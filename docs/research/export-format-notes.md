@@ -51,3 +51,9 @@
 - 最低限の成立確認は STL から始める
 - 3MF は有望でも、PoC で安定性を確認するまでは正式採用しない
 - 本番設計は色指定だけに依存させず、body / legend 分離可能な構造で進める
+
+## 現時点の PoC 実装メモ
+
+- Task 03 では OpenSCAD WASM から binary STL を直接出力する経路を実装した
+- Task 04 では OpenSCAD WASM から OFF を出力し、ブラウザ側で 3MF パッケージを組み立てる経路を実装した
+- この 3MF 経路は「3MF をブラウザ内で成立させる」ための PoC であり、Bambu Studio 互換性は Task 05 で別途確認する
