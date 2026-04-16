@@ -18,7 +18,7 @@ self.addEventListener("message", async (event) => {
   const { runtimeUrl, files, args, outputPaths = [] } = event.data;
 
   try {
-    const { default: OpenSCAD } = await import(runtimeUrl);
+    const { default: OpenSCAD } = await import(/* @vite-ignore */ runtimeUrl);
     const logs = [];
     const instance = await OpenSCAD({
       noInitialRun: true,
