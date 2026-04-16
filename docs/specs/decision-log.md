@@ -26,3 +26,10 @@
 - 結論: 静的配信基盤として Vite を採用し、GitHub Pages 用 base は `GITHUB_REPOSITORY` から自動解決する
 - 理由: GitHub Pages と相性がよく、ローカル開発と本番ビルドの両方を単純な設定で扱えるため
 - 次の対応: Task 02 で OpenSCAD WASM ランタイムを導入し、ブラウザ内 PoC を実装する
+
+### 2026-04-16 - Task 02 OpenSCAD WASM PoC 基盤
+
+- 対象タスク: Task 02
+- 結論: OpenSCAD Playground 系の prebuilt OpenSCAD WASM バンドルを `public/vendor/openscad/` へ同梱し、最小 SCAD を OFF 出力する PoC UI を追加した
+- 理由: GitHub Pages 上でも外部依存なしで OpenSCAD 構文ベースの PoC を進めやすいため
+- 次の対応: Task 03 で STL 出力、Task 04 で 3MF 出力へ拡張する。ライセンス影響は人間確認待ちのまま扱う

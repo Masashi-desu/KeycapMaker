@@ -64,6 +64,102 @@ h1 {
   margin-top: 24px;
 }
 
+.panel {
+  margin-top: 24px;
+  padding: 24px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(22, 32, 43, 0.08);
+  box-shadow: 0 18px 48px rgba(23, 43, 77, 0.08);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.section-label {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4a6a87;
+}
+
+.action-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #1c5c96, #3184d8);
+  box-shadow: 0 12px 24px rgba(49, 132, 216, 0.28);
+  cursor: pointer;
+}
+
+.action-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.stat {
+  padding: 16px;
+  border-radius: 18px;
+  background: #f4f8fc;
+  border: 1px solid rgba(22, 32, 43, 0.06);
+}
+
+.stat-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  color: #5e7991;
+}
+
+.code-block {
+  margin-top: 20px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(22, 32, 43, 0.08);
+  background: #13202d;
+  color: #dce8f2;
+}
+
+.code-block-header {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  color: #c7d9ea;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
 .card {
   padding: 24px;
   border-radius: 24px;
@@ -90,8 +186,17 @@ h1 {
   }
 
   .hero,
+  .panel,
   .card {
     padding: 20px;
     border-radius: 20px;
+  }
+
+  .panel-header {
+    flex-direction: column;
+  }
+
+  .action-button {
+    width: 100%;
   }
 }
