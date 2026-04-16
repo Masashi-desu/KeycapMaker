@@ -7,4 +7,4 @@ GitHub Actions と GitHub Pages デプロイ用のワークフローを配置す
 - GitHub Pages へのデプロイワークフロー
 - 必要に応じたビルド確認や静的チェック
 
-本リポジトリでは、Task 10 で GitHub Pages 向けのワークフローを追加します。
+本リポジトリでは、Task 10 で [deploy-pages.yml](deploy-pages.yml) を追加済みです。

@@ -82,3 +82,17 @@
 - 結論: preview は OFF メッシュ生成、表示は Three.js の動的 import に分離し、入力変更時はデバウンス更新する構成にした
 - 理由: export と別責務の軽量プレビュー経路を持ちつつ、通常 UI の初期ロードを重くしすぎないため
 - 次の対応: Task 10 で GitHub Pages 配信を整え、実ブラウザでの最終確認を進める
+
+### 2026-04-16 - Task 10 GitHub Pages デプロイ整備
+
+- 対象タスク: Task 10
+- 結論: `.github/workflows/deploy-pages.yml` を追加し、`npm ci -> npm run build -> Pages artifact upload -> deploy` の流れを固定した
+- 理由: GitHub Pages での公開経路をリポジトリ内に閉じるため
+- 次の対応: GitHub 側の Pages 設定確認と公開 URL の人間確認を行う
+
+### 2026-04-16 - Task 11 運用と拡張
+
+- 対象タスク: Task 11
+- 結論: `docs/specs/operations-guide.md` と `docs/roadmap/checkpoints.md` を追加し、更新先と拡張候補を固定した
+- 理由: 新規作業者が文書だけで継続開発できる状態を維持するため
+- 次の対応: Task 05 の人間確認結果を反映し、必要なら出力戦略を補正する

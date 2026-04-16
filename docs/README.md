@@ -11,9 +11,10 @@
 ## 推奨読書順
 
 1. [roadmap/implementation-plan.md](roadmap/implementation-plan.md)
-2. [specs/project-scope.md](specs/project-scope.md)
-3. 必要に応じて `research/` 配下の各資料
-4. 実装や判断を進めたら [specs/decision-log.md](specs/decision-log.md) を更新
+2. [roadmap/checkpoints.md](roadmap/checkpoints.md)
+3. [specs/project-scope.md](specs/project-scope.md)
+4. 必要に応じて `research/` 配下の各資料
+5. 実装や判断を進めたら [specs/decision-log.md](specs/decision-log.md) を更新
 
 ## 運用ルール
 

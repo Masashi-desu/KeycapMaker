@@ -9,6 +9,12 @@
 - OpenSCAD 系ランタイムとの接続
 - export 実行フロー
 
+## 現在の主要ファイル
+
+- `main.js`: UI、PoC、editor、export の主導線
+- `lib/keycap-scad-bundle.js`: SCAD 資産をブラウザ実行用ファイル群へまとめる
+- `lib/preview-scene.js`: OFF メッシュを Three.js で表示する
+
 ## 実装方針
 
 - GitHub Pages 前提のため、サーバーサイド処理を前提にしない
