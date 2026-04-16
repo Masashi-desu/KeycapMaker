@@ -61,3 +61,10 @@
 - 結論: 現時点では body / legend を別体積で扱える設計を安全側の正式候補とし、色付き 3MF は PoC 扱いのまま維持する
 - 理由: 3MF と色解釈の安定性が Bambu Studio で未確認のため
 - 次の対応: Task 07 以降の実装は別体積方式を前提に進め、Task 05 の結果で必要なら補正する
+
+### 2026-04-16 - Task 07 SCAD ベース実装
+
+- 対象タスク: Task 07
+- 結論: `scad/base/keycap.scad` を基礎エントリとして、shell / stem socket / legend block / preset を分離した
+- 理由: body / legend 別体積と preview / export の責務分離を、後続 UI から扱いやすい構造にするため
+- 次の対応: Task 08 で UI から `-D` パラメータを渡してこの SCAD ベースを実行する

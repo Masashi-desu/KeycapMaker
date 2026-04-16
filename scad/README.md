@@ -9,6 +9,15 @@
 - `presets/`: profile やキー種別ごとの初期値や定義を置く
 - `samples/`: PoC や回帰確認に使う最小サンプルを置く
 
+## 現在の主要ファイル
+
+- `base/keycap.scad`: `export_target` で `preview / body / legend` を切り替える基礎エントリ
+- `modules/keycap_shell.scad`: 外形シェル
+- `modules/stem_socket.scad`: 簡易 stem cavity
+- `modules/legend_block.scad`: フォント非依存の legend ボリューム
+- `presets/standard-1u.scad`: 1u キー向け既定値
+- `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
+
 ## 運用方針
 
 - preview 用と export 用で重さや精度を分けてよい
