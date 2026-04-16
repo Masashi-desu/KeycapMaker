@@ -14,6 +14,9 @@ const keycapBodyPath = "/outputs/keycap-body.stl";
 const keycapLegendPath = "/outputs/keycap-legend.stl";
 const keycap3mfPath = "keycap-preview.3mf";
 const sampleName = "minimum-poc";
+let disposePreviewScene = null;
+let previewDebounceTimer = 0;
+let previewSceneModulePromise = null;
 
 const fieldGroups = [
   {
@@ -61,6 +64,7 @@ const state = {
   editorSummary: "未生成",
   editorLogs: [],
   editorError: "",
+  previewMesh: null,
   keycapParams: {
     keyWidth: 18,
     keyDepth: 18,
@@ -86,6 +90,11 @@ if (!app) {
 }
 
 function render() {
+  if (disposePreviewScene) {
+    disposePreviewScene();
+    disposePreviewScene = null;
+  }
+
   app.innerHTML = `
     <main class="shell">
       <section class="hero">
@@ -202,6 +211,13 @@ function render() {
           </div>
         </div>
 
+        <div class="preview-shell">
+          <div class="preview-stage" data-preview-stage></div>
+          <div class="preview-caption">
+            OFF メッシュを Three.js で表示します。入力変更時は短い待機後に自動更新されます。
+          </div>
+        </div>
+
         <div class="log-grid">
           <div class="code-block">
             <div class="code-block-header">エディタログ</div>
@@ -265,6 +281,7 @@ function render() {
     input.addEventListener("input", handleFieldChange);
     input.addEventListener("change", handleFieldChange);
   });
+  renderPreviewViewer();
 }
 
 function renderField(field) {
@@ -341,6 +358,41 @@ function handleFieldChange(event) {
   } else {
     state.keycapParams[field] = Number(input.value);
   }
+
+  state.editorStatus = "dirty";
+  state.editorSummary = "入力変更待ち";
+  schedulePreviewRefresh();
+}
+
+function schedulePreviewRefresh() {
+  window.clearTimeout(previewDebounceTimer);
+  previewDebounceTimer = window.setTimeout(() => {
+    executeKeycapPreview({ silent: true });
+  }, 450);
+}
+
+async function renderPreviewViewer() {
+  const container = app.querySelector("[data-preview-stage]");
+  if (!container) {
+    return;
+  }
+
+  if (!state.previewMesh) {
+    container.innerHTML = `
+      <div class="preview-placeholder">
+        まだ preview mesh がありません。パラメータを調整すると自動で OFF プレビューを更新します。
+      </div>
+    `;
+    return;
+  }
+
+  previewSceneModulePromise ??= import("./lib/preview-scene.js");
+  const { mountPreviewScene } = await previewSceneModulePromise;
+  if (!container.isConnected || !state.previewMesh) {
+    return;
+  }
+
+  disposePreviewScene = mountPreviewScene(container, state.previewMesh);
 }
 
 async function executeRuntimePoc() {
@@ -378,11 +430,15 @@ async function executeRuntimePoc() {
   render();
 }
 
-async function executeKeycapPreview() {
+async function executeKeycapPreview(options = {}) {
+  const { silent = false } = options;
+
   state.editorStatus = "running";
   state.editorSummary = "プレビュー用 OFF を生成しています";
-  state.editorLogs = [];
-  state.editorError = "";
+  if (!silent) {
+    state.editorLogs = [];
+    state.editorError = "";
+  }
   render();
 
   try {
@@ -398,10 +454,12 @@ async function executeKeycapPreview() {
     });
 
     const [output] = result.outputs;
+    const previewMesh = parseOff(new TextDecoder().decode(output.bytes));
     state.editorStatus = "success";
-    state.editorSummary = `${Math.round(result.elapsedMs)} ms / ${output.bytes.byteLength} bytes`;
+    state.editorSummary = `${Math.round(result.elapsedMs)} ms / ${previewMesh.vertices.length} vertices / ${previewMesh.faces.length} triangles`;
     state.editorLogs = result.logs.map((entry) => `[${entry.stream}] ${entry.text}`);
     state.editorError = "プレビュー用 OFF の生成に成功しました。";
+    state.previewMesh = previewMesh;
   } catch (error) {
     state.editorStatus = "error";
     state.editorSummary = "プレビュー生成失敗";
@@ -510,3 +568,5 @@ const params = new URLSearchParams(window.location.search);
 if (params.get("autorun") === "1") {
   executeRuntimePoc();
 }
+
+executeKeycapPreview({ silent: true });
