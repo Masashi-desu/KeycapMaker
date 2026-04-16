@@ -17,7 +17,15 @@ function createGeometry(mesh) {
   return geometry;
 }
 
-export function mountPreviewScene(container, mesh) {
+function normalizeLayers(layers) {
+  if (Array.isArray(layers)) {
+    return layers;
+  }
+
+  return [{ mesh: layers, color: 0x4d8fd8, name: "preview" }];
+}
+
+export function mountPreviewScene(container, layers) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0xf7fbff, 1);
@@ -38,20 +46,25 @@ export function mountPreviewScene(container, mesh) {
   rimLight.position.set(-18, -16, 22);
   scene.add(rimLight);
 
-  const geometry = createGeometry(mesh);
-  const material = new THREE.MeshStandardMaterial({
-    color: 0x4d8fd8,
-    metalness: 0.08,
-    roughness: 0.55,
+  const layerEntries = normalizeLayers(layers).map((layer) => {
+    const geometry = createGeometry(layer.mesh);
+    const material = new THREE.MeshStandardMaterial({
+      color: layer.color ?? 0x4d8fd8,
+      metalness: 0.08,
+      roughness: 0.55,
+    });
+    const previewMesh = new THREE.Mesh(geometry, material);
+    scene.add(previewMesh);
+    geometry.computeBoundingBox();
+    return { geometry, material, previewMesh };
   });
-  const previewMesh = new THREE.Mesh(geometry, material);
-  scene.add(previewMesh);
 
-  geometry.computeBoundingBox();
-  const boundingBox = geometry.boundingBox;
+  const boundingBox = layerEntries.reduce((box, entry) => box.union(entry.geometry.boundingBox), new THREE.Box3());
   const center = boundingBox.getCenter(new THREE.Vector3());
   const size = boundingBox.getSize(new THREE.Vector3());
-  previewMesh.position.sub(center);
+  layerEntries.forEach((entry) => {
+    entry.previewMesh.position.sub(center);
+  });
 
   const maxDimension = Math.max(size.x, size.y, size.z, 1);
   camera.position.set(maxDimension * 1.6, maxDimension * 1.35, maxDimension * 1.5);
@@ -83,8 +96,10 @@ export function mountPreviewScene(container, mesh) {
     cancelAnimationFrame(frameId);
     resizeObserver.disconnect();
     controls.dispose();
-    geometry.dispose();
-    material.dispose();
+    layerEntries.forEach((entry) => {
+      entry.geometry.dispose();
+      entry.material.dispose();
+    });
     renderer.dispose();
     container.replaceChildren();
   };

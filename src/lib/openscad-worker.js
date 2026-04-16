@@ -4,14 +4,27 @@ function makeDirRecursive(fs, absolutePath) {
 
   for (const segment of segments) {
     current += `/${segment}`;
-    try {
-      fs.mkdir(current);
-    } catch (error) {
-      if (!`${error}`.includes("File exists")) {
-        throw error;
+    const analysis = fs.analyzePath(current);
+
+    if (analysis.exists) {
+      const mode = analysis.object?.mode ?? analysis.stat?.mode;
+      if (mode != null && !fs.isDir(mode)) {
+        throw new Error(`${current} はディレクトリではありません。`);
       }
+      continue;
     }
+
+    fs.mkdir(current);
   }
+}
+
+function getParentDir(path) {
+  const segments = path.split("/").filter(Boolean);
+  if (segments.length <= 1) {
+    return "/";
+  }
+
+  return `/${segments.slice(0, -1).join("/")}`;
 }
 
 self.addEventListener("message", async (event) => {
@@ -33,11 +46,12 @@ self.addEventListener("message", async (event) => {
     const start = performance.now();
 
     for (const file of files) {
-      const pathSegments = file.path.split("/").filter(Boolean);
-      if (pathSegments.length > 1) {
-        makeDirRecursive(instance.FS, `/${pathSegments.slice(0, -1).join("/")}`);
-      }
+      makeDirRecursive(instance.FS, getParentDir(file.path));
       instance.FS.writeFile(file.path, file.content);
+    }
+
+    for (const outputPath of outputPaths) {
+      makeDirRecursive(instance.FS, getParentDir(outputPath));
     }
 
     const exitCode = instance.callMain(args);
@@ -66,9 +80,11 @@ self.addEventListener("message", async (event) => {
       transfer,
     );
   } catch (error) {
+    const details =
+      error instanceof Error && error.stack ? `${error.name}: ${error.message}\n${error.stack}` : `${error}`;
     self.postMessage({
       ok: false,
-      error: `${error}`,
+      error: details,
     });
   }
 });

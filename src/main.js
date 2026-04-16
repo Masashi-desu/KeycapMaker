@@ -8,15 +8,19 @@ import { buildKeycapArgs, createKeycapFiles } from "./lib/keycap-scad-bundle.js"
 const app = document.querySelector("#app");
 const samplePath = "/samples/minimum-poc.scad";
 const previewOutputPath = "/outputs/minimum-poc.off";
-const stlOutputPath = "/outputs/minimum-poc.stl";
-const keycapPreviewPath = "/outputs/keycap-preview.off";
 const keycapBodyPath = "/outputs/keycap-body.stl";
 const keycapLegendPath = "/outputs/keycap-legend.stl";
+const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
+const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycap3mfPath = "keycap-preview.3mf";
-const sampleName = "minimum-poc";
 let disposePreviewScene = null;
 let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
+const textDecoder = new TextDecoder();
+const previewLayerPalette = {
+  body: 0x4d8fd8,
+  legend: 0xf5b942,
+};
 
 const fieldGroups = [
   {
@@ -64,7 +68,7 @@ const state = {
   editorSummary: "未生成",
   editorLogs: [],
   editorError: "",
-  previewMesh: null,
+  previewLayers: [],
   keycapParams: {
     keyWidth: 18,
     keyDepth: 18,
@@ -377,7 +381,7 @@ async function renderPreviewViewer() {
     return;
   }
 
-  if (!state.previewMesh) {
+  if (state.previewLayers.length === 0) {
     container.innerHTML = `
       <div class="preview-placeholder">
         まだ preview mesh がありません。パラメータを調整すると自動で OFF プレビューを更新します。
@@ -388,11 +392,62 @@ async function renderPreviewViewer() {
 
   previewSceneModulePromise ??= import("./lib/preview-scene.js");
   const { mountPreviewScene } = await previewSceneModulePromise;
-  if (!container.isConnected || !state.previewMesh) {
+  if (!container.isConnected || state.previewLayers.length === 0) {
     return;
   }
 
-  disposePreviewScene = mountPreviewScene(container, state.previewMesh);
+  disposePreviewScene = mountPreviewScene(container, state.previewLayers);
+}
+
+function createKeycapOffJobs(purpose) {
+  if (purpose === "preview" || purpose === "3mf") {
+    return [
+      {
+        name: "body",
+        exportTarget: "body",
+        outputPath: keycapBodyPreviewPath,
+        color: previewLayerPalette.body,
+      },
+      ...(state.keycapParams.legendEnabled
+        ? [
+            {
+              name: "legend",
+              exportTarget: "legend",
+              outputPath: keycapLegendPreviewPath,
+              color: previewLayerPalette.legend,
+            },
+          ]
+        : []),
+    ];
+  }
+
+  throw new Error(`未対応の OFF ジョブ用途です: ${purpose}`);
+}
+
+async function runKeycapOffJobs(jobs) {
+  const outputs = [];
+
+  for (const job of jobs) {
+    const result = await runOpenScad({
+      files: createKeycapFiles(),
+      args: buildKeycapArgs({
+        params: state.keycapParams,
+        exportTarget: job.exportTarget,
+        outputPath: job.outputPath,
+        outputFormat: "off",
+      }),
+      outputPaths: [job.outputPath],
+    });
+
+    const [output] = result.outputs;
+    outputs.push({
+      ...job,
+      result,
+      mesh: parseOff(textDecoder.decode(output.bytes)),
+    });
+  }
+
+  return outputs;
 }
 
 async function executeRuntimePoc() {
@@ -442,29 +497,27 @@ async function executeKeycapPreview(options = {}) {
   render();
 
   try {
-    const result = await runOpenScad({
-      files: createKeycapFiles(),
-      args: buildKeycapArgs({
-        params: state.keycapParams,
-        exportTarget: "preview",
-        outputPath: keycapPreviewPath,
-        outputFormat: "off",
-      }),
-      outputPaths: [keycapPreviewPath],
-    });
-
-    const [output] = result.outputs;
-    const previewMesh = parseOff(new TextDecoder().decode(output.bytes));
+    const previewResults = await runKeycapOffJobs(createKeycapOffJobs("preview"));
+    const totalElapsedMs = previewResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0);
+    const totalVertices = previewResults.reduce((sum, entry) => sum + entry.mesh.vertices.length, 0);
+    const totalFaces = previewResults.reduce((sum, entry) => sum + entry.mesh.faces.length, 0);
     state.editorStatus = "success";
-    state.editorSummary = `${Math.round(result.elapsedMs)} ms / ${previewMesh.vertices.length} vertices / ${previewMesh.faces.length} triangles`;
-    state.editorLogs = result.logs.map((entry) => `[${entry.stream}] ${entry.text}`);
-    state.editorError = "プレビュー用 OFF の生成に成功しました。";
-    state.previewMesh = previewMesh;
+    state.editorSummary = `${Math.round(totalElapsedMs)} ms / ${previewResults.length} objects / ${totalVertices} vertices / ${totalFaces} triangles`;
+    state.editorLogs = previewResults.flatMap((entry) =>
+      entry.result.logs.map((log) => `[${entry.name}/${log.stream}] ${log.text}`),
+    );
+    state.editorError = "プレビュー用 OFF の生成に成功しました。body と legend を別メッシュで描画しています。";
+    state.previewLayers = previewResults.map((entry) => ({
+      name: entry.name,
+      color: entry.color,
+      mesh: entry.mesh,
+    }));
   } catch (error) {
     state.editorStatus = "error";
     state.editorSummary = "プレビュー生成失敗";
     state.editorLogs = [];
     state.editorError = `${error}`;
+    state.previewLayers = [];
   }
 
   render();
@@ -521,29 +574,22 @@ async function executeExport(format) {
         notes: "legend volume を binary STL で出力",
       });
     } else if (format === "3mf") {
-      const offResult = await runOpenScad({
-        files: createKeycapFiles(),
-        args: buildKeycapArgs({
-          params: state.keycapParams,
-          exportTarget: "preview",
-          outputPath: keycapPreviewPath,
-          outputFormat: "off",
-        }),
-        outputPaths: [keycapPreviewPath],
-      });
-
-      const [offOutput] = offResult.outputs;
-      const mesh = parseOff(new TextDecoder().decode(offOutput.bytes));
-      const blob = create3mfBlob([{ name: "keycap-preview", ...mesh }]);
+      const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf"));
+      const blob = create3mfBlob(
+        offResults.map((entry) => ({
+          name: `keycap-${entry.name}`,
+          ...entry.mesh,
+        })),
+      );
       downloadBlob(blob, keycap3mfPath);
 
       state.exportsStatus = "success";
-      state.exportsSummary = `3MF PoC を生成しました (${blob.size} bytes)`;
+      state.exportsSummary = `3MF PoC を生成しました (${blob.size} bytes / ${offResults.length} objects)`;
       state.exportHistory.unshift({
         format,
-        elapsedMs: Math.round(offResult.elapsedMs),
+        elapsedMs: Math.round(offResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0)),
         byteLength: blob.size,
-        notes: "preview mesh を OFF -> 3MF へ変換",
+        notes: "body / legend を別オブジェクトの 3MF として出力",
       });
     } else {
       throw new Error(`未対応の export 形式です: ${format}`);
