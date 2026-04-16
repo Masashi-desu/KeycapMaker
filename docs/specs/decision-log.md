@@ -68,3 +68,10 @@
 - 結論: `scad/base/keycap.scad` を基礎エントリとして、shell / stem socket / legend block / preset を分離した
 - 理由: body / legend 別体積と preview / export の責務分離を、後続 UI から扱いやすい構造にするため
 - 次の対応: Task 08 で UI から `-D` パラメータを渡してこの SCAD ベースを実行する
+
+### 2026-04-16 - Task 08 パラメータ編集 UI
+
+- 対象タスク: Task 08
+- 結論: 本体、legend、stem の主要パラメータを持つ編集 UI を追加し、`-D` 引数で SCAD ベースへ受け渡す構成にした
+- 理由: UI 入力責務と SCAD 幾何責務を分けたまま、後続の preview / export を同じ入力源で扱うため
+- 次の対応: Task 09 で OFF プレビューを Three.js へ接続する
