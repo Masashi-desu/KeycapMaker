@@ -16,42 +16,67 @@ const keycap3mfPath = "keycap-preview.3mf";
 let disposePreviewScene = null;
 let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
+let viewportLayoutMode = getViewportLayoutMode();
 const textDecoder = new TextDecoder();
 const previewLayerPalette = {
   body: 0x4d8fd8,
   legend: 0xf5b942,
 };
 
+const workspaceSections = [
+  {
+    id: "params",
+    label: "パラメータ",
+  },
+  {
+    id: "guide",
+    label: "使い方",
+  },
+  {
+    id: "export",
+    label: "エクスポート",
+  },
+];
+
+const workspaceDraft = {
+  profileName: "KAT",
+  legendExample: "ESC",
+  materialLabel: "Resin test mock",
+};
+
 const fieldGroups = [
   {
     title: "本体",
+    description: "キーキャップ外形とテーパー。profile 切替前でも共通で使う基本寸法です。",
     fields: [
-      { key: "keyWidth", label: "幅", step: 0.1, min: 10 },
-      { key: "keyDepth", label: "奥行き", step: 0.1, min: 10 },
-      { key: "bodyHeight", label: "高さ", step: 0.1, min: 1 },
-      { key: "wallThickness", label: "肉厚", step: 0.05, min: 0.4 },
-      { key: "topScale", label: "上面スケール", step: 0.01, min: 0.5, max: 1 },
+      { key: "keyWidth", label: "幅", hint: "ベース外形", unit: "mm", step: 0.1, min: 10 },
+      { key: "keyDepth", label: "奥行き", hint: "前後方向", unit: "mm", step: 0.1, min: 10 },
+      { key: "bodyHeight", label: "高さ", hint: "フロント高さの仮値", unit: "mm", step: 0.1, min: 1 },
+      { key: "wallThickness", label: "肉厚", hint: "シェル厚み", unit: "mm", step: 0.05, min: 0.4 },
+      { key: "topScale", label: "上面スケール", hint: "テーパー比", unit: "ratio", step: 0.01, min: 0.5, max: 1 },
     ],
   },
   {
     title: "印字",
+    description: "legend body の占有範囲と高さ。文字編集 UI を載せる前段のボリューム定義です。",
     fields: [
-      { key: "legendEnabled", label: "印字を有効化", type: "checkbox" },
-      { key: "legendWidth", label: "印字幅", step: 0.1, min: 0.5 },
-      { key: "legendDepth", label: "印字奥行き", step: 0.1, min: 0.5 },
-      { key: "legendHeight", label: "印字高さ", step: 0.05, min: 0.1 },
-      { key: "legendOffsetX", label: "印字 X オフセット", step: 0.1 },
-      { key: "legendOffsetY", label: "印字 Y オフセット", step: 0.1 },
+      { key: "legendEnabled", label: "印字を有効化", hint: "body と legend を別 volume で扱う", type: "checkbox" },
+      { key: "legendWidth", label: "印字幅", hint: "文字面の横幅", unit: "mm", step: 0.1, min: 0.5 },
+      { key: "legendDepth", label: "印字奥行き", hint: "文字面の縦幅", unit: "mm", step: 0.1, min: 0.5 },
+      { key: "legendHeight", label: "印字高さ", hint: "盛り上がりまたは彫り込みの仮量", unit: "mm", step: 0.05, min: 0.1 },
+      { key: "legendOffsetX", label: "印字 X オフセット", hint: "左右位置", unit: "mm", step: 0.1 },
+      { key: "legendOffsetY", label: "印字 Y オフセット", hint: "前後位置", unit: "mm", step: 0.1 },
     ],
   },
   {
     title: "Stem",
+    description: "stem cavity の PoC パラメータ。将来 profile / switch 系統の差分をここへ吸収します。",
     fields: [
-      { key: "stemEnabled", label: "Stem cavity を有効化", type: "checkbox" },
-      { key: "stemWidth", label: "Stem 幅", step: 0.1, min: 0.5 },
-      { key: "stemDepth", label: "Stem 奥行き", step: 0.1, min: 0.5 },
-      { key: "stemHeight", label: "Stem 高さ", step: 0.1, min: 0.1 },
-      { key: "stemInset", label: "Stem inset", step: 0.1, min: 0.1 },
+      { key: "stemEnabled", label: "Stem cavity を有効化", hint: "switch mount 用の空間を生成", type: "checkbox" },
+      { key: "stemWidth", label: "Stem 幅", hint: "横方向寸法", unit: "mm", step: 0.1, min: 0.5 },
+      { key: "stemDepth", label: "Stem 奥行き", hint: "縦方向寸法", unit: "mm", step: 0.1, min: 0.5 },
+      { key: "stemHeight", label: "Stem 高さ", hint: "底面からの深さ", unit: "mm", step: 0.1, min: 0.1 },
+      { key: "stemInset", label: "Stem inset", hint: "底面からの逃げ量", unit: "mm", step: 0.1, min: 0.1 },
     ],
   },
 ];
@@ -69,6 +94,7 @@ const state = {
   editorLogs: [],
   editorError: "",
   previewLayers: [],
+  sidebarTab: "params",
   keycapParams: {
     keyWidth: 18,
     keyDepth: 18,
@@ -93,6 +119,111 @@ if (!app) {
   throw new Error("#app が見つかりません。");
 }
 
+function getViewportLayoutMode() {
+  if (window.innerWidth <= 760) {
+    return "stack";
+  }
+
+  const shellPadding = 48;
+  const columnGap = 20;
+  const sidebarWidth = Math.min(420, Math.max(320, window.innerWidth * 0.34));
+  const previewSize = Math.min(window.innerHeight - 48, window.innerWidth - 48);
+  const availableWidth = window.innerWidth - shellPadding;
+
+  return availableWidth >= sidebarWidth + columnGap + previewSize ? "centered" : "overlap";
+}
+
+function getStatusLabel(status) {
+  switch (status) {
+    case "running":
+      return "実行中";
+    case "success":
+      return "正常";
+    case "error":
+      return "エラー";
+    case "dirty":
+      return "未反映";
+    default:
+      return "待機";
+  }
+}
+
+function getStatusTone(status) {
+  switch (status) {
+    case "running":
+      return "warning";
+    case "success":
+      return "success";
+    case "error":
+      return "danger";
+    case "dirty":
+      return "info";
+    default:
+      return "neutral";
+  }
+}
+
+function formatMillimeter(value, digits = 1) {
+  return `${Number(value).toFixed(digits)} mm`;
+}
+
+function formatUnitSize() {
+  return `${(state.keycapParams.keyWidth / 18).toFixed(2)}u`;
+}
+
+function formatColorHex(color) {
+  return `#${color.toString(16).padStart(6, "0")}`;
+}
+
+function createOverviewItems() {
+  return [
+    {
+      label: "Profile",
+      value: workspaceDraft.profileName,
+      meta: "仮の profile 情報。将来は selector に置換予定",
+    },
+    {
+      label: "Unit Size",
+      value: formatUnitSize(),
+      meta: `${formatMillimeter(state.keycapParams.keyWidth)} ベースで算出`,
+    },
+    {
+      label: "Front Height",
+      value: formatMillimeter(state.keycapParams.bodyHeight),
+      meta: "PoC の高さパラメータ",
+    },
+    {
+      label: "Legend",
+      value: state.keycapParams.legendEnabled ? workspaceDraft.legendExample : "Disabled",
+      meta: state.keycapParams.legendEnabled
+        ? `${formatMillimeter(state.keycapParams.legendWidth)} × ${formatMillimeter(state.keycapParams.legendDepth)}`
+        : "body のみで出力",
+    },
+  ];
+}
+
+function createQuickNotes() {
+  return [
+    {
+      label: "Legend Build",
+      value: state.keycapParams.legendEnabled
+        ? `${formatMillimeter(state.keycapParams.legendHeight, 2)} の別ボディ`
+        : "現在は無効化",
+      tone: "neutral",
+    },
+    {
+      label: "Shell Wall",
+      value: `${formatMillimeter(state.keycapParams.wallThickness, 2)} を維持`,
+      tone: "neutral",
+    },
+    {
+      label: "Body Material",
+      value: workspaceDraft.materialLabel,
+      tone: "neutral",
+    },
+  ];
+}
+
 function render() {
   if (disposePreviewScene) {
     disposePreviewScene();
@@ -100,182 +231,43 @@ function render() {
   }
 
   app.innerHTML = `
-    <main class="shell">
-      <section class="hero">
-        <p class="eyebrow">Keycaps Maker</p>
-        <h1>キーキャップ編集 Web アプリの実装基盤</h1>
-        <p class="lead">
-          GitHub Pages 配信を前提に、OpenSCAD 系ランタイムのブラウザ実行、
-          キーキャップ形状のプレビュー、STL / 3MF の PoC を段階的に追加します。
-        </p>
-      </section>
+    <main class="app-shell">
+      <section class="editor-screen editor-screen--${viewportLayoutMode}">
+        <aside class="left-column">
+          <article class="inspector-card">
+            <nav class="segment-control" aria-label="workspace sections">
+              ${workspaceSections
+                .map(
+                  (section) => `
+                    <button
+                      class="segment-link ${state.sidebarTab === section.id ? "is-active" : ""}"
+                      type="button"
+                      data-sidebar-tab="${section.id}"
+                    >
+                      ${section.label}
+                    </button>
+                  `,
+                )
+                .join("")}
+            </nav>
+            <div class="inspector-content">
+              ${renderInspectorContent()}
+            </div>
+          </article>
+        </aside>
 
-      <section class="grid">
-        <article class="card">
-          <h2>現在の状態</h2>
-          <ul>
-            <li>Task 01: Vite ベースの静的アプリ初期化</li>
-            <li>Task 02: OpenSCAD WASM ランタイム同梱済み</li>
-            <li>Task 03-04: STL / 3MF PoC 実装済み</li>
-            <li>Task 07-08: キーキャップ SCAD ベースと入力 UI を実装中</li>
-          </ul>
-        </article>
-
-        <article class="card">
-          <h2>次に行うこと</h2>
-          <ul>
-            <li>Three.js を使ったプレビュー表示</li>
-            <li>本体 / 印字の別体積 export を可視化</li>
-            <li>GitHub Pages ワークフロー整備と運用文書の仕上げ</li>
-          </ul>
-        </article>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <p class="section-label">Task 02</p>
-            <h2>OpenSCAD ブラウザ実行 PoC</h2>
+        <section class="right-column">
+          <div class="preview-area">
+            <div class="preview-stage" data-preview-stage></div>
           </div>
-          <button class="action-button" data-run-poc ${state.runtimeStatus === "running" ? "disabled" : ""}>
-            ${state.runtimeStatus === "running" ? "実行中..." : "最小 SCAD を実行"}
-          </button>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-label">状態</span>
-            <strong>${state.runtimeStatus}</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">概要</span>
-            <strong>${state.runtimeSummary}</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">入力</span>
-            <strong>${samplePath}</strong>
-          </div>
-        </div>
-
-        <div class="code-block">
-          <div class="code-block-header">minimum-poc.scad</div>
-          <pre>${escapeHtml(minimumPocScad)}</pre>
-        </div>
-
-        <div class="log-grid">
-          <div class="code-block">
-            <div class="code-block-header">実行ログ</div>
-            <pre>${state.logs.length > 0 ? escapeHtml(state.logs.join("\n")) : "ログはまだありません。"}</pre>
-          </div>
-          <div class="code-block">
-            <div class="code-block-header">エラー / 備考</div>
-            <pre>${state.error ? escapeHtml(state.error) : "まだエラーはありません。"}</pre>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <p class="section-label">Task 08</p>
-            <h2>キーキャップ用パラメータ編集 UI</h2>
-          </div>
-          <button class="action-button" data-preview-keycap ${state.editorStatus === "running" ? "disabled" : ""}>
-            ${state.editorStatus === "running" ? "更新中..." : "プレビュー用 OFF を生成"}
-          </button>
-        </div>
-
-        <div class="editor-grid">
-          ${fieldGroups
-            .map(
-              (group) => `
-                <section class="form-card">
-                  <h3>${group.title}</h3>
-                  <div class="field-grid">
-                    ${group.fields.map((field) => renderField(field)).join("")}
-                  </div>
-                </section>
-              `,
-            )
-            .join("")}
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-label">状態</span>
-            <strong>${state.editorStatus}</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">概要</span>
-            <strong>${state.editorSummary}</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">出力対象</span>
-            <strong>preview / body / legend を分離可能</strong>
-          </div>
-        </div>
-
-        <div class="preview-shell">
-          <div class="preview-stage" data-preview-stage></div>
-          <div class="preview-caption">
-            OFF メッシュを Three.js で表示します。入力変更時は短い待機後に自動更新されます。
-          </div>
-        </div>
-
-        <div class="log-grid">
-          <div class="code-block">
-            <div class="code-block-header">エディタログ</div>
-            <pre>${state.editorLogs.length > 0 ? escapeHtml(state.editorLogs.join("\n")) : "まだプレビュー生成を実行していません。"}</pre>
-          </div>
-          <div class="code-block">
-            <div class="code-block-header">エラー / 備考</div>
-            <pre>${state.editorError ? escapeHtml(state.editorError) : "まだエラーはありません。"}</pre>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <p class="section-label">Task 03 / Task 04</p>
-            <h2>STL / 3MF 出力 PoC</h2>
-          </div>
-          <div class="button-row">
-            <button class="secondary-button" data-export="body" ${state.exportsStatus === "running" ? "disabled" : ""}>
-              本体 STL
-            </button>
-            <button class="secondary-button" data-export="legend" ${state.exportsStatus === "running" ? "disabled" : ""}>
-              印字 STL
-            </button>
-            <button class="secondary-button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
-              3MF PoC
-            </button>
-          </div>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-label">状態</span>
-            <strong>${state.exportsStatus}</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">概要</span>
-            <strong>${state.exportsSummary}</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">方針</span>
-            <strong>body / legend 分離を優先、3MF は PoC</strong>
-          </div>
-        </div>
-
-        <div class="code-block">
-          <div class="code-block-header">生成履歴</div>
-          <pre>${escapeHtml(renderHistory())}</pre>
-        </div>
+        </section>
       </section>
     </main>
   `;
 
+  app.querySelectorAll("[data-sidebar-tab]").forEach((button) => {
+    button.addEventListener("click", handleSidebarTabChange);
+  });
   app.querySelector("[data-run-poc]")?.addEventListener("click", executeRuntimePoc);
   app.querySelector("[data-preview-keycap]")?.addEventListener("click", executeKeycapPreview);
   app.querySelectorAll("[data-export]").forEach((button) => {
@@ -288,35 +280,217 @@ function render() {
   renderPreviewViewer();
 }
 
+function renderInspectorContent() {
+  if (state.sidebarTab === "guide") {
+    return renderGuideTab();
+  }
+
+  if (state.sidebarTab === "export") {
+    return renderExportTab();
+  }
+
+  return renderParametersTab();
+}
+
+function renderParametersTab() {
+  return `
+    <div class="panel-intro">
+      <h1 class="panel-title">Parameters</h1>
+      <p class="panel-text">Key geometry and legend settings for the currently selected cap.</p>
+    </div>
+
+    <div class="info-chip-list">
+      ${createOverviewItems()
+        .slice(0, 3)
+        .map(
+          (item) => `
+            <article class="info-chip">
+              <span class="chip-label">${item.label}</span>
+              <strong>${escapeHtml(item.value)}</strong>
+            </article>
+          `,
+        )
+        .join("")}
+    </div>
+
+    <section class="legend-card">
+      <h2 class="subsection-title">Legend</h2>
+      <div class="legend-input">
+        <strong>${state.keycapParams.legendEnabled ? escapeHtml(workspaceDraft.legendExample) : "Disabled"}</strong>
+      </div>
+    </section>
+
+    <div class="parameter-group-list">
+      ${fieldGroups.map((group) => renderFieldGroup(group)).join("")}
+    </div>
+
+    <div class="notes-heading">Quick Notes</div>
+    <div class="note-list">
+      ${createQuickNotes()
+        .map(
+          (note) => `
+            <article class="note-card note-card--${note.tone}">
+              <span class="chip-label">${note.label}</span>
+              <strong>${escapeHtml(note.value)}</strong>
+            </article>
+          `,
+        )
+        .join("")}
+    </div>
+
+    <button class="action-card" type="button" data-preview-keycap ${state.editorStatus === "running" ? "disabled" : ""}>
+      <span class="chip-label">Next</span>
+      <strong>${state.editorStatus === "running" ? "プレビュー更新中..." : "Preview mesh / legend bodies"}</strong>
+    </button>
+  `;
+}
+
+function renderGuideTab() {
+  return `
+    <div class="panel-intro">
+      <h1 class="panel-title">Guide</h1>
+      <p class="panel-text">PoC の確認手順と OpenSCAD runtime の状態をまとめています。</p>
+    </div>
+
+    <ol class="guide-list">
+      <li class="guide-step">
+        <strong>1. 左カラムで寸法を編集</strong>
+        <span>key width / legend / stem を変更するとプレビューが自動更新されます。</span>
+      </li>
+      <li class="guide-step">
+        <strong>2. 右側で mesh を確認</strong>
+        <span>body と legend を別レイヤーで描画し、volume 分離を把握できます。</span>
+      </li>
+      <li class="guide-step">
+        <strong>3. runtime を検証</strong>
+        <span>最小 SCAD を実行してブラウザ内 OpenSCAD 基盤が動作するかを確認します。</span>
+      </li>
+    </ol>
+
+    ${renderStatusCard("Runtime", state.runtimeStatus, state.runtimeSummary)}
+
+    <button class="secondary-card-button" type="button" data-run-poc ${state.runtimeStatus === "running" ? "disabled" : ""}>
+      ${state.runtimeStatus === "running" ? "実行中..." : "最小 SCAD を実行"}
+    </button>
+
+    <div class="mini-code-block">
+      <div class="mini-code-block__title">Runtime Logs</div>
+      <pre>${state.logs.length > 0 ? escapeHtml(state.logs.join("\n")) : "ログはまだありません。"}</pre>
+    </div>
+
+    <p class="feedback-text">${state.error ? escapeHtml(state.error) : "まだエラーはありません。"}</p>
+  `;
+}
+
+function renderExportTab() {
+  return `
+    <div class="panel-intro">
+      <h1 class="panel-title">Export</h1>
+      <p class="panel-text">body / legend を独立ボディとして 유지しながら STL / 3MF を出力します。</p>
+    </div>
+
+    ${renderStatusCard("Export", state.exportsStatus, state.exportsSummary)}
+
+    <div class="export-button-list">
+      <button class="secondary-card-button" type="button" data-export="body" ${state.exportsStatus === "running" ? "disabled" : ""}>
+        本体 STL
+      </button>
+      <button class="secondary-card-button" type="button" data-export="legend" ${state.exportsStatus === "running" ? "disabled" : ""}>
+        印字 STL
+      </button>
+      <button class="secondary-card-button" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
+        3MF PoC
+      </button>
+    </div>
+
+    <div class="mini-code-block">
+      <div class="mini-code-block__title">History</div>
+      <pre>${escapeHtml(renderHistory())}</pre>
+    </div>
+  `;
+}
+
+function renderStatusCard(label, status, summary) {
+  return `
+    <article class="status-card">
+      <span class="chip-label">${label}</span>
+      <div class="status-row">
+        <strong>${getStatusLabel(status)}</strong>
+        <span class="status-dot status-dot--${getStatusTone(status)}"></span>
+      </div>
+      <p>${escapeHtml(summary)}</p>
+    </article>
+  `;
+}
+
+function renderFieldGroup(group) {
+  return `
+    <section class="field-group-card">
+      <div class="field-group-header">
+        <h3>${group.title}</h3>
+        <p>${group.description}</p>
+      </div>
+      <div class="field-grid">
+        ${group.fields.map((field) => renderField(field)).join("")}
+      </div>
+    </section>
+  `;
+}
+
 function renderField(field) {
   const value = state.keycapParams[field.key];
 
   if (field.type === "checkbox") {
     return `
-      <label class="field checkbox-field">
-        <input type="checkbox" data-field="${field.key}" ${value ? "checked" : ""} />
-        <span>${field.label}</span>
+      <label class="field field--checkbox">
+        <span class="field-copy">
+          <span class="field-label">${field.label}</span>
+          <span class="field-hint">${field.hint ?? ""}</span>
+        </span>
+        <span class="checkbox-pill">
+          <input type="checkbox" data-field="${field.key}" ${value ? "checked" : ""} />
+          <span>${value ? "ON" : "OFF"}</span>
+        </span>
       </label>
     `;
   }
 
   return `
     <label class="field">
-      <span>${field.label}</span>
-      <input
-        type="number"
-        data-field="${field.key}"
-        value="${value}"
-        ${field.min != null ? `min="${field.min}"` : ""}
-        ${field.max != null ? `max="${field.max}"` : ""}
-        ${field.step != null ? `step="${field.step}"` : ""}
-      />
+      <span class="field-copy">
+        <span class="field-label">${field.label}</span>
+        <span class="field-hint">${field.hint ?? ""}</span>
+      </span>
+      <span class="field-control">
+        <input
+          type="number"
+          data-field="${field.key}"
+          value="${value}"
+          ${field.min != null ? `min="${field.min}"` : ""}
+          ${field.max != null ? `max="${field.max}"` : ""}
+          ${field.step != null ? `step="${field.step}"` : ""}
+        />
+        <span class="field-unit">${field.unit ?? ""}</span>
+      </span>
     </label>
   `;
 }
 
+function handleSidebarTabChange(event) {
+  state.sidebarTab = event.currentTarget.dataset.sidebarTab;
+  render();
+}
+
+function handleViewportResize() {
+  const nextMode = getViewportLayoutMode();
+  if (nextMode !== viewportLayoutMode) {
+    viewportLayoutMode = nextMode;
+    render();
+  }
+}
+
 function escapeHtml(value) {
-  return value
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
@@ -609,6 +783,8 @@ async function executeExport(format) {
 }
 
 render();
+
+window.addEventListener("resize", handleViewportResize);
 
 const params = new URLSearchParams(window.location.search);
 if (params.get("autorun") === "1") {

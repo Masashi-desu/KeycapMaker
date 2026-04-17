@@ -67,7 +67,7 @@ export function mountPreviewScene(container, layers) {
   });
 
   const maxDimension = Math.max(size.x, size.y, size.z, 1);
-  camera.position.set(maxDimension * 1.6, maxDimension * 1.35, maxDimension * 1.5);
+  camera.position.set(maxDimension * 1.42, maxDimension * 1.18, maxDimension * 1.32);
   controls.target.set(0, 0, 0);
   controls.update();
 
