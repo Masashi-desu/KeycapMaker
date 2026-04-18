@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
+const OVERLAY_LAYER_NAMES = new Set(["legend", "homing"]);
+
 function createGeometry(mesh) {
   const positions = [];
 
@@ -68,17 +70,17 @@ export function mountPreviewScene(container, layers) {
 
   const layerEntries = normalizeLayers(layers).map((layer) => {
     const geometry = createGeometry(layer.mesh);
-    const isLegendLayer = layer.name === "legend";
+    const isOverlayLayer = OVERLAY_LAYER_NAMES.has(layer.name);
     const material = new THREE.MeshStandardMaterial({
       color: layer.color ?? 0x4d8fd8,
       metalness: 0.08,
       roughness: 0.55,
-      polygonOffset: isLegendLayer,
-      polygonOffsetFactor: isLegendLayer ? -1 : 0,
-      polygonOffsetUnits: isLegendLayer ? -2 : 0,
+      polygonOffset: isOverlayLayer,
+      polygonOffsetFactor: isOverlayLayer ? -1 : 0,
+      polygonOffsetUnits: isOverlayLayer ? -2 : 0,
     });
     const previewMesh = new THREE.Mesh(geometry, material);
-    previewMesh.renderOrder = isLegendLayer ? 1 : 0;
+    previewMesh.renderOrder = isOverlayLayer ? 1 : 0;
     scene.add(previewMesh);
     geometry.computeBoundingBox();
     return { geometry, material, previewMesh };

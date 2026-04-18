@@ -1,6 +1,7 @@
 import "./styles.css";
 import minimumPocScad from "../scad/samples/minimum-poc.scad?raw";
 import { runOpenScad } from "./lib/openscad-client.js";
+import { hexColorToNumber, normalizeHexColor } from "./lib/color-utils.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
 import { parseOff } from "./lib/off-parser.js";
 import {
@@ -16,20 +17,38 @@ const previewOutputPath = "/outputs/minimum-poc.off";
 const keycapBodyPath = "/outputs/keycap-body.stl";
 const keycapLegendPath = "/outputs/keycap-legend.stl";
 const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
+const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycap3mfPath = "keycap-preview.3mf";
 let disposePreviewScene = null;
 let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
+let colorisLoadPromise = null;
+let latestPreviewRequestId = 0;
 let viewportLayoutMode = getViewportLayoutMode();
 const textDecoder = new TextDecoder();
-const previewLayerPalette = {
-  body: 0x4d8fd8,
-  legend: 0xf5b942,
-};
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
 const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
 const KEY_UNIT_MM = 18;
+const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
+const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
+const DEFAULT_KEYCAP_COLORS = Object.freeze({
+  bodyColor: "#f8f9fa",
+  legendColor: "#212529",
+  homingBarColor: "#ff7f00",
+});
+const COLORIS_SWATCHES = Object.freeze([
+  DEFAULT_KEYCAP_COLORS.bodyColor,
+  DEFAULT_KEYCAP_COLORS.legendColor,
+  DEFAULT_KEYCAP_COLORS.homingBarColor,
+  "#f7efe2",
+  "#d8ccb8",
+  "#2d241c",
+  "#6f5e4d",
+  "#7b9bbf",
+  "#5d9270",
+  "#b8884c",
+]);
 const SHAPE_PROFILE_OPTIONS = [
   { value: "standard-1u", label: "標準 1u" },
 ];
@@ -81,6 +100,13 @@ const fieldGroups = [
       { key: "bodyHeight", label: "全体の高さ", hint: "いちばん高い位置までの高さです", unit: "mm", step: 0.1, min: 1 },
       { key: "wallThickness", label: "厚み", hint: "キーキャップの丈夫さに関わる厚みです", unit: "mm", step: 0.05, min: 0.4 },
       { key: "topScale", label: "上面のすぼまり", hint: "数字を小さくすると上面が細く見えます", unit: "", step: 0.01, min: 0.5, max: 1 },
+      {
+        key: "bodyColor",
+        label: "本体の色",
+        hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+        type: "color",
+        placeholder: DEFAULT_KEYCAP_COLORS.bodyColor,
+      },
     ],
   },
   {
@@ -163,6 +189,14 @@ const fieldGroups = [
         visibleWhen: (params) => params.legendEnabled,
       },
       {
+        key: "legendColor",
+        label: "印字の色",
+        hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+        type: "color",
+        placeholder: DEFAULT_KEYCAP_COLORS.legendColor,
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
         key: "legendOffsetX",
         label: "左右の位置",
         hint: "文字を左右に動かします",
@@ -229,6 +263,14 @@ const fieldGroups = [
         min: 0.05,
         visibleWhen: (params) => params.homingBarEnabled,
       },
+      {
+        key: "homingBarColor",
+        label: "目印の色",
+        hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+        type: "color",
+        placeholder: DEFAULT_KEYCAP_COLORS.homingBarColor,
+        visibleWhen: (params) => params.homingBarEnabled,
+      },
     ],
   },
   {
@@ -253,6 +295,10 @@ const fieldGroups = [
   },
 ];
 
+const fieldConfigByKey = new Map(
+  fieldGroups.flatMap((group) => group.fields).map((field) => [field.key, field]),
+);
+
 const state = {
   runtimeStatus: "idle",
   runtimeSummary: "未実行",
@@ -274,6 +320,7 @@ const state = {
     bodyHeight: 9.5,
     wallThickness: 1.2,
     topScale: 0.84,
+    bodyColor: DEFAULT_KEYCAP_COLORS.bodyColor,
     legendEnabled: true,
     legendText: "A",
     legendFontKey: DEFAULT_KEYCAP_LEGEND_FONT_KEY,
@@ -283,6 +330,7 @@ const state = {
     legendWidth: 7.2,
     legendDepth: 4.0,
     legendHeight: 0,
+    legendColor: DEFAULT_KEYCAP_COLORS.legendColor,
     legendOffsetX: 0,
     legendOffsetY: 0,
     homingBarEnabled: true,
@@ -291,6 +339,7 @@ const state = {
     homingBarHeight: 0.6,
     homingBarOffsetY: -3.5,
     homingBarBaseThickness: 0.35,
+    homingBarColor: DEFAULT_KEYCAP_COLORS.homingBarColor,
     stemType: "choc_v2",
     stemEnabled: true,
     stemWidth: 5.5,
@@ -379,8 +428,105 @@ function formatUnitInputValue(value = state.keycapParams.keyWidth) {
   return (Number(value) / KEY_UNIT_MM).toFixed(2);
 }
 
-function formatColorHex(color) {
-  return `#${color.toString(16).padStart(6, "0")}`;
+function resolvePublicAssetUrl(relativePath) {
+  const baseUrl = new URL(import.meta.env.BASE_URL, window.location.origin);
+  return new URL(relativePath, baseUrl).toString();
+}
+
+function getColorFieldValue(fieldKey) {
+  return normalizeHexColor(state.keycapParams[fieldKey]) ?? DEFAULT_KEYCAP_COLORS[fieldKey];
+}
+
+function getColorFieldNumber(fieldKey) {
+  return hexColorToNumber(getColorFieldValue(fieldKey));
+}
+
+function getPartLabel(partName) {
+  switch (partName) {
+    case "legend":
+      return "印字";
+    case "homing":
+      return "目印";
+    default:
+      return "本体";
+  }
+}
+
+function describePartLabels(parts) {
+  return parts.map((part) => getPartLabel(part)).join("、");
+}
+
+function setColorInputValidity(input, isValid) {
+  input.setAttribute("aria-invalid", isValid ? "false" : "true");
+  input.closest(".field-control")?.classList.toggle("is-invalid", !isValid);
+}
+
+function syncColorChip(fieldKey, colorValue = getColorFieldValue(fieldKey)) {
+  app
+    .querySelector(`[data-color-chip="${fieldKey}"]`)
+    ?.style
+    .setProperty("--field-color", colorValue);
+}
+
+function configureColoris() {
+  if (typeof window.Coloris !== "function") {
+    return;
+  }
+
+  window.Coloris({
+    parent: "body",
+    alpha: false,
+    format: "hex",
+    theme: "pill",
+    themeMode: "light",
+    margin: 8,
+    closeButton: true,
+    closeLabel: "閉じる",
+    swatches: COLORIS_SWATCHES,
+  });
+}
+
+function ensureColorisStylesheet() {
+  if (document.querySelector('link[data-coloris-style="true"]')) {
+    return;
+  }
+
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = resolvePublicAssetUrl(COLORIS_STYLE_PATH);
+  link.dataset.colorisStyle = "true";
+  document.head.append(link);
+}
+
+function ensureColorisLoaded() {
+  ensureColorisStylesheet();
+
+  if (typeof window.Coloris === "function") {
+    configureColoris();
+    return Promise.resolve(window.Coloris);
+  }
+
+  if (colorisLoadPromise) {
+    return colorisLoadPromise;
+  }
+
+  colorisLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = resolvePublicAssetUrl(COLORIS_SCRIPT_PATH);
+    script.async = true;
+    script.dataset.colorisScript = "true";
+    script.addEventListener("load", () => {
+      configureColoris();
+      resolve(window.Coloris);
+    }, { once: true });
+    script.addEventListener("error", () => {
+      colorisLoadPromise = null;
+      reject(new Error("Coloris の読み込みに失敗しました。"));
+    }, { once: true });
+    document.head.append(script);
+  });
+
+  return colorisLoadPromise;
 }
 
 function isLegendTextSet(value = state.keycapParams.legendText) {
@@ -442,6 +588,7 @@ function renderShell() {
   app.querySelector(".inspector-card")?.addEventListener("click", handleInspectorCardClick);
   app.querySelector(".inspector-card")?.addEventListener("input", handleInspectorCardInput);
   app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
+  app.querySelector(".inspector-card")?.addEventListener("compositionend", handleInspectorCardCompositionEnd);
   renderPreviewViewer();
 }
 
@@ -487,6 +634,7 @@ function render(options = {}) {
     renderLayout();
     renderSegmentControl();
     renderInspectorPanel();
+    configureColoris();
   };
 
   if (animateInspector && isUiMotionEnabled()) {
@@ -693,6 +841,41 @@ function renderField(field) {
     `;
   }
 
+  if (field.type === "color") {
+    const normalizedValue = getColorFieldValue(field.key);
+    const inputId = `field-${field.key}`;
+
+    return `
+      <div class="field field--color" style="view-transition-name: ${fieldViewTransitionName};">
+        <label class="field-copy" for="${inputId}">
+          <span class="field-label">${field.label}</span>
+          <span class="field-hint">${field.hint ?? ""}</span>
+        </label>
+        <span class="field-control-cluster field-control-cluster--color">
+          <span class="field-control field-control--color">
+            <span class="field-color-chip" data-color-chip="${field.key}" style="--field-color: ${escapeHtml(normalizedValue)};"></span>
+            <input
+              id="${inputId}"
+              type="text"
+              data-field="${field.key}"
+              data-coloris
+              inputmode="text"
+              spellcheck="false"
+              autocomplete="off"
+              aria-invalid="false"
+              value="${escapeHtml(normalizedValue)}"
+              maxlength="7"
+              ${field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : ""}
+            />
+          </span>
+          <button class="field-color-button" type="button" data-color-picker-open="${field.key}">
+            選ぶ
+          </button>
+        </span>
+      </div>
+    `;
+  }
+
   if (field.type === "linked-size") {
     return `
       <label class="field field--linked-size" style="view-transition-name: ${fieldViewTransitionName};">
@@ -772,6 +955,12 @@ function handleSegmentControlClick(event) {
 }
 
 function handleInspectorCardClick(event) {
+  const colorPickerButton = getClosestFromEventTarget(event, "[data-color-picker-open]");
+  if (colorPickerButton) {
+    openColorPicker(colorPickerButton.dataset.colorPickerOpen);
+    return;
+  }
+
   const runtimeButton = getClosestFromEventTarget(event, "[data-run-poc]");
   if (runtimeButton) {
     executeRuntimePoc();
@@ -790,12 +979,24 @@ function handleInspectorCardInput(event) {
     return;
   }
 
-  handleFieldChange({ currentTarget: input });
+  handleFieldChange({
+    currentTarget: input,
+    deferPreview: typeof InputEvent !== "undefined" && event instanceof InputEvent && event.isComposing,
+  });
 }
 
 function handleInspectorCardChange(event) {
   const input = getClosestFromEventTarget(event, "[data-field]");
   if (!input || (input.type !== "checkbox" && input.tagName !== "SELECT")) {
+    return;
+  }
+
+  handleFieldChange({ currentTarget: input });
+}
+
+function handleInspectorCardCompositionEnd(event) {
+  const input = getClosestFromEventTarget(event, "[data-field]");
+  if (!input || input.tagName !== "INPUT" || input.type !== "text") {
     return;
   }
 
@@ -817,6 +1018,10 @@ function handleViewportResize() {
   if (nextMode !== viewportLayoutMode) {
     viewportLayoutMode = nextMode;
     render();
+  }
+
+  if (typeof window.Coloris === "function") {
+    window.Coloris.updatePosition();
   }
 }
 
@@ -863,6 +1068,8 @@ function downloadBlob(blob, filename) {
 function handleFieldChange(event) {
   const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
+  const deferPreview = event.deferPreview === true;
+  const fieldConfig = fieldConfigByKey.get(field);
   if (!field || !input) {
     return;
   }
@@ -874,6 +1081,17 @@ function handleFieldChange(event) {
     state.keycapParams[field] = input.checked;
   } else if (input.tagName === "SELECT") {
     state.keycapParams[field] = input.value;
+  } else if (fieldConfig?.type === "color") {
+    const normalizedColor = normalizeHexColor(input.value);
+    if (!normalizedColor) {
+      setColorInputValidity(input, false);
+      return;
+    }
+
+    state.keycapParams[field] = normalizedColor;
+    input.value = normalizedColor;
+    setColorInputValidity(input, true);
+    syncColorChip(field, normalizedColor);
   } else if (input.type === "text") {
     state.keycapParams[field] = input.value;
   } else {
@@ -896,7 +1114,30 @@ function handleFieldChange(event) {
     render({ animateInspector: true });
   }
 
-  schedulePreviewRefresh();
+  if (!deferPreview) {
+    schedulePreviewRefresh();
+  }
+}
+
+async function openColorPicker(fieldKey) {
+  const input = app.querySelector(`[data-field="${fieldKey}"]`);
+  if (!(input instanceof HTMLInputElement)) {
+    return;
+  }
+
+  const normalizedColor = normalizeHexColor(input.value) ?? getColorFieldValue(fieldKey);
+  input.value = normalizedColor;
+  setColorInputValidity(input, true);
+  syncColorChip(fieldKey, normalizedColor);
+
+  try {
+    await ensureColorisLoaded();
+  } catch (error) {
+    console.warn(error);
+  }
+
+  input.focus();
+  input.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
 }
 
 function syncLinkedShapeInputs(changedField) {
@@ -948,23 +1189,43 @@ async function renderPreviewViewer() {
   disposePreviewScene = mountPreviewScene(container, state.previewLayers);
 }
 
+function createColorLayerJob({ name, exportTarget, outputPath, colorFieldKey }) {
+  return {
+    name,
+    exportTarget,
+    outputPath,
+    colorHex: getColorFieldValue(colorFieldKey),
+    color: getColorFieldNumber(colorFieldKey),
+  };
+}
+
 function createKeycapOffJobs(purpose) {
   if (purpose === "preview" || purpose === "3mf") {
     return [
-      {
+      createColorLayerJob({
         name: "body",
-        exportTarget: "body",
+        exportTarget: "body_core",
         outputPath: keycapBodyPreviewPath,
-        color: previewLayerPalette.body,
-      },
+        colorFieldKey: "bodyColor",
+      }),
+      ...(state.keycapParams.homingBarEnabled
+        ? [
+            createColorLayerJob({
+              name: "homing",
+              exportTarget: "homing",
+              outputPath: keycapHomingPreviewPath,
+              colorFieldKey: "homingBarColor",
+            }),
+          ]
+        : []),
       ...(isLegendRenderable()
         ? [
-            {
+            createColorLayerJob({
               name: "legend",
               exportTarget: "legend",
               outputPath: keycapLegendPreviewPath,
-              color: previewLayerPalette.legend,
-            },
+              colorFieldKey: "legendColor",
+            }),
           ]
         : []),
     ];
@@ -1037,6 +1298,7 @@ async function executeRuntimePoc() {
 
 async function executeKeycapPreview(options = {}) {
   const { silent = false } = options;
+  const requestId = ++latestPreviewRequestId;
 
   state.editorStatus = "running";
   state.editorSummary = "見た目を更新しています";
@@ -1044,27 +1306,35 @@ async function executeKeycapPreview(options = {}) {
     state.editorLogs = [];
     state.editorError = "";
   }
-  render();
 
   try {
     const previewResults = await runKeycapOffJobs(createKeycapOffJobs("preview"));
+    if (requestId !== latestPreviewRequestId) {
+      return;
+    }
+
     const totalElapsedMs = previewResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0);
     const totalVertices = previewResults.reduce((sum, entry) => sum + entry.mesh.vertices.length, 0);
     const totalFaces = previewResults.reduce((sum, entry) => sum + entry.mesh.faces.length, 0);
+    const visiblePartLabels = describePartLabels(previewResults.map((entry) => entry.name));
     state.editorStatus = "success";
     state.editorSummary = `${Math.round(totalElapsedMs)} ms / ${previewResults.length} objects / ${totalVertices} vertices / ${totalFaces} triangles`;
     state.editorLogs = previewResults.flatMap((entry) =>
       entry.result.logs.map((log) => `[${entry.name}/${log.stream}] ${log.text}`),
     );
-    state.editorError = isLegendRenderable()
-      ? "見た目の更新が完了しました。キーキャップ本体と印字を分けて表示しています。"
-      : "見た目の更新が完了しました。印字は入っていないため、本体だけを表示しています。";
+    state.editorError = previewResults.length > 1
+      ? `見た目の更新が完了しました。${visiblePartLabels}を色ごとに分けて表示しています。`
+      : `見た目の更新が完了しました。${visiblePartLabels}を表示しています。`;
     state.previewLayers = previewResults.map((entry) => ({
       name: entry.name,
       color: entry.color,
       mesh: entry.mesh,
     }));
   } catch (error) {
+    if (requestId !== latestPreviewRequestId) {
+      return;
+    }
+
     state.editorStatus = "error";
     state.editorSummary = "見た目の更新に失敗しました";
     state.editorLogs = [];
@@ -1072,7 +1342,6 @@ async function executeKeycapPreview(options = {}) {
     state.previewLayers = [];
   }
 
-  render();
   renderPreviewViewer();
 }
 
@@ -1139,9 +1408,11 @@ async function executeExport(format) {
       });
     } else if (format === "3mf") {
       const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf"));
+      const savedPartLabels = describePartLabels(offResults.map((entry) => entry.name));
       const blob = create3mfBlob(
         offResults.map((entry) => ({
           name: `keycap-${entry.name}`,
+          colorHex: entry.colorHex,
           ...entry.mesh,
         })),
       );
@@ -1154,7 +1425,7 @@ async function executeExport(format) {
         label: "まとめて保存",
         elapsedMs: Math.round(offResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0)),
         byteLength: blob.size,
-        notes: "本体と印字を 3MF 形式でまとめて保存",
+        notes: `${savedPartLabels}を 3MF 形式でまとめて保存`,
       });
     } else {
       throw new Error(`未対応の export 形式です: ${format}`);
@@ -1184,3 +1455,7 @@ if (params.get("autorun") === "1") {
 }
 
 executeKeycapPreview({ silent: true });
+
+ensureColorisLoaded().catch((error) => {
+  console.warn(error);
+});

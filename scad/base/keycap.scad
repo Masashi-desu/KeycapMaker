@@ -116,7 +116,7 @@ legend_projection_base_z = legend_base_z - legend_projection_margin;
 legend_projection_height = legend_total_height + legend_projection_margin * 2;
 homing_bar_base_z = keycap_center_surface_z(body_height, dish_depth) - homing_bar_base_thickness;
 
-module keycap_body(quality = "export") {
+module keycap_body_core(quality = "export") {
     union() {
         keycap_shell(
             width = key_width,
@@ -150,18 +150,27 @@ module keycap_body(quality = "export") {
                 quality = quality
             );
         }
+    }
+}
 
-        if (homing_bar_enabled) {
-            homing_bar_blank(
-                length = homing_bar_length,
-                width = homing_bar_width,
-                height = homing_bar_height,
-                base_thickness = homing_bar_base_thickness,
-                offset_y = homing_bar_offset_y,
-                base_z = homing_bar_base_z,
-                quality = quality
-            );
-        }
+module keycap_homing_bar(quality = "export") {
+    if (homing_bar_enabled) {
+        homing_bar_blank(
+            length = homing_bar_length,
+            width = homing_bar_width,
+            height = homing_bar_height,
+            base_thickness = homing_bar_base_thickness,
+            offset_y = homing_bar_offset_y,
+            base_z = homing_bar_base_z,
+            quality = quality
+        );
+    }
+}
+
+module keycap_body(quality = "export") {
+    union() {
+        keycap_body_core(quality);
+        keycap_homing_bar(quality);
     }
 }
 
@@ -200,6 +209,14 @@ module export_body() {
     keycap_body("export");
 }
 
+module export_body_core() {
+    keycap_body_core("export");
+}
+
+module export_homing() {
+    keycap_homing_bar("export");
+}
+
 module export_legend() {
     keycap_legend("export");
 }
@@ -213,6 +230,10 @@ module preview_model() {
 
 if (resolved_export_target == "body") {
     export_body();
+} else if (resolved_export_target == "body_core") {
+    export_body_core();
+} else if (resolved_export_target == "homing") {
+    export_homing();
 } else if (resolved_export_target == "legend") {
     export_legend();
 } else {

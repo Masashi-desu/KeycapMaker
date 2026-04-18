@@ -11,13 +11,14 @@
 
 ## 現在の主要ファイル
 
-- `base/keycap.scad`: `export_target` で `preview / body / legend` を切り替える基礎エントリ
+- `base/keycap.scad`: `export_target` で `preview / body / body_core / homing / legend` を切り替える基礎エントリ
 - `modules/keycap_shell.scad`: 添付最終モデル由来の外形シェル、dish、内側 hollow
 - `modules/stem_choc_v2.scad`: Choc v2 対応 stem ボディ
 - `modules/homing_bar.scad`: body 側に追加するオプションの homing bar 形状
 - `modules/legend_block.scad`: フォント非依存の legend ボリューム
 - `presets/standard-1u.scad`: 1u キー向け既定値
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
+- `samples/keycap-homing-bar.scad`: homing bar 単体出力の確認用サンプル
 
 ## 運用方針
 

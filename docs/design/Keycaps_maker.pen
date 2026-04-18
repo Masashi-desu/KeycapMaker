@@ -764,6 +764,127 @@
                               ]
                             }
                           ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "3jR6m",
+                          "name": "bodyColorRow",
+                          "width": "fill_container",
+                          "fill": "#F7F0E6",
+                          "cornerRadius": 16,
+                          "gap": 12,
+                          "padding": [
+                            12,
+                            14
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "ISjLY",
+                              "name": "shapeColorTextA",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "blX8Y",
+                                  "name": "shapeColorLabelA",
+                                  "fill": "#2D241C",
+                                  "content": "本体の色",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 14,
+                                  "fontWeight": "Bold"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "l6PBP",
+                                  "name": "shapeColorHintA",
+                                  "fill": "#7C6A58",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "カラーコードを直接入力するか、カラーピッカーで選べます",
+                                  "lineHeight": 1.45,
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "KycGN",
+                              "name": "shapeColorControlsA",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "rrBFn",
+                                  "name": "shapeColorInputA",
+                                  "width": 128,
+                                  "fill": "#FFFFFFB8",
+                                  "cornerRadius": 12,
+                                  "gap": 10,
+                                  "padding": [
+                                    8,
+                                    12
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "ellipse",
+                                      "id": "89J7C",
+                                      "name": "shapeColorSwatchA",
+                                      "fill": "#F8F9FA",
+                                      "width": 20,
+                                      "height": 20,
+                                      "stroke": {
+                                        "align": "inside",
+                                        "thickness": 1,
+                                        "fill": "#CBBDA8"
+                                      }
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "GzE2m",
+                                      "name": "shapeColorValueA",
+                                      "fill": "#2D241C",
+                                      "content": "#f8f9fa",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "Bold"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "pIO0V",
+                                  "name": "shapeColorButtonA",
+                                  "fill": "#FFFFFFB8",
+                                  "cornerRadius": 12,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "SCvhn",
+                                      "name": "shapeColorButtonTextA",
+                                      "fill": "#2D241C",
+                                      "content": "選ぶ",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "Bold"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     }
@@ -1542,6 +1663,127 @@
                         },
                         {
                           "type": "frame",
+                          "id": "kGWpX",
+                          "name": "legendColorRow",
+                          "width": "fill_container",
+                          "fill": "#F7F0E6",
+                          "cornerRadius": 16,
+                          "gap": 12,
+                          "padding": [
+                            12,
+                            14
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "AJkTJ",
+                              "name": "legendColorTextA",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "14odT",
+                                  "name": "legendColorLabelA",
+                                  "fill": "#2D241C",
+                                  "content": "印字の色",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 14,
+                                  "fontWeight": "Bold"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "pP0XD",
+                                  "name": "legendColorHintA",
+                                  "fill": "#7C6A58",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "カラーコードを直接入力するか、カラーピッカーで選べます",
+                                  "lineHeight": 1.45,
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "6uqXi",
+                              "name": "legendColorControlsA",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "5GYuZ",
+                                  "name": "legendColorInputA",
+                                  "width": 128,
+                                  "fill": "#FFFFFFB8",
+                                  "cornerRadius": 12,
+                                  "gap": 10,
+                                  "padding": [
+                                    8,
+                                    12
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "ellipse",
+                                      "id": "mstZL",
+                                      "name": "legendColorSwatchA",
+                                      "fill": "#212529",
+                                      "width": 20,
+                                      "height": 20,
+                                      "stroke": {
+                                        "align": "inside",
+                                        "thickness": 1,
+                                        "fill": "#CBBDA8"
+                                      }
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "t72of",
+                                      "name": "legendColorValueA",
+                                      "fill": "#2D241C",
+                                      "content": "#212529",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "Bold"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "RoRbd",
+                                  "name": "legendColorButtonA",
+                                  "fill": "#FFFFFFB8",
+                                  "cornerRadius": 12,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "dUN27",
+                                      "name": "legendColorButtonTextA",
+                                      "fill": "#2D241C",
+                                      "content": "選ぶ",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "Bold"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
                           "id": "wNUjp",
                           "width": "fill_container",
                           "fill": "#F7F0E6",
@@ -2243,6 +2485,127 @@
                               ]
                             }
                           ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "QngL2",
+                          "name": "homingColorRow",
+                          "width": "fill_container",
+                          "fill": "#F7F0E6",
+                          "cornerRadius": 16,
+                          "gap": 12,
+                          "padding": [
+                            12,
+                            14
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "o1wM2",
+                              "name": "homingColorTextB",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "OrmDh",
+                                  "name": "homingColorLabelB",
+                                  "fill": "#2D241C",
+                                  "content": "目印の色",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 14,
+                                  "fontWeight": "Bold"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "XHs4q",
+                                  "name": "homingColorHintB",
+                                  "fill": "#7C6A58",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "カラーコードを直接入力するか、カラーピッカーで選べます",
+                                  "lineHeight": 1.45,
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "pFVok",
+                              "name": "homingColorControlsB",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "cnB92",
+                                  "name": "homingColorInputB",
+                                  "width": 128,
+                                  "fill": "#FFFFFFB8",
+                                  "cornerRadius": 12,
+                                  "gap": 10,
+                                  "padding": [
+                                    8,
+                                    12
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "ellipse",
+                                      "id": "6L0LK",
+                                      "name": "homingColorSwatchB",
+                                      "fill": "#FF7F00",
+                                      "width": 20,
+                                      "height": 20,
+                                      "stroke": {
+                                        "align": "inside",
+                                        "thickness": 1,
+                                        "fill": "#CBBDA8"
+                                      }
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "6OX7k",
+                                      "name": "homingColorValueB",
+                                      "fill": "#2D241C",
+                                      "content": "#ff7f00",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "Bold"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "jvd3p",
+                                  "name": "homingColorButtonB",
+                                  "fill": "#FFFFFFB8",
+                                  "cornerRadius": 12,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "ewAEY",
+                                      "name": "homingColorButtonTextB",
+                                      "fill": "#2D241C",
+                                      "content": "選ぶ",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 14,
+                                      "fontWeight": "Bold"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     }
@@ -2736,7 +3099,7 @@
                           "fill": {
                             "type": "image",
                             "enabled": true,
-                            "url": "keycap-preview.png",
+                            "url": "assets/keycap-render.png",
                             "mode": "fill"
                           },
                           "width": 724,

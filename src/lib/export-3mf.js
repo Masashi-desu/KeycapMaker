@@ -1,6 +1,15 @@
 import { strToU8, zipSync } from "fflate";
+import { format3mfColor } from "./color-utils.js";
+
+const MATERIALS_NAMESPACE = "http://schemas.microsoft.com/3dmanufacturing/material/2015/02";
+const COLOR_GROUP_RESOURCE_ID = 1000;
 
 function createModelXml(meshes) {
+  const colorResources = meshes
+    .map((mesh) => format3mfColor(mesh.colorHex))
+    .map((colorHex) => `<m:color color="${colorHex}" />`)
+    .join("");
+
   const resources = meshes
     .map((mesh, index) => {
       const objectId = index + 1;
@@ -15,7 +24,7 @@ function createModelXml(meshes) {
         .join("");
 
       return [
-        `<object id="${objectId}" name="${mesh.name}" type="model">`,
+        `<object id="${objectId}" name="${mesh.name}" type="model" pid="${COLOR_GROUP_RESOURCE_ID}" pindex="${index}">`,
         "<mesh>",
         `<vertices>${vertices}</vertices>`,
         `<triangles>${triangles}</triangles>`,
@@ -31,8 +40,8 @@ function createModelXml(meshes) {
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<model unit="millimeter" xml:lang="ja-JP" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">',
-    `<resources>${resources}</resources>`,
+    `<model unit="millimeter" xml:lang="ja-JP" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:m="${MATERIALS_NAMESPACE}">`,
+    `<resources><m:colorgroup id="${COLOR_GROUP_RESOURCE_ID}">${colorResources}</m:colorgroup>${resources}</resources>`,
     `<build>${buildItems}</build>`,
     "</model>",
   ].join("");

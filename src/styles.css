@@ -88,6 +88,7 @@ pre {
   gap: 14px;
   padding: 22px;
   border-radius: 28px;
+  position: relative;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 24%), var(--glass-panel);
   border: 1px solid color-mix(in srgb, var(--border) 58%, white 42%);
   box-shadow:
@@ -307,6 +308,10 @@ pre {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.field--color {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .field--linked-size {
   align-items: start;
 }
@@ -338,6 +343,11 @@ pre {
   gap: 8px;
 }
 
+.field-control-cluster--color {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
 .field-mini-control {
   display: grid;
   gap: 6px;
@@ -365,6 +375,43 @@ pre {
   outline: none;
   background: transparent;
   color: var(--text);
+}
+
+.field-control--color {
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.field-control--color input[type="text"] {
+  width: 96px;
+  font-weight: 700;
+}
+
+.field-control.is-invalid {
+  box-shadow: inset 0 0 0 1px #b9655e;
+}
+
+.field-color-chip {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(45, 36, 28, 0.12);
+  background: var(--field-color, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    0 1px 4px rgba(45, 36, 28, 0.12);
+}
+
+.field-color-button {
+  border: 0;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .field input[type="text"]::placeholder {
@@ -703,6 +750,15 @@ pre {
   }
 
   .field input[type="number"] {
+    width: 100%;
+  }
+
+  .field-control-cluster--color {
+    grid-template-columns: 1fr;
+  }
+
+  .field-control--color input[type="text"],
+  .field-color-button {
     width: 100%;
   }
 
