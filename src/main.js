@@ -499,6 +499,7 @@ function configureColoris() {
     format: "hex",
     theme: "pill",
     themeMode: "light",
+    wrap: false,
     margin: 8,
     closeButton: true,
     closeLabel: "閉じる",
