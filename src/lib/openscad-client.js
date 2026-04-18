@@ -1,4 +1,4 @@
-const workerUrl = new URL("./openscad-worker.js", import.meta.url);
+import workerUrl from "./openscad-worker.js?worker&url";
 
 function resolveRuntimeUrl() {
   const baseUrl = new URL(import.meta.env.BASE_URL, window.location.origin);

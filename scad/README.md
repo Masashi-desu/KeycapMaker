@@ -12,8 +12,9 @@
 ## 現在の主要ファイル
 
 - `base/keycap.scad`: `export_target` で `preview / body / legend` を切り替える基礎エントリ
-- `modules/keycap_shell.scad`: 外形シェル
-- `modules/stem_socket.scad`: 簡易 stem cavity
+- `modules/keycap_shell.scad`: 添付最終モデル由来の外形シェル、dish、内側 hollow
+- `modules/stem_choc_v2.scad`: Choc v2 対応 stem ボディ
+- `modules/homing_bar.scad`: body 側に追加するオプションの homing bar 形状
 - `modules/legend_block.scad`: フォント非依存の legend ボリューム
 - `presets/standard-1u.scad`: 1u キー向け既定値
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
@@ -22,4 +23,6 @@
 
 - preview 用と export 用で重さや精度を分けてよい
 - 色指定だけに依存せず、body と legend の分離可能性を維持する
+- homing bar は body 側の触覚マーカーとして扱い、legend とは別責務にする
+- ブラウザ内 OpenSCAD runtime へ UI パラメータを渡すときは、必要に応じて wrapper SCAD を生成して `user_*` を注入する
 - `text()` を使う場合はフォント依存を明示し、アセット配置とライセンスを確認する

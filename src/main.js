@@ -39,7 +39,7 @@ const workspaceSections = [
 ];
 
 const workspaceDraft = {
-  profileName: "KAT",
+  profileName: "Custom 1u",
   legendExample: "ESC",
   materialLabel: "Resin test mock",
 };
@@ -51,14 +51,14 @@ const fieldGroups = [
     fields: [
       { key: "keyWidth", label: "幅", hint: "ベース外形", unit: "mm", step: 0.1, min: 10 },
       { key: "keyDepth", label: "奥行き", hint: "前後方向", unit: "mm", step: 0.1, min: 10 },
-      { key: "bodyHeight", label: "高さ", hint: "フロント高さの仮値", unit: "mm", step: 0.1, min: 1 },
+      { key: "bodyHeight", label: "高さ", hint: "天面までの基準高さ", unit: "mm", step: 0.1, min: 1 },
       { key: "wallThickness", label: "肉厚", hint: "シェル厚み", unit: "mm", step: 0.05, min: 0.4 },
-      { key: "topScale", label: "上面スケール", hint: "テーパー比", unit: "ratio", step: 0.01, min: 0.5, max: 1 },
+      { key: "topScale", label: "上面スケール", hint: "上面比率に応じてテーパーを補正", unit: "ratio", step: 0.01, min: 0.5, max: 1 },
     ],
   },
   {
     title: "印字",
-    description: "legend body の占有範囲と高さ。文字編集 UI を載せる前段のボリューム定義です。",
+    description: "印字用 legend body の占有範囲と高さです。ホーミングバーとは別オプションで扱います。",
     fields: [
       { key: "legendEnabled", label: "印字を有効化", hint: "body と legend を別 volume で扱う", type: "checkbox" },
       { key: "legendWidth", label: "印字幅", hint: "文字面の横幅", unit: "mm", step: 0.1, min: 0.5 },
@@ -69,14 +69,26 @@ const fieldGroups = [
     ],
   },
   {
-    title: "Stem",
-    description: "stem cavity の PoC パラメータ。将来 profile / switch 系統の差分をここへ吸収します。",
+    title: "ホーミング",
+    description: "元モデルのキートップ凸をホーミングバーとして扱います。印字とは独立した body 側オプションです。",
     fields: [
-      { key: "stemEnabled", label: "Stem cavity を有効化", hint: "switch mount 用の空間を生成", type: "checkbox" },
-      { key: "stemWidth", label: "Stem 幅", hint: "横方向寸法", unit: "mm", step: 0.1, min: 0.5 },
-      { key: "stemDepth", label: "Stem 奥行き", hint: "縦方向寸法", unit: "mm", step: 0.1, min: 0.5 },
-      { key: "stemHeight", label: "Stem 高さ", hint: "底面からの深さ", unit: "mm", step: 0.1, min: 0.1 },
-      { key: "stemInset", label: "Stem inset", hint: "底面からの逃げ量", unit: "mm", step: 0.1, min: 0.1 },
+      { key: "homingBarEnabled", label: "ホーミングバーを有効化", hint: "触覚マーカーを body に追加", type: "checkbox" },
+      { key: "homingBarLength", label: "バー長さ", hint: "左右方向の長さ", unit: "mm", step: 0.1, min: 0.5 },
+      { key: "homingBarWidth", label: "バー幅", hint: "バーの太さ", unit: "mm", step: 0.05, min: 0.1 },
+      { key: "homingBarHeight", label: "バー高さ", hint: "天面からの突出量", unit: "mm", step: 0.05, min: 0.05 },
+      { key: "homingBarOffsetY", label: "バー Y オフセット", hint: "前後位置", unit: "mm", step: 0.1 },
+      { key: "homingBarBaseThickness", label: "バー接地厚み", hint: "天面との接地厚み", unit: "mm", step: 0.05, min: 0.05 },
+    ],
+  },
+  {
+    title: "Stem",
+    description: "Choc v2 stem の基準パラメータ。方式差分は将来ここへ吸収します。",
+    fields: [
+      { key: "stemEnabled", label: "Choc v2 stem を有効化", hint: "マウント用 stem を追加", type: "checkbox" },
+      { key: "stemWidth", label: "Stem 幅", hint: "外径の基準値", unit: "mm", step: 0.1, min: 0.5 },
+      { key: "stemDepth", label: "Stem 奥行き", hint: "外径の補助値", unit: "mm", step: 0.1, min: 0.5 },
+      { key: "stemHeight", label: "Stem 高さ", hint: "底面からの実高さ", unit: "mm", step: 0.1, min: 0.1 },
+      { key: "stemInset", label: "Stem inset", hint: "底面からの開始位置", unit: "mm", step: 0.1, min: 0.1 },
     ],
   },
 ];
@@ -98,8 +110,8 @@ const state = {
   keycapParams: {
     keyWidth: 18,
     keyDepth: 18,
-    bodyHeight: 7.4,
-    wallThickness: 1.15,
+    bodyHeight: 9.5,
+    wallThickness: 1.2,
     topScale: 0.84,
     legendEnabled: true,
     legendWidth: 7.2,
@@ -107,11 +119,17 @@ const state = {
     legendHeight: 0.8,
     legendOffsetX: 0,
     legendOffsetY: 0,
+    homingBarEnabled: true,
+    homingBarLength: 4.0,
+    homingBarWidth: 1.58,
+    homingBarHeight: 0.6,
+    homingBarOffsetY: -3.5,
+    homingBarBaseThickness: 0.35,
     stemEnabled: true,
-    stemWidth: 6.2,
-    stemDepth: 6.2,
-    stemHeight: 3.4,
-    stemInset: 1.1,
+    stemWidth: 5.5,
+    stemDepth: 5.5,
+    stemHeight: 6.5,
+    stemInset: 0.5,
   },
 };
 
@@ -180,7 +198,7 @@ function createOverviewItems() {
     {
       label: "Profile",
       value: workspaceDraft.profileName,
-      meta: "仮の profile 情報。将来は selector に置換予定",
+      meta: "現在のベース形状。将来は selector に置換予定",
     },
     {
       label: "Unit Size",
@@ -190,7 +208,7 @@ function createOverviewItems() {
     {
       label: "Front Height",
       value: formatMillimeter(state.keycapParams.bodyHeight),
-      meta: "PoC の高さパラメータ",
+      meta: "最終ベースの基準高さ",
     },
     {
       label: "Legend",
@@ -198,6 +216,13 @@ function createOverviewItems() {
       meta: state.keycapParams.legendEnabled
         ? `${formatMillimeter(state.keycapParams.legendWidth)} × ${formatMillimeter(state.keycapParams.legendDepth)}`
         : "body のみで出力",
+    },
+    {
+      label: "Homing",
+      value: state.keycapParams.homingBarEnabled ? "Bar" : "Disabled",
+      meta: state.keycapParams.homingBarEnabled
+        ? `${formatMillimeter(state.keycapParams.homingBarLength)} / Y ${formatMillimeter(state.keycapParams.homingBarOffsetY)}`
+        : "触覚マーカーなし",
     },
   ];
 }
@@ -208,6 +233,13 @@ function createQuickNotes() {
       label: "Legend Build",
       value: state.keycapParams.legendEnabled
         ? `${formatMillimeter(state.keycapParams.legendHeight, 2)} の別ボディ`
+        : "現在は無効化",
+      tone: "neutral",
+    },
+    {
+      label: "Homing Bar",
+      value: state.keycapParams.homingBarEnabled
+        ? `${formatMillimeter(state.keycapParams.homingBarHeight, 2)} の body 側凸`
         : "現在は無効化",
       tone: "neutral",
     },
@@ -603,10 +635,11 @@ async function runKeycapOffJobs(jobs) {
 
   for (const job of jobs) {
     const result = await runOpenScad({
-      files: createKeycapFiles(),
-      args: buildKeycapArgs({
+      files: createKeycapFiles({
         params: state.keycapParams,
         exportTarget: job.exportTarget,
+      }),
+      args: buildKeycapArgs({
         outputPath: job.outputPath,
         outputFormat: "off",
       }),
@@ -680,7 +713,7 @@ async function executeKeycapPreview(options = {}) {
     state.editorLogs = previewResults.flatMap((entry) =>
       entry.result.logs.map((log) => `[${entry.name}/${log.stream}] ${log.text}`),
     );
-    state.editorError = "プレビュー用 OFF の生成に成功しました。body と legend を別メッシュで描画しています。";
+    state.editorError = "プレビュー用 OFF の生成に成功しました。body 側のホーミングバーと、別ボディの legend を分けて描画しています。";
     state.previewLayers = previewResults.map((entry) => ({
       name: entry.name,
       color: entry.color,
@@ -705,10 +738,11 @@ async function executeExport(format) {
   try {
     if (format === "body") {
       const result = await runOpenScad({
-        files: createKeycapFiles(),
-        args: buildKeycapArgs({
+        files: createKeycapFiles({
           params: state.keycapParams,
           exportTarget: "body",
+        }),
+        args: buildKeycapArgs({
           outputPath: keycapBodyPath,
           outputFormat: "stl",
         }),
@@ -727,10 +761,11 @@ async function executeExport(format) {
       });
     } else if (format === "legend") {
       const result = await runOpenScad({
-        files: createKeycapFiles(),
-        args: buildKeycapArgs({
+        files: createKeycapFiles({
           params: state.keycapParams,
           exportTarget: "legend",
+        }),
+        args: buildKeycapArgs({
           outputPath: keycapLegendPath,
           outputFormat: "stl",
         }),

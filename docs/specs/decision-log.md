@@ -67,14 +67,35 @@
 - 対象タスク: Task 07
 - 結論: `scad/base/keycap.scad` を基礎エントリとして、shell / stem socket / legend block / preset を分離した
 - 理由: body / legend 別体積と preview / export の責務分離を、後続 UI から扱いやすい構造にするため
-- 次の対応: Task 08 で UI から `-D` パラメータを渡してこの SCAD ベースを実行する
+- 次の対応: Task 08 で UI から `user_*` パラメータを渡してこの SCAD ベースを実行する
 
 ### 2026-04-16 - Task 08 パラメータ編集 UI
 
 - 対象タスク: Task 08
-- 結論: 本体、legend、stem の主要パラメータを持つ編集 UI を追加し、`-D` 引数で SCAD ベースへ受け渡す構成にした
+- 結論: 本体、legend、stem の主要パラメータを持つ編集 UI を追加し、`user_*` 定義を介して SCAD ベースへ受け渡す構成にした
 - 理由: UI 入力責務と SCAD 幾何責務を分けたまま、後続の preview / export を同じ入力源で扱うため
 - 次の対応: Task 09 で OFF プレビューを Three.js へ接続する
+
+### 2026-04-18 - Task 07 最終ベース形状への更新
+
+- 対象タスク: Task 07
+- 結論: POC の単純シェルを、添付最終モデル由来の profile shell / Choc v2 stem / homing bar を持つ構成へ置き換えた
+- 理由: 最終製品の基礎形状を `scad/modules/` に分離しつつ、body / legend 別体積と preview / export 切替の契約を維持するため
+- 次の対応: UI 側で profile 差分や stem 方式をさらに増やすときも、このモジュール境界を維持して拡張する
+
+### 2026-04-18 - Task 07 homing bar と legend の責務分離
+
+- 対象タスク: Task 07
+- 結論: 元モデルのキートップ凸は homing bar として body 側オプションに残し、印字用 legend は別ボディオプションとして並立させた
+- 理由: 触覚マーカーと印字は製造上も UI 上も別責務であり、同一パラメータとして扱うと拡張不能になるため
+- 次の対応: 将来 `text()` ベースの印字へ進める際も、homing bar を body、legend を別 volume とする構成を維持する
+
+### 2026-04-18 - Task 08 browser runtime パラメータ橋渡し修正
+
+- 対象タスク: Task 08
+- 結論: browser 内 OpenSCAD runtime では `-D` 上書きが安定しなかったため、実行ごとに wrapper SCAD を生成して `user_*` 定義を注入する方式へ切り替えた
+- 理由: UI で編集した数値とチェックボックスを、preview / export の両経路で確実に同じ形状へ反映させるため
+- 次の対応: 追加パラメータを増やす際も、wrapper 生成と `user_*` 定義を同時に更新して回帰確認する
 
 ### 2026-04-16 - Task 09 プレビュー改善
 
