@@ -2649,7 +2649,7 @@
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "スイッチにはめる部分の大きさを調整します。今は Choc v2 に対応しています。",
+                          "content": "Choc v2 の標準寸法を 0 として、材料や印刷条件に合わせたクリアランスを調整します。",
                           "lineHeight": 1.45,
                           "fontFamily": "Inter",
                           "fontSize": 13,
@@ -2767,7 +2767,7 @@
                                   "type": "text",
                                   "id": "bZpIG",
                                   "fill": "#2D241C",
-                                  "content": "取り付け部の幅",
+                                  "content": "円の大きさ補正",
                                   "fontFamily": "Inter",
                                   "fontSize": 14,
                                   "fontWeight": "Bold"
@@ -2778,7 +2778,7 @@
                                   "fill": "#7C6A58",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "左右の広がり寸法です",
+                                  "content": "0 が標準です。プラスで外周円を太く、マイナスで細くします",
                                   "lineHeight": 1.45,
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
@@ -2804,7 +2804,7 @@
                                   "type": "text",
                                   "id": "KGb2d",
                                   "fill": "#2D241C",
-                                  "content": "5.5",
+                                  "content": "0",
                                   "fontFamily": "Inter",
                                   "fontSize": 14,
                                   "fontWeight": "Bold"
@@ -2846,7 +2846,7 @@
                                   "type": "text",
                                   "id": "S72ui",
                                   "fill": "#2D241C",
-                                  "content": "取り付け部の奥行き",
+                                  "content": "十字のマージン",
                                   "fontFamily": "Inter",
                                   "fontSize": 14,
                                   "fontWeight": "Bold"
@@ -2857,7 +2857,7 @@
                                   "fill": "#7C6A58",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "前後の広がり寸法です",
+                                  "content": "0 が標準です。プラスで十字穴を広げ、マイナスで狭めます",
                                   "lineHeight": 1.45,
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
@@ -2883,7 +2883,7 @@
                                   "type": "text",
                                   "id": "rfkVG",
                                   "fill": "#2D241C",
-                                  "content": "5.5",
+                                  "content": "0",
                                   "fontFamily": "Inter",
                                   "fontSize": 14,
                                   "fontWeight": "Bold"
@@ -2891,85 +2891,6 @@
                                 {
                                   "type": "text",
                                   "id": "GVpWk",
-                                  "fill": "#7C6A58",
-                                  "content": "mm",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 12,
-                                  "fontWeight": "Bold"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "BSoYA",
-                          "width": "fill_container",
-                          "fill": "#F7F0E6",
-                          "cornerRadius": 16,
-                          "gap": 12,
-                          "padding": [
-                            12,
-                            14
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "jmqIJ",
-                              "width": "fill_container",
-                              "layout": "vertical",
-                              "gap": 4,
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "Itxfc",
-                                  "fill": "#2D241C",
-                                  "content": "取り付け部の高さ",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 14,
-                                  "fontWeight": "Bold"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "L7RTK",
-                                  "fill": "#7C6A58",
-                                  "textGrowth": "fixed-width",
-                                  "width": "fill_container",
-                                  "content": "どれだけ深く差し込むかです",
-                                  "lineHeight": 1.45,
-                                  "fontFamily": "Inter",
-                                  "fontSize": 13,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "he31V",
-                              "width": 110,
-                              "fill": "#FFFFFFB8",
-                              "cornerRadius": 12,
-                              "gap": 10,
-                              "padding": [
-                                8,
-                                12
-                              ],
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "KwJ28",
-                                  "fill": "#2D241C",
-                                  "content": "6.5",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 14,
-                                  "fontWeight": "Bold"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "b5SgX",
                                   "fill": "#7C6A58",
                                   "content": "mm",
                                   "fontFamily": "Inter",
@@ -3004,7 +2925,7 @@
                                   "type": "text",
                                   "id": "EU9Lg",
                                   "fill": "#2D241C",
-                                  "content": "底面からの開始位置",
+                                  "content": "軸の開始位置補正",
                                   "fontFamily": "Inter",
                                   "fontSize": 14,
                                   "fontWeight": "Bold"
@@ -3015,7 +2936,7 @@
                                   "fill": "#7C6A58",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "取り付け部が始まる位置です",
+                                  "content": "0 が標準です。プラスで底面からの開始位置を上げます",
                                   "lineHeight": 1.45,
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
@@ -3041,7 +2962,7 @@
                                   "type": "text",
                                   "id": "QFxjf",
                                   "fill": "#2D241C",
-                                  "content": "0.5",
+                                  "content": "0",
                                   "fontFamily": "Inter",
                                   "fontSize": 14,
                                   "fontWeight": "Bold"
