@@ -16,9 +16,14 @@ default_dish_radius = 45;
 default_dish_depth = 1.0;
 default_top_tilt = 4;
 
+default_legend_text = "A";
+default_legend_font_name = "M PLUS 1p";
+default_legend_weight = "regular";
+default_legend_slant = "none";
+default_legend_underline_enabled = false;
 default_legend_width = 7.0;
 default_legend_depth = 4.6;
-default_legend_height = 0.7;
+default_legend_height = 0;
 default_legend_offset_x = 0;
 default_legend_offset_y = 0;
 default_legend_embed = 0.15;

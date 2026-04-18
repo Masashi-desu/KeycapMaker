@@ -3,7 +3,12 @@ import minimumPocScad from "../scad/samples/minimum-poc.scad?raw";
 import { runOpenScad } from "./lib/openscad-client.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
 import { parseOff } from "./lib/off-parser.js";
-import { buildKeycapArgs, createKeycapFiles } from "./lib/keycap-scad-bundle.js";
+import {
+  DEFAULT_KEYCAP_LEGEND_FONT_KEY,
+  KEYCAP_LEGEND_FONTS,
+  buildKeycapArgs,
+  createKeycapFiles,
+} from "./lib/keycap-scad-bundle.js";
 
 const app = document.querySelector("#app");
 const samplePath = "/samples/minimum-poc.scad";
@@ -22,11 +27,16 @@ const previewLayerPalette = {
   body: 0x4d8fd8,
   legend: 0xf5b942,
 };
+const KEY_UNIT_MM = 18;
+const SHAPE_PROFILE_OPTIONS = [
+  { value: "standard-1u", label: "標準 1u" },
+];
+const DEFAULT_SHAPE_PROFILE_KEY = SHAPE_PROFILE_OPTIONS[0].value;
 
 const workspaceSections = [
   {
     id: "params",
-    label: "パラメータ",
+    label: "設定",
   },
   {
     id: "guide",
@@ -34,70 +44,209 @@ const workspaceSections = [
   },
   {
     id: "export",
-    label: "エクスポート",
+    label: "書き出し",
   },
 ];
 
-const workspaceDraft = {
-  profileName: "Custom 1u",
-  legendExample: "ESC",
-  materialLabel: "Resin test mock",
-};
-
 const fieldGroups = [
   {
-    title: "本体",
-    description: "キーキャップ外形とテーパー。profile 切替前でも共通で使う基本寸法です。",
+    id: "shape",
+    title: "キーキャップの形",
+    description: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。キーサイズは横幅と連動していて、18 mm を 1u として換算します。",
     fields: [
-      { key: "keyWidth", label: "幅", hint: "ベース外形", unit: "mm", step: 0.1, min: 10 },
-      { key: "keyDepth", label: "奥行き", hint: "前後方向", unit: "mm", step: 0.1, min: 10 },
-      { key: "bodyHeight", label: "高さ", hint: "天面までの基準高さ", unit: "mm", step: 0.1, min: 1 },
-      { key: "wallThickness", label: "肉厚", hint: "シェル厚み", unit: "mm", step: 0.05, min: 0.4 },
-      { key: "topScale", label: "上面スケール", hint: "上面比率に応じてテーパーを補正", unit: "ratio", step: 0.01, min: 0.5, max: 1 },
+      {
+        key: "shapeProfile",
+        label: "形のベース",
+        hint: "使う基本形を選びます。現在は標準 1u のみ選べます",
+        type: "select",
+        options: SHAPE_PROFILE_OPTIONS,
+      },
+      {
+        key: "keyWidth",
+        label: "横幅",
+        hint: "横幅とキーサイズは連動します。18 mm = 1u です",
+        type: "linked-size",
+        unit: "mm",
+        step: 0.1,
+        min: 10,
+        secondaryLabel: "キーサイズ",
+        secondaryField: "keySizeUnits",
+        secondaryUnit: "u",
+        secondaryStep: 0.05,
+        secondaryMin: 0.5,
+      },
+      { key: "keyDepth", label: "奥行き", hint: "キーキャップの前後の大きさです", unit: "mm", step: 0.1, min: 10 },
+      { key: "bodyHeight", label: "全体の高さ", hint: "いちばん高い位置までの高さです", unit: "mm", step: 0.1, min: 1 },
+      { key: "wallThickness", label: "厚み", hint: "キーキャップの丈夫さに関わる厚みです", unit: "mm", step: 0.05, min: 0.4 },
+      { key: "topScale", label: "上面のすぼまり", hint: "数字を小さくすると上面が細く見えます", unit: "", step: 0.01, min: 0.5, max: 1 },
     ],
   },
   {
     title: "印字",
-    description: "印字用 legend body の占有範囲と高さです。ホーミングバーとは別オプションで扱います。",
+    description: "入れる文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
     fields: [
-      { key: "legendEnabled", label: "印字を有効化", hint: "body と legend を別 volume で扱う", type: "checkbox" },
-      { key: "legendWidth", label: "印字幅", hint: "文字面の横幅", unit: "mm", step: 0.1, min: 0.5 },
-      { key: "legendDepth", label: "印字奥行き", hint: "文字面の縦幅", unit: "mm", step: 0.1, min: 0.5 },
-      { key: "legendHeight", label: "印字高さ", hint: "盛り上がりまたは彫り込みの仮量", unit: "mm", step: 0.05, min: 0.1 },
-      { key: "legendOffsetX", label: "印字 X オフセット", hint: "左右位置", unit: "mm", step: 0.1 },
-      { key: "legendOffsetY", label: "印字 Y オフセット", hint: "前後位置", unit: "mm", step: 0.1 },
+      { key: "legendEnabled", label: "印字を入れる", hint: "オフにすると文字を作りません", type: "checkbox" },
+      {
+        key: "legendText",
+        label: "入れる文字",
+        hint: "複数文字をそのまま入力できます",
+        type: "text",
+        maxLength: 24,
+        placeholder: "A / Shift / あ",
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendFontKey",
+        label: "書体",
+        hint: "配信に同梱できるライセンスの書体だけを表示しています",
+        type: "select",
+        options: KEYCAP_LEGEND_FONTS.map((font) => ({ value: font.key, label: font.label })),
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendWeight",
+        label: "文字の太さ",
+        hint: "見えやすくしたいときは太字にできます",
+        type: "select",
+        options: [
+          { value: "regular", label: "標準" },
+          { value: "bold", label: "太字" },
+        ],
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendSlant",
+        label: "文字の傾き",
+        hint: "少し傾けて見た目の印象を変えられます",
+        type: "select",
+        options: [
+          { value: "none", label: "なし" },
+          { value: "italic", label: "イタリック風" },
+          { value: "slanted", label: "ななめ" },
+        ],
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendUnderlineEnabled",
+        label: "下線を付ける",
+        hint: "文字の下に線を追加します",
+        type: "checkbox",
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendWidth",
+        label: "文字の横幅の目安",
+        hint: "文字が左右に広がる範囲です",
+        unit: "mm",
+        step: 0.1,
+        min: 0.5,
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendDepth",
+        label: "文字の縦幅の目安",
+        hint: "文字が前後に広がる範囲です",
+        unit: "mm",
+        step: 0.1,
+        min: 0.5,
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendHeight",
+        label: "文字の高さ",
+        hint: "0 にすると表面と同じ高さに収まり、数字を上げると盛り上がります",
+        unit: "mm",
+        step: 0.05,
+        min: 0,
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendOffsetX",
+        label: "左右の位置",
+        hint: "文字を左右に動かします",
+        unit: "mm",
+        step: 0.1,
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendOffsetY",
+        label: "前後の位置",
+        hint: "文字を前後に動かします",
+        unit: "mm",
+        step: 0.1,
+        visibleWhen: (params) => params.legendEnabled,
+      },
     ],
   },
   {
-    title: "ホーミング",
-    description: "元モデルのキートップ凸をホーミングバーとして扱います。印字とは独立した body 側オプションです。",
+    title: "指の目印",
+    description: "F キーや J キーのように、指で触って分かる出っ張りを調整します。印字とは別に設定できます。",
     fields: [
-      { key: "homingBarEnabled", label: "ホーミングバーを有効化", hint: "触覚マーカーを body に追加", type: "checkbox" },
-      { key: "homingBarLength", label: "バー長さ", hint: "左右方向の長さ", unit: "mm", step: 0.1, min: 0.5 },
-      { key: "homingBarWidth", label: "バー幅", hint: "バーの太さ", unit: "mm", step: 0.05, min: 0.1 },
-      { key: "homingBarHeight", label: "バー高さ", hint: "天面からの突出量", unit: "mm", step: 0.05, min: 0.05 },
-      { key: "homingBarOffsetY", label: "バー Y オフセット", hint: "前後位置", unit: "mm", step: 0.1 },
-      { key: "homingBarBaseThickness", label: "バー接地厚み", hint: "天面との接地厚み", unit: "mm", step: 0.05, min: 0.05 },
+      { key: "homingBarEnabled", label: "目印を付ける", hint: "指で位置を探しやすくします", type: "checkbox" },
+      {
+        key: "homingBarLength",
+        label: "目印の長さ",
+        hint: "左右にどれくらい広げるかです",
+        unit: "mm",
+        step: 0.1,
+        min: 0.5,
+        visibleWhen: (params) => params.homingBarEnabled,
+      },
+      {
+        key: "homingBarWidth",
+        label: "目印の太さ",
+        hint: "目印の見た目の太さです",
+        unit: "mm",
+        step: 0.05,
+        min: 0.1,
+        visibleWhen: (params) => params.homingBarEnabled,
+      },
+      {
+        key: "homingBarHeight",
+        label: "目印の高さ",
+        hint: "表面からどれだけ出すかです",
+        unit: "mm",
+        step: 0.05,
+        min: 0.05,
+        visibleWhen: (params) => params.homingBarEnabled,
+      },
+      {
+        key: "homingBarOffsetY",
+        label: "目印の前後位置",
+        hint: "目印を前後に動かします",
+        unit: "mm",
+        step: 0.1,
+        visibleWhen: (params) => params.homingBarEnabled,
+      },
+      {
+        key: "homingBarBaseThickness",
+        label: "目印の土台の厚み",
+        hint: "目印の根元の厚みです",
+        unit: "mm",
+        step: 0.05,
+        min: 0.05,
+        visibleWhen: (params) => params.homingBarEnabled,
+      },
     ],
   },
   {
-    title: "Stem",
-    description: "Choc v2 stem の基準パラメータ。方式差分は将来ここへ吸収します。",
+    title: "取り付け部分",
+    description: "スイッチにはめる部分の大きさを調整します。今は Choc v2 に対応しています。",
     fields: [
       {
         key: "stemType",
-        label: "Stem 方式",
-        hint: "現在は Choc v2 のみ。将来はここで切り替えます。",
+        label: "取り付け方式",
+        hint: "現在は Choc v2 のみ選べます",
         type: "select",
         options: [
           { value: "none", label: "なし" },
           { value: "choc_v2", label: "Choc v2" },
         ],
       },
-      { key: "stemWidth", label: "Stem 幅", hint: "外径の基準値", unit: "mm", step: 0.1, min: 0.5 },
-      { key: "stemDepth", label: "Stem 奥行き", hint: "外径の補助値", unit: "mm", step: 0.1, min: 0.5 },
-      { key: "stemHeight", label: "Stem 高さ", hint: "底面からの実高さ", unit: "mm", step: 0.1, min: 0.1 },
-      { key: "stemInset", label: "Stem inset", hint: "底面からの開始位置", unit: "mm", step: 0.1, min: 0.1 },
+      { key: "stemWidth", label: "取り付け部の幅", hint: "左右の基準サイズです", unit: "mm", step: 0.1, min: 0.5 },
+      { key: "stemDepth", label: "取り付け部の奥行き", hint: "前後の基準サイズです", unit: "mm", step: 0.1, min: 0.5 },
+      { key: "stemHeight", label: "取り付け部の高さ", hint: "どれだけ深く差し込むかです", unit: "mm", step: 0.1, min: 0.1 },
+      { key: "stemInset", label: "底面からの開始位置", hint: "取り付け部が始まる位置です", unit: "mm", step: 0.1, min: 0.1 },
     ],
   },
 ];
@@ -117,15 +266,21 @@ const state = {
   previewLayers: [],
   sidebarTab: "params",
   keycapParams: {
+    shapeProfile: DEFAULT_SHAPE_PROFILE_KEY,
     keyWidth: 18,
     keyDepth: 18,
     bodyHeight: 9.5,
     wallThickness: 1.2,
     topScale: 0.84,
     legendEnabled: true,
+    legendText: "A",
+    legendFontKey: DEFAULT_KEYCAP_LEGEND_FONT_KEY,
+    legendWeight: "regular",
+    legendSlant: "none",
+    legendUnderlineEnabled: false,
     legendWidth: 7.2,
     legendDepth: 4.0,
-    legendHeight: 0.8,
+    legendHeight: 0,
     legendOffsetX: 0,
     legendOffsetY: 0,
     homingBarEnabled: true,
@@ -201,75 +356,20 @@ function formatMillimeter(value, digits = 1) {
   return `${Number(value).toFixed(digits)} mm`;
 }
 
-function formatUnitSize() {
-  return `${(state.keycapParams.keyWidth / 18).toFixed(2)}u`;
+function formatUnitInputValue(value = state.keycapParams.keyWidth) {
+  return (Number(value) / KEY_UNIT_MM).toFixed(2);
 }
 
 function formatColorHex(color) {
   return `#${color.toString(16).padStart(6, "0")}`;
 }
 
-function createOverviewItems() {
-  return [
-    {
-      label: "Profile",
-      value: workspaceDraft.profileName,
-      meta: "現在のベース形状。将来は selector に置換予定",
-    },
-    {
-      label: "Unit Size",
-      value: formatUnitSize(),
-      meta: `${formatMillimeter(state.keycapParams.keyWidth)} ベースで算出`,
-    },
-    {
-      label: "Front Height",
-      value: formatMillimeter(state.keycapParams.bodyHeight),
-      meta: "最終ベースの基準高さ",
-    },
-    {
-      label: "Legend",
-      value: state.keycapParams.legendEnabled ? workspaceDraft.legendExample : "Disabled",
-      meta: state.keycapParams.legendEnabled
-        ? `${formatMillimeter(state.keycapParams.legendWidth)} × ${formatMillimeter(state.keycapParams.legendDepth)}`
-        : "body のみで出力",
-    },
-    {
-      label: "Homing",
-      value: state.keycapParams.homingBarEnabled ? "Bar" : "Disabled",
-      meta: state.keycapParams.homingBarEnabled
-        ? `${formatMillimeter(state.keycapParams.homingBarLength)} / Y ${formatMillimeter(state.keycapParams.homingBarOffsetY)}`
-        : "触覚マーカーなし",
-    },
-  ];
+function isLegendTextSet(value = state.keycapParams.legendText) {
+  return String(value ?? "").trim().length > 0;
 }
 
-function createQuickNotes() {
-  return [
-    {
-      label: "Legend Build",
-      value: state.keycapParams.legendEnabled
-        ? `${formatMillimeter(state.keycapParams.legendHeight, 2)} の別ボディ`
-        : "現在は無効化",
-      tone: "neutral",
-    },
-    {
-      label: "Homing Bar",
-      value: state.keycapParams.homingBarEnabled
-        ? `${formatMillimeter(state.keycapParams.homingBarHeight, 2)} の body 側凸`
-        : "現在は無効化",
-      tone: "neutral",
-    },
-    {
-      label: "Shell Wall",
-      value: `${formatMillimeter(state.keycapParams.wallThickness, 2)} を維持`,
-      tone: "neutral",
-    },
-    {
-      label: "Body Material",
-      value: workspaceDraft.materialLabel,
-      tone: "neutral",
-    },
-  ];
+function isLegendRenderable() {
+  return state.keycapParams.legendEnabled && isLegendTextSet();
 }
 
 function render() {
@@ -319,7 +419,6 @@ function render() {
     button.addEventListener("click", handleSidebarTabChange);
   });
   app.querySelector("[data-run-poc]")?.addEventListener("click", executeRuntimePoc);
-  app.querySelector("[data-preview-keycap]")?.addEventListener("click", executeKeycapPreview);
   app.querySelectorAll("[data-export]").forEach((button) => {
     button.addEventListener("click", () => executeExport(button.dataset.export));
   });
@@ -345,86 +444,46 @@ function renderInspectorContent() {
 function renderParametersTab() {
   return `
     <div class="panel-intro">
-      <h1 class="panel-title">Parameters</h1>
-      <p class="panel-text">Key geometry and legend settings for the currently selected cap.</p>
+      <h1 class="panel-title">設定</h1>
+      <p class="panel-text">選んだキーキャップの形や印字を、入力に合わせて右側へ自動反映しながら調整できます。</p>
     </div>
-
-    <div class="info-chip-list">
-      ${createOverviewItems()
-        .slice(0, 3)
-        .map(
-          (item) => `
-            <article class="info-chip">
-              <span class="chip-label">${item.label}</span>
-              <strong>${escapeHtml(item.value)}</strong>
-            </article>
-          `,
-        )
-        .join("")}
-    </div>
-
-    <section class="legend-card">
-      <h2 class="subsection-title">Legend</h2>
-      <div class="legend-input">
-        <strong>${state.keycapParams.legendEnabled ? escapeHtml(workspaceDraft.legendExample) : "Disabled"}</strong>
-      </div>
-    </section>
 
     <div class="parameter-group-list">
       ${fieldGroups.map((group) => renderFieldGroup(group)).join("")}
     </div>
-
-    <div class="notes-heading">Quick Notes</div>
-    <div class="note-list">
-      ${createQuickNotes()
-        .map(
-          (note) => `
-            <article class="note-card note-card--${note.tone}">
-              <span class="chip-label">${note.label}</span>
-              <strong>${escapeHtml(note.value)}</strong>
-            </article>
-          `,
-        )
-        .join("")}
-    </div>
-
-    <button class="action-card" type="button" data-preview-keycap ${state.editorStatus === "running" ? "disabled" : ""}>
-      <span class="chip-label">Next</span>
-      <strong>${state.editorStatus === "running" ? "プレビュー更新中..." : "Preview mesh / legend bodies"}</strong>
-    </button>
   `;
 }
 
 function renderGuideTab() {
   return `
     <div class="panel-intro">
-      <h1 class="panel-title">Guide</h1>
-      <p class="panel-text">PoC の確認手順と OpenSCAD runtime の状態をまとめています。</p>
+      <h1 class="panel-title">使い方</h1>
+      <p class="panel-text">設定を変えたあと、右側の見た目を見ながら仕上がりを確認できます。</p>
     </div>
 
     <ol class="guide-list">
       <li class="guide-step">
-        <strong>1. 左カラムで寸法を編集</strong>
-        <span>key width / legend / stem を変更するとプレビューが自動更新されます。</span>
+        <strong>1. 左側で形や印字を決める</strong>
+        <span>大きさ、文字、取り付け部分などを変えると、見た目が自動で更新されます。</span>
       </li>
       <li class="guide-step">
-        <strong>2. 右側で mesh を確認</strong>
-        <span>body と legend を別レイヤーで描画し、オブジェクト上にカーソルがあるときだけ回転・ズームできます。</span>
+        <strong>2. 右側で仕上がりを見る</strong>
+        <span>本体と印字を分けて表示し、カーソルを乗せたときだけ回転や拡大ができます。</span>
       </li>
       <li class="guide-step">
-        <strong>3. runtime を検証</strong>
-        <span>最小 SCAD を実行してブラウザ内 OpenSCAD 基盤が動作するかを確認します。</span>
+        <strong>3. 動作チェックをする</strong>
+        <span>簡易チェックを実行すると、ブラウザ内の生成機能が動いているかを確認できます。</span>
       </li>
     </ol>
 
-    ${renderStatusCard("Runtime", state.runtimeStatus, state.runtimeSummary)}
+    ${renderStatusCard("動作チェック", state.runtimeStatus, state.runtimeSummary)}
 
     <button class="secondary-card-button" type="button" data-run-poc ${state.runtimeStatus === "running" ? "disabled" : ""}>
-      ${state.runtimeStatus === "running" ? "実行中..." : "最小 SCAD を実行"}
+      ${state.runtimeStatus === "running" ? "確認中..." : "簡易チェックを実行する"}
     </button>
 
     <div class="mini-code-block">
-      <div class="mini-code-block__title">Runtime Logs</div>
+      <div class="mini-code-block__title">処理ログ</div>
       <pre>${state.logs.length > 0 ? escapeHtml(state.logs.join("\n")) : "ログはまだありません。"}</pre>
     </div>
 
@@ -435,26 +494,26 @@ function renderGuideTab() {
 function renderExportTab() {
   return `
     <div class="panel-intro">
-      <h1 class="panel-title">Export</h1>
-      <p class="panel-text">body / legend を独立ボディとして 유지しながら STL / 3MF を出力します。</p>
+      <h1 class="panel-title">書き出し</h1>
+      <p class="panel-text">印刷用のデータを保存します。印字がある場合は、本体と印字を分けたまま書き出せます。</p>
     </div>
 
-    ${renderStatusCard("Export", state.exportsStatus, state.exportsSummary)}
+    ${renderStatusCard("保存状況", state.exportsStatus, state.exportsSummary)}
 
     <div class="export-button-list">
       <button class="secondary-card-button" type="button" data-export="body" ${state.exportsStatus === "running" ? "disabled" : ""}>
-        本体 STL
+        本体を保存する
       </button>
-      <button class="secondary-card-button" type="button" data-export="legend" ${state.exportsStatus === "running" ? "disabled" : ""}>
-        印字 STL
+      <button class="secondary-card-button" type="button" data-export="legend" ${state.exportsStatus === "running" || !isLegendRenderable() ? "disabled" : ""}>
+        印字を保存する
       </button>
       <button class="secondary-card-button" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
-        3MF PoC
+        まとめて保存する
       </button>
     </div>
 
     <div class="mini-code-block">
-      <div class="mini-code-block__title">History</div>
+      <div class="mini-code-block__title">保存履歴</div>
       <pre>${escapeHtml(renderHistory())}</pre>
     </div>
   `;
@@ -474,6 +533,8 @@ function renderStatusCard(label, status, summary) {
 }
 
 function renderFieldGroup(group) {
+  const visibleFields = group.fields.filter((field) => isFieldVisible(field));
+
   return `
     <section class="field-group-card">
       <div class="field-group-header">
@@ -481,10 +542,18 @@ function renderFieldGroup(group) {
         <p>${group.description}</p>
       </div>
       <div class="field-grid">
-        ${group.fields.map((field) => renderField(field)).join("")}
+        ${visibleFields.map((field) => renderField(field)).join("")}
       </div>
     </section>
   `;
+}
+
+function isFieldVisible(field) {
+  if (typeof field.visibleWhen !== "function") {
+    return true;
+  }
+
+  return field.visibleWhen(state.keycapParams);
 }
 
 function renderField(field) {
@@ -499,7 +568,7 @@ function renderField(field) {
         </span>
         <span class="checkbox-pill">
           <input type="checkbox" data-field="${field.key}" ${value ? "checked" : ""} />
-          <span>${value ? "ON" : "OFF"}</span>
+          <span>${value ? "オン" : "オフ"}</span>
         </span>
       </label>
     `;
@@ -527,6 +596,66 @@ function renderField(field) {
     `;
   }
 
+  if (field.type === "text") {
+    return `
+      <label class="field">
+        <span class="field-copy">
+          <span class="field-label">${field.label}</span>
+          <span class="field-hint">${field.hint ?? ""}</span>
+        </span>
+        <span class="field-control">
+          <input
+            type="text"
+            data-field="${field.key}"
+            value="${escapeHtml(value)}"
+            ${field.maxLength != null ? `maxlength="${field.maxLength}"` : ""}
+            ${field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : ""}
+          />
+        </span>
+      </label>
+    `;
+  }
+
+  if (field.type === "linked-size") {
+    return `
+      <label class="field field--linked-size">
+        <span class="field-copy">
+          <span class="field-label">${field.label}</span>
+          <span class="field-hint">${field.hint ?? ""}</span>
+        </span>
+        <span class="field-control-cluster">
+          <span class="field-mini-control">
+            <span class="field-mini-control__label">横幅</span>
+            <span class="field-control">
+              <input
+                type="number"
+                data-field="${field.key}"
+                value="${value}"
+                ${field.min != null ? `min="${field.min}"` : ""}
+                ${field.max != null ? `max="${field.max}"` : ""}
+                ${field.step != null ? `step="${field.step}"` : ""}
+              />
+              ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
+            </span>
+          </span>
+          <span class="field-mini-control">
+            <span class="field-mini-control__label">${field.secondaryLabel}</span>
+            <span class="field-control">
+              <input
+                type="number"
+                data-field="${field.secondaryField}"
+                value="${formatUnitInputValue(value)}"
+                ${field.secondaryMin != null ? `min="${field.secondaryMin}"` : ""}
+                ${field.secondaryStep != null ? `step="${field.secondaryStep}"` : ""}
+              />
+              ${field.secondaryUnit ? `<span class="field-unit">${field.secondaryUnit}</span>` : ""}
+            </span>
+          </span>
+        </span>
+      </label>
+    `;
+  }
+
   return `
     <label class="field">
       <span class="field-copy">
@@ -542,7 +671,7 @@ function renderField(field) {
           ${field.max != null ? `max="${field.max}"` : ""}
           ${field.step != null ? `step="${field.step}"` : ""}
         />
-        <span class="field-unit">${field.unit ?? ""}</span>
+        ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
       </span>
     </label>
   `;
@@ -565,7 +694,9 @@ function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function renderHistory() {
@@ -576,7 +707,7 @@ function renderHistory() {
   return state.exportHistory
     .map(
       (entry) =>
-        `${entry.format.toUpperCase()} | ${entry.elapsedMs} ms | ${entry.byteLength} bytes | ${entry.notes}`,
+        `${entry.label} | ${entry.elapsedMs} ms | ${entry.byteLength} bytes | ${entry.notes}`,
     )
     .join("\n");
 }
@@ -603,19 +734,40 @@ function handleFieldChange(event) {
   const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
 
-  if (input.type === "checkbox") {
+  if (field === "keySizeUnits") {
+    state.keycapParams.keyWidth = Number(input.value) * KEY_UNIT_MM;
+    syncLinkedShapeInputs("keySizeUnits");
+  } else if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
   } else if (input.tagName === "SELECT") {
     state.keycapParams[field] = input.value;
+  } else if (input.type === "text") {
+    state.keycapParams[field] = input.value;
   } else {
     state.keycapParams[field] = Number(input.value);
+    if (field === "keyWidth") {
+      syncLinkedShapeInputs("keyWidth");
+    }
   }
 
   syncDerivedKeycapParams();
 
   state.editorStatus = "dirty";
-  state.editorSummary = "入力変更待ち";
+  state.editorSummary = "入力内容を反映待ち";
   schedulePreviewRefresh();
+}
+
+function syncLinkedShapeInputs(changedField) {
+  const widthInput = app.querySelector('[data-field="keyWidth"]');
+  const sizeInput = app.querySelector('[data-field="keySizeUnits"]');
+
+  if (changedField === "keySizeUnits" && widthInput) {
+    widthInput.value = `${state.keycapParams.keyWidth}`;
+  }
+
+  if (changedField === "keyWidth" && sizeInput) {
+    sizeInput.value = formatUnitInputValue(state.keycapParams.keyWidth);
+  }
 }
 
 function schedulePreviewRefresh() {
@@ -634,7 +786,7 @@ async function renderPreviewViewer() {
   if (state.previewLayers.length === 0) {
     container.innerHTML = `
       <div class="preview-placeholder">
-        まだ preview mesh がありません。パラメータを調整すると自動で OFF プレビューを更新します。
+        まだ見た目を表示していません。設定を変えると自動で最新の形に更新されます。
       </div>
     `;
     return;
@@ -658,7 +810,7 @@ function createKeycapOffJobs(purpose) {
         outputPath: keycapBodyPreviewPath,
         color: previewLayerPalette.body,
       },
-      ...(state.keycapParams.legendEnabled
+      ...(isLegendRenderable()
         ? [
             {
               name: "legend",
@@ -679,7 +831,7 @@ async function runKeycapOffJobs(jobs) {
 
   for (const job of jobs) {
     const result = await runOpenScad({
-      files: createKeycapFiles({
+      files: await createKeycapFiles({
         params: state.keycapParams,
         exportTarget: job.exportTarget,
       }),
@@ -703,7 +855,7 @@ async function runKeycapOffJobs(jobs) {
 
 async function executeRuntimePoc() {
   state.runtimeStatus = "running";
-  state.runtimeSummary = "OpenSCAD runtime を初期化しています";
+  state.runtimeSummary = "生成機能の準備をしています";
   state.logs = [];
   state.error = "";
   render();
@@ -725,10 +877,10 @@ async function executeRuntimePoc() {
     state.runtimeStatus = "success";
     state.runtimeSummary = `${Math.round(result.elapsedMs)} ms / ${output?.bytes?.byteLength ?? 0} bytes`;
     state.logs = result.logs.map((entry) => `[${entry.stream}] ${entry.text}`);
-    state.error = "最小 SCAD の OFF 出力に成功しました。";
+    state.error = "簡易チェックが正常に完了しました。";
   } catch (error) {
     state.runtimeStatus = "error";
-    state.runtimeSummary = "PoC 実行失敗";
+    state.runtimeSummary = "簡易チェックに失敗しました";
     state.logs = [];
     state.error = `${error}`;
   }
@@ -740,7 +892,7 @@ async function executeKeycapPreview(options = {}) {
   const { silent = false } = options;
 
   state.editorStatus = "running";
-  state.editorSummary = "プレビュー用 OFF を生成しています";
+  state.editorSummary = "見た目を更新しています";
   if (!silent) {
     state.editorLogs = [];
     state.editorError = "";
@@ -757,7 +909,9 @@ async function executeKeycapPreview(options = {}) {
     state.editorLogs = previewResults.flatMap((entry) =>
       entry.result.logs.map((log) => `[${entry.name}/${log.stream}] ${log.text}`),
     );
-    state.editorError = "プレビュー用 OFF の生成に成功しました。body 側のホーミングバーと、別ボディの legend を分けて描画しています。";
+    state.editorError = isLegendRenderable()
+      ? "見た目の更新が完了しました。キーキャップ本体と印字を分けて表示しています。"
+      : "見た目の更新が完了しました。印字は入っていないため、本体だけを表示しています。";
     state.previewLayers = previewResults.map((entry) => ({
       name: entry.name,
       color: entry.color,
@@ -765,7 +919,7 @@ async function executeKeycapPreview(options = {}) {
     }));
   } catch (error) {
     state.editorStatus = "error";
-    state.editorSummary = "プレビュー生成失敗";
+    state.editorSummary = "見た目の更新に失敗しました";
     state.editorLogs = [];
     state.editorError = `${error}`;
     state.previewLayers = [];
@@ -775,14 +929,21 @@ async function executeKeycapPreview(options = {}) {
 }
 
 async function executeExport(format) {
+  if (format === "legend" && !isLegendRenderable()) {
+    state.exportsStatus = "error";
+    state.exportsSummary = "印字が入っていないため、印字データは保存できません";
+    render();
+    return;
+  }
+
   state.exportsStatus = "running";
-  state.exportsSummary = `${format.toUpperCase()} を生成しています`;
+  state.exportsSummary = "保存データを準備しています";
   render();
 
   try {
     if (format === "body") {
       const result = await runOpenScad({
-        files: createKeycapFiles({
+        files: await createKeycapFiles({
           params: state.keycapParams,
           exportTarget: "body",
         }),
@@ -796,16 +957,17 @@ async function executeExport(format) {
       const [output] = result.outputs;
       downloadBlob(new Blob([output.bytes], { type: "model/stl" }), "keycap-body.stl");
       state.exportsStatus = "success";
-      state.exportsSummary = `本体 STL を生成しました (${output.bytes.byteLength} bytes)`;
+      state.exportsSummary = `本体データを保存しました (${output.bytes.byteLength} bytes)`;
       state.exportHistory.unshift({
         format,
+        label: "本体データ",
         elapsedMs: Math.round(result.elapsedMs),
         byteLength: output.bytes.byteLength,
-        notes: "body volume を binary STL で出力",
+        notes: "3D プリンタ向けの STL 形式で保存",
       });
     } else if (format === "legend") {
       const result = await runOpenScad({
-        files: createKeycapFiles({
+        files: await createKeycapFiles({
           params: state.keycapParams,
           exportTarget: "legend",
         }),
@@ -819,12 +981,13 @@ async function executeExport(format) {
       const [output] = result.outputs;
       downloadBlob(new Blob([output.bytes], { type: "model/stl" }), "keycap-legend.stl");
       state.exportsStatus = "success";
-      state.exportsSummary = `印字 STL を生成しました (${output.bytes.byteLength} bytes)`;
+      state.exportsSummary = `印字データを保存しました (${output.bytes.byteLength} bytes)`;
       state.exportHistory.unshift({
         format,
+        label: "印字データ",
         elapsedMs: Math.round(result.elapsedMs),
         byteLength: output.bytes.byteLength,
-        notes: "legend volume を binary STL で出力",
+        notes: "印字だけを STL 形式で保存",
       });
     } else if (format === "3mf") {
       const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf"));
@@ -837,21 +1000,23 @@ async function executeExport(format) {
       downloadBlob(blob, keycap3mfPath);
 
       state.exportsStatus = "success";
-      state.exportsSummary = `3MF PoC を生成しました (${blob.size} bytes / ${offResults.length} objects)`;
+      state.exportsSummary = `まとめて保存しました (${blob.size} bytes / ${offResults.length} 個のパーツ)`;
       state.exportHistory.unshift({
         format,
+        label: "まとめて保存",
         elapsedMs: Math.round(offResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0)),
         byteLength: blob.size,
-        notes: "body / legend を別オブジェクトの 3MF として出力",
+        notes: "本体と印字を 3MF 形式でまとめて保存",
       });
     } else {
       throw new Error(`未対応の export 形式です: ${format}`);
     }
   } catch (error) {
     state.exportsStatus = "error";
-    state.exportsSummary = `${format.toUpperCase()} の生成に失敗しました`;
+    state.exportsSummary = "保存に失敗しました";
     state.exportHistory.unshift({
       format,
+      label: "保存失敗",
       elapsedMs: 0,
       byteLength: 0,
       notes: `${error}`,

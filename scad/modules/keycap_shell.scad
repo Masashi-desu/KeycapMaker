@@ -139,6 +139,24 @@ module keycap_inner_hollow(
     }
 }
 
+module keycap_dish_volume(
+    depth,
+    cap_height,
+    dish_depth,
+    dish_radius,
+    top_tilt,
+    z_shift = 0,
+    quality = "export"
+) {
+    dish_steps = keycap_quality_steps(quality, 48, 100);
+
+    translate([0, 0, cap_height - dish_depth + z_shift])
+        rotate([top_tilt, 0, 0])
+            translate([0, 0, dish_radius])
+                rotate([90, 0, 0])
+                    cylinder(r = dish_radius, h = depth * 3, center = true, $fn = dish_steps);
+}
+
 module keycap_dish_cut(
     depth,
     cap_height,
@@ -147,13 +165,52 @@ module keycap_dish_cut(
     top_tilt,
     quality = "export"
 ) {
-    dish_steps = keycap_quality_steps(quality, 48, 100);
+    keycap_dish_volume(
+        depth = depth,
+        cap_height = cap_height,
+        dish_depth = dish_depth,
+        dish_radius = dish_radius,
+        top_tilt = top_tilt,
+        quality = quality
+    );
+}
 
-    translate([0, 0, cap_height - dish_depth])
-        rotate([top_tilt, 0, 0])
-            translate([0, 0, dish_radius])
-                rotate([90, 0, 0])
-                    cylinder(r = dish_radius, h = depth * 3, center = true, $fn = dish_steps);
+module keycap_dish_band(
+    depth,
+    cap_height,
+    dish_depth,
+    dish_radius,
+    top_tilt,
+    below_surface = 0.15,
+    above_surface = 0,
+    quality = "export"
+) {
+    safe_below_surface = max(below_surface, 0);
+    safe_above_surface = max(above_surface, 0);
+
+    if (safe_below_surface + safe_above_surface > 0) {
+        difference() {
+            keycap_dish_volume(
+                depth = depth,
+                cap_height = cap_height,
+                dish_depth = dish_depth,
+                dish_radius = dish_radius,
+                top_tilt = top_tilt,
+                z_shift = -safe_below_surface,
+                quality = quality
+            );
+
+            keycap_dish_volume(
+                depth = depth,
+                cap_height = cap_height,
+                dish_depth = dish_depth,
+                dish_radius = dish_radius,
+                top_tilt = top_tilt,
+                z_shift = safe_above_surface,
+                quality = quality
+            );
+        }
+    }
 }
 
 module keycap_shell(
