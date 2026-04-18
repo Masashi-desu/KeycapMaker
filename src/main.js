@@ -27,6 +27,8 @@ const previewLayerPalette = {
   body: 0x4d8fd8,
   legend: 0xf5b942,
 };
+const supportsUiViewTransitions = typeof document.startViewTransition === "function";
+const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
 const KEY_UNIT_MM = 18;
 const SHAPE_PROFILE_OPTIONS = [
   { value: "standard-1u", label: "標準 1u" },
@@ -322,6 +324,23 @@ function getViewportLayoutMode() {
   return availableWidth >= sidebarWidth + columnGap + previewSize ? "centered" : "overlap";
 }
 
+function isUiMotionEnabled() {
+  return supportsUiViewTransitions && !reduceMotionQuery?.matches;
+}
+
+function toKebabCase(value) {
+  return String(value ?? "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+}
+
+function createViewTransitionName(prefix, value) {
+  const normalized = toKebabCase(value);
+  return `${prefix}-${normalized || "item"}`;
+}
+
 function getStatusLabel(status) {
   switch (status) {
     case "running":
@@ -372,25 +391,31 @@ function isLegendRenderable() {
   return state.keycapParams.legendEnabled && isLegendTextSet();
 }
 
-function render() {
-  if (disposePreviewScene) {
-    disposePreviewScene();
-    disposePreviewScene = null;
+function renderShell() {
+  if (app.querySelector(".app-shell")) {
+    return;
   }
 
   app.innerHTML = `
     <main class="app-shell">
-      <section class="editor-screen editor-screen--${viewportLayoutMode}">
+      <section class="editor-screen">
         <aside class="left-column">
           <article class="inspector-card">
-            <nav class="segment-control" aria-label="workspace sections">
+            <nav
+              class="segment-control"
+              aria-label="workspace sections"
+              data-segment-control
+              style="--segment-count: ${workspaceSections.length}; --segment-index: 0;"
+            >
+              <span class="segment-control__indicator" aria-hidden="true"></span>
               ${workspaceSections
                 .map(
                   (section) => `
                     <button
-                      class="segment-link ${state.sidebarTab === section.id ? "is-active" : ""}"
+                      class="segment-link"
                       type="button"
                       data-sidebar-tab="${section.id}"
+                      aria-pressed="false"
                     >
                       ${section.label}
                     </button>
@@ -398,9 +423,7 @@ function render() {
                 )
                 .join("")}
             </nav>
-            <div class="inspector-content">
-              ${renderInspectorContent()}
-            </div>
+            <div class="inspector-content" data-inspector-content></div>
           </article>
         </aside>
 
@@ -415,18 +438,64 @@ function render() {
     </main>
   `;
 
-  app.querySelectorAll("[data-sidebar-tab]").forEach((button) => {
-    button.addEventListener("click", handleSidebarTabChange);
-  });
-  app.querySelector("[data-run-poc]")?.addEventListener("click", executeRuntimePoc);
-  app.querySelectorAll("[data-export]").forEach((button) => {
-    button.addEventListener("click", () => executeExport(button.dataset.export));
-  });
-  app.querySelectorAll("[data-field]").forEach((input) => {
-    input.addEventListener("input", handleFieldChange);
-    input.addEventListener("change", handleFieldChange);
-  });
+  app.querySelector("[data-segment-control]")?.addEventListener("click", handleSegmentControlClick);
+  app.querySelector(".inspector-card")?.addEventListener("click", handleInspectorCardClick);
+  app.querySelector(".inspector-card")?.addEventListener("input", handleInspectorCardInput);
+  app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
   renderPreviewViewer();
+}
+
+function renderLayout() {
+  const editorScreen = app.querySelector(".editor-screen");
+  if (!editorScreen) {
+    return;
+  }
+
+  editorScreen.className = `editor-screen editor-screen--${viewportLayoutMode}`;
+}
+
+function renderSegmentControl() {
+  const segmentControl = app.querySelector("[data-segment-control]");
+  if (!segmentControl) {
+    return;
+  }
+
+  const activeIndex = workspaceSections.findIndex((section) => section.id === state.sidebarTab);
+  segmentControl.style.setProperty("--segment-index", `${Math.max(activeIndex, 0)}`);
+
+  segmentControl.querySelectorAll("[data-sidebar-tab]").forEach((button) => {
+    const isActive = button.dataset.sidebarTab === state.sidebarTab;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function renderInspectorPanel() {
+  const container = app.querySelector("[data-inspector-content]");
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = renderInspectorContent();
+}
+
+function render(options = {}) {
+  const { animateInspector = false } = options;
+  renderShell();
+
+  const applyUpdate = () => {
+    renderLayout();
+    renderSegmentControl();
+    renderInspectorPanel();
+  };
+
+  if (animateInspector && isUiMotionEnabled()) {
+    const transition = document.startViewTransition(applyUpdate);
+    transition.finished.catch(() => {});
+    return;
+  }
+
+  applyUpdate();
 }
 
 function renderInspectorContent() {
@@ -443,78 +512,84 @@ function renderInspectorContent() {
 
 function renderParametersTab() {
   return `
-    <div class="panel-intro">
-      <h1 class="panel-title">設定</h1>
-      <p class="panel-text">選んだキーキャップの形や印字を、入力に合わせて右側へ自動反映しながら調整できます。</p>
-    </div>
+    <div class="inspector-panel inspector-panel--params">
+      <div class="panel-intro">
+        <h1 class="panel-title">設定</h1>
+        <p class="panel-text">選んだキーキャップの形や印字を、入力に合わせて右側へ自動反映しながら調整できます。</p>
+      </div>
 
-    <div class="parameter-group-list">
-      ${fieldGroups.map((group) => renderFieldGroup(group)).join("")}
+      <div class="parameter-group-list">
+        ${fieldGroups.map((group, index) => renderFieldGroup(group, index)).join("")}
+      </div>
     </div>
   `;
 }
 
 function renderGuideTab() {
   return `
-    <div class="panel-intro">
-      <h1 class="panel-title">使い方</h1>
-      <p class="panel-text">設定を変えたあと、右側の見た目を見ながら仕上がりを確認できます。</p>
+    <div class="inspector-panel inspector-panel--guide">
+      <div class="panel-intro">
+        <h1 class="panel-title">使い方</h1>
+        <p class="panel-text">設定を変えたあと、右側の見た目を見ながら仕上がりを確認できます。</p>
+      </div>
+
+      <ol class="guide-list">
+        <li class="guide-step">
+          <strong>1. 左側で形や印字を決める</strong>
+          <span>大きさ、文字、取り付け部分などを変えると、見た目が自動で更新されます。</span>
+        </li>
+        <li class="guide-step">
+          <strong>2. 右側で仕上がりを見る</strong>
+          <span>本体と印字を分けて表示し、カーソルを乗せたときだけ回転や拡大ができます。</span>
+        </li>
+        <li class="guide-step">
+          <strong>3. 動作チェックをする</strong>
+          <span>簡易チェックを実行すると、ブラウザ内の生成機能が動いているかを確認できます。</span>
+        </li>
+      </ol>
+
+      ${renderStatusCard("動作チェック", state.runtimeStatus, state.runtimeSummary)}
+
+      <button class="secondary-card-button" type="button" data-run-poc ${state.runtimeStatus === "running" ? "disabled" : ""}>
+        ${state.runtimeStatus === "running" ? "確認中..." : "簡易チェックを実行する"}
+      </button>
+
+      <div class="mini-code-block">
+        <div class="mini-code-block__title">処理ログ</div>
+        <pre>${state.logs.length > 0 ? escapeHtml(state.logs.join("\n")) : "ログはまだありません。"}</pre>
+      </div>
+
+      <p class="feedback-text">${state.error ? escapeHtml(state.error) : "まだエラーはありません。"}</p>
     </div>
-
-    <ol class="guide-list">
-      <li class="guide-step">
-        <strong>1. 左側で形や印字を決める</strong>
-        <span>大きさ、文字、取り付け部分などを変えると、見た目が自動で更新されます。</span>
-      </li>
-      <li class="guide-step">
-        <strong>2. 右側で仕上がりを見る</strong>
-        <span>本体と印字を分けて表示し、カーソルを乗せたときだけ回転や拡大ができます。</span>
-      </li>
-      <li class="guide-step">
-        <strong>3. 動作チェックをする</strong>
-        <span>簡易チェックを実行すると、ブラウザ内の生成機能が動いているかを確認できます。</span>
-      </li>
-    </ol>
-
-    ${renderStatusCard("動作チェック", state.runtimeStatus, state.runtimeSummary)}
-
-    <button class="secondary-card-button" type="button" data-run-poc ${state.runtimeStatus === "running" ? "disabled" : ""}>
-      ${state.runtimeStatus === "running" ? "確認中..." : "簡易チェックを実行する"}
-    </button>
-
-    <div class="mini-code-block">
-      <div class="mini-code-block__title">処理ログ</div>
-      <pre>${state.logs.length > 0 ? escapeHtml(state.logs.join("\n")) : "ログはまだありません。"}</pre>
-    </div>
-
-    <p class="feedback-text">${state.error ? escapeHtml(state.error) : "まだエラーはありません。"}</p>
   `;
 }
 
 function renderExportTab() {
   return `
-    <div class="panel-intro">
-      <h1 class="panel-title">書き出し</h1>
-      <p class="panel-text">印刷用のデータを保存します。印字がある場合は、本体と印字を分けたまま書き出せます。</p>
-    </div>
+    <div class="inspector-panel inspector-panel--export">
+      <div class="panel-intro">
+        <h1 class="panel-title">書き出し</h1>
+        <p class="panel-text">印刷用のデータを保存します。印字がある場合は、本体と印字を分けたまま書き出せます。</p>
+      </div>
 
-    ${renderStatusCard("保存状況", state.exportsStatus, state.exportsSummary)}
+      ${renderStatusCard("保存状況", state.exportsStatus, state.exportsSummary)}
 
-    <div class="export-button-list">
-      <button class="secondary-card-button" type="button" data-export="body" ${state.exportsStatus === "running" ? "disabled" : ""}>
-        本体を保存する
-      </button>
-      <button class="secondary-card-button" type="button" data-export="legend" ${state.exportsStatus === "running" || !isLegendRenderable() ? "disabled" : ""}>
-        印字を保存する
-      </button>
-      <button class="secondary-card-button" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
-        まとめて保存する
-      </button>
-    </div>
+      <div class="export-button-list">
+        <button class="secondary-card-button" type="button" data-export="body" ${state.exportsStatus === "running" ? "disabled" : ""}>
+          本体を保存する
+        </button>
+        <button class="secondary-card-button" type="button" data-export="legend" ${state.exportsStatus === "running" || !isLegendRenderable() ? "disabled" : ""}>
+          印字を保存する
+        </button>
+        <button class="secondary-card-button" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
+          まとめて保存する
+        </button>
+      </div>
 
-    <div class="mini-code-block">
-      <div class="mini-code-block__title">保存履歴</div>
-      <pre>${escapeHtml(renderHistory())}</pre>
+      <div class="mini-code-block">
+        <div class="mini-code-block__title">保存履歴</div>
+        <pre>${escapeHtml(renderHistory())}</pre>
+      </div>
     </div>
   `;
 }
@@ -532,11 +607,12 @@ function renderStatusCard(label, status, summary) {
   `;
 }
 
-function renderFieldGroup(group) {
+function renderFieldGroup(group, groupIndex) {
   const visibleFields = group.fields.filter((field) => isFieldVisible(field));
+  const groupViewTransitionName = createViewTransitionName("field-group", group.id ?? groupIndex);
 
   return `
-    <section class="field-group-card">
+    <section class="field-group-card" style="view-transition-name: ${groupViewTransitionName};">
       <div class="field-group-header">
         <h3>${group.title}</h3>
         <p>${group.description}</p>
@@ -558,10 +634,11 @@ function isFieldVisible(field) {
 
 function renderField(field) {
   const value = state.keycapParams[field.key];
+  const fieldViewTransitionName = createViewTransitionName("field", field.key);
 
   if (field.type === "checkbox") {
     return `
-      <label class="field field--checkbox">
+      <label class="field field--checkbox" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${field.label}</span>
           <span class="field-hint">${field.hint ?? ""}</span>
@@ -576,7 +653,7 @@ function renderField(field) {
 
   if (field.type === "select") {
     return `
-      <label class="field">
+      <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${field.label}</span>
           <span class="field-hint">${field.hint ?? ""}</span>
@@ -598,7 +675,7 @@ function renderField(field) {
 
   if (field.type === "text") {
     return `
-      <label class="field">
+      <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${field.label}</span>
           <span class="field-hint">${field.hint ?? ""}</span>
@@ -618,7 +695,7 @@ function renderField(field) {
 
   if (field.type === "linked-size") {
     return `
-      <label class="field field--linked-size">
+      <label class="field field--linked-size" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${field.label}</span>
           <span class="field-hint">${field.hint ?? ""}</span>
@@ -657,7 +734,7 @@ function renderField(field) {
   }
 
   return `
-    <label class="field">
+    <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
       <span class="field-copy">
         <span class="field-label">${field.label}</span>
         <span class="field-hint">${field.hint ?? ""}</span>
@@ -677,9 +754,62 @@ function renderField(field) {
   `;
 }
 
+function getClosestFromEventTarget(event, selector) {
+  if (!(event.target instanceof Element)) {
+    return null;
+  }
+
+  return event.target.closest(selector);
+}
+
+function handleSegmentControlClick(event) {
+  const button = getClosestFromEventTarget(event, "[data-sidebar-tab]");
+  if (!button) {
+    return;
+  }
+
+  handleSidebarTabChange({ currentTarget: button });
+}
+
+function handleInspectorCardClick(event) {
+  const runtimeButton = getClosestFromEventTarget(event, "[data-run-poc]");
+  if (runtimeButton) {
+    executeRuntimePoc();
+    return;
+  }
+
+  const exportButton = getClosestFromEventTarget(event, "[data-export]");
+  if (exportButton) {
+    executeExport(exportButton.dataset.export);
+  }
+}
+
+function handleInspectorCardInput(event) {
+  const input = getClosestFromEventTarget(event, "[data-field]");
+  if (!input || input.type === "checkbox" || input.tagName === "SELECT") {
+    return;
+  }
+
+  handleFieldChange({ currentTarget: input });
+}
+
+function handleInspectorCardChange(event) {
+  const input = getClosestFromEventTarget(event, "[data-field]");
+  if (!input || (input.type !== "checkbox" && input.tagName !== "SELECT")) {
+    return;
+  }
+
+  handleFieldChange({ currentTarget: input });
+}
+
 function handleSidebarTabChange(event) {
-  state.sidebarTab = event.currentTarget.dataset.sidebarTab;
-  render();
+  const nextTab = event.currentTarget.dataset.sidebarTab;
+  if (!nextTab || nextTab === state.sidebarTab) {
+    return;
+  }
+
+  state.sidebarTab = nextTab;
+  render({ animateInspector: true });
 }
 
 function handleViewportResize() {
@@ -733,6 +863,9 @@ function downloadBlob(blob, filename) {
 function handleFieldChange(event) {
   const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
+  if (!field || !input) {
+    return;
+  }
 
   if (field === "keySizeUnits") {
     state.keycapParams.keyWidth = Number(input.value) * KEY_UNIT_MM;
@@ -752,8 +885,17 @@ function handleFieldChange(event) {
 
   syncDerivedKeycapParams();
 
+  if (input.type === "checkbox") {
+    input.parentElement?.querySelector("span:last-child")?.replaceChildren(input.checked ? "オン" : "オフ");
+  }
+
   state.editorStatus = "dirty";
   state.editorSummary = "入力内容を反映待ち";
+
+  if (field === "legendEnabled" || field === "homingBarEnabled") {
+    render({ animateInspector: true });
+  }
+
   schedulePreviewRefresh();
 }
 
@@ -778,6 +920,11 @@ function schedulePreviewRefresh() {
 }
 
 async function renderPreviewViewer() {
+  if (disposePreviewScene) {
+    disposePreviewScene();
+    disposePreviewScene = null;
+  }
+
   const container = app.querySelector("[data-preview-stage]");
   if (!container) {
     return;
@@ -926,6 +1073,7 @@ async function executeKeycapPreview(options = {}) {
   }
 
   render();
+  renderPreviewViewer();
 }
 
 async function executeExport(format) {
