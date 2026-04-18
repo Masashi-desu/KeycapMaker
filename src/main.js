@@ -25,6 +25,7 @@ let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
 let colorisLoadPromise = null;
 let latestPreviewRequestId = 0;
+let previewViewState = null;
 let viewportLayoutMode = getViewportLayoutMode();
 const textDecoder = new TextDecoder();
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
@@ -1162,7 +1163,8 @@ function schedulePreviewRefresh() {
 
 async function renderPreviewViewer() {
   if (disposePreviewScene) {
-    disposePreviewScene();
+    previewViewState = disposePreviewScene.captureViewState();
+    disposePreviewScene.dispose();
     disposePreviewScene = null;
   }
 
@@ -1186,7 +1188,9 @@ async function renderPreviewViewer() {
     return;
   }
 
-  disposePreviewScene = mountPreviewScene(container, state.previewLayers);
+  disposePreviewScene = mountPreviewScene(container, state.previewLayers, {
+    initialViewState: previewViewState,
+  });
 }
 
 function createColorLayerJob({ name, exportTarget, outputPath, colorFieldKey }) {

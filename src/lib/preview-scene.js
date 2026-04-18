@@ -44,7 +44,64 @@ function updatePointerVector(pointer, domElement, clientX, clientY) {
   return true;
 }
 
-export function mountPreviewScene(container, layers) {
+function getDefaultCameraOffset(sceneScale) {
+  return new THREE.Vector3(1.42, 1.18, 1.32).multiplyScalar(sceneScale);
+}
+
+function isFiniteNumber(value) {
+  return Number.isFinite(value);
+}
+
+function isValidVector3Array(values) {
+  return Array.isArray(values)
+    && values.length === 3
+    && values.every((value) => isFiniteNumber(value));
+}
+
+function captureViewState({ camera, controls, sceneScale }) {
+  const target = controls.target.clone();
+  const offset = camera.position.clone().sub(target);
+  const distance = Math.max(offset.length(), 0.001);
+
+  return {
+    direction: offset.normalize().toArray(),
+    distanceScale: distance / sceneScale,
+    targetScale: target.divideScalar(sceneScale).toArray(),
+  };
+}
+
+function restoreViewState({ camera, controls, sceneScale, viewState }) {
+  if (
+    !viewState
+    || !isFiniteNumber(viewState.distanceScale)
+    || viewState.distanceScale <= 0
+    || !isValidVector3Array(viewState.direction)
+    || !isValidVector3Array(viewState.targetScale)
+  ) {
+    camera.position.copy(getDefaultCameraOffset(sceneScale));
+    controls.target.set(0, 0, 0);
+    controls.update();
+    return;
+  }
+
+  const direction = new THREE.Vector3().fromArray(viewState.direction);
+  if (direction.lengthSq() === 0) {
+    camera.position.copy(getDefaultCameraOffset(sceneScale));
+    controls.target.set(0, 0, 0);
+    controls.update();
+    return;
+  }
+
+  direction.normalize();
+  const target = new THREE.Vector3().fromArray(viewState.targetScale).multiplyScalar(sceneScale);
+  const distance = Math.max(viewState.distanceScale * sceneScale, 0.001);
+  controls.target.copy(target);
+  camera.position.copy(target).addScaledVector(direction, distance);
+  controls.update();
+}
+
+export function mountPreviewScene(container, layers, options = {}) {
+  const { initialViewState = null } = options;
   const anchorElement = container.parentElement ?? container;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -93,10 +150,8 @@ export function mountPreviewScene(container, layers) {
     entry.previewMesh.position.sub(center);
   });
 
-  const maxDimension = Math.max(size.x, size.y, size.z, 1);
-  camera.position.set(maxDimension * 1.42, maxDimension * 1.18, maxDimension * 1.32);
-  controls.target.set(0, 0, 0);
-  controls.update();
+  const sceneScale = Math.max(size.x, size.y, size.z, 1);
+  restoreViewState({ camera, controls, sceneScale, viewState: initialViewState });
 
   const interactiveMeshes = layerEntries.map((entry) => entry.previewMesh);
   const raycaster = new THREE.Raycaster();
@@ -229,7 +284,7 @@ export function mountPreviewScene(container, layers) {
   };
   renderFrame();
 
-  return () => {
+  const dispose = () => {
     cancelAnimationFrame(frameId);
     resizeObserver.disconnect();
     window.removeEventListener("resize", handleResize);
@@ -247,5 +302,10 @@ export function mountPreviewScene(container, layers) {
     });
     renderer.dispose();
     container.replaceChildren();
+  };
+
+  return {
+    captureViewState: () => captureViewState({ camera, controls, sceneScale }),
+    dispose,
   };
 }
