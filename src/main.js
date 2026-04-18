@@ -483,6 +483,17 @@ function syncColorChip(fieldKey, colorValue = getColorFieldValue(fieldKey)) {
     .setProperty("--field-color", colorValue);
 }
 
+function unwrapColorisFieldWrappers(root = app) {
+  root?.querySelectorAll("input[data-coloris]").forEach((input) => {
+    const wrapper = input.parentElement;
+    if (!(wrapper instanceof HTMLElement) || !wrapper.classList.contains("clr-field")) {
+      return;
+    }
+
+    wrapper.replaceWith(input);
+  });
+}
+
 function configureColoris() {
   if (typeof window.Coloris !== "function") {
     return;
@@ -500,6 +511,8 @@ function configureColoris() {
     closeLabel: "閉じる",
     swatches: COLORIS_SWATCHES,
   });
+
+  unwrapColorisFieldWrappers();
 }
 
 function ensureColorisStylesheet() {

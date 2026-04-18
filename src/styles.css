@@ -425,6 +425,14 @@ pre {
   justify-content: flex-start;
 }
 
+.field-control--color .clr-field {
+  min-width: 0;
+}
+
+.field-control--color .clr-field > button {
+  display: none;
+}
+
 .field-control--color input[type="text"] {
   width: 96px;
   font-weight: 700;
