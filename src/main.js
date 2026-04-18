@@ -1,11 +1,11 @@
 import "./styles.css";
 import minimumPocScad from "../scad/samples/minimum-poc.scad?raw";
+import keycapEditorProfiles from "./data/keycap-editor-profiles.json";
 import { runOpenScad } from "./lib/openscad-client.js";
 import { hexColorToNumber, normalizeHexColor } from "./lib/color-utils.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
 import { parseOff } from "./lib/off-parser.js";
 import {
-  DEFAULT_KEYCAP_LEGEND_FONT_KEY,
   KEYCAP_LEGEND_FONTS,
   buildKeycapArgs,
   createKeycapFiles,
@@ -14,12 +14,12 @@ import {
 const app = document.querySelector("#app");
 const samplePath = "/samples/minimum-poc.scad";
 const previewOutputPath = "/outputs/minimum-poc.off";
-const keycapBodyPath = "/outputs/keycap-body.stl";
-const keycapLegendPath = "/outputs/keycap-legend.stl";
 const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycap3mfPath = "keycap-preview.3mf";
+const EDITOR_DATA_KIND = "keycaps-maker/editor-params";
+const EDITOR_DATA_SCHEMA_VERSION = 1;
 let disposePreviewScene = null;
 let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
@@ -27,6 +27,8 @@ let colorisLoadPromise = null;
 let latestPreviewRequestId = 0;
 let previewViewState = null;
 let viewportLayoutMode = getViewportLayoutMode();
+let hasAttachedEditorDataDropListeners = false;
+let editorDataDragDepth = 0;
 const textDecoder = new TextDecoder();
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
 const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -50,10 +52,13 @@ const COLORIS_SWATCHES = Object.freeze([
   "#5d9270",
   "#b8884c",
 ]);
-const SHAPE_PROFILE_OPTIONS = [
-  { value: "standard-1u", label: "標準 1u" },
-];
-const DEFAULT_SHAPE_PROFILE_KEY = SHAPE_PROFILE_OPTIONS[0].value;
+const SHAPE_PROFILE_OPTIONS = keycapEditorProfiles.profiles.map((profile) => ({
+  value: profile.key,
+  label: profile.label,
+}));
+const DEFAULT_SHAPE_PROFILE_KEY = keycapEditorProfiles.defaultProfileKey ?? SHAPE_PROFILE_OPTIONS[0]?.value ?? "standard-1u";
+const EDITOR_SELECTOR_KEYS = Object.freeze(keycapEditorProfiles.selectorKeys ?? ["shapeProfile", "legendFontKey", "stemType"]);
+const keycapProfileByKey = new Map(keycapEditorProfiles.profiles.map((profile) => [profile.key, profile]));
 
 const workspaceSections = [
   {
@@ -70,6 +75,23 @@ const workspaceSections = [
   },
 ];
 
+function cloneSerializable(value) {
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
+  }
+
+  return JSON.parse(JSON.stringify(value));
+}
+
+function resolveShapeProfileConfig(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  return keycapProfileByKey.get(profileKey) ?? keycapProfileByKey.get(DEFAULT_SHAPE_PROFILE_KEY);
+}
+
+function createDefaultKeycapParams(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  const profile = resolveShapeProfileConfig(profileKey);
+  return cloneSerializable(profile?.defaults ?? {});
+}
+
 const fieldGroups = [
   {
     id: "shape",
@@ -79,7 +101,7 @@ const fieldGroups = [
       {
         key: "shapeProfile",
         label: "形のベース",
-        hint: "使う基本形を選びます。現在は標準 1u のみ選べます",
+        hint: "使う基本形を選びます",
         type: "select",
         options: SHAPE_PROFILE_OPTIONS,
       },
@@ -319,6 +341,14 @@ const fieldGroups = [
 const fieldConfigByKey = new Map(
   fieldGroups.flatMap((group) => group.fields).map((field) => [field.key, field]),
 );
+const colorFieldKeys = new Set(
+  fieldGroups.flatMap((group) => group.fields).filter((field) => field.type === "color").map((field) => field.key),
+);
+
+function syncDerivedKeycapParams(params = state.keycapParams) {
+  params.stemEnabled = params.stemType !== "none";
+  return params;
+}
 
 const state = {
   runtimeStatus: "idle",
@@ -334,44 +364,9 @@ const state = {
   editorError: "",
   previewLayers: [],
   sidebarTab: "params",
-  keycapParams: {
-    shapeProfile: DEFAULT_SHAPE_PROFILE_KEY,
-    keyWidth: 18,
-    keyDepth: 18,
-    bodyHeight: 9.5,
-    wallThickness: 1.2,
-    topScale: 0.84,
-    bodyColor: DEFAULT_KEYCAP_COLORS.bodyColor,
-    legendEnabled: true,
-    legendText: "A",
-    legendFontKey: DEFAULT_KEYCAP_LEGEND_FONT_KEY,
-    legendWeight: "regular",
-    legendSlant: "none",
-    legendUnderlineEnabled: false,
-    legendWidth: 7.2,
-    legendDepth: 4.0,
-    legendHeight: 0,
-    legendColor: DEFAULT_KEYCAP_COLORS.legendColor,
-    legendOffsetX: 0,
-    legendOffsetY: 0,
-    homingBarEnabled: true,
-    homingBarLength: 4.0,
-    homingBarWidth: 1.58,
-    homingBarHeight: 0.6,
-    homingBarOffsetY: -3.5,
-    homingBarBaseThickness: 0.35,
-    homingBarColor: DEFAULT_KEYCAP_COLORS.homingBarColor,
-    stemType: "choc_v2",
-    stemEnabled: true,
-    stemOuterDelta: 0,
-    stemCrossMargin: 0,
-    stemInsetDelta: 0,
-  },
+  isImportDragActive: false,
+  keycapParams: syncDerivedKeycapParams(createDefaultKeycapParams()),
 };
-
-function syncDerivedKeycapParams() {
-  state.keycapParams.stemEnabled = state.keycapParams.stemType !== "none";
-}
 
 syncDerivedKeycapParams();
 
@@ -565,6 +560,12 @@ function renderShell() {
 
   app.innerHTML = `
     <main class="app-shell">
+      <div class="drop-overlay" data-import-drop-overlay aria-hidden="true" hidden>
+        <div class="drop-overlay__card">
+          <strong>編集データ JSON をドロップ</strong>
+          <span>保存済みの編集データを読み込み、現在の設定へ反映します。</span>
+        </div>
+      </div>
       <section class="editor-screen">
         <aside class="left-column">
           <article class="inspector-card">
@@ -610,6 +611,8 @@ function renderShell() {
   app.querySelector(".inspector-card")?.addEventListener("input", handleInspectorCardInput);
   app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
   app.querySelector(".inspector-card")?.addEventListener("compositionend", handleInspectorCardCompositionEnd);
+  attachEditorDataDropListeners();
+  syncImportDropOverlay();
   renderPreviewViewer();
 }
 
@@ -656,6 +659,7 @@ function render(options = {}) {
     renderSegmentControl();
     renderInspectorPanel();
     configureColoris();
+    syncImportDropOverlay();
   };
 
   if (animateInspector && isUiMotionEnabled()) {
@@ -738,26 +742,20 @@ function renderExportTab() {
     <div class="inspector-panel inspector-panel--export">
       <div class="panel-intro">
         <h1 class="panel-title">書き出し</h1>
-        <p class="panel-text">印刷用のデータを保存します。印字がある場合は、本体と印字を分けたまま書き出せます。</p>
+        <p class="panel-text">3MF の印刷データと、あとで編集を再開するための JSON を保存できます。</p>
       </div>
-
-      ${renderStatusCard("保存状況", state.exportsStatus, state.exportsSummary)}
 
       <div class="export-button-list">
-        <button class="secondary-card-button" type="button" data-export="body" ${state.exportsStatus === "running" ? "disabled" : ""}>
-          本体を保存する
+        <button class="action-card" type="button" data-export="editor-data" ${state.exportsStatus === "running" ? "disabled" : ""}>
+          <span class="chip-label">JSON</span>
+          <strong>${state.exportsStatus === "running" ? "保存しています..." : "編集データを保存する"}</strong>
+          <span class="action-card__text">保存した JSON は、この画面のどこへでもドラッグ&ドロップして取り込めます。読み込むと現在の設定を置き換えます。</span>
         </button>
-        <button class="secondary-card-button" type="button" data-export="legend" ${state.exportsStatus === "running" || !isLegendRenderable() ? "disabled" : ""}>
-          印字を保存する
+        <button class="action-card" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
+          <span class="chip-label">3MF</span>
+          <strong>${state.exportsStatus === "running" ? "保存しています..." : "3MFデータを保存する"}</strong>
+          <span class="action-card__text">本体、目印、印字を含む印刷用データを 3MF 形式でまとめて保存します。</span>
         </button>
-        <button class="secondary-card-button" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
-          まとめて保存する
-        </button>
-      </div>
-
-      <div class="mini-code-block">
-        <div class="mini-code-block__title">保存履歴</div>
-        <pre>${escapeHtml(renderHistory())}</pre>
       </div>
     </div>
   `;
@@ -1055,17 +1053,139 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function renderHistory() {
-  if (state.exportHistory.length === 0) {
-    return "まだ生成履歴はありません。";
+function pickEditorSelectors(params) {
+  return Object.fromEntries(
+    EDITOR_SELECTOR_KEYS
+      .filter((key) => key in params)
+      .map((key) => [key, params[key]]),
+  );
+}
+
+function listEditableParamKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  const defaults = createDefaultKeycapParams(profileKey);
+
+  return Object.keys(defaults).filter((key) => fieldConfigByKey.has(key) || EDITOR_SELECTOR_KEYS.includes(key));
+}
+
+function sanitizeEditorParamValue(fieldKey, value, fallback) {
+  const fieldConfig = fieldConfigByKey.get(fieldKey);
+
+  if (colorFieldKeys.has(fieldKey)) {
+    return normalizeHexColor(value) ?? fallback;
   }
 
-  return state.exportHistory
-    .map(
-      (entry) =>
-        `${entry.label} | ${entry.elapsedMs} ms | ${entry.byteLength} bytes | ${entry.notes}`,
-    )
-    .join("\n");
+  if (fieldConfig?.type === "select") {
+    const allowedValues = new Set(fieldConfig.options.map((option) => option.value));
+    return allowedValues.has(value) ? value : fallback;
+  }
+
+  if (typeof fallback === "boolean") {
+    return typeof value === "boolean" ? value : fallback;
+  }
+
+  if (typeof fallback === "number") {
+    const nextValue = Number(value);
+    return Number.isFinite(nextValue) ? nextValue : fallback;
+  }
+
+  if (typeof fallback === "string") {
+    return typeof value === "string" ? value : fallback;
+  }
+
+  return value ?? fallback;
+}
+
+function createExportableKeycapParams(params = state.keycapParams) {
+  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const defaults = createDefaultKeycapParams(profileKey);
+  const exportableParams = {};
+
+  for (const key of listEditableParamKeys(profileKey)) {
+    exportableParams[key] = sanitizeEditorParamValue(key, params[key], defaults[key]);
+  }
+
+  return exportableParams;
+}
+
+function createEditorDataPayload(params = state.keycapParams) {
+  const sanitizedParams = createExportableKeycapParams(params);
+
+  return {
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    profileSchemaVersion: keycapEditorProfiles.schemaVersion ?? 1,
+    savedAt: new Date().toISOString(),
+    selectors: pickEditorSelectors(sanitizedParams),
+    params: sanitizedParams,
+  };
+}
+
+function buildEditorDataFilename(params = state.keycapParams) {
+  const timestamp = new Date().toISOString().replaceAll(":", "-").replaceAll(".", "-");
+  return `keycap-editor-${toKebabCase(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY)}-${timestamp}.json`;
+}
+
+function parseEditorDataPayload(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("編集データ JSON の形式が不正です。");
+  }
+
+  if (payload.kind !== EDITOR_DATA_KIND) {
+    throw new Error("Keycaps Maker の編集データ JSON ではありません。");
+  }
+
+  if (payload.schemaVersion !== EDITOR_DATA_SCHEMA_VERSION) {
+    throw new Error(`未対応の編集データ schemaVersion です: ${payload.schemaVersion}`);
+  }
+
+  if (!payload.params || typeof payload.params !== "object" || Array.isArray(payload.params)) {
+    throw new Error("編集データ JSON に params がありません。");
+  }
+
+  const rawProfileKey = payload.selectors?.shapeProfile ?? payload.params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  if (!keycapProfileByKey.has(rawProfileKey)) {
+    throw new Error(`未対応の形のベースです: ${rawProfileKey}`);
+  }
+
+  const defaults = createDefaultKeycapParams(rawProfileKey);
+  const mergedRawParams = {
+    ...pickEditorSelectors(defaults),
+    ...(payload.selectors ?? {}),
+    ...payload.params,
+    shapeProfile: rawProfileKey,
+  };
+  const nextParams = {};
+
+  for (const key of listEditableParamKeys(rawProfileKey)) {
+    nextParams[key] = sanitizeEditorParamValue(key, mergedRawParams[key], defaults[key]);
+  }
+
+  return syncDerivedKeycapParams(nextParams);
+}
+
+function recordExportHistory(entry) {
+  state.exportHistory.unshift(entry);
+}
+
+function setExportStatus(status, summary, historyEntry) {
+  state.exportsStatus = status;
+  state.exportsSummary = summary;
+
+  if (historyEntry) {
+    recordExportHistory(historyEntry);
+  }
+}
+
+function applyShapeProfileParams(profileKey) {
+  const defaults = createDefaultKeycapParams(profileKey);
+  const nextParams = {};
+
+  for (const key of listEditableParamKeys(profileKey)) {
+    nextParams[key] = sanitizeEditorParamValue(key, state.keycapParams[key], defaults[key]);
+  }
+
+  nextParams.shapeProfile = profileKey;
+  state.keycapParams = syncDerivedKeycapParams(nextParams);
 }
 
 function createSampleFiles() {
@@ -1086,6 +1206,143 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+function syncImportDropOverlay() {
+  const overlay = app.querySelector("[data-import-drop-overlay]");
+  if (!overlay) {
+    return;
+  }
+
+  overlay.hidden = !state.isImportDragActive;
+  overlay.classList.toggle("is-active", state.isImportDragActive);
+  overlay.setAttribute("aria-hidden", state.isImportDragActive ? "false" : "true");
+}
+
+function setImportDragActive(isActive) {
+  if (state.isImportDragActive === isActive) {
+    return;
+  }
+
+  state.isImportDragActive = isActive;
+  syncImportDropOverlay();
+}
+
+function isFileTransfer(dataTransfer) {
+  return Array.from(dataTransfer?.types ?? []).includes("Files");
+}
+
+function resetEditorDataDropState() {
+  editorDataDragDepth = 0;
+  setImportDragActive(false);
+}
+
+function attachEditorDataDropListeners() {
+  if (hasAttachedEditorDataDropListeners) {
+    return;
+  }
+
+  hasAttachedEditorDataDropListeners = true;
+  window.addEventListener("dragenter", handleWindowDragEnter);
+  window.addEventListener("dragover", handleWindowDragOver);
+  window.addEventListener("dragleave", handleWindowDragLeave);
+  window.addEventListener("drop", handleWindowDrop);
+  window.addEventListener("dragend", resetEditorDataDropState);
+}
+
+async function importEditorDataFile(file) {
+  const startedAt = performance.now();
+  const text = await file.text();
+  const payload = JSON.parse(text);
+  const nextParams = parseEditorDataPayload(payload);
+
+  state.keycapParams = nextParams;
+  state.editorStatus = "dirty";
+  state.editorSummary = "読み込んだ編集データを反映待ち";
+  setExportStatus(
+    "success",
+    `編集データを読み込みました (${file.name})`,
+    {
+      format: "editor-data-import",
+      label: "編集データ読込",
+      elapsedMs: Math.round(performance.now() - startedAt),
+      byteLength: file.size,
+      notes: `${file.name} を現在の編集内容へ反映`,
+    },
+  );
+
+  render({ animateInspector: true });
+  await executeKeycapPreview({ silent: true });
+}
+
+async function importEditorDataFromDrop(files) {
+  const jsonFile = files.find((file) => file.name.toLowerCase().endsWith(".json"));
+  if (!jsonFile) {
+    throw new Error("JSON ファイルが見つかりません。");
+  }
+
+  await importEditorDataFile(jsonFile);
+}
+
+function handleWindowDragEnter(event) {
+  if (!isFileTransfer(event.dataTransfer)) {
+    return;
+  }
+
+  event.preventDefault();
+  editorDataDragDepth += 1;
+  setImportDragActive(true);
+}
+
+function handleWindowDragOver(event) {
+  if (!isFileTransfer(event.dataTransfer)) {
+    return;
+  }
+
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "copy";
+  }
+
+  setImportDragActive(true);
+}
+
+function handleWindowDragLeave(event) {
+  if (!isFileTransfer(event.dataTransfer)) {
+    return;
+  }
+
+  event.preventDefault();
+  editorDataDragDepth = Math.max(editorDataDragDepth - 1, 0);
+  if (editorDataDragDepth === 0) {
+    setImportDragActive(false);
+  }
+}
+
+async function handleWindowDrop(event) {
+  if (!isFileTransfer(event.dataTransfer)) {
+    return;
+  }
+
+  event.preventDefault();
+  resetEditorDataDropState();
+
+  try {
+    await importEditorDataFromDrop(Array.from(event.dataTransfer?.files ?? []));
+  } catch (error) {
+    setExportStatus(
+      "error",
+      "編集データの読み込みに失敗しました",
+      {
+        format: "editor-data-import",
+        label: "編集データ読込失敗",
+        elapsedMs: 0,
+        byteLength: 0,
+        notes: `${error}`,
+      },
+    );
+    render();
+  }
+}
+
 function handleFieldChange(event) {
   const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
@@ -1101,7 +1358,11 @@ function handleFieldChange(event) {
   } else if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
   } else if (input.tagName === "SELECT") {
-    state.keycapParams[field] = input.value;
+    if (field === "shapeProfile") {
+      applyShapeProfileParams(input.value);
+    } else {
+      state.keycapParams[field] = input.value;
+    }
   } else if (fieldConfig?.type === "color") {
     const normalizedColor = normalizeHexColor(input.value);
     if (!normalizedColor) {
@@ -1131,7 +1392,7 @@ function handleFieldChange(event) {
   state.editorStatus = "dirty";
   state.editorSummary = "入力内容を反映待ち";
 
-  if (field === "legendEnabled" || field === "homingBarEnabled" || field === "stemType") {
+  if (field === "legendEnabled" || field === "homingBarEnabled" || EDITOR_SELECTOR_KEYS.includes(field)) {
     render({ animateInspector: true });
   }
 
@@ -1370,66 +1631,28 @@ async function executeKeycapPreview(options = {}) {
 }
 
 async function executeExport(format) {
-  if (format === "legend" && !isLegendRenderable()) {
-    state.exportsStatus = "error";
-    state.exportsSummary = "印字が入っていないため、印字データは保存できません";
-    render();
-    return;
-  }
-
   state.exportsStatus = "running";
   state.exportsSummary = "保存データを準備しています";
   render();
 
   try {
-    if (format === "body") {
-      const result = await runOpenScad({
-        files: await createKeycapFiles({
-          params: state.keycapParams,
-          exportTarget: "body",
-        }),
-        args: buildKeycapArgs({
-          outputPath: keycapBodyPath,
-          outputFormat: "stl",
-        }),
-        outputPaths: [keycapBodyPath],
-      });
-
-      const [output] = result.outputs;
-      downloadBlob(new Blob([output.bytes], { type: "model/stl" }), "keycap-body.stl");
-      state.exportsStatus = "success";
-      state.exportsSummary = `本体データを保存しました (${output.bytes.byteLength} bytes)`;
-      state.exportHistory.unshift({
-        format,
-        label: "本体データ",
-        elapsedMs: Math.round(result.elapsedMs),
-        byteLength: output.bytes.byteLength,
-        notes: "3D プリンタ向けの STL 形式で保存",
-      });
-    } else if (format === "legend") {
-      const result = await runOpenScad({
-        files: await createKeycapFiles({
-          params: state.keycapParams,
-          exportTarget: "legend",
-        }),
-        args: buildKeycapArgs({
-          outputPath: keycapLegendPath,
-          outputFormat: "stl",
-        }),
-        outputPaths: [keycapLegendPath],
-      });
-
-      const [output] = result.outputs;
-      downloadBlob(new Blob([output.bytes], { type: "model/stl" }), "keycap-legend.stl");
-      state.exportsStatus = "success";
-      state.exportsSummary = `印字データを保存しました (${output.bytes.byteLength} bytes)`;
-      state.exportHistory.unshift({
-        format,
-        label: "印字データ",
-        elapsedMs: Math.round(result.elapsedMs),
-        byteLength: output.bytes.byteLength,
-        notes: "印字だけを STL 形式で保存",
-      });
+    if (format === "editor-data") {
+      const startedAt = performance.now();
+      const payload = createEditorDataPayload();
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+      downloadBlob(blob, buildEditorDataFilename(payload.params));
+      setExportStatus(
+        "success",
+        `編集データを保存しました (${blob.size} bytes)`,
+        {
+          format,
+          label: "編集データ JSON",
+          elapsedMs: Math.round(performance.now() - startedAt),
+          byteLength: blob.size,
+          notes: "画面で編集するパラメータを JSON 形式で保存",
+        },
+      );
     } else if (format === "3mf") {
       const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf"));
       const savedPartLabels = describePartLabels(offResults.map((entry) => entry.name));
@@ -1442,28 +1665,32 @@ async function executeExport(format) {
       );
       downloadBlob(blob, keycap3mfPath);
 
-      state.exportsStatus = "success";
-      state.exportsSummary = `まとめて保存しました (${blob.size} bytes / ${offResults.length} 個のパーツ)`;
-      state.exportHistory.unshift({
-        format,
-        label: "まとめて保存",
-        elapsedMs: Math.round(offResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0)),
-        byteLength: blob.size,
-        notes: `${savedPartLabels}を 3MF 形式でまとめて保存`,
-      });
+      setExportStatus(
+        "success",
+        `3MFデータを保存しました (${blob.size} bytes / ${offResults.length} 個のパーツ)`,
+        {
+          format,
+          label: "3MFデータ",
+          elapsedMs: Math.round(offResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0)),
+          byteLength: blob.size,
+          notes: `${savedPartLabels}を 3MF 形式でまとめて保存`,
+        },
+      );
     } else {
       throw new Error(`未対応の export 形式です: ${format}`);
     }
   } catch (error) {
-    state.exportsStatus = "error";
-    state.exportsSummary = "保存に失敗しました";
-    state.exportHistory.unshift({
-      format,
-      label: "保存失敗",
-      elapsedMs: 0,
-      byteLength: 0,
-      notes: `${error}`,
-    });
+    setExportStatus(
+      "error",
+      "保存に失敗しました",
+      {
+        format,
+        label: "保存失敗",
+        elapsedMs: 0,
+        byteLength: 0,
+        notes: `${error}`,
+      },
+    );
   }
 
   render();

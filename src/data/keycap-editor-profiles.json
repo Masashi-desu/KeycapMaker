@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "defaultProfileKey": "standard-1u",
+  "selectorKeys": ["shapeProfile", "legendFontKey", "stemType"],
+  "profiles": [
+    {
+      "key": "standard-1u",
+      "label": "標準 1u",
+      "defaults": {
+        "shapeProfile": "standard-1u",
+        "keyWidth": 18,
+        "keyDepth": 18,
+        "bodyHeight": 9.5,
+        "wallThickness": 1.2,
+        "topScale": 0.84,
+        "bodyColor": "#f8f9fa",
+        "legendEnabled": true,
+        "legendText": "A",
+        "legendFontKey": "mplus1p",
+        "legendWeight": "regular",
+        "legendSlant": "none",
+        "legendUnderlineEnabled": false,
+        "legendWidth": 7.2,
+        "legendDepth": 4.0,
+        "legendHeight": 0,
+        "legendColor": "#212529",
+        "legendOffsetX": 0,
+        "legendOffsetY": 0,
+        "homingBarEnabled": true,
+        "homingBarLength": 4.0,
+        "homingBarWidth": 1.58,
+        "homingBarHeight": 0.6,
+        "homingBarOffsetY": -3.5,
+        "homingBarBaseThickness": 0.35,
+        "homingBarColor": "#ff7f00",
+        "stemType": "choc_v2",
+        "stemOuterDelta": 0,
+        "stemCrossMargin": 0,
+        "stemInsetDelta": 0
+      }
+    }
+  ]
+}

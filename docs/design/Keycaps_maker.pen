@@ -3035,6 +3035,232 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "UHUlE",
+      "x": 1540,
+      "y": 0,
+      "name": "Left Column / Export",
+      "width": 420,
+      "fill": "#FCFAF6",
+      "cornerRadius": 28,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "#D8CCB8"
+      },
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 22,
+      "children": [
+        {
+          "type": "frame",
+          "id": "Nr8Hk",
+          "name": "Segment Control",
+          "width": "fill_container",
+          "fill": "#EFE7DA",
+          "cornerRadius": 20,
+          "gap": 6,
+          "padding": 6,
+          "children": [
+            {
+              "type": "frame",
+              "id": "2MCaG",
+              "name": "segParams",
+              "width": "fill_container",
+              "fill": "#00000000",
+              "cornerRadius": 14,
+              "padding": [
+                12,
+                10
+              ],
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "DACeg",
+                  "name": "segParamsText",
+                  "fill": "#6F5E4D",
+                  "content": "設定",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "Bold"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "NIc6G",
+              "name": "segGuide",
+              "width": "fill_container",
+              "fill": "#00000000",
+              "cornerRadius": 14,
+              "padding": [
+                12,
+                10
+              ],
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "NHQbQ",
+                  "name": "segGuideText",
+                  "fill": "#6F5E4D",
+                  "content": "使い方",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "Bold"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wPqyx",
+              "name": "segExport",
+              "width": "fill_container",
+              "fill": "#2D241C",
+              "cornerRadius": 14,
+              "padding": [
+                12,
+                10
+              ],
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "dGaWs",
+                  "name": "segExportText",
+                  "fill": "#FFF9F0",
+                  "content": "書き出し",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "Bold"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "IGAQf",
+          "name": "sectionIntro",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "children": [
+            {
+              "type": "text",
+              "id": "g4KjY",
+              "name": "sectionIntroTitle",
+              "fill": "#2D241C",
+              "content": "書き出し",
+              "fontFamily": "Inter",
+              "fontSize": 24,
+              "fontWeight": "Bold"
+            },
+            {
+              "type": "text",
+              "id": "cjU1F",
+              "name": "sectionIntroText",
+              "fill": "#7C6A58",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "3MF の印刷データと、あとで編集を再開するための JSON を保存できます。",
+              "lineHeight": 1.45,
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "xcHZf",
+          "name": "Export JSON Card",
+          "width": "fill_container",
+          "fill": "#2D241C",
+          "cornerRadius": 20,
+          "layout": "vertical",
+          "gap": 6,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "dAneZ",
+              "fill": "#CDBFAE",
+              "content": "JSON",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "Bold"
+            },
+            {
+              "type": "text",
+              "id": "bdbma",
+              "fill": "#FFF9F0",
+              "content": "編集データを保存する",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "Bold"
+            },
+            {
+              "type": "text",
+              "id": "dEldy",
+              "fill": "#CDBFAE",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "保存した JSON は、この画面のどこへでもドラッグ&ドロップして取り込めます。読み込むと現在の設定を置き換えます。",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Pwopl",
+          "name": "Export 3MF Card",
+          "width": "fill_container",
+          "fill": "#2D241C",
+          "cornerRadius": 20,
+          "layout": "vertical",
+          "gap": 6,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "7Akwj",
+              "fill": "#CDBFAE",
+              "content": "3MF",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "Bold"
+            },
+            {
+              "type": "text",
+              "id": "7B9YK",
+              "fill": "#FFF9F0",
+              "content": "3MFデータを保存する",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "Bold"
+            },
+            {
+              "type": "text",
+              "id": "EI8Dn",
+              "fill": "#CDBFAE",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "本体、目印、印字を含む印刷用データを 3MF 形式でまとめて保存します。",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
