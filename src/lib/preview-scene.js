@@ -25,16 +25,36 @@ function normalizeLayers(layers) {
   return [{ mesh: layers, color: 0x4d8fd8, name: "preview" }];
 }
 
+function updatePointerVector(pointer, domElement, clientX, clientY) {
+  const rect = domElement.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) {
+    return false;
+  }
+
+  const normalizedX = ((clientX - rect.left) / rect.width) * 2 - 1;
+  const normalizedY = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+  if (normalizedX < -1 || normalizedX > 1 || normalizedY < -1 || normalizedY > 1) {
+    return false;
+  }
+
+  pointer.set(normalizedX, normalizedY);
+  return true;
+}
+
 export function mountPreviewScene(container, layers) {
+  const anchorElement = container.parentElement ?? container;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0xf7fbff, 1);
+  renderer.setClearColor(0x000000, 0);
   container.replaceChildren(renderer.domElement);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
+  controls.cursorStyle = "grab";
+  controls.enabled = false;
 
   scene.add(new THREE.AmbientLight(0xffffff, 1.4));
 
@@ -71,7 +91,115 @@ export function mountPreviewScene(container, layers) {
   controls.target.set(0, 0, 0);
   controls.update();
 
+  const interactiveMeshes = layerEntries.map((entry) => entry.previewMesh);
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  const canvas = renderer.domElement;
+  let isHoveringMesh = false;
+  let isInteracting = false;
+
+  const syncControlsState = (enabled) => {
+    controls.enabled = enabled;
+    if (!isInteracting) {
+      canvas.style.cursor = enabled ? "grab" : "default";
+    }
+  };
+
+  const updateHoverState = (clientX, clientY) => {
+    if (!updatePointerVector(pointer, canvas, clientX, clientY)) {
+      isHoveringMesh = false;
+      if (!isInteracting) {
+        syncControlsState(false);
+      }
+      return false;
+    }
+
+    raycaster.setFromCamera(pointer, camera);
+    isHoveringMesh = raycaster.intersectObjects(interactiveMeshes, false).length > 0;
+
+    if (!isInteracting) {
+      syncControlsState(isHoveringMesh);
+    }
+
+    return isHoveringMesh;
+  };
+
+  const handlePointerMove = (event) => {
+    if (isInteracting) {
+      return;
+    }
+
+    updateHoverState(event.clientX, event.clientY);
+  };
+
+  const handlePointerLeave = () => {
+    if (isInteracting) {
+      return;
+    }
+
+    isHoveringMesh = false;
+    syncControlsState(false);
+  };
+
+  const handlePointerDownCapture = (event) => {
+    syncControlsState(updateHoverState(event.clientX, event.clientY));
+  };
+
+  const handleWheelCapture = (event) => {
+    updateHoverState(event.clientX, event.clientY);
+  };
+
+  const handleControlStart = () => {
+    if (!controls.enabled) {
+      return;
+    }
+
+    isInteracting = true;
+    canvas.style.cursor = "grabbing";
+  };
+
+  const handleControlEnd = () => {
+    isInteracting = false;
+    isHoveringMesh = false;
+    syncControlsState(false);
+  };
+
+  canvas.addEventListener("pointermove", handlePointerMove);
+  canvas.addEventListener("pointerleave", handlePointerLeave);
+  canvas.addEventListener("pointerdown", handlePointerDownCapture, { capture: true });
+  canvas.addEventListener("wheel", handleWheelCapture, { capture: true, passive: true });
+  syncControlsState(false);
+
+  controls.addEventListener("start", handleControlStart);
+  controls.addEventListener("end", handleControlEnd);
+
+  const syncViewportCanvasBounds = () => {
+    if (window.innerWidth <= 760) {
+      container.style.left = "0";
+      container.style.top = "0";
+      container.style.width = "100%";
+      container.style.height = "100%";
+      return;
+    }
+
+    const rect = anchorElement.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const halfWidth = Math.max(centerX, viewportWidth - centerX, 1);
+    const halfHeight = Math.max(centerY, viewportHeight - centerY, 1);
+    const left = centerX - halfWidth - rect.left;
+    const top = centerY - halfHeight - rect.top;
+
+    container.style.left = `${left}px`;
+    container.style.top = `${top}px`;
+    container.style.width = `${halfWidth * 2}px`;
+    container.style.height = `${halfHeight * 2}px`;
+  };
+
   const handleResize = () => {
+    syncViewportCanvasBounds();
     const width = Math.max(container.clientWidth, 1);
     const height = Math.max(container.clientHeight, 1);
     camera.aspect = width / height;
@@ -82,7 +210,9 @@ export function mountPreviewScene(container, layers) {
   handleResize();
 
   const resizeObserver = new ResizeObserver(handleResize);
-  resizeObserver.observe(container);
+  resizeObserver.observe(anchorElement);
+  window.addEventListener("resize", handleResize);
+  window.addEventListener("scroll", handleResize, { passive: true });
 
   let frameId = 0;
   const renderFrame = () => {
@@ -95,6 +225,14 @@ export function mountPreviewScene(container, layers) {
   return () => {
     cancelAnimationFrame(frameId);
     resizeObserver.disconnect();
+    window.removeEventListener("resize", handleResize);
+    window.removeEventListener("scroll", handleResize);
+    canvas.removeEventListener("pointermove", handlePointerMove);
+    canvas.removeEventListener("pointerleave", handlePointerLeave);
+    canvas.removeEventListener("pointerdown", handlePointerDownCapture, { capture: true });
+    canvas.removeEventListener("wheel", handleWheelCapture, { capture: true });
+    controls.removeEventListener("start", handleControlStart);
+    controls.removeEventListener("end", handleControlEnd);
     controls.dispose();
     layerEntries.forEach((entry) => {
       entry.geometry.dispose();

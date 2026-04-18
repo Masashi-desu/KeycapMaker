@@ -84,7 +84,16 @@ const fieldGroups = [
     title: "Stem",
     description: "Choc v2 stem の基準パラメータ。方式差分は将来ここへ吸収します。",
     fields: [
-      { key: "stemEnabled", label: "Choc v2 stem を有効化", hint: "マウント用 stem を追加", type: "checkbox" },
+      {
+        key: "stemType",
+        label: "Stem 方式",
+        hint: "現在は Choc v2 のみ。将来はここで切り替えます。",
+        type: "select",
+        options: [
+          { value: "none", label: "なし" },
+          { value: "choc_v2", label: "Choc v2" },
+        ],
+      },
       { key: "stemWidth", label: "Stem 幅", hint: "外径の基準値", unit: "mm", step: 0.1, min: 0.5 },
       { key: "stemDepth", label: "Stem 奥行き", hint: "外径の補助値", unit: "mm", step: 0.1, min: 0.5 },
       { key: "stemHeight", label: "Stem 高さ", hint: "底面からの実高さ", unit: "mm", step: 0.1, min: 0.1 },
@@ -125,6 +134,7 @@ const state = {
     homingBarHeight: 0.6,
     homingBarOffsetY: -3.5,
     homingBarBaseThickness: 0.35,
+    stemType: "choc_v2",
     stemEnabled: true,
     stemWidth: 5.5,
     stemDepth: 5.5,
@@ -132,6 +142,12 @@ const state = {
     stemInset: 0.5,
   },
 };
+
+function syncDerivedKeycapParams() {
+  state.keycapParams.stemEnabled = state.keycapParams.stemType !== "none";
+}
+
+syncDerivedKeycapParams();
 
 if (!app) {
   throw new Error("#app が見つかりません。");
@@ -290,7 +306,9 @@ function render() {
 
         <section class="right-column">
           <div class="preview-area">
-            <div class="preview-stage" data-preview-stage></div>
+            <div class="preview-stage">
+              <div class="preview-stage__canvas" data-preview-stage></div>
+            </div>
           </div>
         </section>
       </section>
@@ -391,7 +409,7 @@ function renderGuideTab() {
       </li>
       <li class="guide-step">
         <strong>2. 右側で mesh を確認</strong>
-        <span>body と legend を別レイヤーで描画し、volume 分離を把握できます。</span>
+        <span>body と legend を別レイヤーで描画し、オブジェクト上にカーソルがあるときだけ回転・ズームできます。</span>
       </li>
       <li class="guide-step">
         <strong>3. runtime を検証</strong>
@@ -487,6 +505,28 @@ function renderField(field) {
     `;
   }
 
+  if (field.type === "select") {
+    return `
+      <label class="field">
+        <span class="field-copy">
+          <span class="field-label">${field.label}</span>
+          <span class="field-hint">${field.hint ?? ""}</span>
+        </span>
+        <span class="field-control field-control--select">
+          <select data-field="${field.key}">
+            ${field.options
+              .map(
+                (option) => `
+                  <option value="${option.value}" ${option.value === value ? "selected" : ""}>${option.label}</option>
+                `,
+              )
+              .join("")}
+          </select>
+        </span>
+      </label>
+    `;
+  }
+
   return `
     <label class="field">
       <span class="field-copy">
@@ -565,9 +605,13 @@ function handleFieldChange(event) {
 
   if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
+  } else if (input.tagName === "SELECT") {
+    state.keycapParams[field] = input.value;
   } else {
     state.keycapParams[field] = Number(input.value);
   }
+
+  syncDerivedKeycapParams();
 
   state.editorStatus = "dirty";
   state.editorSummary = "入力変更待ち";

@@ -10,6 +10,11 @@
   --panel-softer: #f5efe5;
   --panel-warm: #fff8ee;
   --panel-dark: #2d241c;
+  --glass-panel: rgba(252, 250, 246, 0.58);
+  --glass-panel-soft: rgba(243, 236, 225, 0.72);
+  --glass-panel-softer: rgba(245, 239, 229, 0.7);
+  --glass-panel-warm: rgba(255, 248, 238, 0.74);
+  --glass-outline: rgba(255, 255, 255, 0.34);
   --border: #d8ccb8;
   --border-soft: #e0d5c3;
   --text: #2d241c;
@@ -28,10 +33,12 @@ body {
 
 body {
   margin: 0;
+  overflow-x: hidden;
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -51,6 +58,7 @@ pre {
 .app-shell {
   min-height: 100vh;
   padding: 24px;
+  overflow-x: clip;
   background: linear-gradient(135deg, var(--page-start) 0%, var(--page-end) 100%);
 }
 
@@ -80,9 +88,13 @@ pre {
   gap: 14px;
   padding: 22px;
   border-radius: 28px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  box-shadow: 0 12px 28px rgba(45, 36, 28, 0.04);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 24%), var(--glass-panel);
+  border: 1px solid color-mix(in srgb, var(--border) 58%, white 42%);
+  box-shadow:
+    0 20px 44px rgba(45, 36, 28, 0.1),
+    inset 0 1px 0 var(--glass-outline);
+  backdrop-filter: blur(28px) saturate(145%);
+  -webkit-backdrop-filter: blur(28px) saturate(145%);
 }
 
 .inspector-content {
@@ -96,7 +108,8 @@ pre {
   gap: 6px;
   padding: 6px;
   border-radius: 20px;
-  background: #efe7da;
+  background: rgba(239, 231, 218, 0.74);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .segment-link {
@@ -155,7 +168,9 @@ pre {
   gap: 6px;
   padding: 14px 16px;
   border-radius: 18px;
-  background: var(--panel-soft);
+  background: var(--glass-panel-soft);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
 }
 
 .info-chip {
@@ -193,8 +208,10 @@ pre {
   gap: 12px;
   padding: 18px;
   border-radius: 22px;
-  background: var(--panel-warm);
-  border: 1px solid var(--border-soft);
+  background: var(--glass-panel-warm);
+  border: 1px solid color-mix(in srgb, var(--border-soft) 72%, white 28%);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
 }
 
 .subsection-title,
@@ -207,7 +224,8 @@ pre {
 .legend-input {
   padding: 14px 16px;
   border-radius: 16px;
-  background: var(--panel-softer);
+  background: var(--glass-panel-softer);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .legend-input strong {
@@ -231,7 +249,8 @@ pre {
   align-items: center;
   padding: 12px 14px;
   border-radius: 16px;
-  background: #f7f0e6;
+  background: rgba(247, 240, 230, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .field--checkbox {
@@ -257,7 +276,7 @@ pre {
   min-width: 110px;
   padding: 8px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.68);
 }
 
 .field input[type="number"] {
@@ -267,6 +286,19 @@ pre {
   background: transparent;
   color: var(--text);
   text-align: right;
+}
+
+.field select {
+  min-width: 132px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.field-control--select {
+  justify-content: space-between;
 }
 
 .field-unit,
@@ -367,10 +399,12 @@ pre {
 .secondary-card-button {
   padding: 14px 16px;
   border-radius: 18px;
-  background: var(--panel-soft);
+  background: var(--glass-panel-soft);
   text-align: left;
   font-size: 15px;
   font-weight: 700;
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
 }
 
 .mini-code-block {
@@ -425,10 +459,17 @@ pre {
   aspect-ratio: 1 / 1;
   max-height: 100%;
   flex: 0 0 auto;
+  position: relative;
+  overflow: visible;
   background: transparent;
 }
 
-.preview-stage canvas {
+.preview-stage__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.preview-stage__canvas canvas {
   display: block;
   width: 100%;
   height: 100%;
@@ -459,7 +500,6 @@ pre {
 }
 
 .editor-screen--overlap .preview-stage {
-  width: var(--preview-size);
   margin-left: auto;
 }
 
@@ -492,6 +532,7 @@ pre {
     min-height: 520px;
     max-height: none;
   }
+
 }
 
 @media (max-width: 720px) {
