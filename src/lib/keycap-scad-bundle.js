@@ -86,10 +86,9 @@ function createKeycapDefinitions({ params, exportTarget }) {
     user_homing_bar_offset_y: params.homingBarOffsetY,
     user_homing_bar_base_thickness: params.homingBarBaseThickness,
     user_stem_enabled: params.stemEnabled,
-    user_stem_width: params.stemWidth,
-    user_stem_depth: params.stemDepth,
-    user_stem_height: params.stemHeight,
-    user_stem_inset: params.stemInset,
+    user_stem_outer_delta: params.stemOuterDelta,
+    user_stem_cross_margin: params.stemCrossMargin,
+    user_stem_inset_delta: params.stemInsetDelta,
   };
 }
 

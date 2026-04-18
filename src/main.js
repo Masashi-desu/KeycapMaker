@@ -276,7 +276,7 @@ const fieldGroups = [
   },
   {
     title: "取り付け部分",
-    description: "スイッチにはめる部分の大きさを調整します。今は Choc v2 に対応しています。",
+    description: "Choc v2 の標準寸法を 0 として、材料や印刷条件に合わせたクリアランスを調整します。",
     fields: [
       {
         key: "stemType",
@@ -288,10 +288,30 @@ const fieldGroups = [
           { value: "choc_v2", label: "Choc v2" },
         ],
       },
-      { key: "stemWidth", label: "取り付け部の幅", hint: "左右の基準サイズです", unit: "mm", step: 0.1, min: 0.5 },
-      { key: "stemDepth", label: "取り付け部の奥行き", hint: "前後の基準サイズです", unit: "mm", step: 0.1, min: 0.5 },
-      { key: "stemHeight", label: "取り付け部の高さ", hint: "どれだけ深く差し込むかです", unit: "mm", step: 0.1, min: 0.1 },
-      { key: "stemInset", label: "底面からの開始位置", hint: "取り付け部が始まる位置です", unit: "mm", step: 0.1, min: 0.1 },
+      {
+        key: "stemOuterDelta",
+        label: "円の大きさ補正",
+        hint: "0 が標準です。プラスで外周円を太く、マイナスで細くします",
+        unit: "mm",
+        step: 0.02,
+        visibleWhen: (params) => params.stemEnabled,
+      },
+      {
+        key: "stemCrossMargin",
+        label: "十字のマージン",
+        hint: "0 が標準です。プラスで十字穴を広げ、マイナスで狭めます",
+        unit: "mm",
+        step: 0.02,
+        visibleWhen: (params) => params.stemEnabled,
+      },
+      {
+        key: "stemInsetDelta",
+        label: "軸の開始位置補正",
+        hint: "0 が標準です。プラスで底面からの開始位置を上げます",
+        unit: "mm",
+        step: 0.05,
+        visibleWhen: (params) => params.stemEnabled,
+      },
     ],
   },
 ];
@@ -343,10 +363,9 @@ const state = {
     homingBarColor: DEFAULT_KEYCAP_COLORS.homingBarColor,
     stemType: "choc_v2",
     stemEnabled: true,
-    stemWidth: 5.5,
-    stemDepth: 5.5,
-    stemHeight: 6.5,
-    stemInset: 0.5,
+    stemOuterDelta: 0,
+    stemCrossMargin: 0,
+    stemInsetDelta: 0,
   },
 };
 
@@ -1111,7 +1130,7 @@ function handleFieldChange(event) {
   state.editorStatus = "dirty";
   state.editorSummary = "入力内容を反映待ち";
 
-  if (field === "legendEnabled" || field === "homingBarEnabled") {
+  if (field === "legendEnabled" || field === "homingBarEnabled" || field === "stemType") {
     render({ animateInspector: true });
   }
 

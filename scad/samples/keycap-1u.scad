@@ -18,10 +18,9 @@ user_homing_bar_length = 4.0;
 user_homing_bar_width = 1.58;
 user_homing_bar_offset_y = -3.5;
 user_homing_bar_base_thickness = 0.35;
-user_stem_width = 5.5;
-user_stem_depth = 5.5;
-user_stem_height = 6.5;
-user_stem_inset = 0.5;
+user_stem_outer_delta = 0;
+user_stem_cross_margin = 0;
+user_stem_inset_delta = 0;
 user_homing_bar_enabled = true;
 
 include <../base/keycap.scad>

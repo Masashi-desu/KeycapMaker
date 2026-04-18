@@ -5,6 +5,9 @@ use <../modules/stem_choc_v2.scad>
 use <../modules/homing_bar.scad>
 
 resolved_export_target = is_undef(export_target) ? "preview" : export_target;
+function positive_dimension(value, minimum = 0.1) = max(value, minimum);
+function stem_cross_dimension(base_value, margin) =
+    positive_dimension(base_value + margin * 2);
 
 key_width = is_undef(user_key_width) ? default_key_width : user_key_width;
 key_depth = is_undef(user_key_depth) ? default_key_depth : user_key_depth;
@@ -66,26 +69,33 @@ legend_tilt_margin = abs(tan(top_tilt)) * key_depth;
 legend_projection_margin = max(dish_depth + legend_curve_margin + legend_tilt_margin + 0.5, 1);
 
 stem_enabled = is_undef(user_stem_enabled) ? true : user_stem_enabled;
-stem_width = is_undef(user_stem_width) ? default_stem_width : user_stem_width;
-stem_depth = is_undef(user_stem_depth) ? default_stem_depth : user_stem_depth;
-stem_outer_diameter = is_undef(user_stem_outer_diameter)
-    ? min(stem_width, stem_depth)
-    : user_stem_outer_diameter;
-stem_inset = is_undef(user_stem_inset) ? default_stem_inset : user_stem_inset;
+stem_outer_delta = is_undef(user_stem_outer_delta) ? 0 : user_stem_outer_delta;
+stem_cross_margin = is_undef(user_stem_cross_margin) ? 0 : user_stem_cross_margin;
+stem_inset_delta = is_undef(user_stem_inset_delta) ? 0 : user_stem_inset_delta;
+legacy_stem_width = is_undef(user_stem_width) ? default_stem_width : user_stem_width;
+legacy_stem_depth = is_undef(user_stem_depth) ? default_stem_depth : user_stem_depth;
+stem_outer_diameter = !is_undef(user_stem_outer_diameter)
+    ? positive_dimension(user_stem_outer_diameter)
+    : (!is_undef(user_stem_width) || !is_undef(user_stem_depth))
+        ? positive_dimension(min(legacy_stem_width, legacy_stem_depth))
+        : positive_dimension(default_stem_outer_diameter + stem_outer_delta);
+stem_inset = is_undef(user_stem_inset)
+    ? max(default_stem_inset + stem_inset_delta, 0)
+    : max(user_stem_inset, 0);
 stem_height = is_undef(user_stem_height)
     ? max(body_height - dish_depth - top_thickness - stem_inset, 0.6)
     : user_stem_height;
 stem_cross_width_horizontal = is_undef(user_stem_cross_width_horizontal)
-    ? default_stem_cross_width_horizontal
+    ? stem_cross_dimension(default_stem_cross_width_horizontal, stem_cross_margin)
     : user_stem_cross_width_horizontal;
 stem_cross_length_horizontal = is_undef(user_stem_cross_length_horizontal)
-    ? default_stem_cross_length_horizontal
+    ? stem_cross_dimension(default_stem_cross_length_horizontal, stem_cross_margin)
     : user_stem_cross_length_horizontal;
 stem_cross_width_vertical = is_undef(user_stem_cross_width_vertical)
-    ? default_stem_cross_width_vertical
+    ? stem_cross_dimension(default_stem_cross_width_vertical, stem_cross_margin)
     : user_stem_cross_width_vertical;
 stem_cross_length_vertical = is_undef(user_stem_cross_length_vertical)
-    ? default_stem_cross_length_vertical
+    ? stem_cross_dimension(default_stem_cross_length_vertical, stem_cross_margin)
     : user_stem_cross_length_vertical;
 stem_cross_chamfer = is_undef(user_stem_cross_chamfer)
     ? default_stem_cross_chamfer
