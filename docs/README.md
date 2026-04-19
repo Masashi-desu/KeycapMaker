@@ -1,25 +1,29 @@
 # docs ディレクトリ案内
 
-`docs/` は、このリポジトリで実装を継続するための文書群をまとめる場所です。
+`docs/` は、現在の実装を保守・拡張するための文書群です。未解決の TODO と採用済みの設計判断を分け、日常的に参照しやすい構成にしています。
 
 ## サブディレクトリの役割
 
-- `design/`: Pencil の `.pen` を含む画面デザインの正本と、その参照用プレビューを置きます
-- `roadmap/`: 実行順序を固定した主手順書と、進行管理に使う文書を置きます
-- `research/`: 背景知識、比較情報、判断材料、注意事項を置きます
-- `specs/`: スコープ、用語、判断記録など、実装時の基準になる文書を置きます
+- `architecture/`: アプリ構成、SCAD / export 契約、実装上の前提
+- `guide/`: ローカル開発手順、手動確認手順、更新時の運用
+- `decisions/`: 採用済みの判断を時系列で残す記録
+- `reference/`: 用語や短い参照資料
+- `backlog/`: 未着手または継続検討中の拡張 TODO
+- `design/`: Pencil の `.pen` を含む画面デザインの正本
 
 ## 推奨読書順
 
-1. [roadmap/implementation-plan.md](roadmap/implementation-plan.md)
-2. [roadmap/checkpoints.md](roadmap/checkpoints.md)
-3. [specs/project-scope.md](specs/project-scope.md)
-4. 必要に応じて `research/` 配下の各資料
-5. 実装や判断を進めたら [specs/decision-log.md](specs/decision-log.md) を更新
+1. [architecture/overview.md](architecture/overview.md)
+2. [architecture/scad-and-export.md](architecture/scad-and-export.md)
+3. [guide/development.md](guide/development.md)
+4. [guide/manual-verification.md](guide/manual-verification.md)
+5. [decisions/decision-log.md](decisions/decision-log.md)
+6. 必要に応じて `backlog/` と `design/`
 
 ## 運用ルール
 
-- 実装順序で迷ったら `roadmap/implementation-plan.md` を正とする
-- `roadmap/implementation-plan.md` では、各タスクの中で `Codex` と `人間` の担当を分けて読む
-- 背景知識は `research/` に寄せ、主手順書に比較情報を詰め込みすぎない
-- 実際の判断結果は `specs/decision-log.md` に残し、未確認事項を確認済み扱いにしない
+- 構成や責務が変わったら `architecture/` を更新する
+- 日常運用や確認手順が変わったら `guide/` を更新する
+- 採用した判断は [decisions/decision-log.md](decisions/decision-log.md) に残す
+- 将来の拡張案や未解決事項は `backlog/` に寄せる
+- 画面デザイン変更は `design/` を正本とする

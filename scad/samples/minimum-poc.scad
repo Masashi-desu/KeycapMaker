@@ -1,6 +1,6 @@
-// Minimum PoC sample for browser-side OpenSCAD validation.
-// This sample intentionally avoids font dependencies so Task 02 can
-// validate the runtime before `text()` and font packaging are introduced.
+// Minimum runtime smoke sample for browser-side OpenSCAD validation.
+// This sample intentionally avoids font dependencies so the runtime can
+// be checked independently from `text()` and bundled font assets.
 
 body_width = 18;
 body_depth = 18;

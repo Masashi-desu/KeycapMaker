@@ -1,13 +1,13 @@
 # scad ディレクトリ案内
 
-`scad/` にはキーキャップ形状に関する SCAD 資産を置きます。ここでは、プレビュー用と本番出力用の責務分離、および body / legend を別体積で扱える構造を意識します。stem は `MX / Choc v1 / Choc v2 / Alps` の mount 差分を `modules/` に分離して扱います。
+`scad/` にはキーキャップ形状に関する SCAD 資産を置きます。ここでは、プレビュー用と本番出力用の責務分離、および body / legend を別体積で扱える構造を維持します。stem は `MX / Choc v1 / Choc v2 / Alps` の mount 差分を `modules/` に分離して扱います。
 
 ## サブディレクトリの役割
 
 - `base/`: キーキャップ全体の基礎形状と export エントリを置く
 - `modules/`: stem、legend、形状差分などの再利用モジュールを置く
 - `presets/`: profile やキー種別ごとの初期値や定義を置く
-- `samples/`: PoC や回帰確認に使う最小サンプルを置く
+- `samples/`: ランタイム簡易チェックと回帰確認に使うサンプルを置く
 
 ## 現在の主要ファイル
 
