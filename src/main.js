@@ -20,6 +20,10 @@ const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycap3mfPath = "keycap-preview.3mf";
 const EDITOR_DATA_KIND = "keycaps-maker/editor-params";
 const EDITOR_DATA_SCHEMA_VERSION = 1;
+const CHEVRON_ICON_URLS = Object.freeze({
+  expanded: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-up.svg",
+  collapsed: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-down.svg",
+});
 let disposePreviewScene = null;
 let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
@@ -133,6 +137,7 @@ const fieldGroups = [
     ],
   },
   {
+    id: "legend",
     title: "印字",
     description: "入れる文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
     fields: [
@@ -238,6 +243,7 @@ const fieldGroups = [
     ],
   },
   {
+    id: "homing",
     title: "指の目印",
     description: "F キーや J キーのように、指で触って分かる出っ張りを調整します。印字とは別に設定できます。",
     fields: [
@@ -297,6 +303,7 @@ const fieldGroups = [
     ],
   },
   {
+    id: "stem",
     title: "取り付け部分",
     description: "Choc v2 の標準寸法を 0 として、材料や印刷条件に合わせたクリアランスを調整します。",
     fields: [
@@ -345,6 +352,10 @@ const colorFieldKeys = new Set(
   fieldGroups.flatMap((group) => group.fields).filter((field) => field.type === "color").map((field) => field.key),
 );
 
+function createFieldGroupCollapseState() {
+  return Object.fromEntries(fieldGroups.map((group) => [group.id, true]));
+}
+
 function syncDerivedKeycapParams(params = state.keycapParams) {
   params.stemEnabled = params.stemType !== "none";
   return params;
@@ -365,6 +376,7 @@ const state = {
   previewLayers: [],
   sidebarTab: "params",
   isImportDragActive: false,
+  collapsedFieldGroups: createFieldGroupCollapseState(),
   keycapParams: syncDerivedKeycapParams(createDefaultKeycapParams()),
 };
 
@@ -789,16 +801,35 @@ function renderStatusCard(label, status, summary) {
 
 function renderFieldGroup(group, groupIndex) {
   const visibleFields = group.fields.filter((field) => isFieldVisible(field));
-  const groupViewTransitionName = createViewTransitionName("field-group", group.id ?? groupIndex);
+  const groupId = group.id ?? `group-${groupIndex}`;
+  const isCollapsed = state.collapsedFieldGroups[groupId] === true;
+  const groupViewTransitionName = createViewTransitionName("field-group", groupId);
+  const groupBodyId = `field-group-body-${groupId}`;
+  const toggleLabel = isCollapsed ? `${group.title}を展開` : `${group.title}を折りたたむ`;
+  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
 
   return `
     <section class="field-group-card" style="view-transition-name: ${groupViewTransitionName};">
       <div class="field-group-header">
-        <h3>${group.title}</h3>
-        <p>${group.description}</p>
+        <div class="field-group-header__row">
+          <h3>${group.title}</h3>
+          <button
+            class="field-group-toggle"
+            type="button"
+            data-field-group-toggle="${groupId}"
+            aria-expanded="${isCollapsed ? "false" : "true"}"
+            aria-controls="${groupBodyId}"
+            aria-label="${toggleLabel}"
+          >
+            <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+          </button>
+        </div>
       </div>
-      <div class="field-grid">
-        ${visibleFields.map((field) => renderField(field)).join("")}
+      <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
+        <p class="field-group-description">${group.description}</p>
+        <div class="field-grid">
+          ${visibleFields.map((field) => renderField(field)).join("")}
+        </div>
       </div>
     </section>
   `;
@@ -987,6 +1018,12 @@ function handleSegmentControlClick(event) {
 }
 
 function handleInspectorCardClick(event) {
+  const groupToggleButton = getClosestFromEventTarget(event, "[data-field-group-toggle]");
+  if (groupToggleButton) {
+    toggleFieldGroup(groupToggleButton.dataset.fieldGroupToggle);
+    return;
+  }
+
   const colorPickerButton = getClosestFromEventTarget(event, "[data-color-picker-open]");
   if (colorPickerButton) {
     openColorPicker(colorPickerButton.dataset.colorPickerOpen);
@@ -1042,6 +1079,15 @@ function handleSidebarTabChange(event) {
   }
 
   state.sidebarTab = nextTab;
+  render({ animateInspector: true });
+}
+
+function toggleFieldGroup(groupId) {
+  if (!groupId || !(groupId in state.collapsedFieldGroups)) {
+    return;
+  }
+
+  state.collapsedFieldGroups[groupId] = !state.collapsedFieldGroups[groupId];
   render({ animateInspector: true });
 }
 

@@ -192,23 +192,60 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "7HBcL",
+                      "id": "Gmalx",
+                      "name": "shapeHeader",
                       "width": "fill_container",
                       "layout": "vertical",
-                      "gap": 4,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "Bwbre",
-                          "fill": "#2D241C",
-                          "content": "キーキャップの形",
-                          "fontFamily": "Inter",
-                          "fontSize": 20,
-                          "fontWeight": "Bold"
+                          "type": "frame",
+                          "id": "aVyqg",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "kGlyP",
+                              "fill": "#2D241C",
+                              "content": "キーキャップの形",
+                              "fontFamily": "Inter",
+                              "fontSize": 20,
+                              "fontWeight": "Bold"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "zR94e",
+                              "name": "collapseButton",
+                              "width": 30,
+                              "height": 30,
+                              "fill": "#FFFFFFB8",
+                              "cornerRadius": 12,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "#E0D5C3"
+                              },
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "NCwbo",
+                                  "width": 16,
+                                  "height": 16,
+                                  "iconFontName": "chevron-up",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#6F5E4D"
+                                }
+                              ]
+                            }
+                          ]
                         },
                         {
                           "type": "text",
-                          "id": "Omf42",
+                          "id": "lf7xW",
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
@@ -908,23 +945,60 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "2sQSH",
+                      "id": "eD08E",
+                      "name": "legendHeader",
                       "width": "fill_container",
                       "layout": "vertical",
-                      "gap": 4,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "Y8seY",
-                          "fill": "#2D241C",
-                          "content": "印字",
-                          "fontFamily": "Inter",
-                          "fontSize": 20,
-                          "fontWeight": "Bold"
+                          "type": "frame",
+                          "id": "08XKu",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "po33e",
+                              "fill": "#2D241C",
+                              "content": "印字",
+                              "fontFamily": "Inter",
+                              "fontSize": 20,
+                              "fontWeight": "Bold"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "SMi5a",
+                              "name": "collapseButton",
+                              "width": 30,
+                              "height": 30,
+                              "fill": "#FFFFFFB8",
+                              "cornerRadius": 12,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "#E0D5C3"
+                              },
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "jWZAr",
+                                  "width": 16,
+                                  "height": 16,
+                                  "iconFontName": "chevron-up",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#6F5E4D"
+                                }
+                              ]
+                            }
+                          ]
                         },
                         {
                           "type": "text",
-                          "id": "uhVDs",
+                          "id": "8OVI0",
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
@@ -1962,23 +2036,60 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "f1dhU",
+                      "id": "oN2Jh",
+                      "name": "homingHeader",
                       "width": "fill_container",
                       "layout": "vertical",
-                      "gap": 4,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "w0LfR",
-                          "fill": "#2D241C",
-                          "content": "指の目印",
-                          "fontFamily": "Inter",
-                          "fontSize": 20,
-                          "fontWeight": "Bold"
+                          "type": "frame",
+                          "id": "Xsvfn",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rRkKo",
+                              "fill": "#2D241C",
+                              "content": "指の目印",
+                              "fontFamily": "Inter",
+                              "fontSize": 20,
+                              "fontWeight": "Bold"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "RcrCr",
+                              "name": "collapseButton",
+                              "width": 30,
+                              "height": 30,
+                              "fill": "#FFFFFFB8",
+                              "cornerRadius": 12,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "#E0D5C3"
+                              },
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "9oAfP",
+                                  "width": 16,
+                                  "height": 16,
+                                  "iconFontName": "chevron-up",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#6F5E4D"
+                                }
+                              ]
+                            }
+                          ]
                         },
                         {
                           "type": "text",
-                          "id": "XLgrC",
+                          "id": "CXUZI",
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
@@ -2629,23 +2740,60 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "88pnD",
+                      "id": "CGeIo",
+                      "name": "stemHeader",
                       "width": "fill_container",
                       "layout": "vertical",
-                      "gap": 4,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "qDLNi",
-                          "fill": "#2D241C",
-                          "content": "取り付け部分",
-                          "fontFamily": "Inter",
-                          "fontSize": 20,
-                          "fontWeight": "Bold"
+                          "type": "frame",
+                          "id": "Npxsh",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "WMO0K",
+                              "fill": "#2D241C",
+                              "content": "取り付け部分",
+                              "fontFamily": "Inter",
+                              "fontSize": 20,
+                              "fontWeight": "Bold"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "08dzQ",
+                              "name": "collapseButton",
+                              "width": 30,
+                              "height": 30,
+                              "fill": "#FFFFFFB8",
+                              "cornerRadius": 12,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "#E0D5C3"
+                              },
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "TGfr0",
+                                  "width": 16,
+                                  "height": 16,
+                                  "iconFontName": "chevron-up",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#6F5E4D"
+                                }
+                              ]
+                            }
+                          ]
                         },
                         {
                           "type": "text",
-                          "id": "lKVu4",
+                          "id": "mADXa",
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
