@@ -150,7 +150,7 @@ pre {
   --segment-gap: 6px;
   --segment-padding: 6px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--segment-count), minmax(0, 1fr));
   gap: var(--segment-gap);
   padding: var(--segment-padding);
   border-radius: 20px;
@@ -188,6 +188,7 @@ pre {
   cursor: pointer;
   position: relative;
   z-index: 1;
+  white-space: nowrap;
   transition:
     color 180ms ease,
     transform 180ms ease;
@@ -845,15 +846,13 @@ pre {
   }
 
   .segment-control {
-    grid-template-columns: 1fr;
+    --segment-gap: 4px;
+    --segment-padding: 4px;
   }
 
-  .segment-control__indicator {
-    bottom: auto;
-    right: var(--segment-padding);
-    width: auto;
-    height: calc((100% - (var(--segment-padding) * 2) - (var(--segment-gap) * (var(--segment-count) - 1))) / var(--segment-count));
-    transform: translateY(calc(var(--segment-index) * (100% + var(--segment-gap))));
+  .segment-link {
+    padding: 9px 8px;
+    font-size: 12px;
   }
 
   .field,
