@@ -1132,7 +1132,9 @@ function pickEditorSelectors(params) {
 function listEditableParamKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   const defaults = createDefaultKeycapParams(profileKey);
 
-  return Object.keys(defaults).filter((key) => fieldConfigByKey.has(key) || EDITOR_SELECTOR_KEYS.includes(key));
+  // Preserve hidden geometry defaults as part of the editor state so profile switches
+  // and JSON round-trips do not silently fall back to the SCAD preset values.
+  return Object.keys(defaults);
 }
 
 function sanitizeEditorParamValue(fieldKey, value, fallback) {
