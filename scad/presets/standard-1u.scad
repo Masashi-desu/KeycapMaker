@@ -45,3 +45,36 @@ default_stem_cross_length_horizontal = 4.3;
 default_stem_cross_width_vertical = 1.35;
 default_stem_cross_length_vertical = 4.3;
 default_stem_cross_chamfer = 0.4;
+
+default_stem_type = "choc_v2";
+
+default_stem_mx_outer_diameter = 5.5;
+default_stem_mx_height = 4.5;
+default_stem_mx_inset = 0;
+default_stem_mx_cross_width_horizontal = default_stem_cross_width_horizontal;
+default_stem_mx_cross_length_horizontal = default_stem_cross_length_horizontal;
+default_stem_mx_cross_width_vertical = default_stem_cross_width_vertical;
+default_stem_mx_cross_length_vertical = default_stem_cross_length_vertical;
+default_stem_mx_cross_chamfer = default_stem_cross_chamfer;
+
+default_stem_choc_v2_outer_diameter = default_stem_outer_diameter;
+default_stem_choc_v2_height = default_stem_height;
+default_stem_choc_v2_inset = default_stem_inset;
+default_stem_choc_v2_cross_width_horizontal = default_stem_cross_width_horizontal;
+default_stem_choc_v2_cross_length_horizontal = default_stem_cross_length_horizontal;
+default_stem_choc_v2_cross_width_vertical = default_stem_cross_width_vertical;
+default_stem_choc_v2_cross_length_vertical = default_stem_cross_length_vertical;
+default_stem_choc_v2_cross_chamfer = default_stem_cross_chamfer;
+
+default_stem_choc_v1_height = 3.0;
+default_stem_choc_v1_inset = 0;
+default_stem_choc_v1_prong_width = 1.2;
+default_stem_choc_v1_prong_depth = 3.0;
+default_stem_choc_v1_prong_spacing = 5.7;
+default_stem_choc_v1_lead_in = 0.12;
+
+default_stem_alps_height = 3.5;
+default_stem_alps_inset = 0;
+default_stem_alps_length = 4.45;
+default_stem_alps_width = 2.25;
+default_stem_alps_lead_in = 0.12;

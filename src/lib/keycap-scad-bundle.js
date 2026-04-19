@@ -2,7 +2,10 @@ import keycapBaseScad from "../../scad/base/keycap.scad?raw";
 import keycapShellScad from "../../scad/modules/keycap_shell.scad?raw";
 import homingBarScad from "../../scad/modules/homing_bar.scad?raw";
 import legendBlockScad from "../../scad/modules/legend_block.scad?raw";
+import stemMxScad from "../../scad/modules/stem_mx.scad?raw";
+import stemChocV1Scad from "../../scad/modules/stem_choc_v1.scad?raw";
 import stemChocV2Scad from "../../scad/modules/stem_choc_v2.scad?raw";
+import stemAlpsScad from "../../scad/modules/stem_alps.scad?raw";
 import standardPresetScad from "../../scad/presets/standard-1u.scad?raw";
 
 export const KEYCAP_ENTRY_PATH = "/scad/base/keycap.scad";
@@ -41,7 +44,10 @@ const SCAD_FILES = [
   { path: "/scad/modules/keycap_shell.scad", content: keycapShellScad },
   { path: "/scad/modules/homing_bar.scad", content: homingBarScad },
   { path: "/scad/modules/legend_block.scad", content: legendBlockScad },
+  { path: "/scad/modules/stem_mx.scad", content: stemMxScad },
+  { path: "/scad/modules/stem_choc_v1.scad", content: stemChocV1Scad },
   { path: "/scad/modules/stem_choc_v2.scad", content: stemChocV2Scad },
+  { path: "/scad/modules/stem_alps.scad", content: stemAlpsScad },
   { path: "/scad/presets/standard-1u.scad", content: standardPresetScad },
 ];
 const runtimeAssetPromises = new Map();
@@ -89,6 +95,7 @@ function createKeycapDefinitions({ params, exportTarget }) {
     user_homing_bar_height: params.homingBarHeight,
     user_homing_bar_offset_y: params.homingBarOffsetY,
     user_homing_bar_base_thickness: params.homingBarBaseThickness,
+    user_stem_type: params.stemType,
     user_stem_enabled: params.stemEnabled,
     user_stem_outer_delta: params.stemOuterDelta,
     user_stem_cross_margin: params.stemCrossMargin,

@@ -96,6 +96,80 @@ function createDefaultKeycapParams(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   return cloneSerializable(profile?.defaults ?? {});
 }
 
+const STEM_TYPE_OPTIONS = Object.freeze([
+  { value: "none", label: "なし" },
+  { value: "mx", label: "MX 互換" },
+  { value: "choc_v1", label: "Choc v1" },
+  { value: "choc_v2", label: "Choc v2" },
+  { value: "alps", label: "Alps / Matias" },
+]);
+const STEM_TYPE_LABELS = new Map(STEM_TYPE_OPTIONS.map((option) => [option.value, option.label]));
+const CROSS_COMPATIBLE_STEM_TYPES = new Set(["mx", "choc_v2"]);
+
+function isSupportedStemType(stemType) {
+  return STEM_TYPE_LABELS.has(stemType);
+}
+
+function isCrossCompatibleStemType(stemType) {
+  return CROSS_COMPATIBLE_STEM_TYPES.has(stemType);
+}
+
+function resolveDefaultStemType(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  const defaults = createDefaultKeycapParams(profileKey);
+  return isSupportedStemType(defaults.stemType) ? defaults.stemType : "choc_v2";
+}
+
+function resolveStemType(params = {}) {
+  if (isSupportedStemType(params.stemType)) {
+    return params.stemType;
+  }
+
+  return resolveDefaultStemType(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
+}
+
+function getStemGroupDescription(params) {
+  const stemType = resolveStemType(params);
+
+  switch (stemType) {
+    case "none":
+      return "取り付け部分を作りません。外形や印字だけを確認したいとき向けです。";
+    case "mx":
+      return "Cherry MX 互換の十字形状です。Cherry / Gateron / Kailh BOX など、一般的なメカニカルキーボード用の軸に合います。";
+    case "choc_v1":
+      return "Kailh Choc v1 用の 2 本爪形状です。薄型キーボード向けの Choc v1 軸に合います。";
+    case "alps":
+      return "Alps / Matias 系の差し込み形状です。対応する Alps 系の軸に合います。";
+    default:
+      return "Kailh Choc v2 用の十字形状です。Choc v2 軸に合う取り付け部分を作ります。";
+  }
+}
+
+function getStemOuterHint(params) {
+  return resolveStemType(params) === "mx"
+    ? "0 が標準です。プラスで外周円を太く、マイナスで細くします"
+    : "0 が標準です。プラスで外周円を太く、マイナスで細くします";
+}
+
+function getStemFitHint(params) {
+  switch (resolveStemType(params)) {
+    case "mx":
+    case "choc_v2":
+      return "0 が標準です。プラスで十字穴を広げ、マイナスで狭めます";
+    case "choc_v1":
+      return "0 が標準です。プラスで 2 本爪を細くして緩く、マイナスで太くしてきつくします";
+    case "alps":
+      return "0 が標準です。プラスで差し込み部を細くして緩く、マイナスで太くしてきつくします";
+    default:
+      return "取り付け部分を作らないときは使いません";
+  }
+}
+
+function getStemInsetHint(params) {
+  return resolveStemType(params) === "none"
+    ? "取り付け部分を作らないときは使いません"
+    : "0 が標準です。プラスで底面からの開始位置を上げ、内部干渉を避けます";
+}
+
 const fieldGroups = [
   {
     id: "shape",
@@ -314,30 +388,27 @@ const fieldGroups = [
   {
     id: "stem",
     title: "取り付け部分",
-    description: "Choc v2 の標準寸法を 0 として、材料や印刷条件に合わせたクリアランスを調整します。",
+    description: (params) => getStemGroupDescription(params),
     fields: [
       {
         key: "stemType",
         label: "取り付け方式",
-        hint: "現在は Choc v2 のみ選べます",
+        hint: "キーキャップが合う軸の種類を選びます",
         type: "select",
-        options: [
-          { value: "none", label: "なし" },
-          { value: "choc_v2", label: "Choc v2" },
-        ],
+        options: STEM_TYPE_OPTIONS,
       },
       {
         key: "stemOuterDelta",
-        label: "円の大きさ補正",
-        hint: "0 が標準です。プラスで外周円を太く、マイナスで細くします",
+        label: "外周の補正",
+        hint: (params) => getStemOuterHint(params),
         unit: "mm",
         step: 0.02,
-        visibleWhen: (params) => params.stemEnabled,
+        visibleWhen: (params) => params.stemEnabled && isCrossCompatibleStemType(resolveStemType(params)),
       },
       {
         key: "stemCrossMargin",
-        label: "十字のマージン",
-        hint: "0 が標準です。プラスで十字穴を広げ、マイナスで狭めます",
+        label: "はまりのゆとり",
+        hint: (params) => getStemFitHint(params),
         unit: "mm",
         step: 0.02,
         visibleWhen: (params) => params.stemEnabled,
@@ -345,7 +416,7 @@ const fieldGroups = [
       {
         key: "stemInsetDelta",
         label: "軸の開始位置補正",
-        hint: "0 が標準です。プラスで底面からの開始位置を上げます",
+        hint: (params) => getStemInsetHint(params),
         unit: "mm",
         step: 0.05,
         visibleWhen: (params) => params.stemEnabled,
@@ -366,6 +437,7 @@ function createFieldGroupCollapseState() {
 }
 
 function syncDerivedKeycapParams(params = state.keycapParams) {
+  params.stemType = resolveStemType(params);
   params.stemEnabled = params.stemType !== "none";
   return params;
 }
@@ -816,6 +888,7 @@ function renderFieldGroup(group, groupIndex) {
   const groupBodyId = `field-group-body-${groupId}`;
   const toggleLabel = isCollapsed ? `${group.title}を展開` : `${group.title}を折りたたむ`;
   const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
+  const groupDescription = resolveDynamicCopy(group.description);
 
   return `
     <section class="field-group-card" style="view-transition-name: ${groupViewTransitionName};">
@@ -835,7 +908,7 @@ function renderFieldGroup(group, groupIndex) {
         </div>
       </div>
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
-        <p class="field-group-description">${group.description}</p>
+        <p class="field-group-description">${groupDescription}</p>
         <div class="field-grid">
           ${visibleFields.map((field) => renderField(field)).join("")}
         </div>
@@ -852,16 +925,23 @@ function isFieldVisible(field) {
   return field.visibleWhen(state.keycapParams);
 }
 
+function resolveDynamicCopy(value, params = state.keycapParams) {
+  return typeof value === "function" ? value(params) : (value ?? "");
+}
+
 function renderField(field) {
   const value = state.keycapParams[field.key];
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
+  const fieldLabel = resolveDynamicCopy(field.label);
+  const fieldHint = resolveDynamicCopy(field.hint);
+  const secondaryLabel = resolveDynamicCopy(field.secondaryLabel);
 
   if (field.type === "checkbox") {
     return `
       <label class="field field--checkbox" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
-          <span class="field-label">${field.label}</span>
-          <span class="field-hint">${field.hint ?? ""}</span>
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
         </span>
         <span class="checkbox-pill">
           <input type="checkbox" data-field="${field.key}" ${value ? "checked" : ""} />
@@ -875,8 +955,8 @@ function renderField(field) {
     return `
       <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
-          <span class="field-label">${field.label}</span>
-          <span class="field-hint">${field.hint ?? ""}</span>
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
         </span>
         <span class="field-control field-control--select">
           <select data-field="${field.key}">
@@ -897,8 +977,8 @@ function renderField(field) {
     return `
       <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
-          <span class="field-label">${field.label}</span>
-          <span class="field-hint">${field.hint ?? ""}</span>
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
         </span>
         <span class="field-control">
           <input
@@ -920,8 +1000,8 @@ function renderField(field) {
     return `
       <div class="field field--color" style="view-transition-name: ${fieldViewTransitionName};">
         <label class="field-copy" for="${inputId}">
-          <span class="field-label">${field.label}</span>
-          <span class="field-hint">${field.hint ?? ""}</span>
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
         </label>
         <span class="field-control-cluster field-control-cluster--color">
           <span class="field-control field-control--color">
@@ -952,8 +1032,8 @@ function renderField(field) {
     return `
       <label class="field field--linked-size" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
-          <span class="field-label">${field.label}</span>
-          <span class="field-hint">${field.hint ?? ""}</span>
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
         </span>
         <span class="field-control-cluster">
           <span class="field-mini-control">
@@ -971,7 +1051,7 @@ function renderField(field) {
             </span>
           </span>
           <span class="field-mini-control">
-            <span class="field-mini-control__label">${field.secondaryLabel}</span>
+            <span class="field-mini-control__label">${secondaryLabel}</span>
             <span class="field-control">
               <input
                 type="number"
@@ -991,8 +1071,8 @@ function renderField(field) {
   return `
     <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
       <span class="field-copy">
-        <span class="field-label">${field.label}</span>
-        <span class="field-hint">${field.hint ?? ""}</span>
+        <span class="field-label">${fieldLabel}</span>
+        <span class="field-hint">${fieldHint}</span>
       </span>
       <span class="field-control">
         <input

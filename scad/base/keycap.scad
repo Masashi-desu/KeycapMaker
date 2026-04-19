@@ -1,13 +1,52 @@
 include <../presets/standard-1u.scad>
 use <../modules/keycap_shell.scad>
 use <../modules/legend_block.scad>
+use <../modules/stem_mx.scad>
+use <../modules/stem_choc_v1.scad>
 use <../modules/stem_choc_v2.scad>
+use <../modules/stem_alps.scad>
 use <../modules/homing_bar.scad>
 
 resolved_export_target = is_undef(export_target) ? "preview" : export_target;
 function positive_dimension(value, minimum = 0.1) = max(value, minimum);
 function stem_cross_dimension(base_value, margin) =
     positive_dimension(base_value + margin * 2);
+function supported_stem_type(type) =
+    type == "none"
+    || type == "mx"
+    || type == "choc_v1"
+    || type == "choc_v2"
+    || type == "alps";
+function cross_compatible_stem_type(type) =
+    type == "mx" || type == "choc_v2";
+function stem_default_outer_diameter(type) =
+    type == "mx" ? default_stem_mx_outer_diameter : default_stem_choc_v2_outer_diameter;
+function stem_default_inset(type) =
+    type == "mx"
+        ? default_stem_mx_inset
+        : type == "choc_v1"
+            ? default_stem_choc_v1_inset
+            : type == "alps"
+                ? default_stem_alps_inset
+                : default_stem_choc_v2_inset;
+function stem_default_height(type) =
+    type == "mx"
+        ? default_stem_mx_height
+        : type == "choc_v1"
+            ? default_stem_choc_v1_height
+            : type == "alps"
+                ? default_stem_alps_height
+                : default_stem_choc_v2_height;
+function stem_default_cross_width_horizontal(type) =
+    type == "mx" ? default_stem_mx_cross_width_horizontal : default_stem_choc_v2_cross_width_horizontal;
+function stem_default_cross_length_horizontal(type) =
+    type == "mx" ? default_stem_mx_cross_length_horizontal : default_stem_choc_v2_cross_length_horizontal;
+function stem_default_cross_width_vertical(type) =
+    type == "mx" ? default_stem_mx_cross_width_vertical : default_stem_choc_v2_cross_width_vertical;
+function stem_default_cross_length_vertical(type) =
+    type == "mx" ? default_stem_mx_cross_length_vertical : default_stem_choc_v2_cross_length_vertical;
+function stem_default_cross_chamfer(type) =
+    type == "mx" ? default_stem_mx_cross_chamfer : default_stem_choc_v2_cross_chamfer;
 
 key_width = is_undef(user_key_width) ? default_key_width : user_key_width;
 key_depth = is_undef(user_key_depth) ? default_key_depth : user_key_depth;
@@ -74,7 +113,11 @@ legend_curve_margin = (key_width * key_width) / max(dish_radius * 8, 0.1);
 legend_tilt_margin = abs(tan(top_tilt)) * key_depth;
 legend_projection_margin = max(dish_depth + legend_curve_margin + legend_tilt_margin + 0.5, 1);
 
-stem_enabled = is_undef(user_stem_enabled) ? true : user_stem_enabled;
+requested_stem_type = is_undef(user_stem_type) ? default_stem_type : user_stem_type;
+stem_type = supported_stem_type(requested_stem_type) ? requested_stem_type : default_stem_type;
+stem_enabled = is_undef(user_stem_enabled)
+    ? stem_type != "none"
+    : user_stem_enabled && stem_type != "none";
 stem_outer_delta = is_undef(user_stem_outer_delta) ? 0 : user_stem_outer_delta;
 stem_cross_margin = is_undef(user_stem_cross_margin) ? 0 : user_stem_cross_margin;
 stem_inset_delta = is_undef(user_stem_inset_delta) ? 0 : user_stem_inset_delta;
@@ -84,28 +127,37 @@ stem_outer_diameter = !is_undef(user_stem_outer_diameter)
     ? positive_dimension(user_stem_outer_diameter)
     : (!is_undef(user_stem_width) || !is_undef(user_stem_depth))
         ? positive_dimension(min(legacy_stem_width, legacy_stem_depth))
-        : positive_dimension(default_stem_outer_diameter + stem_outer_delta);
+        : positive_dimension(stem_default_outer_diameter(stem_type) + stem_outer_delta);
 stem_inset = is_undef(user_stem_inset)
-    ? max(default_stem_inset + stem_inset_delta, 0)
+    ? max(stem_default_inset(stem_type) + stem_inset_delta, 0)
     : max(user_stem_inset, 0);
+available_stem_height = max(body_height - dish_depth - top_thickness - stem_inset, 0.6);
 stem_height = is_undef(user_stem_height)
-    ? max(body_height - dish_depth - top_thickness - stem_inset, 0.6)
-    : user_stem_height;
+    ? available_stem_height
+    : min(max(user_stem_height, 0.6), available_stem_height);
 stem_cross_width_horizontal = is_undef(user_stem_cross_width_horizontal)
-    ? stem_cross_dimension(default_stem_cross_width_horizontal, stem_cross_margin)
+    ? stem_cross_dimension(stem_default_cross_width_horizontal(stem_type), stem_cross_margin)
     : user_stem_cross_width_horizontal;
 stem_cross_length_horizontal = is_undef(user_stem_cross_length_horizontal)
-    ? stem_cross_dimension(default_stem_cross_length_horizontal, stem_cross_margin)
+    ? stem_cross_dimension(stem_default_cross_length_horizontal(stem_type), stem_cross_margin)
     : user_stem_cross_length_horizontal;
 stem_cross_width_vertical = is_undef(user_stem_cross_width_vertical)
-    ? stem_cross_dimension(default_stem_cross_width_vertical, stem_cross_margin)
+    ? stem_cross_dimension(stem_default_cross_width_vertical(stem_type), stem_cross_margin)
     : user_stem_cross_width_vertical;
 stem_cross_length_vertical = is_undef(user_stem_cross_length_vertical)
-    ? stem_cross_dimension(default_stem_cross_length_vertical, stem_cross_margin)
+    ? stem_cross_dimension(stem_default_cross_length_vertical(stem_type), stem_cross_margin)
     : user_stem_cross_length_vertical;
 stem_cross_chamfer = is_undef(user_stem_cross_chamfer)
-    ? default_stem_cross_chamfer
+    ? stem_default_cross_chamfer(stem_type)
     : user_stem_cross_chamfer;
+stem_post_fit_delta = stem_cross_margin * 2;
+stem_choc_v1_prong_width = positive_dimension(default_stem_choc_v1_prong_width - stem_post_fit_delta);
+stem_choc_v1_prong_depth = positive_dimension(default_stem_choc_v1_prong_depth - stem_post_fit_delta);
+stem_choc_v1_prong_spacing = default_stem_choc_v1_prong_spacing;
+stem_choc_v1_lead_in = default_stem_choc_v1_lead_in;
+stem_alps_length = positive_dimension(default_stem_alps_length - stem_post_fit_delta);
+stem_alps_width = positive_dimension(default_stem_alps_width - stem_post_fit_delta);
+stem_alps_lead_in = default_stem_alps_lead_in;
 
 homing_bar_enabled = is_undef(user_homing_bar_enabled)
     ? default_homing_bar_enabled
@@ -154,17 +206,50 @@ module keycap_body_core(quality = "export") {
         );
 
         if (stem_enabled) {
-            stem_choc_v2(
-                outer_diameter = stem_outer_diameter,
-                stem_height = stem_height,
-                base_clearance = stem_inset,
-                cross_width_horizontal = stem_cross_width_horizontal,
-                cross_length_horizontal = stem_cross_length_horizontal,
-                cross_width_vertical = stem_cross_width_vertical,
-                cross_length_vertical = stem_cross_length_vertical,
-                cross_chamfer = stem_cross_chamfer,
-                quality = quality
-            );
+            if (stem_type == "mx") {
+                stem_mx(
+                    outer_diameter = stem_outer_diameter,
+                    stem_height = stem_height,
+                    base_clearance = stem_inset,
+                    cross_width_horizontal = stem_cross_width_horizontal,
+                    cross_length_horizontal = stem_cross_length_horizontal,
+                    cross_width_vertical = stem_cross_width_vertical,
+                    cross_length_vertical = stem_cross_length_vertical,
+                    cross_chamfer = stem_cross_chamfer,
+                    quality = quality
+                );
+            } else if (stem_type == "choc_v1") {
+                stem_choc_v1(
+                    prong_width = stem_choc_v1_prong_width,
+                    prong_depth = stem_choc_v1_prong_depth,
+                    prong_spacing = stem_choc_v1_prong_spacing,
+                    stem_height = stem_height,
+                    base_clearance = stem_inset,
+                    lead_in = stem_choc_v1_lead_in,
+                    quality = quality
+                );
+            } else if (stem_type == "alps") {
+                stem_alps(
+                    stem_length = stem_alps_length,
+                    stem_width = stem_alps_width,
+                    stem_height = stem_height,
+                    base_clearance = stem_inset,
+                    lead_in = stem_alps_lead_in,
+                    quality = quality
+                );
+            } else {
+                stem_choc_v2(
+                    outer_diameter = stem_outer_diameter,
+                    stem_height = stem_height,
+                    base_clearance = stem_inset,
+                    cross_width_horizontal = stem_cross_width_horizontal,
+                    cross_length_horizontal = stem_cross_length_horizontal,
+                    cross_width_vertical = stem_cross_width_vertical,
+                    cross_length_vertical = stem_cross_length_vertical,
+                    cross_chamfer = stem_cross_chamfer,
+                    quality = quality
+                );
+            }
         }
     }
 }

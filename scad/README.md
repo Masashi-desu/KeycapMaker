@@ -1,6 +1,6 @@
 # scad ディレクトリ案内
 
-`scad/` にはキーキャップ形状に関する SCAD 資産を置きます。ここでは、プレビュー用と本番出力用の責務分離、および body / legend を別体積で扱える構造を意識します。
+`scad/` にはキーキャップ形状に関する SCAD 資産を置きます。ここでは、プレビュー用と本番出力用の責務分離、および body / legend を別体積で扱える構造を意識します。stem は `MX / Choc v1 / Choc v2 / Alps` の mount 差分を `modules/` に分離して扱います。
 
 ## サブディレクトリの役割
 
@@ -13,12 +13,16 @@
 
 - `base/keycap.scad`: `export_target` で `preview / body / body_core / homing / legend` を切り替える基礎エントリ
 - `modules/keycap_shell.scad`: 添付最終モデル由来の外形シェル、dish、内側 hollow
-- `modules/stem_choc_v2.scad`: Choc v2 対応 stem ボディ
+- `modules/stem_mx.scad`: MX 互換 stem ボディ
+- `modules/stem_choc_v1.scad`: Kailh Choc v1 向け 2 本爪 stem
+- `modules/stem_choc_v2.scad`: Kailh Choc v2 向け MX 互換 stem
+- `modules/stem_alps.scad`: Alps / Matias 向け stem
 - `modules/homing_bar.scad`: body 側に追加するオプションの homing bar 形状
 - `modules/legend_block.scad`: フォント非依存の legend ボリューム
 - `presets/standard-1u.scad`: 1u キー向け既定値
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
 - `samples/keycap-homing-bar.scad`: homing bar 単体出力の確認用サンプル
+- `samples/stem-mounts.scad`: mount 差分の回帰確認用サンプル
 
 ## 運用方針
 
