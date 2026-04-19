@@ -139,7 +139,7 @@ const fieldGroups = [
   {
     id: "legend",
     title: "印字",
-    description: "入れる文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
+    description: "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
     fields: [
       { key: "legendEnabled", label: "印字を入れる", hint: "オフにすると文字を作りません", type: "checkbox" },
       {
@@ -210,7 +210,16 @@ const fieldGroups = [
       {
         key: "legendHeight",
         label: "文字の高さ",
-        hint: "0 にすると表面と同じ高さに収まり、数字を上げると盛り上がります",
+        hint: "0 にすると上面シェルの大半を埋める埋め込み印字になり、数字を上げると盛り上がります",
+        unit: "mm",
+        step: 0.05,
+        min: 0,
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendEmbed",
+        label: "内側への埋め込み",
+        hint: "盛り上がる文字の根元をどれだけキートップ内部へ入れるかです。高さ 0 の場合は上面シェルの大半まで自動で埋め込みます",
         unit: "mm",
         step: 0.05,
         min: 0,

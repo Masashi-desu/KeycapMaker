@@ -13,6 +13,7 @@ user_legend_underline_enabled = false;
 user_legend_width = 7.2;
 user_legend_depth = 4.0;
 user_legend_height = 0;
+user_legend_embed = 0.6;
 user_homing_bar_height = 0.6;
 user_homing_bar_length = 4.0;
 user_homing_bar_width = 1.58;

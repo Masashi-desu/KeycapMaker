@@ -77,6 +77,7 @@ function createKeycapDefinitions({ params, exportTarget }) {
     user_legend_width: params.legendWidth,
     user_legend_depth: params.legendDepth,
     user_legend_height: params.legendHeight,
+    user_legend_embed: params.legendEmbed,
     user_legend_offset_x: params.legendOffsetX,
     user_legend_offset_y: params.legendOffsetY,
     user_homing_bar_enabled: params.homingBarEnabled,

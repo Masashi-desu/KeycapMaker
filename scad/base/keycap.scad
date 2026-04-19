@@ -60,10 +60,16 @@ legend_depth = is_undef(user_legend_depth) ? default_legend_depth : user_legend_
 legend_height = is_undef(user_legend_height) ? default_legend_height : user_legend_height;
 legend_offset_x = is_undef(user_legend_offset_x) ? default_legend_offset_x : user_legend_offset_x;
 legend_offset_y = is_undef(user_legend_offset_y) ? default_legend_offset_y : user_legend_offset_y;
-legend_embed = is_undef(user_legend_embed) ? default_legend_embed : user_legend_embed;
+requested_legend_embed = is_undef(user_legend_embed) ? default_legend_embed : user_legend_embed;
+// Keep a thin body-colored floor under flush legends so the top shell remains continuous.
+legend_bottom_skin = min(0.2, max(top_thickness * 0.5, 0.05));
+legend_embed = min(max(requested_legend_embed, 0), max(top_thickness - legend_bottom_skin, 0));
 legend_has_text = len(legend_text) > 0;
 legend_surface_height = max(legend_height, 0);
-legend_total_height = max(legend_embed + legend_surface_height, 0);
+legend_below_surface = legend_surface_height == 0
+    ? max(legend_embed, max(top_thickness - legend_bottom_skin, 0))
+    : legend_embed;
+legend_total_height = max(legend_below_surface + legend_surface_height, 0);
 legend_curve_margin = (key_width * key_width) / max(dish_radius * 8, 0.1);
 legend_tilt_margin = abs(tan(top_tilt)) * key_depth;
 legend_projection_margin = max(dish_depth + legend_curve_margin + legend_tilt_margin + 0.5, 1);
@@ -121,7 +127,7 @@ homing_bar_base_thickness = is_undef(user_homing_bar_base_thickness)
     : user_homing_bar_base_thickness;
 
 legend_surface_z = keycap_center_surface_z(body_height, dish_depth);
-legend_base_z = legend_surface_z - legend_embed;
+legend_base_z = legend_surface_z - legend_below_surface;
 legend_projection_base_z = legend_base_z - legend_projection_margin;
 legend_projection_height = legend_total_height + legend_projection_margin * 2;
 homing_bar_base_z = keycap_center_surface_z(body_height, dish_depth) - homing_bar_base_thickness;
@@ -207,7 +213,7 @@ module keycap_legend(quality = "export") {
                 dish_depth = dish_depth,
                 dish_radius = dish_radius,
                 top_tilt = top_tilt,
-                below_surface = legend_embed,
+                below_surface = legend_below_surface,
                 above_surface = legend_surface_height,
                 quality = quality
             );

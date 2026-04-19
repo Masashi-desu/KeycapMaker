@@ -23,6 +23,7 @@
         "legendWidth": 7.2,
         "legendDepth": 4.0,
         "legendHeight": 0,
+        "legendEmbed": 0.6,
         "legendColor": "#212529",
         "legendOffsetX": 0,
         "legendOffsetY": 0,

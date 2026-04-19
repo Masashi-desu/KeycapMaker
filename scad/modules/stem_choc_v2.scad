@@ -9,7 +9,7 @@ module stem_slot(length, width, height) {
 module stem_choc_v2(
     outer_diameter = 5.5,
     stem_height = 6.5,
-    base_clearance = 0.5,
+    base_clearance = 0,
     cross_width_horizontal = 1.25,
     cross_length_horizontal = 4.3,
     cross_width_vertical = 1.35,
