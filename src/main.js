@@ -19,7 +19,7 @@ const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycap3mfPath = "keycap-preview.3mf";
 const EDITOR_DATA_KIND = "keycaps-maker/editor-params";
-const EDITOR_DATA_SCHEMA_VERSION = 1;
+const EDITOR_DATA_SCHEMA_VERSION = 2;
 const CHEVRON_ICON_URLS = Object.freeze({
   expanded: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-up.svg",
   collapsed: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-down.svg",
@@ -37,6 +37,7 @@ const textDecoder = new TextDecoder();
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
 const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
 const KEY_UNIT_MM = 18;
+const LEGEND_MIN_SIZE = 0.5;
 const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
 const DEFAULT_KEYCAP_COLORS = Object.freeze({
@@ -264,21 +265,12 @@ const fieldGroups = [
         visibleWhen: (params) => params.legendEnabled,
       },
       {
-        key: "legendWidth",
-        label: "文字の横幅の目安",
-        hint: "文字が左右に広がる範囲です",
+        key: "legendSize",
+        label: "文字の大きさ",
+        hint: "基準になる大きさです。文字数が多いと収まるよう自動で少し小さくします",
         unit: "mm",
         step: 0.1,
-        min: 0.5,
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendDepth",
-        label: "文字の縦幅の目安",
-        hint: "文字が前後に広がる範囲です",
-        unit: "mm",
-        step: 0.1,
-        min: 0.5,
+        min: LEGEND_MIN_SIZE,
         visibleWhen: (params) => params.legendEnabled,
       },
       {
@@ -436,7 +428,18 @@ function createFieldGroupCollapseState() {
   return Object.fromEntries(fieldGroups.map((group) => [group.id, true]));
 }
 
+function clampLegendSize(value, fallback = LEGEND_MIN_SIZE) {
+  const nextValue = Number(value);
+  return Number.isFinite(nextValue) ? Math.max(nextValue, LEGEND_MIN_SIZE) : fallback;
+}
+
 function syncDerivedKeycapParams(params = state.keycapParams) {
+  const defaultLegendSize = clampLegendSize(
+    createDefaultKeycapParams(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY).legendSize,
+    LEGEND_MIN_SIZE,
+  );
+
+  params.legendSize = clampLegendSize(params.legendSize, defaultLegendSize);
   params.stemType = resolveStemType(params);
   params.stemEnabled = params.stemType !== "none";
   return params;
@@ -1304,6 +1307,7 @@ function parseEditorDataPayload(payload) {
     ...payload.params,
     shapeProfile: rawProfileKey,
   };
+
   const nextParams = {};
 
   for (const key of listEditableParamKeys(rawProfileKey)) {

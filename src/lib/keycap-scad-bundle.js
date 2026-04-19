@@ -11,6 +11,7 @@ import standardPresetScad from "../../scad/presets/standard-1u.scad?raw";
 export const KEYCAP_ENTRY_PATH = "/scad/base/keycap.scad";
 export const KEYCAP_JOB_PATH = "/scad/base/keycap-job.scad";
 export const DEFAULT_KEYCAP_LEGEND_FONT_KEY = "mplus1p";
+const LEGEND_SIZE_WIDTH_RATIO = 1.8;
 export const KEYCAP_LEGEND_FONTS = [
   {
     key: "mplus1p",
@@ -52,6 +53,11 @@ const SCAD_FILES = [
 ];
 const runtimeAssetPromises = new Map();
 
+function clampLegendSize(value) {
+  const nextValue = Number(value);
+  return Number.isFinite(nextValue) ? Math.max(nextValue, 0.5) : 4.0;
+}
+
 function formatDefinitionValue(value) {
   if (typeof value === "boolean") {
     return value ? "true" : "false";
@@ -66,6 +72,7 @@ function formatDefinitionValue(value) {
 
 function createKeycapDefinitions({ params, exportTarget }) {
   const selectedFont = resolveKeycapLegendFont(params.legendFontKey);
+  const legendSize = clampLegendSize(params.legendSize);
 
   return {
     export_target: exportTarget,
@@ -83,8 +90,8 @@ function createKeycapDefinitions({ params, exportTarget }) {
     user_legend_weight: params.legendWeight,
     user_legend_slant: params.legendSlant,
     user_legend_underline_enabled: params.legendUnderlineEnabled,
-    user_legend_width: params.legendWidth,
-    user_legend_depth: params.legendDepth,
+    user_legend_width: legendSize * LEGEND_SIZE_WIDTH_RATIO,
+    user_legend_depth: legendSize,
     user_legend_height: params.legendHeight,
     user_legend_embed: params.legendEmbed,
     user_legend_offset_x: params.legendOffsetX,
