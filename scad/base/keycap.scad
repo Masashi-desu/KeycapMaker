@@ -110,6 +110,8 @@ requested_legend_embed = is_undef(user_legend_embed) ? default_legend_embed : us
 // Keep a thin body-colored floor under flush legends so the top shell remains continuous.
 legend_bottom_skin = min(0.2, max(top_thickness * 0.5, 0.05));
 legend_embed = min(max(requested_legend_embed, 0), max(top_thickness - legend_bottom_skin, 0));
+// keycap_shell() builds the top face from a 0.01-thick slab, so subtraction must overshoot the surface slightly.
+legend_visible_surface_overlap = 0.02;
 legend_has_text = len(legend_text) > 0;
 legend_surface_height = max(legend_height, 0);
 legend_below_surface = legend_surface_height == 0
@@ -230,8 +232,46 @@ homing_bar_anchor_plane_z = keycap_top_plane_height(
 );
 homing_bar_surface_delta = homing_bar_anchor_surface_z - homing_bar_anchor_plane_z;
 
-module keycap_body_core(quality = "export") {
-    union() {
+module keycap_legend_volume(quality = "export") {
+    if (legend_enabled && legend_has_text && legend_total_height > 0) {
+        keycap_top_plane_transform(top_center_height, top_pitch_deg, top_roll_deg)
+            legend_block(
+                label = legend_text,
+                width = legend_width,
+                depth = legend_depth,
+                height = legend_total_height,
+                offset_x = legend_offset_x,
+                offset_y = legend_offset_y,
+                base_z = legend_surface_delta - legend_below_surface,
+                font_name = legend_font_name,
+                weight = legend_weight,
+                slant = legend_slant,
+                underline_enabled = legend_underline_enabled
+            );
+    }
+}
+
+module keycap_legend_visible_volume(quality = "export") {
+    if (legend_enabled && legend_has_text && legend_total_height > 0) {
+        keycap_top_plane_transform(top_center_height, top_pitch_deg, top_roll_deg)
+            legend_block(
+                label = legend_text,
+                width = legend_width,
+                depth = legend_depth,
+                height = legend_total_height + legend_visible_surface_overlap,
+                offset_x = legend_offset_x,
+                offset_y = legend_offset_y,
+                base_z = legend_surface_delta - legend_below_surface,
+                font_name = legend_font_name,
+                weight = legend_weight,
+                slant = legend_slant,
+                underline_enabled = legend_underline_enabled
+            );
+    }
+}
+
+module keycap_body_shell(quality = "export") {
+    difference() {
         keycap_shell(
             width = key_width,
             depth = key_depth,
@@ -251,6 +291,13 @@ module keycap_body_core(quality = "export") {
             quality = quality
         );
 
+        keycap_legend_visible_volume(quality);
+    }
+}
+
+module keycap_body_core(quality = "export") {
+    union() {
+        keycap_body_shell(quality);
         keycap_stem(quality);
     }
 }
@@ -359,22 +406,7 @@ module keycap_body(quality = "export") {
 }
 
 module keycap_legend(quality = "export") {
-    if (legend_enabled && legend_has_text && legend_total_height > 0) {
-        keycap_top_plane_transform(top_center_height, top_pitch_deg, top_roll_deg)
-            legend_block(
-                label = legend_text,
-                width = legend_width,
-                depth = legend_depth,
-                height = legend_total_height,
-                offset_x = legend_offset_x,
-                offset_y = legend_offset_y,
-                base_z = legend_surface_delta - legend_below_surface,
-                font_name = legend_font_name,
-                weight = legend_weight,
-                slant = legend_slant,
-                underline_enabled = legend_underline_enabled
-            );
-    }
+    keycap_legend_volume(quality);
 }
 
 module export_body() {
