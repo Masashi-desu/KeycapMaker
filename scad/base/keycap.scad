@@ -47,16 +47,22 @@ function stem_default_cross_length_vertical(type) =
     type == "mx" ? default_stem_mx_cross_length_vertical : default_stem_choc_v2_cross_length_vertical;
 function stem_default_cross_chamfer(type) =
     type == "mx" ? default_stem_mx_cross_chamfer : default_stem_choc_v2_cross_chamfer;
+function stem_plane_slope_magnitude(pitch_deg, roll_deg) =
+    sqrt(pow(tan(pitch_deg), 2) + pow(tan(roll_deg), 2));
+function stem_footprint_radius(type, outer_diameter, prong_width, prong_depth, prong_spacing, alps_length, alps_width) =
+    type == "mx" || type == "choc_v2"
+        ? positive_dimension(outer_diameter) / 2
+        : type == "choc_v1"
+            ? sqrt(pow(prong_spacing / 2 + prong_width / 2, 2) + pow(prong_depth / 2, 2))
+            : type == "alps"
+                ? sqrt(pow(alps_length / 2, 2) + pow(alps_width / 2, 2))
+                : 0;
 
 key_width = is_undef(user_key_width) ? default_key_width : user_key_width;
 key_depth = is_undef(user_key_depth) ? default_key_depth : user_key_depth;
-body_height = is_undef(user_body_height) ? default_body_height : user_body_height;
+top_center_height = is_undef(user_top_center_height) ? default_top_center_height : user_top_center_height;
 wall_thickness = is_undef(user_wall_thickness) ? default_wall_thickness : user_wall_thickness;
 top_scale = is_undef(user_top_scale) ? default_top_scale : user_top_scale;
-
-profile_shoulder_height = is_undef(user_profile_shoulder_height)
-    ? default_profile_shoulder_height
-    : user_profile_shoulder_height;
 
 // Keep the legacy top-scale UI mapped onto the final profile's taper angles.
 taper_factor = default_top_scale >= 1
@@ -84,7 +90,8 @@ top_corner_radius = is_undef(user_top_corner_radius)
     : user_top_corner_radius;
 dish_radius = is_undef(user_dish_radius) ? default_dish_radius : user_dish_radius;
 dish_depth = is_undef(user_dish_depth) ? default_dish_depth : user_dish_depth;
-top_tilt = is_undef(user_top_tilt) ? default_top_tilt : user_top_tilt;
+top_pitch_deg = is_undef(user_top_pitch_deg) ? default_top_pitch_deg : user_top_pitch_deg;
+top_roll_deg = is_undef(user_top_roll_deg) ? default_top_roll_deg : user_top_roll_deg;
 
 legend_enabled = is_undef(user_legend_enabled) ? true : user_legend_enabled;
 legend_text = is_undef(user_legend_text) ? default_legend_text : user_legend_text;
@@ -109,9 +116,23 @@ legend_below_surface = legend_surface_height == 0
     ? max(legend_embed, max(top_thickness - legend_bottom_skin, 0))
     : legend_embed;
 legend_total_height = max(legend_below_surface + legend_surface_height, 0);
-legend_curve_margin = (key_width * key_width) / max(dish_radius * 8, 0.1);
-legend_tilt_margin = abs(tan(top_tilt)) * key_depth;
-legend_projection_margin = max(dish_depth + legend_curve_margin + legend_tilt_margin + 0.5, 1);
+legend_anchor_surface_z = keycap_surface_z(
+    legend_offset_x,
+    legend_offset_y,
+    top_center_height,
+    dish_depth,
+    dish_radius,
+    top_pitch_deg,
+    top_roll_deg
+);
+legend_anchor_plane_z = keycap_top_plane_height(
+    legend_offset_x,
+    legend_offset_y,
+    top_center_height,
+    top_pitch_deg,
+    top_roll_deg
+);
+legend_surface_delta = legend_anchor_surface_z - legend_anchor_plane_z;
 
 requested_stem_type = is_undef(user_stem_type) ? default_stem_type : user_stem_type;
 stem_type = supported_stem_type(requested_stem_type) ? requested_stem_type : default_stem_type;
@@ -131,10 +152,6 @@ stem_outer_diameter = !is_undef(user_stem_outer_diameter)
 stem_inset = is_undef(user_stem_inset)
     ? max(stem_default_inset(stem_type) + stem_inset_delta, 0)
     : max(user_stem_inset, 0);
-available_stem_height = max(body_height - dish_depth - top_thickness - stem_inset, 0.6);
-stem_height = is_undef(user_stem_height)
-    ? available_stem_height
-    : min(max(user_stem_height, 0.6), available_stem_height);
 stem_cross_width_horizontal = is_undef(user_stem_cross_width_horizontal)
     ? stem_cross_dimension(stem_default_cross_width_horizontal(stem_type), stem_cross_margin)
     : user_stem_cross_width_horizontal;
@@ -158,6 +175,24 @@ stem_choc_v1_lead_in = default_stem_choc_v1_lead_in;
 stem_alps_length = positive_dimension(default_stem_alps_length - stem_post_fit_delta);
 stem_alps_width = positive_dimension(default_stem_alps_width - stem_post_fit_delta);
 stem_alps_lead_in = default_stem_alps_lead_in;
+stem_clip_overlap = 0.05;
+stem_safe_radius = stem_footprint_radius(
+    stem_type,
+    stem_outer_diameter,
+    stem_choc_v1_prong_width,
+    stem_choc_v1_prong_depth,
+    stem_choc_v1_prong_spacing,
+    stem_alps_length,
+    stem_alps_width
+);
+stem_auto_contact_height = keycap_inner_height(top_center_height, dish_depth, top_thickness)
+    + stem_safe_radius * stem_plane_slope_magnitude(top_pitch_deg, top_roll_deg)
+    - stem_inset
+    + stem_clip_overlap;
+requested_stem_height = is_undef(user_stem_height)
+    ? max(stem_default_height(stem_type), stem_auto_contact_height)
+    : max(user_stem_height, 0.6);
+stem_height = max(requested_stem_height, 0.6);
 
 homing_bar_enabled = is_undef(user_homing_bar_enabled)
     ? default_homing_bar_enabled
@@ -177,22 +212,32 @@ homing_bar_offset_y = is_undef(user_homing_bar_offset_y)
 homing_bar_base_thickness = is_undef(user_homing_bar_base_thickness)
     ? default_homing_bar_base_thickness
     : user_homing_bar_base_thickness;
-
-legend_surface_z = keycap_center_surface_z(body_height, dish_depth);
-legend_base_z = legend_surface_z - legend_below_surface;
-legend_projection_base_z = legend_base_z - legend_projection_margin;
-legend_projection_height = legend_total_height + legend_projection_margin * 2;
-homing_bar_base_z = keycap_center_surface_z(body_height, dish_depth) - homing_bar_base_thickness;
+homing_bar_anchor_surface_z = keycap_surface_z(
+    0,
+    homing_bar_offset_y,
+    top_center_height,
+    dish_depth,
+    dish_radius,
+    top_pitch_deg,
+    top_roll_deg
+);
+homing_bar_anchor_plane_z = keycap_top_plane_height(
+    0,
+    homing_bar_offset_y,
+    top_center_height,
+    top_pitch_deg,
+    top_roll_deg
+);
+homing_bar_surface_delta = homing_bar_anchor_surface_z - homing_bar_anchor_plane_z;
 
 module keycap_body_core(quality = "export") {
     union() {
         keycap_shell(
             width = key_width,
             depth = key_depth,
-            cap_height = body_height,
+            top_center_height = top_center_height,
             wall = wall_thickness,
             top_thickness = top_thickness,
-            shoulder_height = profile_shoulder_height,
             front_angle = profile_front_angle,
             back_angle = profile_back_angle,
             left_angle = profile_left_angle,
@@ -201,70 +246,108 @@ module keycap_body_core(quality = "export") {
             top_corner_radius = top_corner_radius,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
-            top_tilt = top_tilt,
+            pitch_deg = top_pitch_deg,
+            roll_deg = top_roll_deg,
             quality = quality
         );
 
-        if (stem_enabled) {
-            if (stem_type == "mx") {
-                stem_mx(
-                    outer_diameter = stem_outer_diameter,
-                    stem_height = stem_height,
-                    base_clearance = stem_inset,
-                    cross_width_horizontal = stem_cross_width_horizontal,
-                    cross_length_horizontal = stem_cross_length_horizontal,
-                    cross_width_vertical = stem_cross_width_vertical,
-                    cross_length_vertical = stem_cross_length_vertical,
-                    cross_chamfer = stem_cross_chamfer,
-                    quality = quality
-                );
-            } else if (stem_type == "choc_v1") {
-                stem_choc_v1(
-                    prong_width = stem_choc_v1_prong_width,
-                    prong_depth = stem_choc_v1_prong_depth,
-                    prong_spacing = stem_choc_v1_prong_spacing,
-                    stem_height = stem_height,
-                    base_clearance = stem_inset,
-                    lead_in = stem_choc_v1_lead_in,
-                    quality = quality
-                );
-            } else if (stem_type == "alps") {
-                stem_alps(
-                    stem_length = stem_alps_length,
-                    stem_width = stem_alps_width,
-                    stem_height = stem_height,
-                    base_clearance = stem_inset,
-                    lead_in = stem_alps_lead_in,
-                    quality = quality
-                );
-            } else {
-                stem_choc_v2(
-                    outer_diameter = stem_outer_diameter,
-                    stem_height = stem_height,
-                    base_clearance = stem_inset,
-                    cross_width_horizontal = stem_cross_width_horizontal,
-                    cross_length_horizontal = stem_cross_length_horizontal,
-                    cross_width_vertical = stem_cross_width_vertical,
-                    cross_length_vertical = stem_cross_length_vertical,
-                    cross_chamfer = stem_cross_chamfer,
-                    quality = quality
-                );
-            }
+        keycap_stem(quality);
+    }
+}
+
+module keycap_stem_nominal(quality = "export") {
+    if (stem_enabled) {
+        if (stem_type == "mx") {
+            stem_mx(
+                outer_diameter = stem_outer_diameter,
+                stem_height = stem_height,
+                base_clearance = stem_inset,
+                cross_width_horizontal = stem_cross_width_horizontal,
+                cross_length_horizontal = stem_cross_length_horizontal,
+                cross_width_vertical = stem_cross_width_vertical,
+                cross_length_vertical = stem_cross_length_vertical,
+                cross_chamfer = stem_cross_chamfer,
+                quality = quality
+            );
+        } else if (stem_type == "choc_v1") {
+            stem_choc_v1(
+                prong_width = stem_choc_v1_prong_width,
+                prong_depth = stem_choc_v1_prong_depth,
+                prong_spacing = stem_choc_v1_prong_spacing,
+                stem_height = stem_height,
+                base_clearance = stem_inset,
+                lead_in = stem_choc_v1_lead_in,
+                quality = quality
+            );
+        } else if (stem_type == "alps") {
+            stem_alps(
+                stem_length = stem_alps_length,
+                stem_width = stem_alps_width,
+                stem_height = stem_height,
+                base_clearance = stem_inset,
+                lead_in = stem_alps_lead_in,
+                quality = quality
+            );
+        } else {
+            stem_choc_v2(
+                outer_diameter = stem_outer_diameter,
+                stem_height = stem_height,
+                base_clearance = stem_inset,
+                cross_width_horizontal = stem_cross_width_horizontal,
+                cross_length_horizontal = stem_cross_length_horizontal,
+                cross_width_vertical = stem_cross_width_vertical,
+                cross_length_vertical = stem_cross_length_vertical,
+                cross_chamfer = stem_cross_chamfer,
+                quality = quality
+            );
+        }
+    }
+}
+
+module keycap_stem_clip_volume(quality = "export") {
+    if (stem_enabled) {
+        translate([0, 0, stem_clip_overlap])
+            keycap_inner_clearance_volume(
+                width = key_width,
+                depth = key_depth,
+                top_center_height = top_center_height,
+                wall = wall_thickness,
+                top_thickness = top_thickness,
+                dish_depth = dish_depth,
+                front_angle = profile_front_angle,
+                back_angle = profile_back_angle,
+                left_angle = profile_left_angle,
+                right_angle = profile_right_angle,
+                bottom_corner_radius = bottom_corner_radius,
+                top_corner_radius = top_corner_radius,
+                pitch_deg = top_pitch_deg,
+                roll_deg = top_roll_deg,
+                quality = quality
+            );
+    }
+}
+
+module keycap_stem(quality = "export") {
+    if (stem_enabled) {
+        intersection() {
+            keycap_stem_nominal(quality);
+            keycap_stem_clip_volume(quality);
         }
     }
 }
 
 module keycap_homing_bar(quality = "export") {
     if (homing_bar_enabled) {
-        homing_bar_blank(
-            length = homing_bar_length,
-            width = homing_bar_width,
-            height = homing_bar_height,
-            base_thickness = homing_bar_base_thickness,
-            offset_y = homing_bar_offset_y,
-            base_z = homing_bar_base_z,
-            quality = quality
-        );
+        keycap_top_plane_transform(top_center_height, top_pitch_deg, top_roll_deg)
+            homing_bar_blank(
+                length = homing_bar_length,
+                width = homing_bar_width,
+                height = homing_bar_height,
+                base_thickness = homing_bar_base_thickness,
+                offset_y = homing_bar_offset_y,
+                base_z = homing_bar_surface_delta - homing_bar_base_thickness,
+                quality = quality
+            );
     }
 }
 
@@ -277,32 +360,20 @@ module keycap_body(quality = "export") {
 
 module keycap_legend(quality = "export") {
     if (legend_enabled && legend_has_text && legend_total_height > 0) {
-        intersection() {
+        keycap_top_plane_transform(top_center_height, top_pitch_deg, top_roll_deg)
             legend_block(
                 label = legend_text,
                 width = legend_width,
                 depth = legend_depth,
-                height = legend_projection_height,
+                height = legend_total_height,
                 offset_x = legend_offset_x,
                 offset_y = legend_offset_y,
-                base_z = legend_projection_base_z,
+                base_z = legend_surface_delta - legend_below_surface,
                 font_name = legend_font_name,
                 weight = legend_weight,
                 slant = legend_slant,
                 underline_enabled = legend_underline_enabled
             );
-
-            keycap_dish_band(
-                depth = key_depth,
-                cap_height = body_height,
-                dish_depth = dish_depth,
-                dish_radius = dish_radius,
-                top_tilt = top_tilt,
-                below_surface = legend_below_surface,
-                above_surface = legend_surface_height,
-                quality = quality
-            );
-        }
     }
 }
 

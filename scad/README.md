@@ -12,7 +12,7 @@
 ## 現在の主要ファイル
 
 - `base/keycap.scad`: `export_target` で `preview / body / body_core / homing / legend` を切り替える基礎エントリ
-- `modules/keycap_shell.scad`: 添付最終モデル由来の外形シェル、dish、内側 hollow
+- `modules/keycap_shell.scad`: `top_center_height + pitch / roll` 基準の外形シェル、dish、内側 hollow
 - `modules/stem_mx.scad`: MX 互換 stem ボディ
 - `modules/stem_choc_v1.scad`: Kailh Choc v1 向け 2 本爪 stem
 - `modules/stem_choc_v2.scad`: Kailh Choc v2 向け MX 互換 stem
@@ -22,6 +22,8 @@
 - `presets/standard-1u.scad`: 1u キー向け既定値
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
 - `samples/keycap-homing-bar.scad`: homing bar 単体出力の確認用サンプル
+- `samples/keycap-stem-clip.scad`: 強い左右傾斜でも stem が内側天井で止まるか確認するサンプル
+- `samples/keycap-top-orientation.scad`: 上面中央高さ固定 + pitch / roll の確認用サンプル
 - `samples/stem-mounts.scad`: mount 差分の回帰確認用サンプル
 
 ## 運用方針

@@ -1,21 +1,32 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "defaultProfileKey": "standard-1u",
   "selectorKeys": ["shapeProfile", "legendFontKey", "stemType"],
   "profiles": [
     {
       "key": "standard-1u",
       "label": "標準 1u",
+      "geometryDefaults": {
+        "profileFrontAngle": 15,
+        "profileBackAngle": 15,
+        "profileLeftAngle": 10,
+        "profileRightAngle": 10,
+        "topThickness": 1.5,
+        "bottomCornerRadius": 1.0,
+        "topCornerRadius": 1.5
+      },
       "defaults": {
         "shapeProfile": "standard-1u",
         "keyWidth": 18,
         "keyDepth": 18,
-        "bodyHeight": 9.5,
+        "topCenterHeight": 9.5,
+        "topSlopeInputMode": "angle",
+        "topPitchDeg": 0,
+        "topRollDeg": 0,
         "wallThickness": 1.2,
         "topScale": 0.84,
         "dishRadius": 45,
         "dishDepth": 0,
-        "topTilt": 0,
         "bodyColor": "#f8f9fa",
         "legendEnabled": true,
         "legendText": "A",

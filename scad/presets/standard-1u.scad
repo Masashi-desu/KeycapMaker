@@ -1,10 +1,9 @@
 default_key_width = 18;
 default_key_depth = 18;
-default_body_height = 9.5;
+default_top_center_height = 9.5;
 default_wall_thickness = 1.2;
 default_top_scale = 0.84;
 
-default_profile_shoulder_height = 3.0;
 default_profile_front_angle = 15;
 default_profile_back_angle = 15;
 default_profile_left_angle = 10;
@@ -13,8 +12,9 @@ default_top_thickness = 1.5;
 default_bottom_corner_radius = 1.0;
 default_top_corner_radius = 1.5;
 default_dish_radius = 45;
-default_dish_depth = 1.0;
-default_top_tilt = 4;
+default_dish_depth = 0;
+default_top_pitch_deg = 0;
+default_top_roll_deg = 0;
 
 default_legend_text = "A";
 default_legend_font_name = "M PLUS 1p";

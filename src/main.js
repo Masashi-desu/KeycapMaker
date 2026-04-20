@@ -19,7 +19,7 @@ const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycap3mfPath = "keycap-preview.3mf";
 const EDITOR_DATA_KIND = "keycaps-maker/editor-params";
-const EDITOR_DATA_SCHEMA_VERSION = 2;
+const EDITOR_DATA_SCHEMA_VERSION = 3;
 const CHEVRON_ICON_URLS = Object.freeze({
   expanded: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-up.svg",
   collapsed: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-down.svg",
@@ -171,6 +171,127 @@ function getStemInsetHint(params) {
     : "0 が標準です。プラスで底面からの開始位置を上げ、内部干渉を避けます";
 }
 
+const TOP_SLOPE_INPUT_MODE_OPTIONS = Object.freeze([
+  { value: "angle", label: "角度で調整" },
+  { value: "edge-height", label: "端の高さで調整" },
+]);
+const TOP_SLOPE_INPUT_MODE_LABELS = new Set(TOP_SLOPE_INPUT_MODE_OPTIONS.map((option) => option.value));
+
+function clampMinimum(value, fallback, minimum) {
+  const nextValue = Number(value);
+  return Number.isFinite(nextValue) ? Math.max(nextValue, minimum) : fallback;
+}
+
+function degTan(value) {
+  return Math.tan((Number(value) * Math.PI) / 180);
+}
+
+function atanDeg(value) {
+  return (Math.atan(value) * 180) / Math.PI;
+}
+
+function resolveTopSlopeInputMode(value) {
+  return TOP_SLOPE_INPUT_MODE_LABELS.has(value) ? value : "angle";
+}
+
+function resolveShapeProfileGeometryDefaults(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  const profile = resolveShapeProfileConfig(profileKey);
+  const geometryDefaults = profile?.geometryDefaults ?? {};
+
+  return {
+    profileFrontAngle: clampMinimum(geometryDefaults.profileFrontAngle, 15, 0.1),
+    profileBackAngle: clampMinimum(geometryDefaults.profileBackAngle, 15, 0.1),
+    profileLeftAngle: clampMinimum(geometryDefaults.profileLeftAngle, 10, 0.1),
+    profileRightAngle: clampMinimum(geometryDefaults.profileRightAngle, 10, 0.1),
+    topThickness: clampMinimum(geometryDefaults.topThickness, 1.5, 0.05),
+  };
+}
+
+function resolveProfileAngles(params = {}) {
+  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const defaults = createDefaultKeycapParams(profileKey);
+  const geometryDefaults = resolveShapeProfileGeometryDefaults(profileKey);
+  const topScale = Number(params.topScale ?? defaults.topScale ?? 1);
+  const defaultTopScale = Number(defaults.topScale ?? 1);
+  const taperFactor = defaultTopScale >= 1
+    ? 1
+    : Math.max((1 - topScale) / Math.max(1 - defaultTopScale, 0.01), 0);
+
+  return {
+    front: Math.max(geometryDefaults.profileFrontAngle * taperFactor, 0.1),
+    back: Math.max(geometryDefaults.profileBackAngle * taperFactor, 0.1),
+    left: Math.max(geometryDefaults.profileLeftAngle * taperFactor, 0.1),
+    right: Math.max(geometryDefaults.profileRightAngle * taperFactor, 0.1),
+    topThickness: geometryDefaults.topThickness,
+  };
+}
+
+function resolveTopPlaneGeometry(params = {}) {
+  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const defaults = createDefaultKeycapParams(profileKey);
+  const resolvedAngles = resolveProfileAngles(params);
+  const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
+  const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
+  const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+  const topLeft = -keyWidth / 2 + topCenterHeight * degTan(resolvedAngles.left);
+  const topRight = keyWidth / 2 - topCenterHeight * degTan(resolvedAngles.right);
+  const topFront = -keyDepth / 2 + topCenterHeight * degTan(resolvedAngles.front);
+  const topBack = keyDepth / 2 - topCenterHeight * degTan(resolvedAngles.back);
+
+  return {
+    topCenterHeight,
+    topLeft,
+    topRight,
+    topFront,
+    topBack,
+    topThickness: resolvedAngles.topThickness,
+  };
+}
+
+function resolveTopEdgeHeights(params = {}) {
+  const geometry = resolveTopPlaneGeometry(params);
+  const topPitchDeg = Number(params.topPitchDeg ?? 0);
+  const topRollDeg = Number(params.topRollDeg ?? 0);
+  const pitchSlope = degTan(topPitchDeg);
+  const rollSlope = degTan(topRollDeg);
+
+  return {
+    topFrontHeight: geometry.topCenterHeight + geometry.topFront * pitchSlope,
+    topBackHeight: geometry.topCenterHeight + geometry.topBack * pitchSlope,
+    topLeftHeight: geometry.topCenterHeight + geometry.topLeft * rollSlope,
+    topRightHeight: geometry.topCenterHeight + geometry.topRight * rollSlope,
+    topVisibleCenterHeight: geometry.topCenterHeight - Math.max(Number(params.dishDepth ?? 0), 0),
+  };
+}
+
+function getTopCenterHeightHint(params) {
+  return `dish を付ける前のキートップ中央です。現在の中央表面は ${formatMillimeter(params.topVisibleCenterHeight)} です`;
+}
+
+function getTopPitchHint(params) {
+  return `プラスで奥が高くなります。現在: 手前 ${formatMillimeter(params.topFrontHeight)} / 奥 ${formatMillimeter(params.topBackHeight)}`;
+}
+
+function getTopRollHint(params) {
+  return `プラスで右が高くなります。現在: 左 ${formatMillimeter(params.topLeftHeight)} / 右 ${formatMillimeter(params.topRightHeight)}`;
+}
+
+function getTopFrontHeightHint(params) {
+  return `上面基準面の手前高さです。中央高さは固定され、現在の前後傾斜は ${formatDegree(params.topPitchDeg)} です`;
+}
+
+function getTopBackHeightHint(params) {
+  return `上面基準面の奥高さです。中央高さは固定され、現在の前後傾斜は ${formatDegree(params.topPitchDeg)} です`;
+}
+
+function getTopLeftHeightHint(params) {
+  return `上面基準面の左高さです。中央高さは固定され、現在の左右傾斜は ${formatDegree(params.topRollDeg)} です`;
+}
+
+function getTopRightHeightHint(params) {
+  return `上面基準面の右高さです。中央高さは固定され、現在の左右傾斜は ${formatDegree(params.topRollDeg)} です`;
+}
+
 const fieldGroups = [
   {
     id: "shape",
@@ -199,7 +320,6 @@ const fieldGroups = [
         secondaryMin: 0.5,
       },
       { key: "keyDepth", label: "奥行き", hint: "キーキャップの前後の大きさです", unit: "mm", step: 0.1, min: 10 },
-      { key: "bodyHeight", label: "全体の高さ", hint: "いちばん高い位置までの高さです", unit: "mm", step: 0.1, min: 1 },
       { key: "wallThickness", label: "厚み", hint: "キーキャップの丈夫さに関わる厚みです", unit: "mm", step: 0.05, min: 0.4 },
       { key: "topScale", label: "上面のすぼまり", hint: "数字を小さくすると上面が細く見えます", unit: "", step: 0.01, min: 0.5, max: 1 },
       {
@@ -208,6 +328,69 @@ const fieldGroups = [
         hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
         type: "color",
         placeholder: DEFAULT_KEYCAP_COLORS.bodyColor,
+      },
+    ],
+  },
+  {
+    id: "top",
+    title: "キートップ",
+    description: "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+    fields: [
+      { key: "topCenterHeight", label: "上面中央の高さ", hint: (params) => getTopCenterHeightHint(params), unit: "mm", step: 0.1, min: 1 },
+      {
+        key: "topSlopeInputMode",
+        label: "傾きの入力方法",
+        hint: "角度で入れるか、端の高さで入れるかを選びます",
+        type: "select",
+        options: TOP_SLOPE_INPUT_MODE_OPTIONS,
+      },
+      {
+        key: "topPitchDeg",
+        label: "手前から奥の傾斜",
+        hint: (params) => getTopPitchHint(params),
+        unit: "deg",
+        step: 0.1,
+        visibleWhen: (params) => params.topSlopeInputMode === "angle",
+      },
+      {
+        key: "topRollDeg",
+        label: "左右の傾斜",
+        hint: (params) => getTopRollHint(params),
+        unit: "deg",
+        step: 0.1,
+        visibleWhen: (params) => params.topSlopeInputMode === "angle",
+      },
+      {
+        key: "topFrontHeight",
+        label: "手前高さ",
+        hint: (params) => getTopFrontHeightHint(params),
+        unit: "mm",
+        step: 0.1,
+        visibleWhen: (params) => params.topSlopeInputMode === "edge-height",
+      },
+      {
+        key: "topBackHeight",
+        label: "奥高さ",
+        hint: (params) => getTopBackHeightHint(params),
+        unit: "mm",
+        step: 0.1,
+        visibleWhen: (params) => params.topSlopeInputMode === "edge-height",
+      },
+      {
+        key: "topLeftHeight",
+        label: "左高さ",
+        hint: (params) => getTopLeftHeightHint(params),
+        unit: "mm",
+        step: 0.1,
+        visibleWhen: (params) => params.topSlopeInputMode === "edge-height",
+      },
+      {
+        key: "topRightHeight",
+        label: "右高さ",
+        hint: (params) => getTopRightHeightHint(params),
+        unit: "mm",
+        step: 0.1,
+        visibleWhen: (params) => params.topSlopeInputMode === "edge-height",
       },
     ],
   },
@@ -434,12 +617,19 @@ function clampLegendSize(value, fallback = LEGEND_MIN_SIZE) {
 }
 
 function syncDerivedKeycapParams(params = state.keycapParams) {
+  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const defaults = createDefaultKeycapParams(profileKey);
   const defaultLegendSize = clampLegendSize(
-    createDefaultKeycapParams(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY).legendSize,
+    defaults.legendSize,
     LEGEND_MIN_SIZE,
   );
 
+  params.topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+  params.topPitchDeg = Number.isFinite(Number(params.topPitchDeg)) ? Number(params.topPitchDeg) : Number(defaults.topPitchDeg ?? 0);
+  params.topRollDeg = Number.isFinite(Number(params.topRollDeg)) ? Number(params.topRollDeg) : Number(defaults.topRollDeg ?? 0);
+  params.topSlopeInputMode = resolveTopSlopeInputMode(params.topSlopeInputMode ?? defaults.topSlopeInputMode);
   params.legendSize = clampLegendSize(params.legendSize, defaultLegendSize);
+  Object.assign(params, resolveTopEdgeHeights(params));
   params.stemType = resolveStemType(params);
   params.stemEnabled = params.stemType !== "none";
   return params;
@@ -533,6 +723,30 @@ function getStatusTone(status) {
 
 function formatMillimeter(value, digits = 1) {
   return `${Number(value).toFixed(digits)} mm`;
+}
+
+function formatDegree(value, digits = 1) {
+  return `${Number(value).toFixed(digits)}°`;
+}
+
+function countStepDigits(step) {
+  const rawStep = `${step ?? ""}`;
+  if (!rawStep.includes(".")) {
+    return 0;
+  }
+
+  return rawStep.split(".")[1].replace(/0+$/, "").length;
+}
+
+function formatNumericFieldValue(fieldKey, value) {
+  const nextValue = Number(value);
+  if (!Number.isFinite(nextValue)) {
+    return "";
+  }
+
+  const fieldConfig = fieldConfigByKey.get(fieldKey);
+  const digits = Math.min(countStepDigits(fieldConfig?.step) + 1, 3);
+  return `${Number(nextValue.toFixed(digits))}`;
 }
 
 function formatUnitInputValue(value = state.keycapParams.keyWidth) {
@@ -1045,7 +1259,7 @@ function renderField(field) {
               <input
                 type="number"
                 data-field="${field.key}"
-                value="${value}"
+                value="${formatNumericFieldValue(field.key, value)}"
                 ${field.min != null ? `min="${field.min}"` : ""}
                 ${field.max != null ? `max="${field.max}"` : ""}
                 ${field.step != null ? `step="${field.step}"` : ""}
@@ -1081,7 +1295,7 @@ function renderField(field) {
         <input
           type="number"
           data-field="${field.key}"
-          value="${value}"
+          value="${formatNumericFieldValue(field.key, value)}"
           ${field.min != null ? `min="${field.min}"` : ""}
           ${field.max != null ? `max="${field.max}"` : ""}
           ${field.step != null ? `step="${field.step}"` : ""}
@@ -1191,7 +1405,9 @@ function handleViewportResize() {
   }
 
   if (typeof window.Coloris === "function") {
-    window.Coloris.updatePosition();
+    try {
+      window.Coloris.updatePosition();
+    } catch (error) {}
   }
 }
 
@@ -1497,6 +1713,72 @@ async function handleWindowDrop(event) {
   }
 }
 
+const TOP_LIVE_FIELD_KEYS = new Set([
+  "topCenterHeight",
+  "topPitchDeg",
+  "topRollDeg",
+  "topFrontHeight",
+  "topBackHeight",
+  "topLeftHeight",
+  "topRightHeight",
+]);
+
+function syncFieldHint(fieldKey) {
+  const input = app.querySelector(`[data-field="${fieldKey}"]`);
+  const fieldConfig = fieldConfigByKey.get(fieldKey);
+  const hint = input?.closest(".field")?.querySelector(".field-hint");
+
+  if (hint && fieldConfig) {
+    hint.textContent = resolveDynamicCopy(fieldConfig.hint);
+  }
+}
+
+function syncVisibleTopFieldState(activeField = null) {
+  TOP_LIVE_FIELD_KEYS.forEach((fieldKey) => {
+    const input = app.querySelector(`[data-field="${fieldKey}"]`);
+    if (!input) {
+      return;
+    }
+
+    if (fieldKey !== activeField) {
+      input.value = formatNumericFieldValue(fieldKey, state.keycapParams[fieldKey]);
+    }
+
+    syncFieldHint(fieldKey);
+  });
+}
+
+function isTopEdgeHeightField(field) {
+  return field === "topFrontHeight"
+    || field === "topBackHeight"
+    || field === "topLeftHeight"
+    || field === "topRightHeight";
+}
+
+function applyTopEdgeHeightChange(field, value) {
+  const geometry = resolveTopPlaneGeometry(state.keycapParams);
+  const centerHeight = geometry.topCenterHeight;
+
+  if (field === "topFrontHeight" && Math.abs(geometry.topFront) > 1e-6) {
+    state.keycapParams.topPitchDeg = atanDeg((value - centerHeight) / geometry.topFront);
+    return;
+  }
+
+  if (field === "topBackHeight" && Math.abs(geometry.topBack) > 1e-6) {
+    state.keycapParams.topPitchDeg = atanDeg((value - centerHeight) / geometry.topBack);
+    return;
+  }
+
+  if (field === "topLeftHeight" && Math.abs(geometry.topLeft) > 1e-6) {
+    state.keycapParams.topRollDeg = atanDeg((value - centerHeight) / geometry.topLeft);
+    return;
+  }
+
+  if (field === "topRightHeight" && Math.abs(geometry.topRight) > 1e-6) {
+    state.keycapParams.topRollDeg = atanDeg((value - centerHeight) / geometry.topRight);
+  }
+}
+
 function handleFieldChange(event) {
   const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
@@ -1531,13 +1813,29 @@ function handleFieldChange(event) {
   } else if (input.type === "text") {
     state.keycapParams[field] = input.value;
   } else {
-    state.keycapParams[field] = Number(input.value);
+    const nextValue = Number(input.value);
+
+    if (isTopEdgeHeightField(field)) {
+      applyTopEdgeHeightChange(field, nextValue);
+    } else {
+      state.keycapParams[field] = nextValue;
+    }
+
     if (field === "keyWidth") {
       syncLinkedShapeInputs("keyWidth");
     }
   }
 
   syncDerivedKeycapParams();
+
+  if (
+    TOP_LIVE_FIELD_KEYS.has(field)
+    || field === "topScale"
+    || field === "keyWidth"
+    || field === "keyDepth"
+  ) {
+    syncVisibleTopFieldState(field);
+  }
 
   if (input.type === "checkbox") {
     input.parentElement?.querySelector("span:last-child")?.replaceChildren(input.checked ? "オン" : "オフ");
@@ -1546,11 +1844,16 @@ function handleFieldChange(event) {
   state.editorStatus = "dirty";
   state.editorSummary = "入力内容を反映待ち";
 
-  if (field === "legendEnabled" || field === "homingBarEnabled" || EDITOR_SELECTOR_KEYS.includes(field)) {
+  if (
+    field === "legendEnabled"
+    || field === "homingBarEnabled"
+    || field === "topSlopeInputMode"
+    || EDITOR_SELECTOR_KEYS.includes(field)
+  ) {
     render({ animateInspector: true });
   }
 
-  if (!deferPreview) {
+  if (!deferPreview && field !== "topSlopeInputMode") {
     schedulePreviewRefresh();
   }
 }
