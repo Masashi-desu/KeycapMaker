@@ -115,3 +115,12 @@
   現在の legend placement は top dish に密結合しており、side legend の導入ボトルネックになっているため
 - 関連:
   [../backlog/legend-extensibility-todo.md](../backlog/legend-extensibility-todo.md)
+
+## 2026-04-21 - 丸みのある legend 書体は OpenSCAD 内で高精細化する
+
+- 結論:
+  legend の `text()` は preview / export ごとに `$fn` を上げ、小さい文字サイズでは内部だけ拡大してから縮小する
+- 理由:
+  bundled OpenSCAD runtime では小さい `text()` が粗く多角形化されやすく、丸みのある書体で角張りが目立ったため
+- 関連:
+  [../backlog/legend-svg-path-option.md](../backlog/legend-svg-path-option.md)

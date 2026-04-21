@@ -1,5 +1,11 @@
 function legend_text_length(label) = max(len(label), 1);
 function legend_is_single_glyph(label) = legend_text_length(label) == 1;
+function legend_quality_steps(quality, preview_steps, export_steps) =
+    quality == "preview" ? preview_steps : export_steps;
+function legend_text_curve_steps(quality = "export") =
+    legend_quality_steps(quality, 48, 96);
+function legend_text_internal_scale(quality = "export") =
+    legend_quality_steps(quality, 6, 10);
 function legend_slant_angle(slant) =
     slant == "italic" ? 10
     : slant == "slanted" ? 18
@@ -33,7 +39,7 @@ function legend_underline_width(label, width, size, weight, slant) =
 function legend_underline_thickness(size, weight) =
     max(size * (weight == "bold" ? 0.14 : 0.1), 0.24);
 
-module legend_text_slanted(label, size, font_name, slant_angle) {
+module legend_text_slanted(label, size, font_name, slant_angle, curve_steps = 48) {
     multmatrix([
         [1, tan(slant_angle), 0, 0],
         [0, 1, 0, 0],
@@ -45,12 +51,22 @@ module legend_text_slanted(label, size, font_name, slant_angle) {
             size = size,
             font = font_name,
             halign = "center",
-            valign = "center"
+            valign = "center",
+            $fn = curve_steps
         );
 }
 
 // Keep decoration options available across bundled fonts without requiring extra font files.
-module legend_text_profile(label, size, width, depth, font_name, weight = "regular", slant = "none") {
+module legend_text_profile(
+    label,
+    size,
+    width,
+    depth,
+    font_name,
+    weight = "regular",
+    slant = "none",
+    curve_steps = 48
+) {
     slant_angle = legend_slant_angle(slant);
     print_delta = legend_print_delta(size, label);
     weight_delta = legend_weight_delta(size, label, weight);
@@ -59,9 +75,21 @@ module legend_text_profile(label, size, width, depth, font_name, weight = "regul
     offset(delta = print_delta + weight_delta)
         if (single_glyph) {
             resize([legend_single_glyph_target_width(width, depth), 0, 0], auto = [false, true, true])
-                legend_text_slanted(label = label, size = size, font_name = font_name, slant_angle = slant_angle);
+                legend_text_slanted(
+                    label = label,
+                    size = size,
+                    font_name = font_name,
+                    slant_angle = slant_angle,
+                    curve_steps = curve_steps
+                );
         } else {
-            legend_text_slanted(label = label, size = size, font_name = font_name, slant_angle = slant_angle);
+            legend_text_slanted(
+                label = label,
+                size = size,
+                font_name = font_name,
+                slant_angle = slant_angle,
+                curve_steps = curve_steps
+            );
         }
 }
 
@@ -76,31 +104,41 @@ module legend_block(
     font_name = "M PLUS 1p",
     weight = "regular",
     slant = "none",
-    underline_enabled = false
+    underline_enabled = false,
+    quality = "export"
 ) {
     if (!is_undef(label) && len(label) > 0) {
         size = legend_text_size(label, width, depth, weight, slant);
         underline_width = legend_underline_width(label, width, size, weight, slant);
         underline_thickness = legend_underline_thickness(size, weight);
         underline_offset_y = -size * 0.58;
+        curve_steps = legend_text_curve_steps(quality);
+        internal_scale = legend_text_internal_scale(quality);
 
         translate([offset_x, offset_y, base_z])
             linear_extrude(height = height, center = false, convexity = 10)
-                union() {
-                    legend_text_profile(
-                        label = label,
-                        size = size,
-                        width = width,
-                        depth = depth,
-                        font_name = font_name,
-                        weight = weight,
-                        slant = slant
-                    );
+                // Build glyph outlines at a larger internal scale so the bundled runtime
+                // preserves more of the original font curvature before scaling back down.
+                scale([1 / internal_scale, 1 / internal_scale, 1])
+                    union() {
+                        legend_text_profile(
+                            label = label,
+                            size = size * internal_scale,
+                            width = width * internal_scale,
+                            depth = depth * internal_scale,
+                            font_name = font_name,
+                            weight = weight,
+                            slant = slant,
+                            curve_steps = curve_steps
+                        );
 
-                    if (underline_enabled) {
-                        translate([0, underline_offset_y])
-                            square([underline_width, underline_thickness], center = true);
+                        if (underline_enabled) {
+                            translate([0, underline_offset_y * internal_scale])
+                                square(
+                                    [underline_width * internal_scale, underline_thickness * internal_scale],
+                                    center = true
+                                );
+                        }
                     }
-                }
     }
 }

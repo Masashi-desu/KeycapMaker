@@ -246,7 +246,8 @@ module keycap_legend_volume(quality = "export") {
                 font_name = legend_font_name,
                 weight = legend_weight,
                 slant = legend_slant,
-                underline_enabled = legend_underline_enabled
+                underline_enabled = legend_underline_enabled,
+                quality = quality
             );
     }
 }
@@ -265,7 +266,8 @@ module keycap_legend_visible_volume(quality = "export") {
                 font_name = legend_font_name,
                 weight = legend_weight,
                 slant = legend_slant,
-                underline_enabled = legend_underline_enabled
+                underline_enabled = legend_underline_enabled,
+                quality = quality
             );
     }
 }
