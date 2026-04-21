@@ -1,5 +1,4 @@
 import "./styles.css";
-import minimumPocScad from "../scad/samples/minimum-poc.scad?raw";
 import keycapEditorProfiles from "./data/keycap-editor-profiles.json";
 import { runOpenScad } from "./lib/openscad-client.js";
 import { hexColorToNumber, normalizeHexColor } from "./lib/color-utils.js";
@@ -12,8 +11,6 @@ import {
 } from "./lib/keycap-scad-bundle.js";
 
 const app = document.querySelector("#app");
-const samplePath = "/samples/minimum-poc.scad";
-const previewOutputPath = "/outputs/minimum-poc.off";
 const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
@@ -69,10 +66,6 @@ const workspaceSections = [
   {
     id: "params",
     label: "設定",
-  },
-  {
-    id: "guide",
-    label: "使い方",
   },
   {
     id: "export",
@@ -636,10 +629,6 @@ function syncDerivedKeycapParams(params = state.keycapParams) {
 }
 
 const state = {
-  runtimeStatus: "idle",
-  runtimeSummary: "未実行",
-  logs: [],
-  error: "",
   exportsStatus: "idle",
   exportsSummary: "未生成",
   exportHistory: [],
@@ -689,36 +678,6 @@ function toKebabCase(value) {
 function createViewTransitionName(prefix, value) {
   const normalized = toKebabCase(value);
   return `${prefix}-${normalized || "item"}`;
-}
-
-function getStatusLabel(status) {
-  switch (status) {
-    case "running":
-      return "実行中";
-    case "success":
-      return "正常";
-    case "error":
-      return "エラー";
-    case "dirty":
-      return "未反映";
-    default:
-      return "待機";
-  }
-}
-
-function getStatusTone(status) {
-  switch (status) {
-    case "running":
-      return "warning";
-    case "success":
-      return "success";
-    case "error":
-      return "danger";
-    case "dirty":
-      return "info";
-    default:
-      return "neutral";
-  }
 }
 
 function formatMillimeter(value, digits = 1) {
@@ -995,10 +954,6 @@ function render(options = {}) {
 }
 
 function renderInspectorContent() {
-  if (state.sidebarTab === "guide") {
-    return renderGuideTab();
-  }
-
   if (state.sidebarTab === "export") {
     return renderExportTab();
   }
@@ -1017,45 +972,6 @@ function renderParametersTab() {
       <div class="parameter-group-list">
         ${fieldGroups.map((group, index) => renderFieldGroup(group, index)).join("")}
       </div>
-    </div>
-  `;
-}
-
-function renderGuideTab() {
-  return `
-    <div class="inspector-panel inspector-panel--guide">
-      <div class="panel-intro">
-        <h1 class="panel-title">使い方</h1>
-        <p class="panel-text">設定を変えたあと、右側の見た目を見ながら仕上がりを確認できます。</p>
-      </div>
-
-      <ol class="guide-list">
-        <li class="guide-step">
-          <strong>1. 左側で形や印字を決める</strong>
-          <span>大きさ、文字、取り付け部分などを変えると、見た目が自動で更新されます。</span>
-        </li>
-        <li class="guide-step">
-          <strong>2. 右側で仕上がりを見る</strong>
-          <span>本体と印字を分けて表示し、カーソルを乗せたときだけ回転や拡大ができます。</span>
-        </li>
-        <li class="guide-step">
-          <strong>3. 動作チェックをする</strong>
-          <span>簡易チェックを実行すると、ブラウザ内の生成機能が動いているかを確認できます。</span>
-        </li>
-      </ol>
-
-      ${renderStatusCard("動作チェック", state.runtimeStatus, state.runtimeSummary)}
-
-      <button class="secondary-card-button" type="button" data-run-poc ${state.runtimeStatus === "running" ? "disabled" : ""}>
-        ${state.runtimeStatus === "running" ? "確認中..." : "簡易チェックを実行する"}
-      </button>
-
-      <div class="mini-code-block">
-        <div class="mini-code-block__title">処理ログ</div>
-        <pre>${state.logs.length > 0 ? escapeHtml(state.logs.join("\n")) : "ログはまだありません。"}</pre>
-      </div>
-
-      <p class="feedback-text">${state.error ? escapeHtml(state.error) : "まだエラーはありません。"}</p>
     </div>
   `;
 }
@@ -1081,19 +997,6 @@ function renderExportTab() {
         </button>
       </div>
     </div>
-  `;
-}
-
-function renderStatusCard(label, status, summary) {
-  return `
-    <article class="status-card">
-      <span class="chip-label">${label}</span>
-      <div class="status-row">
-        <strong>${getStatusLabel(status)}</strong>
-        <span class="status-dot status-dot--${getStatusTone(status)}"></span>
-      </div>
-      <p>${escapeHtml(summary)}</p>
-    </article>
   `;
 }
 
@@ -1336,12 +1239,6 @@ function handleInspectorCardClick(event) {
     return;
   }
 
-  const runtimeButton = getClosestFromEventTarget(event, "[data-run-poc]");
-  if (runtimeButton) {
-    executeRuntimePoc();
-    return;
-  }
-
   const exportButton = getClosestFromEventTarget(event, "[data-export]");
   if (exportButton) {
     executeExport(exportButton.dataset.export);
@@ -1556,15 +1453,6 @@ function applyShapeProfileParams(profileKey) {
 
   nextParams.shapeProfile = profileKey;
   state.keycapParams = syncDerivedKeycapParams(nextParams);
-}
-
-function createSampleFiles() {
-  return [
-    {
-      path: samplePath,
-      content: minimumPocScad,
-    },
-  ];
 }
 
 function downloadBlob(blob, filename) {
@@ -2003,41 +1891,6 @@ async function runKeycapOffJobs(jobs) {
   return outputs;
 }
 
-async function executeRuntimePoc() {
-  state.runtimeStatus = "running";
-  state.runtimeSummary = "生成機能の準備をしています";
-  state.logs = [];
-  state.error = "";
-  render();
-
-  try {
-    const result = await runOpenScad({
-      files: createSampleFiles(),
-      args: [
-        samplePath,
-        "-o",
-        previewOutputPath,
-        "--backend=manifold",
-        "--export-format=off",
-      ],
-      outputPaths: [previewOutputPath],
-    });
-
-    const [output] = result.outputs;
-    state.runtimeStatus = "success";
-    state.runtimeSummary = `${Math.round(result.elapsedMs)} ms / ${output?.bytes?.byteLength ?? 0} bytes`;
-    state.logs = result.logs.map((entry) => `[${entry.stream}] ${entry.text}`);
-    state.error = "簡易チェックが正常に完了しました。";
-  } catch (error) {
-    state.runtimeStatus = "error";
-    state.runtimeSummary = "簡易チェックに失敗しました";
-    state.logs = [];
-    state.error = `${error}`;
-  }
-
-  render();
-}
-
 async function executeKeycapPreview(options = {}) {
   const { silent = false } = options;
   const requestId = ++latestPreviewRequestId;
@@ -2156,11 +2009,6 @@ async function executeExport(format) {
 render();
 
 window.addEventListener("resize", handleViewportResize);
-
-const params = new URLSearchParams(window.location.search);
-if (params.get("autorun") === "1") {
-  executeRuntimePoc();
-}
 
 executeKeycapPreview({ silent: true });
 

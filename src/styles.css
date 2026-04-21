@@ -233,9 +233,6 @@ pre {
 
 .panel-text,
 .field-hint,
-.guide-step span,
-.feedback-text,
-.status-card p,
 .field-group-header p {
   color: var(--muted);
   font-size: 13px;
@@ -245,16 +242,13 @@ pre {
 .info-chip-list,
 .parameter-group-list,
 .note-list,
-.export-button-list,
-.guide-list {
+.export-button-list {
   display: grid;
   gap: 12px;
 }
 
 .info-chip,
-.note-card,
-.status-card,
-.guide-step {
+.note-card {
   display: grid;
   gap: 6px;
   padding: 14px 16px;
@@ -278,13 +272,10 @@ pre {
 
 .info-chip strong,
 .note-card strong,
-.status-card strong,
 .action-card strong,
-.secondary-card-button,
 .legend-input__label,
 .field-label,
-.field-group-header h3,
-.guide-step strong {
+.field-group-header h3 {
   color: var(--text);
 }
 
@@ -580,8 +571,7 @@ pre {
   accent-color: var(--panel-dark);
 }
 
-.action-card,
-.secondary-card-button {
+.action-card {
   width: 100%;
   border: 0;
   cursor: pointer;
@@ -620,99 +610,13 @@ pre {
   color: var(--muted-soft);
 }
 
-.action-card:disabled,
-.secondary-card-button:disabled {
+.action-card:disabled {
   opacity: 0.7;
   cursor: wait;
 }
 
 .note-card--neutral:last-child {
   margin-bottom: 2px;
-}
-
-.status-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.status-card strong {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-}
-
-.status-dot--neutral {
-  background: #b6aa98;
-}
-
-.status-dot--info {
-  background: #7b9bbf;
-}
-
-.status-dot--warning {
-  background: #b8884c;
-}
-
-.status-dot--success {
-  background: #5d9270;
-}
-
-.status-dot--danger {
-  background: #b9655e;
-}
-
-.guide-list {
-  list-style: none;
-  padding: 0;
-}
-
-.secondary-card-button {
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: var(--glass-panel-soft);
-  text-align: left;
-  font-size: 15px;
-  font-weight: 700;
-  backdrop-filter: blur(0px) saturate(100%);
-  -webkit-backdrop-filter: blur(0px) saturate(100%);
-}
-
-.mini-code-block {
-  overflow: hidden;
-  border-radius: 18px;
-  background: rgba(32, 25, 21, 0.28);
-  backdrop-filter: blur(0px) saturate(100%);
-  -webkit-backdrop-filter: blur(0px) saturate(100%);
-  color: #efe2d0;
-}
-
-.mini-code-block__title {
-  padding: 12px 14px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #d4bfa7;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.mini-code-block pre {
-  max-height: 220px;
-  overflow: auto;
-  padding: 14px;
-  font-size: 12px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.feedback-text {
-  padding: 0 2px;
 }
 
 .right-column {

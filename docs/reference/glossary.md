@@ -39,7 +39,3 @@ UI 初期値や SCAD パラメータの組み合わせをまとめた定義。
 ## stem
 
 キーキャップ裏面の取り付け形状。
-
-## runtime smoke check
-
-`minimum-poc.scad` を使って OpenSCAD runtime が最低限動くか確認する簡易チェック。

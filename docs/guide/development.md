@@ -49,7 +49,6 @@
 
 1. `npm run build`
 2. ブラウザでアプリを開き、preview が表示されることを確認
-3. 必要に応じて `簡易チェックを実行する` を押すか、`?autorun=1` で runtime smoke を走らせる
 
 変更内容に応じて追加確認する。
 
@@ -84,5 +83,4 @@
 
 ## 補足
 
-- `minimum-poc.scad` は現在も runtime smoke に使っているため削除しない
 - 3MF は user-facing export だが、スライサー互換性の確認は別手順で扱う

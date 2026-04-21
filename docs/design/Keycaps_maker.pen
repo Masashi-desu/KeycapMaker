@@ -101,31 +101,6 @@
                     },
                     {
                       "type": "frame",
-                      "id": "M7bQR",
-                      "name": "segGuide",
-                      "width": "fill_container",
-                      "fill": "#00000000",
-                      "cornerRadius": 14,
-                      "padding": [
-                        12,
-                        10
-                      ],
-                      "justifyContent": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "nVOce",
-                          "name": "segGuideText",
-                          "fill": "#6F5E4D",
-                          "content": "使い方",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "Bold"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
                       "id": "PqbNg",
                       "name": "segExport",
                       "width": "fill_container",
@@ -323,31 +298,6 @@
                   "name": "segParamsText",
                   "fill": "#6F5E4D",
                   "content": "設定",
-                  "fontFamily": "Inter",
-                  "fontSize": 13,
-                  "fontWeight": "Bold"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "NIc6G",
-              "name": "segGuide",
-              "width": "fill_container",
-              "fill": "#00000000",
-              "cornerRadius": 14,
-              "padding": [
-                12,
-                10
-              ],
-              "justifyContent": "center",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "NHQbQ",
-                  "name": "segGuideText",
-                  "fill": "#6F5E4D",
-                  "content": "使い方",
                   "fontFamily": "Inter",
                   "fontSize": 13,
                   "fontWeight": "Bold"
