@@ -59,7 +59,7 @@
 - export 変更:
   3MF 保存、part 数、Bambu Studio 読み込み
 - フォント変更:
-  実文字表示と runtime asset 読み込み
+  実文字表示、font 検索、native style の有効 / 無効、runtime asset 読み込み
 
 ## ドキュメント更新先
 

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "defaultProfileKey": "standard-1u",
   "selectorKeys": ["shapeProfile", "legendFontKey", "stemType"],
   "profiles": [
@@ -30,11 +30,11 @@
         "bodyColor": "#f8f9fa",
         "legendEnabled": true,
         "legendText": "A",
-        "legendFontKey": "mplus1p",
-        "legendWeight": "regular",
-        "legendSlant": "none",
+        "legendFontKey": "mplus1-variable",
+        "legendFontStyleKey": "regular",
         "legendUnderlineEnabled": false,
         "legendSize": 4.0,
+        "legendOutlineDelta": 0,
         "legendHeight": 0,
         "legendEmbed": 0.6,
         "legendColor": "#212529",

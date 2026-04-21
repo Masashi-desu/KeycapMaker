@@ -17,13 +17,15 @@ default_top_pitch_deg = 0;
 default_top_roll_deg = 0;
 
 default_legend_text = "A";
-default_legend_font_name = "M PLUS 1p";
-default_legend_weight = "regular";
-default_legend_slant = "none";
+default_legend_font_name = "M PLUS 1:style=Regular";
 default_legend_underline_enabled = false;
+default_legend_underline_width = 0;
+default_legend_underline_thickness = 0;
+default_legend_underline_offset_y = 0;
 default_legend_width = 7.2;
 default_legend_depth = 4.0;
 default_legend_height = 0;
+default_legend_outline_delta = 0;
 default_legend_offset_x = 0;
 default_legend_offset_y = 0;
 default_legend_embed = 0.6;

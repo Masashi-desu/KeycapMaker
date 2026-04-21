@@ -5,7 +5,7 @@
 Keycap Maker は、GitHub Pages で配信するクライアントサイド完結のキーキャップ編集アプリです。現在の主要機能は次のとおりです。
 
 - キーキャップ形状の編集
-- legend の文字列、書体、装飾、位置、高さ、埋め込み量の編集
+- legend の文字列、書体、font 内 style、明示的な太さ補正、位置、高さ、埋め込み量の編集
 - homing bar と stem 方式の切り替え
 - Three.js によるプレビュー
 - 3MF の書き出し
@@ -79,6 +79,7 @@ Keycap Maker は、GitHub Pages で配信するクライアントサイド完結
 
 - legend は単一項目モデルで、複数 legend や side legend は未対応
 - legend の露出面は top dish 前提
+- variable font の native style は使えるが、italic / slanted は font 側に実データがない限り出せない
 - 3MF の色情報は付与しているが、スライサー互換性は別途手動確認が必要
 - OpenSCAD runtime とフォント同梱のライセンス確認は人間の最終確認が必要
 

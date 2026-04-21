@@ -2616,7 +2616,7 @@
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "配信に同梱できるライセンスの書体だけを表示しています",
+                          "content": "虫眼鏡から検索できます。対応 style は右側で選びます",
                           "lineHeight": 1.45,
                           "fontFamily": "Inter",
                           "fontSize": 13,
@@ -2627,8 +2627,8 @@
                     {
                       "type": "frame",
                       "id": "JcLrb",
-                      "width": 128,
-                      "fill": "#FFFFFF3D",
+                      "width": 192,
+                      "fill": "#F5EFE533",
                       "cornerRadius": 12,
                       "stroke": {
                         "align": "inside",
@@ -2647,19 +2647,20 @@
                           "type": "text",
                           "id": "S28dH",
                           "fill": "#2D241C",
-                          "content": "M PLUS 1p",
+                          "content": "M PLUS 1 Variable",
                           "fontFamily": "Inter",
                           "fontSize": 14,
-                          "fontWeight": "Bold"
+                          "fontWeight": "normal"
                         },
                         {
-                          "type": "text",
-                          "id": "ZVJUn",
-                          "fill": "#7C6A58",
-                          "content": "⌄",
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "Bold"
+                          "type": "icon_font",
+                          "id": "JQurZ",
+                          "name": "fontSearchIcon",
+                          "width": 16,
+                          "height": 16,
+                          "iconFontName": "search",
+                          "iconFontFamily": "lucide",
+                          "fill": "#6F5E4D"
                         }
                       ]
                     }
@@ -2694,7 +2695,7 @@
                           "type": "text",
                           "id": "wooQ0",
                           "fill": "#2D241C",
-                          "content": "文字の太さ",
+                          "content": "フォント内スタイル",
                           "fontFamily": "Inter",
                           "fontSize": 14,
                           "fontWeight": "Bold"
@@ -2705,7 +2706,7 @@
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "見えやすくしたいときは太字にできます",
+                          "content": "内蔵 style を使います",
                           "lineHeight": 1.45,
                           "fontFamily": "Inter",
                           "fontSize": 13,
@@ -2716,7 +2717,7 @@
                     {
                       "type": "frame",
                       "id": "1Mpxm",
-                      "width": 118,
+                      "width": 158,
                       "fill": "#FFFFFF3D",
                       "cornerRadius": 12,
                       "stroke": {
@@ -2736,103 +2737,14 @@
                           "type": "text",
                           "id": "LacSQ",
                           "fill": "#2D241C",
-                          "content": "標準",
+                          "content": "Regular",
                           "fontFamily": "Inter",
                           "fontSize": 14,
-                          "fontWeight": "Bold"
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
                           "id": "IfHyI",
-                          "fill": "#7C6A58",
-                          "content": "⌄",
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "Bold"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "Wv1jM",
-                  "width": "fill_container",
-                  "fill": "#F4ECE129",
-                  "cornerRadius": 16,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#D8CCB83D"
-                  },
-                  "gap": 12,
-                  "padding": [
-                    12,
-                    14
-                  ],
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "D46sS",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 4,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "yJ3Bp",
-                          "fill": "#2D241C",
-                          "content": "文字の傾き",
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "Bold"
-                        },
-                        {
-                          "type": "text",
-                          "id": "HeMgg",
-                          "fill": "#7C6A58",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "少し傾けて見た目の印象を変えられます",
-                          "lineHeight": 1.45,
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "hkEmp",
-                      "width": 118,
-                      "fill": "#FFFFFF3D",
-                      "cornerRadius": 12,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#D8CCB857"
-                      },
-                      "gap": 10,
-                      "padding": [
-                        8,
-                        12
-                      ],
-                      "justifyContent": "space_between",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "pJpMI",
-                          "fill": "#2D241C",
-                          "content": "なし",
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "Bold"
-                        },
-                        {
-                          "type": "text",
-                          "id": "HGx3Z",
                           "fill": "#7C6A58",
                           "content": "⌄",
                           "fontFamily": "Inter",
@@ -2883,7 +2795,7 @@
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "文字の下に線を追加します",
+                          "content": "下線位置と太さは font ファイルの情報を使います。任意の見た目へ置き換えません",
                           "lineHeight": 1.45,
                           "fontFamily": "Inter",
                           "fontSize": 13,
@@ -3027,7 +2939,7 @@
                 },
                 {
                   "type": "frame",
-                  "id": "w8tNw",
+                  "id": "Wv1jM",
                   "width": "fill_container",
                   "fill": "#F4ECE129",
                   "cornerRadius": 16,
@@ -3045,27 +2957,27 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "3c9o8",
+                      "id": "D46sS",
                       "width": "fill_container",
                       "layout": "vertical",
                       "gap": 4,
                       "children": [
                         {
                           "type": "text",
-                          "id": "khSqj",
+                          "id": "yJ3Bp",
                           "fill": "#2D241C",
-                          "content": "内側への埋め込み",
+                          "content": "太さ補正",
                           "fontFamily": "Inter",
                           "fontSize": 14,
                           "fontWeight": "Bold"
                         },
                         {
                           "type": "text",
-                          "id": "mPgI1",
+                          "id": "HeMgg",
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "盛り上がる文字の根元をどれだけキートップ内部へ入れるかです。高さ 0 の場合は上面シェルの大半まで自動で埋め込みます",
+                          "content": "0 が元の輪郭です。プラスで太く、マイナスで細くします",
                           "lineHeight": 1.45,
                           "fontFamily": "Inter",
                           "fontSize": 13,
@@ -3075,7 +2987,7 @@
                     },
                     {
                       "type": "frame",
-                      "id": "Pda4c",
+                      "id": "hkEmp",
                       "width": 110,
                       "fill": "#FFFFFF3D",
                       "cornerRadius": 12,
@@ -3094,16 +3006,16 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "yiWnu",
+                          "id": "pJpMI",
                           "fill": "#2D241C",
-                          "content": "0.6",
+                          "content": "0",
                           "fontFamily": "Inter",
                           "fontSize": 14,
                           "fontWeight": "Bold"
                         },
                         {
                           "type": "text",
-                          "id": "a553x",
+                          "id": "HGx3Z",
                           "fill": "#7C6A58",
                           "content": "mm",
                           "fontFamily": "Inter",
@@ -3193,6 +3105,95 @@
                         {
                           "type": "text",
                           "id": "4EPYo",
+                          "fill": "#7C6A58",
+                          "content": "mm",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "Bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "w8tNw",
+                  "width": "fill_container",
+                  "fill": "#F4ECE129",
+                  "cornerRadius": 16,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#D8CCB83D"
+                  },
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "3c9o8",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "khSqj",
+                          "fill": "#2D241C",
+                          "content": "内側への埋め込み",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "Bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "mPgI1",
+                          "fill": "#7C6A58",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "盛り上がる文字の根元をどれだけキートップ内部へ入れるかです。高さ 0 の場合は上面シェルの大半まで自動で埋め込みます",
+                          "lineHeight": 1.45,
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Pda4c",
+                      "width": 110,
+                      "fill": "#FFFFFF3D",
+                      "cornerRadius": 12,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#D8CCB857"
+                      },
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        12
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "yiWnu",
+                          "fill": "#2D241C",
+                          "content": "0.6",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "Bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "a553x",
                           "fill": "#7C6A58",
                           "content": "mm",
                           "fontFamily": "Inter",

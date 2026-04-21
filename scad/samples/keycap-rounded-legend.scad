@@ -13,13 +13,12 @@ user_dish_depth = 0;
 user_legend_enabled = true;
 user_legend_text = "B";
 user_legend_font_name = "M PLUS Rounded 1c";
-user_legend_weight = "regular";
-user_legend_slant = "none";
 user_legend_underline_enabled = false;
 user_legend_width = 7.2;
 user_legend_depth = 4.0;
 user_legend_height = 0;
 user_legend_embed = 0.6;
+user_legend_outline_delta = 0;
 
 user_homing_bar_enabled = false;
 user_stem_type = "none";

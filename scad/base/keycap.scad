@@ -96,14 +96,22 @@ top_roll_deg = is_undef(user_top_roll_deg) ? default_top_roll_deg : user_top_rol
 legend_enabled = is_undef(user_legend_enabled) ? true : user_legend_enabled;
 legend_text = is_undef(user_legend_text) ? default_legend_text : user_legend_text;
 legend_font_name = is_undef(user_legend_font_name) ? default_legend_font_name : user_legend_font_name;
-legend_weight = is_undef(user_legend_weight) ? default_legend_weight : user_legend_weight;
-legend_slant = is_undef(user_legend_slant) ? default_legend_slant : user_legend_slant;
 legend_underline_enabled = is_undef(user_legend_underline_enabled)
     ? default_legend_underline_enabled
     : user_legend_underline_enabled;
+legend_underline_width = is_undef(user_legend_underline_width)
+    ? default_legend_underline_width
+    : user_legend_underline_width;
+legend_underline_thickness = is_undef(user_legend_underline_thickness)
+    ? default_legend_underline_thickness
+    : user_legend_underline_thickness;
+legend_underline_offset_y = is_undef(user_legend_underline_offset_y)
+    ? default_legend_underline_offset_y
+    : user_legend_underline_offset_y;
 legend_width = is_undef(user_legend_width) ? default_legend_width : user_legend_width;
 legend_depth = is_undef(user_legend_depth) ? default_legend_depth : user_legend_depth;
 legend_height = is_undef(user_legend_height) ? default_legend_height : user_legend_height;
+legend_outline_delta = is_undef(user_legend_outline_delta) ? default_legend_outline_delta : user_legend_outline_delta;
 legend_offset_x = is_undef(user_legend_offset_x) ? default_legend_offset_x : user_legend_offset_x;
 legend_offset_y = is_undef(user_legend_offset_y) ? default_legend_offset_y : user_legend_offset_y;
 requested_legend_embed = is_undef(user_legend_embed) ? default_legend_embed : user_legend_embed;
@@ -244,9 +252,11 @@ module keycap_legend_volume(quality = "export") {
                 offset_y = legend_offset_y,
                 base_z = legend_surface_delta - legend_below_surface,
                 font_name = legend_font_name,
-                weight = legend_weight,
-                slant = legend_slant,
                 underline_enabled = legend_underline_enabled,
+                underline_width = legend_underline_width,
+                underline_thickness = legend_underline_thickness,
+                underline_offset_y = legend_underline_offset_y,
+                outline_delta = legend_outline_delta,
                 quality = quality
             );
     }
@@ -264,9 +274,11 @@ module keycap_legend_visible_volume(quality = "export") {
                 offset_y = legend_offset_y,
                 base_z = legend_surface_delta - legend_below_surface,
                 font_name = legend_font_name,
-                weight = legend_weight,
-                slant = legend_slant,
                 underline_enabled = legend_underline_enabled,
+                underline_width = legend_underline_width,
+                underline_thickness = legend_underline_thickness,
+                underline_offset_y = legend_underline_offset_y,
+                outline_delta = legend_outline_delta,
                 quality = quality
             );
     }

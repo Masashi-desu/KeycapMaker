@@ -5,9 +5,12 @@ import { hexColorToNumber, normalizeHexColor } from "./lib/color-utils.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
 import { parseOff } from "./lib/off-parser.js";
 import {
+  DEFAULT_KEYCAP_LEGEND_FONT_KEY,
   KEYCAP_LEGEND_FONTS,
   buildKeycapArgs,
   createKeycapFiles,
+  getKeycapLegendFontStyleOptions,
+  resolveKeycapLegendFont,
 } from "./lib/keycap-scad-bundle.js";
 
 const app = document.querySelector("#app");
@@ -17,11 +20,19 @@ const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycap3mfPath = "keycap-preview.3mf";
 const EDITOR_DATA_KIND = "keycap-maker/editor-params";
 const LEGACY_EDITOR_DATA_KINDS = new Set([EDITOR_DATA_KIND.replace("keycap-maker", "keycap" + "s-maker")]);
-const EDITOR_DATA_SCHEMA_VERSION = 3;
+const EDITOR_DATA_SCHEMA_VERSION = 4;
 const CHEVRON_ICON_URLS = Object.freeze({
   expanded: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-up.svg",
   collapsed: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-down.svg",
 });
+const SEARCH_ICON_MARKUP = `
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path
+      d="M10.5 4.5a6 6 0 1 0 0 12a6 6 0 0 0 0-12m0-1.5a7.5 7.5 0 1 1 0 15a7.5 7.5 0 0 1 0-15m8.56 14.94l2.22 2.22a.75.75 0 1 1-1.06 1.06L18 19a.75.75 0 0 1 1.06-1.06"
+      fill="currentColor"
+    />
+  </svg>
+`;
 let disposePreviewScene = null;
 let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
@@ -31,11 +42,16 @@ let previewViewState = null;
 let viewportLayoutMode = getViewportLayoutMode();
 let hasAttachedEditorDataDropListeners = false;
 let editorDataDragDepth = 0;
+const legendFontPreviewPromises = new Map();
+let pendingLegendFontPickerFocus = false;
 const textDecoder = new TextDecoder();
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
 const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
 const KEY_UNIT_MM = 18;
 const LEGEND_MIN_SIZE = 0.5;
+const LEGEND_OUTLINE_MIN = -1.2;
+const LEGEND_OUTLINE_MAX = 1.2;
+const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
 const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
 const DEFAULT_KEYCAP_COLORS = Object.freeze({
@@ -89,6 +105,86 @@ function resolveShapeProfileConfig(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
 function createDefaultKeycapParams(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   const profile = resolveShapeProfileConfig(profileKey);
   return cloneSerializable(profile?.defaults ?? {});
+}
+
+function resolveLegendFontConfig(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
+  return resolveKeycapLegendFont(fontKey);
+}
+
+function resolveLegendFontSearchLabel(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
+  const selectedFont = resolveLegendFontConfig(fontKey);
+  return selectedFont.searchLabel ?? selectedFont.label;
+}
+
+function normalizeLegendFontPickerQuery(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function getLegendFontPickerResults(query = state.legendFontPickerQuery) {
+  const normalizedQuery = normalizeLegendFontPickerQuery(query);
+  if (!normalizedQuery) {
+    return KEYCAP_LEGEND_FONTS;
+  }
+
+  return KEYCAP_LEGEND_FONTS.filter((font) => {
+    const searchLabel = String(font.searchLabel ?? font.label).toLowerCase();
+    const fontName = String(font.fontName ?? "").toLowerCase();
+    return searchLabel.includes(normalizedQuery) || fontName.includes(normalizedQuery);
+  });
+}
+
+function getLegendFontFieldHint(params) {
+  const selectedFont = resolveLegendFontConfig(params.legendFontKey);
+  return selectedFont.fontKind === "variable"
+    ? "虫眼鏡から検索できます。対応 style は右側で選びます"
+    : "虫眼鏡から検索できます";
+}
+
+function getLegendFontStyleFieldOptions(params = state.keycapParams) {
+  const nativeStyleOptions = getKeycapLegendFontStyleOptions(params.legendFontKey);
+  if (nativeStyleOptions.length === 0) {
+    return [{ value: LEGEND_FONT_STYLE_FALLBACK_KEY, label: "フォント名どおり" }];
+  }
+
+  return nativeStyleOptions.map((option) => ({
+    value: option.key,
+    label: option.label,
+  }));
+}
+
+function isLegendFontStyleSelectable(params = state.keycapParams) {
+  return getKeycapLegendFontStyleOptions(params.legendFontKey).length > 0;
+}
+
+function getLegendFontStyleHint(params) {
+  return isLegendFontStyleSelectable(params)
+    ? "内蔵 style を使います"
+    : "フォント名どおりに使います";
+}
+
+function clampLegendOutlineDelta(value, fallback = 0) {
+  const nextValue = Number(value);
+  if (!Number.isFinite(nextValue)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(nextValue, LEGEND_OUTLINE_MIN), LEGEND_OUTLINE_MAX);
+}
+
+function getLegendOutlineHint() {
+  return "0 が元の輪郭です。プラスで太く、マイナスで細くします";
+}
+
+function syncLegendFontParams(params = state.keycapParams) {
+  params.legendFontKey = resolveLegendFontConfig(params.legendFontKey).key;
+  const styleOptions = getLegendFontStyleFieldOptions(params);
+  const fallbackStyleKey = styleOptions[0]?.value ?? LEGEND_FONT_STYLE_FALLBACK_KEY;
+  const allowedStyleKeys = new Set(styleOptions.map((option) => option.value));
+  params.legendFontStyleKey = allowedStyleKeys.has(params.legendFontStyleKey)
+    ? params.legendFontStyleKey
+    : fallbackStyleKey;
+  params.legendOutlineDelta = clampLegendOutlineDelta(params.legendOutlineDelta, 0);
+  return params;
 }
 
 const STEM_TYPE_OPTIONS = Object.freeze([
@@ -406,38 +502,23 @@ const fieldGroups = [
       {
         key: "legendFontKey",
         label: "書体",
-        hint: "配信に同梱できるライセンスの書体だけを表示しています",
-        type: "select",
-        options: KEYCAP_LEGEND_FONTS.map((font) => ({ value: font.key, label: font.label })),
+        hint: (params) => getLegendFontFieldHint(params),
+        type: "font-search",
         visibleWhen: (params) => params.legendEnabled,
       },
       {
-        key: "legendWeight",
-        label: "文字の太さ",
-        hint: "見えやすくしたいときは太字にできます",
+        key: "legendFontStyleKey",
+        label: "フォント内スタイル",
+        hint: (params) => getLegendFontStyleHint(params),
         type: "select",
-        options: [
-          { value: "regular", label: "標準" },
-          { value: "bold", label: "太字" },
-        ],
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendSlant",
-        label: "文字の傾き",
-        hint: "少し傾けて見た目の印象を変えられます",
-        type: "select",
-        options: [
-          { value: "none", label: "なし" },
-          { value: "italic", label: "イタリック風" },
-          { value: "slanted", label: "ななめ" },
-        ],
+        options: (params) => getLegendFontStyleFieldOptions(params),
+        disabledWhen: (params) => !isLegendFontStyleSelectable(params),
         visibleWhen: (params) => params.legendEnabled,
       },
       {
         key: "legendUnderlineEnabled",
         label: "下線を付ける",
-        hint: "文字の下に線を追加します",
+        hint: "下線位置と太さは font ファイルの情報を使います。任意の見た目へ置き換えません",
         type: "checkbox",
         visibleWhen: (params) => params.legendEnabled,
       },
@@ -448,6 +529,16 @@ const fieldGroups = [
         unit: "mm",
         step: 0.1,
         min: LEGEND_MIN_SIZE,
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
+        key: "legendOutlineDelta",
+        label: "太さ補正",
+        hint: () => getLegendOutlineHint(),
+        unit: "mm",
+        step: 0.02,
+        min: LEGEND_OUTLINE_MIN,
+        max: LEGEND_OUTLINE_MAX,
         visibleWhen: (params) => params.legendEnabled,
       },
       {
@@ -622,6 +713,7 @@ function syncDerivedKeycapParams(params = state.keycapParams) {
   params.topPitchDeg = Number.isFinite(Number(params.topPitchDeg)) ? Number(params.topPitchDeg) : Number(defaults.topPitchDeg ?? 0);
   params.topRollDeg = Number.isFinite(Number(params.topRollDeg)) ? Number(params.topRollDeg) : Number(defaults.topRollDeg ?? 0);
   params.topSlopeInputMode = resolveTopSlopeInputMode(params.topSlopeInputMode ?? defaults.topSlopeInputMode);
+  syncLegendFontParams(params);
   params.legendSize = clampLegendSize(params.legendSize, defaultLegendSize);
   Object.assign(params, resolveTopEdgeHeights(params));
   params.stemType = resolveStemType(params);
@@ -640,6 +732,8 @@ const state = {
   previewLayers: [],
   sidebarTab: "params",
   isImportDragActive: false,
+  legendFontPickerOpen: false,
+  legendFontPickerQuery: "",
   collapsedFieldGroups: createFieldGroupCollapseState(),
   keycapParams: syncDerivedKeycapParams(createDefaultKeycapParams()),
 };
@@ -894,6 +988,7 @@ function renderShell() {
   app.querySelector(".inspector-card")?.addEventListener("input", handleInspectorCardInput);
   app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
   app.querySelector(".inspector-card")?.addEventListener("compositionend", handleInspectorCardCompositionEnd);
+  app.querySelector(".inspector-card")?.addEventListener("keydown", handleInspectorCardKeydown);
   attachEditorDataDropListeners();
   syncImportDropOverlay();
   renderPreviewViewer();
@@ -943,6 +1038,7 @@ function render(options = {}) {
     renderInspectorPanel();
     configureColoris();
     syncImportDropOverlay();
+    focusLegendFontPickerQuery();
   };
 
   if (animateInspector && isUiMotionEnabled()) {
@@ -960,6 +1056,23 @@ function renderInspectorContent() {
   }
 
   return renderParametersTab();
+}
+
+function focusLegendFontPickerQuery() {
+  if (!pendingLegendFontPickerFocus) {
+    return;
+  }
+
+  pendingLegendFontPickerFocus = false;
+  const input = app.querySelector("[data-font-picker-query]");
+  if (!(input instanceof HTMLInputElement)) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    input.focus();
+    input.select();
+  });
 }
 
 function renderParametersTab() {
@@ -1050,12 +1163,98 @@ function resolveDynamicCopy(value, params = state.keycapParams) {
   return typeof value === "function" ? value(params) : (value ?? "");
 }
 
+function resolveFieldOptions(field, params = state.keycapParams) {
+  if (typeof field.options === "function") {
+    return field.options(params);
+  }
+
+  return field.options ?? [];
+}
+
+function isFieldDisabled(field, params = state.keycapParams) {
+  return typeof field.disabledWhen === "function" ? field.disabledWhen(params) : false;
+}
+
+async function ensureLegendFontPreviewLoaded(font) {
+  if (!font?.measurementFamily || typeof FontFace === "undefined" || typeof document === "undefined") {
+    return null;
+  }
+
+  const cachedPromise = legendFontPreviewPromises.get(font.key);
+  if (cachedPromise) {
+    return cachedPromise;
+  }
+
+  const descriptors = font.fontKind === "variable"
+    ? { style: "normal", weight: "100 900" }
+    : { style: "normal", weight: `${font.cssWeight ?? 400}` };
+  const previewPromise = new FontFace(
+    font.measurementFamily,
+    `url(${resolvePublicAssetUrl(font.assetPath)})`,
+    descriptors,
+  )
+    .load()
+    .then((loadedFace) => {
+      document.fonts.add(loadedFace);
+      return loadedFace;
+    })
+    .catch((error) => {
+      legendFontPreviewPromises.delete(font.key);
+      console.warn(error);
+      return null;
+    });
+
+  legendFontPreviewPromises.set(font.key, previewPromise);
+  return previewPromise;
+}
+
+function warmLegendFontPreviewFonts() {
+  KEYCAP_LEGEND_FONTS.forEach((font) => {
+    void ensureLegendFontPreviewLoaded(font);
+  });
+}
+
+function buildLegendFontPreviewStyle(font) {
+  if (!font?.measurementFamily) {
+    return "";
+  }
+
+  return `font-family: "${font.measurementFamily}", "Hiragino Sans", "Yu Gothic UI", sans-serif; font-style: normal; font-weight: ${font.cssWeight ?? 400};`;
+}
+
+function renderLegendFontPickerOptions() {
+  const matchingFonts = getLegendFontPickerResults();
+  if (matchingFonts.length === 0) {
+    return `<div class="font-picker-empty">一致するフォントがありません</div>`;
+  }
+
+  return matchingFonts
+    .map((font) => {
+      const isSelected = font.key === state.keycapParams.legendFontKey;
+      const previewStyle = buildLegendFontPreviewStyle(font);
+
+      return `
+        <button
+          class="font-picker-option ${isSelected ? "is-selected" : ""}"
+          type="button"
+          data-font-picker-option="${font.key}"
+        >
+          <span class="font-picker-option__preview" style="${escapeHtml(previewStyle)}">${escapeHtml(font.label)}</span>
+          <span class="font-picker-option__meta">${font.fontKind === "variable" ? "Variable / named style" : "Static face"}</span>
+        </button>
+      `;
+    })
+    .join("");
+}
+
 function renderField(field) {
   const value = state.keycapParams[field.key];
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
   const fieldLabel = resolveDynamicCopy(field.label);
   const fieldHint = resolveDynamicCopy(field.hint);
   const secondaryLabel = resolveDynamicCopy(field.secondaryLabel);
+  const fieldOptions = resolveFieldOptions(field);
+  const isDisabled = isFieldDisabled(field);
 
   if (field.type === "checkbox") {
     return `
@@ -1072,6 +1271,58 @@ function renderField(field) {
     `;
   }
 
+  if (field.type === "font-search") {
+    const selectedFont = resolveLegendFontConfig(value);
+    const selectedFontLabel = resolveLegendFontSearchLabel(value);
+    const selectedPreviewStyle = buildLegendFontPreviewStyle(selectedFont);
+    const pickerId = `font-picker-${field.key}`;
+    const isPickerOpen = state.legendFontPickerOpen;
+
+    return `
+      <label class="field field--font-search ${isPickerOpen ? "is-open" : ""}" style="view-transition-name: ${fieldViewTransitionName};">
+        <span class="field-copy">
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
+        </span>
+        <span class="font-picker" data-font-picker>
+          <span class="font-picker-summary">
+            <span class="field-control font-picker-selection">
+              <span class="font-picker-selection__label" style="${escapeHtml(selectedPreviewStyle)}">${escapeHtml(selectedFontLabel)}</span>
+            </span>
+            <button
+              class="font-picker-search-button"
+              type="button"
+              data-font-picker-open="${field.key}"
+              aria-expanded="${isPickerOpen ? "true" : "false"}"
+              aria-controls="${pickerId}"
+              aria-label="フォントを検索"
+            >
+              ${SEARCH_ICON_MARKUP}
+            </button>
+          </span>
+          ${isPickerOpen ? `
+            <span class="font-picker-popover" id="${pickerId}" role="dialog" aria-label="フォント検索">
+              <label class="field-control font-picker-search-input">
+                <span class="font-picker-search-input__icon">${SEARCH_ICON_MARKUP}</span>
+                <input
+                  type="text"
+                  data-font-picker-query
+                  value="${escapeHtml(state.legendFontPickerQuery)}"
+                  placeholder="フォント名で検索"
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+              </label>
+              <span class="font-picker-options" data-font-picker-options>
+                ${renderLegendFontPickerOptions()}
+              </span>
+            </span>
+          ` : ""}
+        </span>
+      </label>
+    `;
+  }
+
   if (field.type === "select") {
     return `
       <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
@@ -1080,8 +1331,8 @@ function renderField(field) {
           <span class="field-hint">${fieldHint}</span>
         </span>
         <span class="field-control field-control--select">
-          <select data-field="${field.key}">
-            ${field.options
+          <select data-field="${field.key}" ${isDisabled ? "disabled" : ""}>
+            ${fieldOptions
               .map(
                 (option) => `
                   <option value="${option.value}" ${option.value === value ? "selected" : ""}>${option.label}</option>
@@ -1228,6 +1479,22 @@ function handleSegmentControlClick(event) {
 }
 
 function handleInspectorCardClick(event) {
+  const fontPickerOptionButton = getClosestFromEventTarget(event, "[data-font-picker-option]");
+  if (fontPickerOptionButton) {
+    applyLegendFontSelection(resolveLegendFontConfig(fontPickerOptionButton.dataset.fontPickerOption), { closePicker: true });
+    return;
+  }
+
+  const fontPickerOpenButton = getClosestFromEventTarget(event, "[data-font-picker-open]");
+  if (fontPickerOpenButton) {
+    if (state.legendFontPickerOpen) {
+      closeLegendFontPicker();
+    } else {
+      openLegendFontPicker();
+    }
+    return;
+  }
+
   const groupToggleButton = getClosestFromEventTarget(event, "[data-field-group-toggle]");
   if (groupToggleButton) {
     toggleFieldGroup(groupToggleButton.dataset.fieldGroupToggle);
@@ -1247,6 +1514,12 @@ function handleInspectorCardClick(event) {
 }
 
 function handleInspectorCardInput(event) {
+  const fontPickerQueryInput = getClosestFromEventTarget(event, "[data-font-picker-query]");
+  if (fontPickerQueryInput) {
+    handleLegendFontPickerQueryInput(fontPickerQueryInput);
+    return;
+  }
+
   const input = getClosestFromEventTarget(event, "[data-field]");
   if (!input || input.type === "checkbox" || input.tagName === "SELECT") {
     return;
@@ -1274,6 +1547,31 @@ function handleInspectorCardCompositionEnd(event) {
   }
 
   handleFieldChange({ currentTarget: input });
+}
+
+function handleInspectorCardKeydown(event) {
+  const fontPickerQueryInput = getClosestFromEventTarget(event, "[data-font-picker-query]");
+  if (!fontPickerQueryInput) {
+    return;
+  }
+
+  if (event.key === "Escape") {
+    closeLegendFontPicker();
+    event.preventDefault();
+    return;
+  }
+
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  const firstMatchingFont = getLegendFontPickerResults()[0];
+  if (!firstMatchingFont) {
+    return;
+  }
+
+  applyLegendFontSelection(firstMatchingFont, { closePicker: true });
+  event.preventDefault();
 }
 
 function handleSidebarTabChange(event) {
@@ -1318,6 +1616,80 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function applyLegendFontSelection(font, options = {}) {
+  const { deferPreview = false, closePicker = false } = options;
+
+  if (closePicker) {
+    state.legendFontPickerOpen = false;
+    state.legendFontPickerQuery = "";
+  }
+
+  if (!font || font.key === state.keycapParams.legendFontKey) {
+    if (closePicker) {
+      render();
+    }
+    return false;
+  }
+
+  state.keycapParams.legendFontKey = font.key;
+  syncDerivedKeycapParams();
+  state.editorStatus = "dirty";
+  state.editorSummary = "入力内容を反映待ち";
+  render({ animateInspector: true });
+
+  if (!deferPreview) {
+    schedulePreviewRefresh();
+  }
+
+  return true;
+}
+
+function openLegendFontPicker() {
+  state.legendFontPickerOpen = true;
+  state.legendFontPickerQuery = "";
+  pendingLegendFontPickerFocus = true;
+  render();
+  warmLegendFontPreviewFonts();
+}
+
+function closeLegendFontPicker() {
+  if (!state.legendFontPickerOpen) {
+    return;
+  }
+
+  state.legendFontPickerOpen = false;
+  state.legendFontPickerQuery = "";
+  render();
+}
+
+function handleLegendFontPickerQueryInput(input) {
+  state.legendFontPickerQuery = input.value;
+  const options = app.querySelector("[data-font-picker-options]");
+  if (options) {
+    options.innerHTML = renderLegendFontPickerOptions();
+  }
+}
+
+function handleWindowPointerDown(event) {
+  if (!state.legendFontPickerOpen) {
+    return;
+  }
+
+  if (event.target instanceof Element && event.target.closest("[data-font-picker]")) {
+    return;
+  }
+
+  closeLegendFontPicker();
+}
+
+function handleWindowKeydown(event) {
+  if (event.key !== "Escape" || !state.legendFontPickerOpen) {
+    return;
+  }
+
+  closeLegendFontPicker();
+}
+
 function pickEditorSelectors(params) {
   return Object.fromEntries(
     EDITOR_SELECTOR_KEYS
@@ -1334,15 +1706,31 @@ function listEditableParamKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   return Object.keys(defaults);
 }
 
-function sanitizeEditorParamValue(fieldKey, value, fallback) {
+function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContext = state.keycapParams) {
   const fieldConfig = fieldConfigByKey.get(fieldKey);
+
+  if (fieldKey === "legendFontKey") {
+    return resolveLegendFontConfig(value).key;
+  }
+
+  if (fieldKey === "legendFontStyleKey") {
+    const legendFontKey = resolveLegendFontConfig(paramsContext?.legendFontKey).key;
+    const styleOptions = getLegendFontStyleFieldOptions({ legendFontKey });
+    const allowedValues = new Set(styleOptions.map((option) => option.value));
+    const fallbackValue = allowedValues.has(fallback) ? fallback : (styleOptions[0]?.value ?? LEGEND_FONT_STYLE_FALLBACK_KEY);
+    return allowedValues.has(value) ? value : fallbackValue;
+  }
+
+  if (fieldKey === "legendOutlineDelta") {
+    return clampLegendOutlineDelta(value, fallback);
+  }
 
   if (colorFieldKeys.has(fieldKey)) {
     return normalizeHexColor(value) ?? fallback;
   }
 
   if (fieldConfig?.type === "select") {
-    const allowedValues = new Set(fieldConfig.options.map((option) => option.value));
+    const allowedValues = new Set(resolveFieldOptions(fieldConfig).map((option) => option.value));
     return allowedValues.has(value) ? value : fallback;
   }
 
@@ -1368,7 +1756,7 @@ function createExportableKeycapParams(params = state.keycapParams) {
   const exportableParams = {};
 
   for (const key of listEditableParamKeys(profileKey)) {
-    exportableParams[key] = sanitizeEditorParamValue(key, params[key], defaults[key]);
+    exportableParams[key] = sanitizeEditorParamValue(key, params[key], defaults[key], params);
   }
 
   return exportableParams;
@@ -1425,7 +1813,7 @@ function parseEditorDataPayload(payload) {
   const nextParams = {};
 
   for (const key of listEditableParamKeys(rawProfileKey)) {
-    nextParams[key] = sanitizeEditorParamValue(key, mergedRawParams[key], defaults[key]);
+    nextParams[key] = sanitizeEditorParamValue(key, mergedRawParams[key], defaults[key], mergedRawParams);
   }
 
   return syncDerivedKeycapParams(nextParams);
@@ -1449,7 +1837,7 @@ function applyShapeProfileParams(profileKey) {
   const nextParams = {};
 
   for (const key of listEditableParamKeys(profileKey)) {
-    nextParams[key] = sanitizeEditorParamValue(key, state.keycapParams[key], defaults[key]);
+    nextParams[key] = sanitizeEditorParamValue(key, state.keycapParams[key], defaults[key], state.keycapParams);
   }
 
   nextParams.shapeProfile = profileKey;
@@ -2010,6 +2398,8 @@ async function executeExport(format) {
 render();
 
 window.addEventListener("resize", handleViewportResize);
+window.addEventListener("pointerdown", handleWindowPointerDown, true);
+window.addEventListener("keydown", handleWindowKeydown);
 
 executeKeycapPreview({ silent: true });
 

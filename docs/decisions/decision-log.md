@@ -82,16 +82,9 @@
 ## 2026-04-18 - legend を `text()` ベースへ移行
 
 - 結論:
-  legend は `text()` ベースとし、`M PLUS 1p`、`M PLUS Rounded 1c`、`DotGothic16` を同梱する
+  legend は `text()` ベースとし、同梱 font asset の family / face を切り替えて使う
 - 理由:
   UI から任意文字列と複数書体を扱えるようにするため
-
-## 2026-04-18 - legend 装飾はフォント非依存で表現
-
-- 結論:
-  太字、イタリック風、ななめ、下線は追加フォントではなく 2D 形状操作で表現する
-- 理由:
-  書体ごとの差を減らし、同じ UI を維持するため
 
 ## 2026-04-18 - legend の高さ 0 は flush として扱う
 
@@ -124,3 +117,45 @@
   bundled OpenSCAD runtime では小さい `text()` が粗く多角形化されやすく、丸みのある書体で角張りが目立ったため
 - 関連:
   [../backlog/legend-svg-path-option.md](../backlog/legend-svg-path-option.md)
+
+## 2026-04-21 - legend に擬似的な太らせ補正は入れない
+
+- 結論:
+  legend の glyph outline には外周 `offset()` をかけず、選択したフォントの輪郭をそのまま使う
+- 理由:
+  ユーザーが意図していない太らせが見た目に混ざると、選択したフォントとの差が分かりにくくなるため
+
+## 2026-04-21 - legend の style 選択は font spec を優先する
+
+- 結論:
+  bold / italic / slanted のような style は、font が持つ named style や separate face を優先し、擬似 style はユーザー操作なしでは付けない
+- 理由:
+  選択した font の仕様をそのまま使う方が、見た目の由来が明確で保守しやすいため
+
+## 2026-04-21 - variable font は static face より優先して導入する
+
+- 結論:
+  `M PLUS 1 Variable` を同梱し、native style を UI から選べるようにする。static font は font 名検索から face を直接選ぶ
+- 理由:
+  variable font がある family では、1 ファイルで named style を扱える方が UI と asset 管理を単純化できるため
+
+## 2026-04-21 - 明示操作の輪郭補正だけを geometry で許可する
+
+- 結論:
+  font-native な style 選択とは別に、`legendOutlineDelta` をユーザー入力の明示操作として提供し、このときだけ `offset()` で輪郭補正する
+- 理由:
+  native style だけでは足りない微調整 needs を残しつつ、無断補正は避けたいため
+
+## 2026-04-21 - underline は font metadata に従う
+
+- 結論:
+  `legendUnderlineEnabled` が有効なときは、font file の `post` / `head` / `hhea` から `UnderlinePosition` / `UnderlineThickness` と line box 中心を読み、center 揃え text の座標へ変換して下線位置と太さを決める。metadata を取得できない場合、任意の固定値へフォールバックしない
+- 理由:
+  underline も選択した font の仕様に寄せた方が、見た目の由来が明確で、任意の装飾が混ざらないため
+
+## 2026-04-21 - font 選択 UI はブラウザ標準 datalist に依存しない
+
+- 結論:
+  font 選択は自前の検索 popover で実装し、虫眼鏡ボタンから検索 textbox と scrollable list を開く。候補は各 font 自身で表示し、入力中にリアルタイム絞り込みする
+- 理由:
+  datalist では option の見た目制御が弱く、font そのものを preview しながら選ぶ体験を作りにくいため
