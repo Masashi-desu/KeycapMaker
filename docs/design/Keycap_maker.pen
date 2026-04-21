@@ -458,7 +458,25 @@
       "x": 2080,
       "y": 0,
       "name": "Parameter Card Components",
-      "fill": "#00000000",
+      "fill": {
+        "type": "gradient",
+        "gradientType": "linear",
+        "enabled": true,
+        "rotation": 135,
+        "size": {
+          "height": 1
+        },
+        "colors": [
+          {
+            "color": "#F4F1EA",
+            "position": 0
+          },
+          {
+            "color": "#E7E0D2",
+            "position": 1
+          }
+        ]
+      },
       "stroke": {
         "align": "inside",
         "thickness": 0,
@@ -540,7 +558,7 @@
                 {
                   "type": "text",
                   "id": "lf7xW",
-                  "fill": "#7C6A58",
+                  "fill": "#7c6a58",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
                   "content": "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。キーサイズは横幅と連動していて、18 mm を 1u として換算します。",
@@ -569,12 +587,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -656,7 +674,8 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
@@ -825,12 +844,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -914,12 +933,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -1003,12 +1022,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -1084,12 +1103,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -1316,12 +1335,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -1406,12 +1425,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -1496,12 +1515,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -1586,12 +1605,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -1772,12 +1791,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -1862,12 +1881,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -1952,12 +1971,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -2042,12 +2061,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -2132,12 +2151,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -2222,12 +2241,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -2406,12 +2425,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -2510,12 +2529,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -2550,7 +2569,7 @@
                     {
                       "type": "frame",
                       "id": "5Hubf",
-                      "width": 118,
+                      "width": "fill_container",
                       "fill": "#F5EFE533",
                       "cornerRadius": 12,
                       "stroke": {
@@ -2578,7 +2597,8 @@
                 },
                 {
                   "type": "frame",
-                  "id": "OhmZY",
+                  "id": "NiXVW",
+                  "name": "fontRowNew",
                   "width": "fill_container",
                   "fill": "#F4ECE129",
                   "cornerRadius": 16,
@@ -2587,23 +2607,23 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
-                      "id": "c066g",
+                      "id": "5sXeY",
                       "width": "fill_container",
                       "layout": "vertical",
                       "gap": 4,
                       "children": [
                         {
                           "type": "text",
-                          "id": "ezl5w",
+                          "id": "12rc4",
                           "fill": "#2D241C",
                           "content": "書体",
                           "fontFamily": "Inter",
@@ -2612,11 +2632,11 @@
                         },
                         {
                           "type": "text",
-                          "id": "K5FjZ",
+                          "id": "KeYTu",
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "虫眼鏡から検索できます。対応 style は右側で選びます",
+                          "content": "虫眼鏡から検索できます",
                           "lineHeight": 1.45,
                           "fontFamily": "Inter",
                           "fontSize": 13,
@@ -2626,8 +2646,8 @@
                     },
                     {
                       "type": "frame",
-                      "id": "JcLrb",
-                      "width": 192,
+                      "id": "58cwd",
+                      "width": "fill_container",
                       "fill": "#F5EFE533",
                       "cornerRadius": 12,
                       "stroke": {
@@ -2635,32 +2655,161 @@
                         "thickness": 1,
                         "fill": "#D8CCB857"
                       },
-                      "gap": 10,
+                      "gap": 8,
                       "padding": [
-                        8,
+                        6,
+                        6,
+                        6,
                         12
                       ],
                       "justifyContent": "space_between",
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "S28dH",
-                          "fill": "#2D241C",
-                          "content": "M PLUS 1 Variable",
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "normal"
+                          "type": "frame",
+                          "id": "UIUHX",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "nGV7X",
+                              "fill": "#2D241C",
+                              "content": "黒薔薇シンデレラ",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "Bold"
+                            },
+                            {
+                              "type": "text",
+                              "id": "Qynb1",
+                              "fill": "#7C6A58",
+                              "content": "Static face",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
                         },
                         {
-                          "type": "icon_font",
-                          "id": "JQurZ",
-                          "name": "fontSearchIcon",
-                          "width": 16,
-                          "height": 16,
-                          "iconFontName": "search",
-                          "iconFontFamily": "lucide",
-                          "fill": "#6F5E4D"
+                          "type": "frame",
+                          "id": "UtDZs",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#2D241C0F",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#D8CCB86B"
+                          },
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "ZTO1E",
+                              "width": 18,
+                              "height": 18,
+                              "iconFontName": "search",
+                              "iconFontFamily": "lucide",
+                              "fill": "#2D241C"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "EGllQ",
+                  "name": "attrCard",
+                  "width": "fill_container",
+                  "fill": "#F3ECE12E",
+                  "cornerRadius": 18,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#D8CCB833"
+                  },
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "MJfDO",
+                      "name": "attrHeader",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "oBBsv",
+                          "name": "attrTitle",
+                          "fill": "#2D241C",
+                          "content": "著作権・ライセンス表記",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "Bold"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "64IdW",
+                          "name": "copyButton",
+                          "fill": "#2D241C14",
+                          "cornerRadius": 12,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "WRv5t",
+                              "name": "copyText",
+                              "fill": "#2D241C",
+                              "content": "コピー",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "Bold"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lMjnZ",
+                      "name": "attrBody",
+                      "width": "fill_container",
+                      "fill": "#FFF8EEEB",
+                      "cornerRadius": 14,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#E8DED0"
+                      },
+                      "layout": "vertical",
+                      "gap": 8,
+                      "padding": 12,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "9OUiO",
+                          "name": "attrBodyText",
+                          "fill": "#2D241C",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "使用フォント: 黒薔薇シンデレラ Version 1.00.20180805\n著作権表示: Copyright(c) 2017 M+ FONTS PROJECT/MODI\nライセンス表記: This font is free software. Unlimited permission is granted to use, copy, and distribute it, with or without modification, either commercially or noncommercially. THIS FONT IS PROVIDED \"AS IS\" WITHOUT WARRANTY.\n派生元ライセンス: SIL Open Font License, Version 1.1\n配布ページ: https://modi.jpn.org/font_kurobara-cinderella.php",
+                          "lineHeight": 1.6,
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -2677,12 +2826,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -2706,7 +2855,7 @@
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "内蔵 style を使います",
+                          "content": "フォント名どおりに使います",
                           "lineHeight": 1.45,
                           "fontFamily": "Inter",
                           "fontSize": 13,
@@ -2717,7 +2866,8 @@
                     {
                       "type": "frame",
                       "id": "1Mpxm",
-                      "width": 158,
+                      "opacity": 0.56,
+                      "width": "fill_container",
                       "fill": "#FFFFFF3D",
                       "cornerRadius": 12,
                       "stroke": {
@@ -2736,8 +2886,8 @@
                         {
                           "type": "text",
                           "id": "LacSQ",
-                          "fill": "#2D241C",
-                          "content": "Regular",
+                          "fill": "#7C6A58",
+                          "content": "フォント名どおり",
                           "fontFamily": "Inter",
                           "fontSize": 14,
                           "fontWeight": "normal"
@@ -2766,12 +2916,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -2859,12 +3009,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -2948,12 +3098,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -3037,12 +3187,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -3126,12 +3276,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -3216,12 +3366,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -3351,12 +3501,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -3440,12 +3590,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -3626,12 +3776,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -3824,12 +3974,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -3928,12 +4078,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -4017,12 +4167,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -4106,12 +4256,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -4195,12 +4345,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -4284,12 +4434,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -4374,12 +4524,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -4606,12 +4756,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -4804,12 +4954,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -4893,12 +5043,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -4982,12 +5132,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -5071,12 +5221,12 @@
                     "thickness": 1,
                     "fill": "#D8CCB83D"
                   },
-                  "gap": 12,
+                  "layout": "vertical",
+                  "gap": 10,
                   "padding": [
                     12,
                     14
                   ],
-                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",

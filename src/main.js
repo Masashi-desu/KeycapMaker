@@ -1320,43 +1320,45 @@ function renderField(field) {
           <span class="field-hint">${fieldHint}</span>
         </span>
         <span class="font-picker" data-font-picker>
-          <span class="font-picker-summary">
-            <span class="field-control font-picker-selection">
-              <span class="font-picker-selection__label" style="${escapeHtml(selectedPreviewStyle)}">${escapeHtml(selectedFontLabel)}</span>
-              <span class="font-picker-meta-row">
-                <span class="font-picker-selection__meta">${escapeHtml(selectedFontMetaLabel)}</span>
+          <span class="font-picker-trigger-shell">
+            <span class="field-control font-picker-trigger">
+              <span class="font-picker-selection">
+                <span class="font-picker-selection__label" style="${escapeHtml(selectedPreviewStyle)}">${escapeHtml(selectedFontLabel)}</span>
+                <span class="font-picker-meta-row">
+                  <span class="font-picker-selection__meta">${escapeHtml(selectedFontMetaLabel)}</span>
+                </span>
               </span>
+              <button
+                class="font-picker-search-button"
+                type="button"
+                data-font-picker-open="${field.key}"
+                aria-expanded="${isPickerOpen ? "true" : "false"}"
+                aria-controls="${pickerId}"
+                aria-label="フォントを検索"
+              >
+                ${SEARCH_ICON_MARKUP}
+              </button>
             </span>
-            <button
-              class="font-picker-search-button"
-              type="button"
-              data-font-picker-open="${field.key}"
-              aria-expanded="${isPickerOpen ? "true" : "false"}"
-              aria-controls="${pickerId}"
-              aria-label="フォントを検索"
-            >
-              ${SEARCH_ICON_MARKUP}
-            </button>
+            ${isPickerOpen ? `
+              <span class="font-picker-popover" id="${pickerId}" role="dialog" aria-label="フォント検索">
+                <label class="field-control font-picker-search-input">
+                  <span class="font-picker-search-input__icon">${SEARCH_ICON_MARKUP}</span>
+                  <input
+                    type="text"
+                    data-font-picker-query
+                    value="${escapeHtml(state.legendFontPickerQuery)}"
+                    placeholder="フォント名で検索"
+                    spellcheck="false"
+                    autocomplete="off"
+                  />
+                </label>
+                <span class="font-picker-options" data-font-picker-options>
+                  ${renderLegendFontPickerOptions()}
+                </span>
+              </span>
+            ` : ""}
           </span>
           ${selectedFontAttributionCard}
-          ${isPickerOpen ? `
-            <span class="font-picker-popover" id="${pickerId}" role="dialog" aria-label="フォント検索">
-              <label class="field-control font-picker-search-input">
-                <span class="font-picker-search-input__icon">${SEARCH_ICON_MARKUP}</span>
-                <input
-                  type="text"
-                  data-font-picker-query
-                  value="${escapeHtml(state.legendFontPickerQuery)}"
-                  placeholder="フォント名で検索"
-                  spellcheck="false"
-                  autocomplete="off"
-                />
-              </label>
-              <span class="font-picker-options" data-font-picker-options>
-                ${renderLegendFontPickerOptions()}
-              </span>
-            </span>
-          ` : ""}
         </span>
       </label>
     `;

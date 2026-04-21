@@ -260,8 +260,8 @@ pre {
 }
 
 .info-chip {
-  grid-template-columns: 1fr auto;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   gap: 14px;
 }
 
@@ -411,9 +411,9 @@ pre {
 
 .field {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
   padding: 12px 14px;
   border-radius: 16px;
   background: var(--glass-surface);
@@ -422,11 +422,11 @@ pre {
 }
 
 .field--checkbox {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .field--color {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .field--linked-size {
@@ -446,7 +446,19 @@ pre {
 .field-copy {
   display: grid;
   gap: 4px;
+  width: 100%;
   min-width: 0;
+}
+
+.field > .field-control,
+.field > .field-control-cluster,
+.field > .font-picker {
+  width: 100%;
+  justify-self: stretch;
+}
+
+.field > .checkbox-pill {
+  justify-self: start;
 }
 
 .field-label {
@@ -460,6 +472,7 @@ pre {
   align-items: center;
   gap: 10px;
   min-width: 110px;
+  max-width: 100%;
   padding: 8px 12px;
   border-radius: 12px;
   background: var(--glass-control);
@@ -470,24 +483,35 @@ pre {
 .field-control-cluster {
   display: grid;
   gap: 8px;
+  width: 100%;
 }
 
 .font-picker {
   position: relative;
   display: grid;
   gap: 8px;
+  width: 100%;
   z-index: 1;
 }
 
-.font-picker-summary {
+.font-picker-trigger-shell {
+  position: relative;
+  width: 100%;
+  z-index: 2;
+}
+
+.font-picker-trigger {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 6px 6px 12px;
 }
 
 .font-picker-selection {
-  min-width: 180px;
+  min-width: 0;
+  width: 100%;
   display: grid;
   gap: 4px;
   align-content: center;
@@ -496,10 +520,10 @@ pre {
 
 .font-picker-selection__label {
   display: block;
-  max-width: 180px;
+  max-width: none;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  white-space: normal;
+  text-overflow: clip;
 }
 
 .font-picker-selection__meta {
@@ -520,9 +544,7 @@ pre {
 }
 
 .font-attribution-card__header {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
+  display: grid;
   gap: 10px;
 }
 
@@ -532,6 +554,7 @@ pre {
 }
 
 .font-attribution-card__copy {
+  justify-self: start;
   flex: 0 0 auto;
   border: 0;
   padding: 8px 10px;
@@ -560,16 +583,19 @@ pre {
 .font-picker-search-button {
   width: 40px;
   height: 40px;
+  flex: 0 0 auto;
+  justify-self: end;
+  align-self: stretch;
   padding: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   display: inline-grid;
   place-items: center;
   cursor: pointer;
   color: var(--text);
-  background: var(--glass-control);
+  background: rgba(45, 36, 28, 0.06);
   box-shadow:
-    inset 0 0 0 1px var(--glass-border-control),
+    inset 0 0 0 1px rgba(216, 204, 184, 0.42),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
@@ -687,7 +713,8 @@ pre {
 }
 
 .field input[type="number"] {
-  width: 92px;
+  width: 100%;
+  min-width: 0;
   border: 0;
   outline: none;
   background: transparent;
@@ -696,7 +723,8 @@ pre {
 }
 
 .field input[type="text"] {
-  width: 180px;
+  width: 100%;
+  min-width: 0;
   border: 0;
   outline: none;
   background: transparent;
@@ -704,7 +732,8 @@ pre {
 }
 
 .field input[type="search"] {
-  width: 180px;
+  width: 100%;
+  min-width: 0;
   border: 0;
   outline: none;
   background: transparent;
@@ -766,7 +795,8 @@ pre {
 }
 
 .field select {
-  min-width: 132px;
+  width: 100%;
+  min-width: 0;
   border: 0;
   outline: none;
   background: transparent;
