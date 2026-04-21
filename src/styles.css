@@ -488,6 +488,9 @@ pre {
 
 .font-picker-selection {
   min-width: 180px;
+  display: grid;
+  gap: 4px;
+  align-content: center;
   justify-content: flex-start;
 }
 
@@ -497,6 +500,61 @@ pre {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.font-picker-selection__meta {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.font-picker-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.font-attribution-card {
+  gap: 10px;
+}
+
+.font-attribution-card__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.font-attribution-card__header > span {
+  display: grid;
+  gap: 4px;
+}
+
+.font-attribution-card__copy {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(45, 36, 28, 0.08);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.font-attribution-card__body {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: 14px;
+  background: rgba(255, 248, 238, 0.92);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 40%, white 60%);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text);
 }
 
 .font-picker-search-button {

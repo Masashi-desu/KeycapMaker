@@ -42,6 +42,7 @@ let previewViewState = null;
 let viewportLayoutMode = getViewportLayoutMode();
 let hasAttachedEditorDataDropListeners = false;
 let editorDataDragDepth = 0;
+let fontAttributionCopyResetTimer = 0;
 const legendFontPreviewPromises = new Map();
 let pendingLegendFontPickerFocus = false;
 const textDecoder = new TextDecoder();
@@ -109,11 +110,6 @@ function createDefaultKeycapParams(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
 
 function resolveLegendFontConfig(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
   return resolveKeycapLegendFont(fontKey);
-}
-
-function resolveLegendFontSearchLabel(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
-  const selectedFont = resolveLegendFontConfig(fontKey);
-  return selectedFont.searchLabel ?? selectedFont.label;
 }
 
 function normalizeLegendFontPickerQuery(value) {
@@ -734,6 +730,7 @@ const state = {
   isImportDragActive: false,
   legendFontPickerOpen: false,
   legendFontPickerQuery: "",
+  copiedFontAttributionKey: "",
   collapsedFieldGroups: createFieldGroupCollapseState(),
   keycapParams: syncDerivedKeycapParams(createDefaultKeycapParams()),
 };
@@ -1222,6 +1219,39 @@ function buildLegendFontPreviewStyle(font) {
   return `font-family: "${font.measurementFamily}", "Hiragino Sans", "Yu Gothic UI", sans-serif; font-style: normal; font-weight: ${font.cssWeight ?? 400};`;
 }
 
+function getLegendFontMetaLabel(font) {
+  return font?.fontKind === "variable" ? "Variable / named style" : "Static face";
+}
+
+function getLegendFontAttributionText(font) {
+  const lines = Array.isArray(font?.requiredAttributionLines) ? font.requiredAttributionLines : [];
+  return lines.join("\n");
+}
+
+function renderLegendFontAttributionCard(font) {
+  const attributionText = getLegendFontAttributionText(font);
+  if (!attributionText) {
+    return "";
+  }
+
+  const isCopied = state.copiedFontAttributionKey === font.key;
+  return `
+    <span class="note-card font-attribution-card">
+      <span class="font-attribution-card__header">
+        <strong>著作権・ライセンス表記</strong>
+        <button
+          class="font-attribution-card__copy"
+          type="button"
+          data-copy-font-attribution="${font.key}"
+        >
+          ${isCopied ? "コピー済み" : "コピー"}
+        </button>
+      </span>
+      <pre class="font-attribution-card__body">${escapeHtml(attributionText)}</pre>
+    </span>
+  `;
+}
+
 function renderLegendFontPickerOptions() {
   const matchingFonts = getLegendFontPickerResults();
   if (matchingFonts.length === 0) {
@@ -1232,6 +1262,7 @@ function renderLegendFontPickerOptions() {
     .map((font) => {
       const isSelected = font.key === state.keycapParams.legendFontKey;
       const previewStyle = buildLegendFontPreviewStyle(font);
+      const metaLabel = getLegendFontMetaLabel(font);
 
       return `
         <button
@@ -1240,7 +1271,9 @@ function renderLegendFontPickerOptions() {
           data-font-picker-option="${font.key}"
         >
           <span class="font-picker-option__preview" style="${escapeHtml(previewStyle)}">${escapeHtml(font.label)}</span>
-          <span class="font-picker-option__meta">${font.fontKind === "variable" ? "Variable / named style" : "Static face"}</span>
+          <span class="font-picker-meta-row">
+            <span class="font-picker-option__meta">${escapeHtml(metaLabel)}</span>
+          </span>
         </button>
       `;
     })
@@ -1273,8 +1306,10 @@ function renderField(field) {
 
   if (field.type === "font-search") {
     const selectedFont = resolveLegendFontConfig(value);
-    const selectedFontLabel = resolveLegendFontSearchLabel(value);
+    const selectedFontLabel = selectedFont.label;
     const selectedPreviewStyle = buildLegendFontPreviewStyle(selectedFont);
+    const selectedFontMetaLabel = getLegendFontMetaLabel(selectedFont);
+    const selectedFontAttributionCard = renderLegendFontAttributionCard(selectedFont);
     const pickerId = `font-picker-${field.key}`;
     const isPickerOpen = state.legendFontPickerOpen;
 
@@ -1288,6 +1323,9 @@ function renderField(field) {
           <span class="font-picker-summary">
             <span class="field-control font-picker-selection">
               <span class="font-picker-selection__label" style="${escapeHtml(selectedPreviewStyle)}">${escapeHtml(selectedFontLabel)}</span>
+              <span class="font-picker-meta-row">
+                <span class="font-picker-selection__meta">${escapeHtml(selectedFontMetaLabel)}</span>
+              </span>
             </span>
             <button
               class="font-picker-search-button"
@@ -1300,6 +1338,7 @@ function renderField(field) {
               ${SEARCH_ICON_MARKUP}
             </button>
           </span>
+          ${selectedFontAttributionCard}
           ${isPickerOpen ? `
             <span class="font-picker-popover" id="${pickerId}" role="dialog" aria-label="フォント検索">
               <label class="field-control font-picker-search-input">
@@ -1479,6 +1518,12 @@ function handleSegmentControlClick(event) {
 }
 
 function handleInspectorCardClick(event) {
+  const copyFontAttributionButton = getClosestFromEventTarget(event, "[data-copy-font-attribution]");
+  if (copyFontAttributionButton) {
+    void handleCopyLegendFontAttribution(copyFontAttributionButton.dataset.copyFontAttribution);
+    return;
+  }
+
   const fontPickerOptionButton = getClosestFromEventTarget(event, "[data-font-picker-option]");
   if (fontPickerOptionButton) {
     applyLegendFontSelection(resolveLegendFontConfig(fontPickerOptionButton.dataset.fontPickerOption), { closePicker: true });
@@ -1614,6 +1659,47 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll("\"", "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {}
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "absolute";
+  textarea.style.left = "-9999px";
+  document.body.append(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
+}
+
+async function handleCopyLegendFontAttribution(fontKey) {
+  const font = resolveLegendFontConfig(fontKey);
+  const attributionText = getLegendFontAttributionText(font);
+  if (!font || !attributionText) {
+    return;
+  }
+
+  await copyTextToClipboard(attributionText);
+  state.copiedFontAttributionKey = font.key;
+  render();
+
+  window.clearTimeout(fontAttributionCopyResetTimer);
+  fontAttributionCopyResetTimer = window.setTimeout(() => {
+    if (state.copiedFontAttributionKey !== font.key) {
+      return;
+    }
+
+    state.copiedFontAttributionKey = "";
+    render();
+  }, 1600);
 }
 
 function applyLegendFontSelection(font, options = {}) {

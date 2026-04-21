@@ -139,6 +139,27 @@
 - 理由:
   variable font がある family では、1 ファイルで named style を扱える方が UI と asset 管理を単純化できるため
 
+## 2026-04-21 - 版権依存しない世界観フォントは OFL 配布物を優先する
+
+- 結論:
+  映画や漫画の固有ロゴ書体は避け、再配布条件が明確な Google Fonts の `Bangers`、`Creepster`、`Rye`、`Orbitron` を legend 用に同梱する
+- 理由:
+  GitHub Pages 配信で同梱でき、コミック、ホラー、西部劇、SF の方向性を追加しつつ、権利関係を proprietary franchise font に寄せずに済むため
+
+## 2026-04-21 - Art Gothic 系は近似の OFL 書体で扱う
+
+- 結論:
+  `Art Gothic` という固有ファミリー自体は同梱せず、Google Fonts の `Grenze Gotisch` と `MedievalSharp` を近似候補として追加する
+- 理由:
+  リポジトリ内で再配布条件を明確に保ったまま、`Art Gothic` 検索 needs と gothic display の方向性を満たしたいため
+
+## 2026-04-21 - 外部配布の和文 display font は出典メモを同梱する
+
+- 結論:
+  MODI 工場の `黒薔薇シンデレラ` を追加し、配布元 URL と M+ FONTS 派生の注記を `public/fonts/KurobaraCinderella-MODI.txt` に残す
+- 理由:
+  Google Fonts 配布物ではない日本語 font は参照元が散らばりやすく、ライセンス確認の経路を repo 内に残した方が保守しやすいため
+
 ## 2026-04-21 - 明示操作の輪郭補正だけを geometry で許可する
 
 - 結論:
