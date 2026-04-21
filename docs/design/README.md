@@ -4,7 +4,7 @@
 
 ## 収録内容
 
-- `Keycaps_maker.pen`: Pencil の編集元ファイルです。デザイン変更時の正本として扱います
+- `Keycap_maker.pen`: Pencil の編集元ファイルです。デザイン変更時の正本として扱います
 - `assets/`: `.pen` が参照する関連アセットを保持します。現在のレンダリング画像 `keycap-render.png` もここに置きます
 
 ## 運用ルール

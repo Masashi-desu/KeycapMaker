@@ -15,7 +15,8 @@ const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycap3mfPath = "keycap-preview.3mf";
-const EDITOR_DATA_KIND = "keycaps-maker/editor-params";
+const EDITOR_DATA_KIND = "keycap-maker/editor-params";
+const LEGACY_EDITOR_DATA_KINDS = new Set([EDITOR_DATA_KIND.replace("keycap-maker", "keycap" + "s-maker")]);
 const EDITOR_DATA_SCHEMA_VERSION = 3;
 const CHEVRON_ICON_URLS = Object.freeze({
   expanded: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-up.svg",
@@ -1396,8 +1397,8 @@ function parseEditorDataPayload(payload) {
     throw new Error("編集データ JSON の形式が不正です。");
   }
 
-  if (payload.kind !== EDITOR_DATA_KIND) {
-    throw new Error("Keycaps Maker の編集データ JSON ではありません。");
+  if (payload.kind !== EDITOR_DATA_KIND && !LEGACY_EDITOR_DATA_KINDS.has(payload.kind)) {
+    throw new Error("Keycap Maker の編集データ JSON ではありません。");
   }
 
   if (payload.schemaVersion !== EDITOR_DATA_SCHEMA_VERSION) {

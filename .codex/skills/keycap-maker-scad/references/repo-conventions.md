@@ -1,4 +1,4 @@
-# Keycaps Maker SCAD Conventions
+# Keycap Maker SCAD Conventions
 
 ## Project Constraints
 
@@ -61,8 +61,8 @@
 
 ## Relevant Repo Docs
 
-- `/Users/workSpace/Keycaps Maker/README.md`
-- `/Users/workSpace/Keycaps Maker/scad/README.md`
-- `/Users/workSpace/Keycaps Maker/docs/research/scad-design-guidelines.md`
-- `/Users/workSpace/Keycaps Maker/docs/specs/operations-guide.md`
-- `/Users/workSpace/Keycaps Maker/public/vendor/openscad/README.md`
+- `/Users/workSpace/Keycap Maker/README.md`
+- `/Users/workSpace/Keycap Maker/scad/README.md`
+- `/Users/workSpace/Keycap Maker/docs/research/scad-design-guidelines.md`
+- `/Users/workSpace/Keycap Maker/docs/specs/operations-guide.md`
+- `/Users/workSpace/Keycap Maker/public/vendor/openscad/README.md`

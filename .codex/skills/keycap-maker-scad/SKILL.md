@@ -1,9 +1,9 @@
 ---
-name: keycaps-maker-scad
-description: Extend and maintain Keycaps Maker's modular OpenSCAD assets under `scad/` and the browser parameter bridge that feeds them. Use when Codex needs to work on this repository's keycap-specific structure, including body/legend split, preview/export separation, `scad/base` vs `scad/modules` placement, presets, samples, or the `src/lib/keycap-scad-bundle.js` `-D` parameter mapping.
+name: keycap-maker-scad
+description: Extend and maintain Keycap Maker's modular OpenSCAD assets under `scad/` and the browser parameter bridge that feeds them. Use when Codex needs to work on this repository's keycap-specific structure, including body/legend split, preview/export separation, `scad/base` vs `scad/modules` placement, presets, samples, or the `src/lib/keycap-scad-bundle.js` `-D` parameter mapping.
 ---
 
-# Keycaps Maker Scad
+# Keycap Maker Scad
 
 ## Quick Start
 

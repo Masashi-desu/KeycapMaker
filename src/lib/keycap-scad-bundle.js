@@ -1,5 +1,5 @@
 import keycapBaseScad from "../../scad/base/keycap.scad?raw";
-import keycapShellScad from "../../scad/modules/keycap_shell.scad?raw";
+import shellModuleScad from "../../scad/modules/keycap_shell.scad?raw";
 import homingBarScad from "../../scad/modules/homing_bar.scad?raw";
 import legendBlockScad from "../../scad/modules/legend_block.scad?raw";
 import stemMxScad from "../../scad/modules/stem_mx.scad?raw";
@@ -42,7 +42,7 @@ const KEYCAP_LEGEND_FONT_MAP = new Map(KEYCAP_LEGEND_FONTS.map((font) => [font.k
 
 const SCAD_FILES = [
   { path: "/scad/base/keycap.scad", content: keycapBaseScad },
-  { path: "/scad/modules/keycap_shell.scad", content: keycapShellScad },
+  { path: "/scad/modules/keycap_shell.scad", content: shellModuleScad },
   { path: "/scad/modules/homing_bar.scad", content: homingBarScad },
   { path: "/scad/modules/legend_block.scad", content: legendBlockScad },
   { path: "/scad/modules/stem_mx.scad", content: stemMxScad },
