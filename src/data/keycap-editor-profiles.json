@@ -16,6 +16,7 @@
         "topCornerRadius": 1.5
       },
       "defaults": {
+        "name": "keycap-preview",
         "shapeProfile": "standard-1u",
         "keyWidth": 18,
         "keyDepth": 18,

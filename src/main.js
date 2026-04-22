@@ -17,7 +17,7 @@ const app = document.querySelector("#app");
 const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
-const keycap3mfPath = "keycap-preview.3mf";
+const DEFAULT_EXPORT_BASE_NAME = "keycap-preview";
 const EDITOR_DATA_KIND = "keycap-maker/editor-params";
 const LEGACY_EDITOR_DATA_KINDS = new Set([EDITOR_DATA_KIND.replace("keycap-maker", "keycap" + "s-maker")]);
 const EDITOR_DATA_SCHEMA_VERSION = 4;
@@ -192,6 +192,14 @@ const STEM_TYPE_OPTIONS = Object.freeze([
 ]);
 const STEM_TYPE_LABELS = new Map(STEM_TYPE_OPTIONS.map((option) => [option.value, option.label]));
 const CROSS_COMPATIBLE_STEM_TYPES = new Set(["mx", "choc_v2"]);
+const SETTINGS_NAME_FIELD = Object.freeze({
+  key: "name",
+  label: "名称",
+  hint: "3MF と編集データ JSON の保存名に使います",
+  type: "text",
+  maxLength: 80,
+  placeholder: DEFAULT_EXPORT_BASE_NAME,
+});
 
 function isSupportedStemType(stemType) {
   return STEM_TYPE_LABELS.has(stemType);
@@ -681,9 +689,10 @@ const fieldGroups = [
   },
 ];
 
-const fieldConfigByKey = new Map(
-  fieldGroups.flatMap((group) => group.fields).map((field) => [field.key, field]),
-);
+const fieldConfigByKey = new Map([
+  [SETTINGS_NAME_FIELD.key, SETTINGS_NAME_FIELD],
+  ...fieldGroups.flatMap((group) => group.fields).map((field) => [field.key, field]),
+]);
 const colorFieldKeys = new Set(
   fieldGroups.flatMap((group) => group.fields).filter((field) => field.type === "color").map((field) => field.key),
 );
@@ -765,6 +774,18 @@ function toKebabCase(value) {
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .toLowerCase();
+}
+
+function sanitizeExportBaseName(value, fallback = DEFAULT_EXPORT_BASE_NAME) {
+  const fallbackValue = String(fallback ?? "").trim() || DEFAULT_EXPORT_BASE_NAME;
+  const normalized = String(value ?? "")
+    .trim()
+    .replace(/\.(json|3mf)$/i, "")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-")
+    .replace(/\s+/g, " ")
+    .replace(/\.+$/g, "");
+
+  return normalized || fallbackValue;
 }
 
 function createViewTransitionName(prefix, value) {
@@ -1081,6 +1102,7 @@ function renderParametersTab() {
       </div>
 
       <div class="parameter-group-list">
+        ${renderNameFieldCard()}
         ${fieldGroups.map((group, index) => renderFieldGroup(group, index)).join("")}
       </div>
     </div>
@@ -1108,6 +1130,38 @@ function renderExportTab() {
         </button>
       </div>
     </div>
+  `;
+}
+
+function renderNameFieldCard() {
+  const groupViewTransitionName = createViewTransitionName("field-group", SETTINGS_NAME_FIELD.key);
+  const fieldViewTransitionName = createViewTransitionName("field", SETTINGS_NAME_FIELD.key);
+  const value = state.keycapParams[SETTINGS_NAME_FIELD.key];
+
+  return `
+    <section class="field-group-card" style="view-transition-name: ${groupViewTransitionName};">
+      <div class="field-group-header">
+        <div class="field-group-header__row">
+          <h3>名称</h3>
+        </div>
+      </div>
+      <div class="field-group-body">
+        <p class="field-group-description">保存するときの名前です。3MF と編集データ JSON の両方に使われ、あとで読み込んでもこの名前が残ります。</p>
+        <span class="field-control name-field-control" style="view-transition-name: ${fieldViewTransitionName};">
+          <input
+            id="settings-name-input"
+            type="text"
+            data-field="${SETTINGS_NAME_FIELD.key}"
+            value="${escapeHtml(value)}"
+            aria-label="${escapeHtml(SETTINGS_NAME_FIELD.label)}"
+            ${SETTINGS_NAME_FIELD.maxLength != null ? `maxlength="${SETTINGS_NAME_FIELD.maxLength}"` : ""}
+            ${SETTINGS_NAME_FIELD.placeholder ? `placeholder="${escapeHtml(SETTINGS_NAME_FIELD.placeholder)}"` : ""}
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </span>
+      </div>
+    </section>
   `;
 }
 
@@ -1797,6 +1851,10 @@ function listEditableParamKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
 function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContext = state.keycapParams) {
   const fieldConfig = fieldConfigByKey.get(fieldKey);
 
+  if (fieldKey === SETTINGS_NAME_FIELD.key) {
+    return sanitizeExportBaseName(value, fallback);
+  }
+
   if (fieldKey === "legendFontKey") {
     return resolveLegendFontConfig(value).key;
   }
@@ -1864,8 +1922,11 @@ function createEditorDataPayload(params = state.keycapParams) {
 }
 
 function buildEditorDataFilename(params = state.keycapParams) {
-  const timestamp = new Date().toISOString().replaceAll(":", "-").replaceAll(".", "-");
-  return `keycap-editor-${toKebabCase(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY)}-${timestamp}.json`;
+  return `${sanitizeExportBaseName(params.name)}.json`;
+}
+
+function build3mfFilename(params = state.keycapParams) {
+  return `${sanitizeExportBaseName(params.name)}.3mf`;
 }
 
 function parseEditorDataPayload(payload) {
@@ -2450,7 +2511,7 @@ async function executeExport(format) {
           ...entry.mesh,
         })),
       );
-      downloadBlob(blob, keycap3mfPath);
+      downloadBlob(blob, build3mfFilename());
 
       setExportStatus(
         "success",

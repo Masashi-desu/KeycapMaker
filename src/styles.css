@@ -480,6 +480,37 @@ pre {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
+.name-field-control {
+  width: 100%;
+  justify-self: stretch;
+}
+
+.name-field-control:focus-within {
+  border-color: rgba(123, 155, 191, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 3px rgba(123, 155, 191, 0.12);
+}
+
+.name-field-control input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.name-field-control input[type="text"]::placeholder {
+  color: color-mix(in srgb, var(--muted) 62%, white 38%);
+}
+
 .field-control-cluster {
   display: grid;
   gap: 8px;

@@ -160,6 +160,88 @@
                   ]
                 },
                 {
+                  "type": "frame",
+                  "id": "m4ZlZ",
+                  "name": "Name Card",
+                  "width": "fill_container",
+                  "fill": "#FFF8EE38",
+                  "cornerRadius": 22,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#D8CCB83D"
+                  },
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 18,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "L4zJx",
+                      "name": "nameHeader",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "MYQga",
+                          "name": "nameTitle",
+                          "fill": "#2D241C",
+                          "content": "名称",
+                          "fontFamily": "Inter",
+                          "fontSize": 20,
+                          "fontWeight": "Bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "20Fm3",
+                          "name": "nameDescription",
+                          "fill": "#7C6A58",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "保存するときの名前です。3MF と編集データ JSON の両方に使われ、あとで読み込んでもこの名前が残ります。",
+                          "lineHeight": 1.45,
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "9IPgv",
+                      "name": "nameInput",
+                      "width": "fill_container",
+                      "fill": "#FFFFFF3D",
+                      "cornerRadius": 12,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#D8CCB857"
+                      },
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        12
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "EHETd",
+                          "name": "nameValue",
+                          "fill": "#2D241C",
+                          "content": "keycap-preview",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "Bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
                   "id": "ZejTU",
                   "type": "ref",
                   "ref": "74clu",
