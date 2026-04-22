@@ -1,12 +1,19 @@
+import {
+  createDefaultKeycapParams,
+  DEFAULT_SHAPE_PROFILE_KEY,
+  getShapeProfileGeometryDefaults,
+  resolveShapeGeometryType,
+} from "../data/keycap-shape-registry.js";
 import keycapBaseScad from "../../scad/base/keycap.scad?raw";
 import shellModuleScad from "../../scad/modules/keycap_shell.scad?raw";
+import typewriterModuleScad from "../../scad/modules/keycap_typewriter.scad?raw";
 import homingBarScad from "../../scad/modules/homing_bar.scad?raw";
 import legendBlockScad from "../../scad/modules/legend_block.scad?raw";
 import stemMxScad from "../../scad/modules/stem_mx.scad?raw";
 import stemChocV1Scad from "../../scad/modules/stem_choc_v1.scad?raw";
 import stemChocV2Scad from "../../scad/modules/stem_choc_v2.scad?raw";
 import stemAlpsScad from "../../scad/modules/stem_alps.scad?raw";
-import standardPresetScad from "../../scad/presets/standard-1u.scad?raw";
+import stemNominalsScad from "../../scad/presets/stem-nominals.scad?raw";
 
 export const KEYCAP_ENTRY_PATH = "/scad/base/keycap.scad";
 export const KEYCAP_JOB_PATH = "/scad/base/keycap-job.scad";
@@ -186,16 +193,49 @@ const fontMetadataPromises = new Map();
 const SCAD_FILES = [
   { path: "/scad/base/keycap.scad", content: keycapBaseScad },
   { path: "/scad/modules/keycap_shell.scad", content: shellModuleScad },
+  { path: "/scad/modules/keycap_typewriter.scad", content: typewriterModuleScad },
   { path: "/scad/modules/homing_bar.scad", content: homingBarScad },
   { path: "/scad/modules/legend_block.scad", content: legendBlockScad },
   { path: "/scad/modules/stem_mx.scad", content: stemMxScad },
   { path: "/scad/modules/stem_choc_v1.scad", content: stemChocV1Scad },
   { path: "/scad/modules/stem_choc_v2.scad", content: stemChocV2Scad },
   { path: "/scad/modules/stem_alps.scad", content: stemAlpsScad },
-  { path: "/scad/presets/standard-1u.scad", content: standardPresetScad },
+  { path: "/scad/presets/stem-nominals.scad", content: stemNominalsScad },
 ];
 const runtimeAssetPromises = new Map();
 const measurementFontPromises = new Map();
+
+function clampTypewriterCornerRadius(value, fallback = 0) {
+  const nextValue = Number(value);
+  if (!Number.isFinite(nextValue)) {
+    return Math.max(Number(fallback) || 0, 0);
+  }
+
+  return Math.max(nextValue, 0);
+}
+
+function resolveShapeGeometryParameters(params = {}) {
+  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const defaults = createDefaultKeycapParams(profileKey);
+  const geometryDefaults = getShapeProfileGeometryDefaults(profileKey);
+  const geometryType = resolveShapeGeometryType(profileKey);
+  const topScale = Number(params.topScale ?? defaults.topScale ?? 1);
+  const defaultTopScale = Number(defaults.topScale ?? 1);
+  const taperFactor = defaultTopScale >= 1
+    ? 1
+    : Math.max((1 - topScale) / Math.max(1 - defaultTopScale, 0.01), 0);
+
+  return {
+    shapeGeometryType: geometryType,
+    profileFrontAngle: geometryType === "typewriter" ? 0 : Math.max(Number(geometryDefaults.profileFrontAngle ?? 0) * taperFactor, 0.1),
+    profileBackAngle: geometryType === "typewriter" ? 0 : Math.max(Number(geometryDefaults.profileBackAngle ?? 0) * taperFactor, 0.1),
+    profileLeftAngle: geometryType === "typewriter" ? 0 : Math.max(Number(geometryDefaults.profileLeftAngle ?? 0) * taperFactor, 0.1),
+    profileRightAngle: geometryType === "typewriter" ? 0 : Math.max(Number(geometryDefaults.profileRightAngle ?? 0) * taperFactor, 0.1),
+    topThickness: Math.max(Number(geometryDefaults.topThickness ?? 0.05), 0.05),
+    bottomCornerRadius: Math.max(Number(geometryDefaults.bottomCornerRadius ?? 0), 0),
+    topCornerRadius: Math.max(Number(geometryDefaults.topCornerRadius ?? 0), 0),
+  };
+}
 
 function hasByteRange(start, length, totalLength) {
   return Number.isInteger(start)
@@ -495,6 +535,7 @@ function formatDefinitionValue(value) {
 
 async function createKeycapDefinitions({ params, exportTarget }) {
   const selectedFont = resolveKeycapLegendFont(params.legendFontKey);
+  const shapeGeometry = resolveShapeGeometryParameters(params);
   const legendSize = clampLegendSize(params.legendSize);
   const selectedFontStyle = resolveKeycapLegendFontStyle(selectedFont, params.legendFontStyleKey);
   const legendWidth = legendSize * LEGEND_SIZE_WIDTH_RATIO;
@@ -510,11 +551,22 @@ async function createKeycapDefinitions({ params, exportTarget }) {
 
   return {
     export_target: exportTarget,
+    user_shape_geometry_type: shapeGeometry.shapeGeometryType,
     user_key_width: params.keyWidth,
     user_key_depth: params.keyDepth,
     user_top_center_height: params.topCenterHeight,
     user_wall_thickness: params.wallThickness,
-    user_top_scale: params.topScale,
+    user_typewriter_corner_radius: clampTypewriterCornerRadius(
+      params.typewriterCornerRadius,
+      Math.min(Number(params.keyWidth ?? 18), Number(params.keyDepth ?? 18)) / 2,
+    ),
+    user_profile_front_angle: shapeGeometry.profileFrontAngle,
+    user_profile_back_angle: shapeGeometry.profileBackAngle,
+    user_profile_left_angle: shapeGeometry.profileLeftAngle,
+    user_profile_right_angle: shapeGeometry.profileRightAngle,
+    user_top_thickness: shapeGeometry.topThickness,
+    user_bottom_corner_radius: shapeGeometry.bottomCornerRadius,
+    user_top_corner_radius: shapeGeometry.topCornerRadius,
     user_dish_radius: params.dishRadius,
     user_dish_depth: params.dishDepth,
     user_top_pitch_deg: params.topPitchDeg,

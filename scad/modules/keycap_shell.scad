@@ -8,7 +8,7 @@ function keycap_center_surface_z(top_center_height, dish_depth) =
     top_center_height - dish_depth;
 
 function keycap_inner_corner_radius(corner_radius, wall) =
-    max(corner_radius - wall, 0.1);
+    max(corner_radius - wall, 0);
 
 function keycap_top_plane_slope(angle) = tan(angle);
 
@@ -33,12 +33,29 @@ module rounded_rect_coords(left, right, front, back, radius, quality = "export")
     depth = max(back - front, 0.2);
     center_x = (left + right) / 2;
     center_y = (front + back) / 2;
-    safe_radius = max(radius, 0.1);
+    safe_radius = min(max(radius, 0), width / 2, depth / 2);
+    circle_epsilon = 0.001;
     corner_steps = keycap_quality_steps(quality, 18, 48);
 
     translate([center_x, center_y, 0])
-        if (width <= 2 * safe_radius || depth <= 2 * safe_radius) {
+        if (safe_radius <= 0.001) {
             square([width, depth], center = true);
+        } else if (width <= 2 * safe_radius + circle_epsilon && depth <= 2 * safe_radius + circle_epsilon) {
+            circle(r = min(width, depth) / 2, $fn = corner_steps);
+        } else if (width <= 2 * safe_radius + circle_epsilon) {
+            hull() {
+                translate([0, depth / 2 - safe_radius])
+                    circle(r = safe_radius, $fn = corner_steps);
+                translate([0, -depth / 2 + safe_radius])
+                    circle(r = safe_radius, $fn = corner_steps);
+            }
+        } else if (depth <= 2 * safe_radius + circle_epsilon) {
+            hull() {
+                translate([width / 2 - safe_radius, 0])
+                    circle(r = safe_radius, $fn = corner_steps);
+                translate([-width / 2 + safe_radius, 0])
+                    circle(r = safe_radius, $fn = corner_steps);
+            }
         } else {
             hull() {
                 translate([ width / 2 - safe_radius,  depth / 2 - safe_radius])

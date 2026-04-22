@@ -13,8 +13,10 @@
 
 - `src/main.js`
   入力項目、export 導線、JSON 入出力、状態管理
-- `src/data/keycap-editor-profiles.json`
-  初期値、selector、profile 切り替え
+- `src/data/keycap-shape-registry.js`
+  shape JSON の集約、selector、profile 切り替え
+- `src/data/keycap-shapes/*.json`
+  shape ごとの初期値、geometry defaults、表示グループ
 
 ### SCAD 形状
 
@@ -23,7 +25,7 @@
 - `scad/modules/`
   shell、legend、stem、homing bar
 - `scad/presets/`
-  SCAD 側の既定値
+  stem nominal constant や sample 用 parameter set
 
 ### runtime / preview / export
 

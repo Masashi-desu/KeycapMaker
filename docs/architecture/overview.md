@@ -26,8 +26,10 @@ Keycap Maker は、GitHub Pages で配信するクライアントサイド完結
 
 - `src/main.js`
   アプリ状態、フォーム、プレビュー更新、export、JSON 入出力の中心
-- `src/data/keycap-editor-profiles.json`
-  形状プリセットと初期値
+- `src/data/keycap-shape-registry.js`
+  shape JSON の集約、selector、既定 shape の解決
+- `src/data/keycap-shapes/*.json`
+  shape ごとの初期値、geometry defaults、表示グループ定義
 
 ### OpenSCAD 実行
 
@@ -47,7 +49,7 @@ Keycap Maker は、GitHub Pages で配信するクライアントサイド完結
 - `scad/modules/`
   shell、legend、stem、homing bar などの再利用形状
 - `scad/presets/`
-  SCAD 側の既定値
+  SCAD 固有の nominal constant や sample 用 parameter set
 
 ### プレビューと export
 
@@ -65,6 +67,24 @@ Keycap Maker は、GitHub Pages で配信するクライアントサイド完結
 3. worker が bundled OpenSCAD runtime で SCAD を実行する
 4. preview では OFF を解析して Three.js 表示に渡す
 5. export では OFF を part ごとに集め、3MF または編集データ JSON を生成する
+
+### Mermaid で見る全体フロー
+
+```mermaid
+flowchart LR
+  screen["画面 / src/main.js"] --> state["editor state"]
+  shapeJson["shape JSON / src/data/keycap-shapes/*.json"] --> state
+  state --> editorJson["編集データ JSON"]
+  state --> bridge["SCAD bridge / src/lib/keycap-scad-bundle.js"]
+  shapeJson --> bridge
+  bridge --> wrapper["wrapper SCAD / user_*"]
+  scadAssets["SCAD assets / scad/base + scad/modules"] --> wrapper
+  wrapper --> worker["Worker / src/openscad-worker.js"]
+  worker --> wasm["OpenSCAD WASM runtime"]
+  wasm --> off["OFF meshes"]
+  off --> preview["Three.js preview"]
+  off --> export3mf["3MF export"]
+```
 
 ## 現在のユーザー向け出力
 

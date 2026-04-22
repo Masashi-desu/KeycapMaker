@@ -1,5 +1,14 @@
 import "./styles.css";
-import keycapEditorProfiles from "./data/keycap-editor-profiles.json";
+import keycapEditorProfiles, {
+  createDefaultKeycapParams,
+  DEFAULT_SHAPE_PROFILE_KEY,
+  EDITOR_SELECTOR_KEYS,
+  getShapeProfileFieldGroups,
+  getShapeProfileFieldOverride,
+  getShapeProfileGeometryDefaults,
+  resolveShapeGeometryType,
+  SHAPE_PROFILE_MAP,
+} from "./data/keycap-shape-registry.js";
 import { runOpenScad } from "./lib/openscad-client.js";
 import { hexColorToNumber, normalizeHexColor } from "./lib/color-utils.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
@@ -76,9 +85,6 @@ const SHAPE_PROFILE_OPTIONS = keycapEditorProfiles.profiles.map((profile) => ({
   value: profile.key,
   label: profile.label,
 }));
-const DEFAULT_SHAPE_PROFILE_KEY = keycapEditorProfiles.defaultProfileKey ?? SHAPE_PROFILE_OPTIONS[0]?.value ?? "standard-1u";
-const EDITOR_SELECTOR_KEYS = Object.freeze(keycapEditorProfiles.selectorKeys ?? ["shapeProfile", "legendFontKey", "stemType"]);
-const keycapProfileByKey = new Map(keycapEditorProfiles.profiles.map((profile) => [profile.key, profile]));
 
 const workspaceSections = [
   {
@@ -91,21 +97,8 @@ const workspaceSections = [
   },
 ];
 
-function cloneSerializable(value) {
-  if (typeof structuredClone === "function") {
-    return structuredClone(value);
-  }
-
-  return JSON.parse(JSON.stringify(value));
-}
-
-function resolveShapeProfileConfig(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
-  return keycapProfileByKey.get(profileKey) ?? keycapProfileByKey.get(DEFAULT_SHAPE_PROFILE_KEY);
-}
-
-function createDefaultKeycapParams(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
-  const profile = resolveShapeProfileConfig(profileKey);
-  return cloneSerializable(profile?.defaults ?? {});
+function isTypewriterShapeProfile(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  return resolveShapeGeometryType(profileKey) === "typewriter";
 }
 
 function resolveLegendFontConfig(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
@@ -158,6 +151,20 @@ function getLegendFontStyleHint(params) {
     : "フォント名どおりに使います";
 }
 
+function clampTypewriterCornerRadius(value, fallback = 0) {
+  const nextValue = Number(value);
+  if (!Number.isFinite(nextValue)) {
+    return Math.max(Number(fallback) || 0, 0);
+  }
+
+  return Math.max(nextValue, 0);
+}
+
+function getTypewriterCornerRadiusHint(params) {
+  const maxRadius = Math.max(Math.min(Number(params.keyWidth ?? 0), Number(params.keyDepth ?? 0)) / 2, 0);
+  return `${formatMillimeter(maxRadius)} で丸、0 mm に近づけると角が立ちます`;
+}
+
 function clampLegendOutlineDelta(value, fallback = 0) {
   const nextValue = Number(value);
   if (!Number.isFinite(nextValue)) {
@@ -200,6 +207,13 @@ const SETTINGS_NAME_FIELD = Object.freeze({
   maxLength: 80,
   placeholder: DEFAULT_EXPORT_BASE_NAME,
 });
+const GEOMETRY_TYPE_RESET_FIELDS = new Set([
+  "topCenterHeight",
+  "topScale",
+  "dishRadius",
+  "dishDepth",
+  "typewriterCornerRadius",
+]);
 
 function isSupportedStemType(stemType) {
   return STEM_TYPE_LABELS.has(stemType);
@@ -289,15 +303,18 @@ function resolveTopSlopeInputMode(value) {
 }
 
 function resolveShapeProfileGeometryDefaults(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
-  const profile = resolveShapeProfileConfig(profileKey);
-  const geometryDefaults = profile?.geometryDefaults ?? {};
+  const geometryDefaults = getShapeProfileGeometryDefaults(profileKey);
+  const geometryType = resolveShapeGeometryType(profileKey);
 
   return {
-    profileFrontAngle: clampMinimum(geometryDefaults.profileFrontAngle, 15, 0.1),
-    profileBackAngle: clampMinimum(geometryDefaults.profileBackAngle, 15, 0.1),
-    profileLeftAngle: clampMinimum(geometryDefaults.profileLeftAngle, 10, 0.1),
-    profileRightAngle: clampMinimum(geometryDefaults.profileRightAngle, 10, 0.1),
-    topThickness: clampMinimum(geometryDefaults.topThickness, 1.5, 0.05),
+    geometryType,
+    profileFrontAngle: clampMinimum(geometryDefaults.profileFrontAngle, Number(geometryDefaults.profileFrontAngle) || 0, 0),
+    profileBackAngle: clampMinimum(geometryDefaults.profileBackAngle, Number(geometryDefaults.profileBackAngle) || 0, 0),
+    profileLeftAngle: clampMinimum(geometryDefaults.profileLeftAngle, Number(geometryDefaults.profileLeftAngle) || 0, 0),
+    profileRightAngle: clampMinimum(geometryDefaults.profileRightAngle, Number(geometryDefaults.profileRightAngle) || 0, 0),
+    topThickness: clampMinimum(geometryDefaults.topThickness, Number(geometryDefaults.topThickness) || 0.05, 0.05),
+    bottomCornerRadius: clampMinimum(geometryDefaults.bottomCornerRadius, Number(geometryDefaults.bottomCornerRadius) || 0, 0),
+    topCornerRadius: clampMinimum(geometryDefaults.topCornerRadius, Number(geometryDefaults.topCornerRadius) || 0, 0),
   };
 }
 
@@ -305,6 +322,17 @@ function resolveProfileAngles(params = {}) {
   const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
   const defaults = createDefaultKeycapParams(profileKey);
   const geometryDefaults = resolveShapeProfileGeometryDefaults(profileKey);
+
+  if (geometryDefaults.geometryType === "typewriter") {
+    return {
+      front: 0,
+      back: 0,
+      left: 0,
+      right: 0,
+      topThickness: geometryDefaults.topThickness,
+    };
+  }
+
   const topScale = Number(params.topScale ?? defaults.topScale ?? 1);
   const defaultTopScale = Number(defaults.topScale ?? 1);
   const taperFactor = defaultTopScale >= 1
@@ -359,6 +387,10 @@ function resolveTopEdgeHeights(params = {}) {
 }
 
 function getTopCenterHeightHint(params) {
+  if (isTypewriterShapeProfile(params.shapeProfile)) {
+    return "薄いキートップの底から上面までの厚みです";
+  }
+
   return `dish を付ける前のキートップ中央です。現在の中央表面は ${formatMillimeter(params.topVisibleCenterHeight)} です`;
 }
 
@@ -386,11 +418,15 @@ function getTopRightHeightHint(params) {
   return `上面基準面の右高さです。中央高さは固定され、現在の左右傾斜は ${formatDegree(params.topRollDeg)} です`;
 }
 
-const fieldGroups = [
+const fieldGroupTemplates = [
   {
     id: "shape",
     title: "キーキャップの形",
-    description: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。キーサイズは横幅と連動していて、18 mm を 1u として換算します。",
+    description: (params) => (
+      isTypewriterShapeProfile(params.shapeProfile)
+        ? "タイプライター風の薄いキートップ外形を調整します。横幅は 18 mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。"
+        : "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。キーサイズは横幅と連動していて、18 mm を 1u として換算します。"
+    ),
     fields: [
       {
         key: "shapeProfile",
@@ -414,8 +450,31 @@ const fieldGroups = [
         secondaryMin: 0.5,
       },
       { key: "keyDepth", label: "奥行き", hint: "キーキャップの前後の大きさです", unit: "mm", step: 0.1, min: 10 },
-      { key: "wallThickness", label: "厚み", hint: "キーキャップの丈夫さに関わる厚みです", unit: "mm", step: 0.05, min: 0.4 },
-      { key: "topScale", label: "上面のすぼまり", hint: "数字を小さくすると上面が細く見えます", unit: "", step: 0.01, min: 0.5, max: 1 },
+      {
+        key: "wallThickness",
+        label: "肉厚",
+        hint: "キーキャップの丈夫さに関わる厚みです",
+        unit: "mm",
+        step: 0.05,
+        min: 0.4,
+      },
+      {
+        key: "typewriterCornerRadius",
+        label: "R",
+        hint: (params) => getTypewriterCornerRadiusHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: 0,
+      },
+      {
+        key: "topScale",
+        label: "上面のすぼまり",
+        hint: "数字を小さくすると上面が細く見えます",
+        unit: "",
+        step: 0.01,
+        min: 0.5,
+        max: 1,
+      },
       {
         key: "bodyColor",
         label: "本体の色",
@@ -430,7 +489,14 @@ const fieldGroups = [
     title: "キートップ",
     description: "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
     fields: [
-      { key: "topCenterHeight", label: "上面中央の高さ", hint: (params) => getTopCenterHeightHint(params), unit: "mm", step: 0.1, min: 1 },
+      {
+        key: "topCenterHeight",
+        label: (params) => (isTypewriterShapeProfile(params.shapeProfile) ? "キートップの厚み" : "上面中央の高さ"),
+        hint: (params) => getTopCenterHeightHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: 1,
+      },
       {
         key: "topSlopeInputMode",
         label: "傾きの入力方法",
@@ -691,14 +757,45 @@ const fieldGroups = [
 
 const fieldConfigByKey = new Map([
   [SETTINGS_NAME_FIELD.key, SETTINGS_NAME_FIELD],
-  ...fieldGroups.flatMap((group) => group.fields).map((field) => [field.key, field]),
+  ...fieldGroupTemplates.flatMap((group) => group.fields).map((field) => [field.key, field]),
 ]);
 const colorFieldKeys = new Set(
-  fieldGroups.flatMap((group) => group.fields).filter((field) => field.type === "color").map((field) => field.key),
+  fieldGroupTemplates.flatMap((group) => group.fields).filter((field) => field.type === "color").map((field) => field.key),
 );
 
 function createFieldGroupCollapseState() {
-  return Object.fromEntries(fieldGroups.map((group) => [group.id, true]));
+  const groupIds = keycapEditorProfiles.profiles.flatMap((profile) => (profile.fieldGroups ?? []).map((group) => group.id));
+  return Object.fromEntries(Array.from(new Set(groupIds)).map((groupId) => [groupId, true]));
+}
+
+const FIELD_GROUP_DESCRIPTION_RESOLVERS = Object.freeze({
+  "stem-group": (params) => getStemGroupDescription(params),
+});
+
+function getFieldConfig(fieldKey, profileKey = state.keycapParams?.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY) {
+  const baseField = fieldConfigByKey.get(fieldKey);
+  if (!baseField) {
+    return null;
+  }
+
+  const override = getShapeProfileFieldOverride(profileKey, fieldKey) ?? {};
+  return {
+    ...baseField,
+    ...override,
+  };
+}
+
+function getActiveFieldGroups(profileKey = state.keycapParams?.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY) {
+  return getShapeProfileFieldGroups(profileKey)
+    .map((group) => ({
+      ...group,
+      fields: (group.fieldKeys ?? [])
+        .map((fieldKey) => getFieldConfig(fieldKey, profileKey))
+        .filter(Boolean),
+      description: group.descriptionKey != null
+        ? (FIELD_GROUP_DESCRIPTION_RESOLVERS[group.descriptionKey] ?? group.description ?? "")
+        : group.description,
+    }));
 }
 
 function clampLegendSize(value, fallback = LEGEND_MIN_SIZE) {
@@ -718,6 +815,10 @@ function syncDerivedKeycapParams(params = state.keycapParams) {
   params.topPitchDeg = Number.isFinite(Number(params.topPitchDeg)) ? Number(params.topPitchDeg) : Number(defaults.topPitchDeg ?? 0);
   params.topRollDeg = Number.isFinite(Number(params.topRollDeg)) ? Number(params.topRollDeg) : Number(defaults.topRollDeg ?? 0);
   params.topSlopeInputMode = resolveTopSlopeInputMode(params.topSlopeInputMode ?? defaults.topSlopeInputMode);
+  params.typewriterCornerRadius = clampTypewriterCornerRadius(
+    params.typewriterCornerRadius,
+    defaults.typewriterCornerRadius ?? Math.min(Number(params.keyWidth ?? defaults.keyWidth ?? 18), Number(params.keyDepth ?? defaults.keyDepth ?? 18)) / 2,
+  );
   syncLegendFontParams(params);
   params.legendSize = clampLegendSize(params.legendSize, defaultLegendSize);
   Object.assign(params, resolveTopEdgeHeights(params));
@@ -816,7 +917,7 @@ function formatNumericFieldValue(fieldKey, value) {
     return "";
   }
 
-  const fieldConfig = fieldConfigByKey.get(fieldKey);
+  const fieldConfig = getFieldConfig(fieldKey);
   const digits = Math.min(countStepDigits(fieldConfig?.step) + 1, 3);
   return `${Number(nextValue.toFixed(digits))}`;
 }
@@ -1094,6 +1195,8 @@ function focusLegendFontPickerQuery() {
 }
 
 function renderParametersTab() {
+  const activeFieldGroups = getActiveFieldGroups();
+
   return `
     <div class="inspector-panel inspector-panel--params">
       <div class="panel-intro">
@@ -1103,7 +1206,7 @@ function renderParametersTab() {
 
       <div class="parameter-group-list">
         ${renderNameFieldCard()}
-        ${fieldGroups.map((group, index) => renderFieldGroup(group, index)).join("")}
+        ${activeFieldGroups.map((group, index) => renderFieldGroup(group, index)).join("")}
       </div>
     </div>
   `;
@@ -1843,8 +1946,8 @@ function pickEditorSelectors(params) {
 function listEditableParamKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   const defaults = createDefaultKeycapParams(profileKey);
 
-  // Preserve hidden geometry defaults as part of the editor state so profile switches
-  // and JSON round-trips do not silently fall back to the SCAD preset values.
+  // Preserve hidden shape defaults as part of the editor state so profile switches
+  // and JSON round-trips stay aligned with the shape JSON definitions.
   return Object.keys(defaults);
 }
 
@@ -1869,6 +1972,10 @@ function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContext = sta
 
   if (fieldKey === "legendOutlineDelta") {
     return clampLegendOutlineDelta(value, fallback);
+  }
+
+  if (fieldKey === "typewriterCornerRadius") {
+    return clampTypewriterCornerRadius(value, fallback);
   }
 
   if (colorFieldKeys.has(fieldKey)) {
@@ -1947,7 +2054,7 @@ function parseEditorDataPayload(payload) {
   }
 
   const rawProfileKey = payload.selectors?.shapeProfile ?? payload.params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
-  if (!keycapProfileByKey.has(rawProfileKey)) {
+  if (!SHAPE_PROFILE_MAP.has(rawProfileKey)) {
     throw new Error(`未対応の形のベースです: ${rawProfileKey}`);
   }
 
@@ -1983,10 +2090,16 @@ function setExportStatus(status, summary, historyEntry) {
 
 function applyShapeProfileParams(profileKey) {
   const defaults = createDefaultKeycapParams(profileKey);
+  const previousGeometryType = resolveShapeGeometryType(state.keycapParams.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
+  const nextGeometryType = resolveShapeGeometryType(profileKey);
+  const geometryTypeChanged = previousGeometryType !== nextGeometryType;
   const nextParams = {};
 
   for (const key of listEditableParamKeys(profileKey)) {
-    nextParams[key] = sanitizeEditorParamValue(key, state.keycapParams[key], defaults[key], state.keycapParams);
+    const sourceValue = geometryTypeChanged && GEOMETRY_TYPE_RESET_FIELDS.has(key)
+      ? defaults[key]
+      : state.keycapParams[key];
+    nextParams[key] = sanitizeEditorParamValue(key, sourceValue, defaults[key], state.keycapParams);
   }
 
   nextParams.shapeProfile = profileKey;
@@ -2151,7 +2264,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
 
 function syncFieldHint(fieldKey) {
   const input = app.querySelector(`[data-field="${fieldKey}"]`);
-  const fieldConfig = fieldConfigByKey.get(fieldKey);
+  const fieldConfig = getFieldConfig(fieldKey);
   const hint = input?.closest(".field")?.querySelector(".field-hint");
 
   if (hint && fieldConfig) {
@@ -2209,7 +2322,7 @@ function handleFieldChange(event) {
   const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
   const deferPreview = event.deferPreview === true;
-  const fieldConfig = fieldConfigByKey.get(field);
+  const fieldConfig = getFieldConfig(field);
   if (!field || !input) {
     return;
   }

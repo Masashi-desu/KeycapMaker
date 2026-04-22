@@ -6,7 +6,7 @@
 
 - `base/`: キーキャップ全体の基礎形状と export エントリを置く
 - `modules/`: stem、legend、形状差分などの再利用モジュールを置く
-- `presets/`: profile やキー種別ごとの初期値や定義を置く
+- `presets/`: stem nominal constant や sample 用 parameter set を置く
 - `samples/`: 形状回帰確認に使うサンプルを置く
 
 ## 現在の主要ファイル
@@ -19,8 +19,10 @@
 - `modules/stem_alps.scad`: Alps / Matias 向け stem
 - `modules/homing_bar.scad`: body 側に追加するオプションの homing bar 形状
 - `modules/legend_block.scad`: フォント非依存の legend ボリューム
-- `presets/standard-1u.scad`: 1u キー向け既定値
+- `modules/keycap_typewriter.scad`: 薄いタイプライター風キートップ外形
+- `presets/stem-nominals.scad`: stem 形状の nominal 寸法
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
+- `samples/keycap-typewriter.scad`: タイプライター風キートップの確認用サンプル
 - `samples/keycap-legend-seat.scad`: flush legend の座面切り抜き確認用サンプル
 - `samples/keycap-multi-character-legend.scad`: 複数文字でも明示サイズを保つか確認するサンプル
 - `samples/keycap-rounded-legend.scad`: 丸みのある書体の legend 品質確認用サンプル
@@ -34,5 +36,5 @@
 - preview 用と export 用で重さや精度を分けてよい
 - 色指定だけに依存せず、body と legend の分離可能性を維持する
 - homing bar は body 側の触覚マーカーとして扱い、legend とは別責務にする
-- ブラウザ内 OpenSCAD runtime へ UI パラメータを渡すときは、必要に応じて wrapper SCAD を生成して `user_*` を注入する
+- ブラウザ内 OpenSCAD runtime へ UI パラメータを渡すときは、shape JSON から解決した明示値を wrapper SCAD の `user_*` へ注入する
 - `text()` を使う場合はフォント依存を明示し、アセット配置とライセンスを確認する

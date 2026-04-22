@@ -1,0 +1,91 @@
+{
+  "key": "typewriter",
+  "label": "タイプライター",
+  "geometryType": "typewriter",
+  "geometryDefaults": {
+    "profileFrontAngle": 0,
+    "profileBackAngle": 0,
+    "profileLeftAngle": 0,
+    "profileRightAngle": 0,
+    "topThickness": 1.2,
+    "bottomCornerRadius": 0,
+    "topCornerRadius": 0
+  },
+  "defaults": {
+    "name": "typewriter-keytop",
+    "shapeProfile": "typewriter",
+    "keyWidth": 18,
+    "keyDepth": 18,
+    "topCenterHeight": 5.2,
+    "topSlopeInputMode": "angle",
+    "topPitchDeg": 0,
+    "topRollDeg": 0,
+    "wallThickness": 1.1,
+    "topScale": 1,
+    "dishRadius": 45,
+    "dishDepth": 0,
+    "typewriterCornerRadius": 9,
+    "bodyColor": "#f8f9fa",
+    "legendEnabled": true,
+    "legendText": "A",
+    "legendFontKey": "mplus1-variable",
+    "legendFontStyleKey": "regular",
+    "legendUnderlineEnabled": false,
+    "legendSize": 4.0,
+    "legendOutlineDelta": 0,
+    "legendHeight": 0,
+    "legendEmbed": 0.6,
+    "legendColor": "#212529",
+    "legendOffsetX": 0,
+    "legendOffsetY": 0,
+    "homingBarEnabled": false,
+    "homingBarLength": 4.0,
+    "homingBarWidth": 1.58,
+    "homingBarHeight": 0.6,
+    "homingBarOffsetY": -3.5,
+    "homingBarBaseThickness": 0.35,
+    "homingBarColor": "#ff7f00",
+    "stemType": "choc_v2",
+    "stemOuterDelta": 0,
+    "stemCrossMargin": 0,
+    "stemInsetDelta": 0
+  },
+  "fieldGroups": [
+    {
+      "id": "shape",
+      "title": "キーキャップの形",
+      "description": "タイプライター風の薄いキートップ外形を調整します。横幅は 18 mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
+      "fieldKeys": ["shapeProfile", "keyWidth", "keyDepth", "typewriterCornerRadius", "bodyColor"]
+    },
+    {
+      "id": "top",
+      "title": "キートップ",
+      "description": "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+      "fieldKeys": ["topCenterHeight", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+    },
+    {
+      "id": "legend",
+      "title": "印字",
+      "description": "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+      "fieldKeys": ["legendEnabled", "legendText", "legendFontKey", "legendFontStyleKey", "legendUnderlineEnabled", "legendSize", "legendOutlineDelta", "legendHeight", "legendEmbed", "legendColor", "legendOffsetX", "legendOffsetY"]
+    },
+    {
+      "id": "homing",
+      "title": "指の目印",
+      "description": "F キーや J キーのように、指で触って分かる出っ張りを調整します。印字とは別に設定できます。",
+      "fieldKeys": ["homingBarEnabled", "homingBarLength", "homingBarWidth", "homingBarHeight", "homingBarOffsetY", "homingBarBaseThickness", "homingBarColor"]
+    },
+    {
+      "id": "stem",
+      "title": "取り付け部分",
+      "descriptionKey": "stem-group",
+      "fieldKeys": ["stemType", "stemOuterDelta", "stemCrossMargin"]
+    }
+  ],
+  "fieldOverrides": {
+    "topCenterHeight": {
+      "label": "キートップの厚み",
+      "hint": "薄いキートップの底から上面までの厚みです"
+    }
+  }
+}

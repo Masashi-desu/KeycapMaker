@@ -180,3 +180,10 @@
   font 選択は自前の検索 popover で実装し、虫眼鏡ボタンから検索 textbox と scrollable list を開く。候補は各 font 自身で表示し、入力中にリアルタイム絞り込みする
 - 理由:
   datalist では option の見た目制御が弱く、font そのものを preview しながら選ぶ体験を作りにくいため
+
+## 2026-04-22 - shape ごとの editor 初期値は JSON に集約する
+
+- 結論:
+  shape ごとの初期値、geometry defaults、表示グループ定義は `src/data/keycap-shapes/*.json` に集約し、`scad/base/keycap.scad` は SCAD 側のフェイルセーフ default を持たず explicit `user_*` を受ける
+- 理由:
+  editor と SCAD の責務境界を明確にし、shape 追加時の初期値と UI 構成を 1 か所の JSON で保守できるようにするため

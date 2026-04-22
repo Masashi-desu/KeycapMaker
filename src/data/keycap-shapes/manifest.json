@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 5,
+  "defaultProfileKey": "standard-1u",
+  "selectorKeys": ["shapeProfile", "legendFontKey", "stemType"],
+  "shapeKeys": ["standard-1u", "typewriter"]
+}

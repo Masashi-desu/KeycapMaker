@@ -1,4 +1,6 @@
 export_target = "preview";
+include <common/standard-1u-params.scad>
+
 user_key_width = 18;
 user_key_depth = 18;
 user_top_center_height = 9.5;
