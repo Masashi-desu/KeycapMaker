@@ -185,7 +185,7 @@ module keycap_typewriter_band_cap(
     }
 }
 
-module keycap_typewriter_rim_seat(
+module keycap_typewriter_rim_side_shell(
     width,
     depth,
     top_center_height,
@@ -197,18 +197,22 @@ module keycap_typewriter_rim_seat(
     roll_deg = 0,
     quality = "export"
 ) {
-    keycap_typewriter_band_cap(
-        width = width,
-        depth = depth,
-        top_center_height = top_center_height,
-        band_width = band_width,
-        corner_radius = corner_radius,
-        dish_radius = dish_radius,
-        dish_depth = dish_depth,
-        pitch_deg = pitch_deg,
-        roll_deg = roll_deg,
-        quality = quality
-    );
+    safe_band_width = max(band_width, 0);
+
+    if (safe_band_width > 0) {
+        keycap_typewriter_band_cap(
+            width = width,
+            depth = depth,
+            top_center_height = top_center_height,
+            band_width = safe_band_width,
+            corner_radius = corner_radius,
+            dish_radius = dish_radius,
+            dish_depth = dish_depth,
+            pitch_deg = pitch_deg,
+            roll_deg = roll_deg,
+            quality = quality
+        );
+    }
 }
 
 module keycap_typewriter_rim_top_extension(
@@ -224,13 +228,15 @@ module keycap_typewriter_rim_top_extension(
     roll_deg = 0,
     quality = "export"
 ) {
-    if (height_up > 0) {
+    safe_band_width = max(band_width, 0);
+
+    if (safe_band_width > 0 && height_up > 0) {
         difference() {
             keycap_typewriter_band_cap(
                 width = width,
                 depth = depth,
                 top_center_height = top_center_height + height_up,
-                band_width = band_width,
+                band_width = safe_band_width,
                 corner_radius = corner_radius,
                 dish_radius = dish_radius,
                 dish_depth = dish_depth,
@@ -243,7 +249,7 @@ module keycap_typewriter_rim_top_extension(
                 width = width,
                 depth = depth,
                 top_center_height = top_center_height,
-                band_width = band_width,
+                band_width = safe_band_width,
                 corner_radius = corner_radius,
                 dish_radius = dish_radius,
                 dish_depth = dish_depth,
@@ -258,19 +264,26 @@ module keycap_typewriter_rim_top_extension(
 module keycap_typewriter_rim_bottom_extension(
     width,
     depth,
+    top_center_height,
     band_width,
     height_down = 0,
     corner_radius = 9,
+    dish_radius = 45,
+    dish_depth = 0,
+    pitch_deg = 0,
+    roll_deg = 0,
     quality = "export"
 ) {
-    if (height_down > 0) {
+    safe_band_width = max(band_width, 0);
+
+    if (safe_band_width > 0 && height_down > 0) {
         translate([0, 0, -height_down])
             linear_extrude(height = height_down)
                 keycap_typewriter_plan_ring(
                     width = width,
                     depth = depth,
                     corner_radius = corner_radius,
-                    band_width = band_width,
+                    band_width = safe_band_width,
                     quality = quality
                 );
     }
@@ -291,7 +304,7 @@ module keycap_typewriter_rim(
     quality = "export"
 ) {
     union() {
-        keycap_typewriter_rim_seat(
+        keycap_typewriter_rim_side_shell(
             width = width,
             depth = depth,
             top_center_height = top_center_height,
@@ -321,9 +334,14 @@ module keycap_typewriter_rim(
         keycap_typewriter_rim_bottom_extension(
             width = width,
             depth = depth,
+            top_center_height = top_center_height,
             band_width = band_width,
             height_down = height_down,
             corner_radius = corner_radius,
+            dish_radius = dish_radius,
+            dish_depth = dish_depth,
+            pitch_deg = pitch_deg,
+            roll_deg = roll_deg,
             quality = quality
         );
     }

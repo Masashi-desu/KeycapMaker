@@ -197,11 +197,11 @@ function getTypewriterRimWidthHint(params) {
 }
 
 function getTypewriterRimHeightUpHint() {
-  return "0 でキートップ上面と面一です。プラスで上へ伸びます";
+  return "0 で上面と面一です。プラスで上へ伸びます";
 }
 
 function getTypewriterRimHeightDownHint() {
-  return "0 でキートップ下面と面一です。プラスで下へ伸びます";
+  return "0 で下面と面一です。プラスで下へ伸びます";
 }
 
 function clampLegendOutlineDelta(value, fallback = 0) {
@@ -878,6 +878,14 @@ function getActiveFieldGroups(profileKey = state.keycapParams?.shapeProfile ?? D
     }));
 }
 
+function getShapeProfileVisibleFieldKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  return new Set(
+    getShapeProfileFieldGroups(profileKey)
+      .flatMap((group) => group.fieldKeys ?? [])
+      .filter(Boolean),
+  );
+}
+
 function clampLegendSize(value, fallback = LEGEND_MIN_SIZE) {
   const nextValue = Number(value);
   return Number.isFinite(nextValue) ? Math.max(nextValue, LEGEND_MIN_SIZE) : fallback;
@@ -925,7 +933,7 @@ const state = {
   legendFontPickerQuery: "",
   copiedFontAttributionKey: "",
   collapsedFieldGroups: createFieldGroupCollapseState(),
-  keycapParams: syncDerivedKeycapParams(createDefaultKeycapParams()),
+  keycapParams: createInitialKeycapParams(),
 };
 
 syncDerivedKeycapParams();
@@ -2082,7 +2090,7 @@ function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContext = sta
   }
 
   if (fieldConfig?.type === "select") {
-    const allowedValues = new Set(resolveFieldOptions(fieldConfig).map((option) => option.value));
+    const allowedValues = new Set(resolveFieldOptions(fieldConfig, paramsContext).map((option) => option.value));
     return allowedValues.has(value) ? value : fallback;
   }
 
@@ -2114,17 +2122,24 @@ function createExportableKeycapParams(params = state.keycapParams) {
   return exportableParams;
 }
 
-function createEditorDataPayload(params = state.keycapParams) {
+function createEditorDataPayloadFromParams(params, savedAt = new Date().toISOString()) {
   const sanitizedParams = createExportableKeycapParams(params);
-
   return {
     kind: EDITOR_DATA_KIND,
     schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
     profileSchemaVersion: keycapEditorProfiles.schemaVersion ?? 1,
-    savedAt: new Date().toISOString(),
+    savedAt,
     selectors: pickEditorSelectors(sanitizedParams),
     params: sanitizedParams,
   };
+}
+
+function createEditorDataPayload(params = state.keycapParams) {
+  return createEditorDataPayloadFromParams(params);
+}
+
+function createShapeProfileDefaultPayload(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  return createEditorDataPayloadFromParams(createDefaultKeycapParams(profileKey), null);
 }
 
 function buildEditorDataFilename(params = state.keycapParams) {
@@ -2174,6 +2189,10 @@ function parseEditorDataPayload(payload) {
   return syncDerivedKeycapParams(nextParams);
 }
 
+function createInitialKeycapParams(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  return parseEditorDataPayload(createShapeProfileDefaultPayload(profileKey));
+}
+
 function recordExportHistory(entry) {
   state.exportHistory.unshift(entry);
 }
@@ -2189,18 +2208,24 @@ function setExportStatus(status, summary, historyEntry) {
 
 function applyShapeProfileParams(profileKey) {
   const defaults = createDefaultKeycapParams(profileKey);
-  const previousGeometryType = resolveShapeGeometryType(state.keycapParams.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
+  const defaultParams = createInitialKeycapParams(profileKey);
+  const previousProfileKey = state.keycapParams.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const previousGeometryType = resolveShapeGeometryType(previousProfileKey);
   const nextGeometryType = resolveShapeGeometryType(profileKey);
+  const previousVisibleFieldKeys = getShapeProfileVisibleFieldKeys(previousProfileKey);
+  const nextVisibleFieldKeys = getShapeProfileVisibleFieldKeys(profileKey);
   const geometryTypeChanged = previousGeometryType !== nextGeometryType;
   const nextParams = {};
 
   for (const key of listEditableParamKeys(profileKey)) {
-    const sourceValue = geometryTypeChanged && GEOMETRY_TYPE_RESET_FIELDS.has(key)
-      ? defaults[key]
-      : state.keycapParams[key];
+    const shouldResetToProfileDefault = geometryTypeChanged && GEOMETRY_TYPE_RESET_FIELDS.has(key)
+      || !previousVisibleFieldKeys.has(key)
+      || !nextVisibleFieldKeys.has(key);
+    const sourceValue = shouldResetToProfileDefault ? defaultParams[key] : state.keycapParams[key];
     nextParams[key] = sanitizeEditorParamValue(key, sourceValue, defaults[key], state.keycapParams);
   }
 
+  nextParams.name = state.keycapParams.name ?? defaultParams.name ?? defaults.name;
   nextParams.shapeProfile = profileKey;
   state.keycapParams = syncDerivedKeycapParams(nextParams);
 }

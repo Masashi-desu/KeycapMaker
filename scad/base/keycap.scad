@@ -306,11 +306,13 @@ module keycap_body_shell(quality = "export") {
         keycap_body_shell_positive(quality);
         keycap_legend_visible_volume(quality);
         if (rim_enabled) {
-            keycap_typewriter_rim_seat(
+            keycap_typewriter_rim(
                 width = key_width,
                 depth = key_depth,
                 top_center_height = top_center_height,
                 band_width = rim_width,
+                height_up = rim_height_up,
+                height_down = rim_height_down,
                 corner_radius = typewriter_corner_radius,
                 dish_radius = dish_radius,
                 dish_depth = dish_depth,
