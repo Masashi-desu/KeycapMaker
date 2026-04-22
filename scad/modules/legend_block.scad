@@ -1,19 +1,11 @@
-function legend_text_length(label) = max(len(label), 1);
-function legend_is_single_glyph(label) = legend_text_length(label) == 1;
 function legend_quality_steps(quality, preview_steps, export_steps) =
     quality == "preview" ? preview_steps : export_steps;
 function legend_text_curve_steps(quality = "export") =
     legend_quality_steps(quality, 48, 96);
 function legend_text_internal_scale(quality = "export") =
     legend_quality_steps(quality, 6, 10);
-function legend_single_glyph_target_width(width, depth) =
-    min(width * 0.96, max(depth * 1.25, 4.8));
-function legend_text_size(label, width, depth) =
-    let(
-        width_fit = (width * 1.5) / legend_text_length(label),
-        depth_fit = depth * 0.98
-    )
-    max(min(depth_fit, width_fit), 1.0);
+// Keep legend size tied to the user's explicit control value without auto-fitting by label length.
+function legend_text_size(depth) = max(depth, 0);
 
 module legend_text_shape(label, size, font_name, curve_steps = 48) {
     text(
@@ -26,9 +18,16 @@ module legend_text_shape(label, size, font_name, curve_steps = 48) {
     );
 }
 
-module legend_resized_text_shape(label, size, width, depth, font_name, curve_steps = 48) {
-    if (legend_is_single_glyph(label)) {
-        resize([legend_single_glyph_target_width(width, depth), 0, 0], auto = [false, true, true])
+// Keep decoration options available across bundled fonts without requiring extra font files.
+module legend_text_profile(
+    label,
+    size,
+    font_name,
+    outline_delta = 0,
+    curve_steps = 48
+) {
+    if (abs(outline_delta) > 0.0001) {
+        offset(delta = outline_delta)
             legend_text_shape(
                 label = label,
                 size = size,
@@ -36,43 +35,9 @@ module legend_resized_text_shape(label, size, width, depth, font_name, curve_ste
                 curve_steps = curve_steps
             );
     } else {
-        text(
-            text = label,
-            size = size,
-            font = font_name,
-            halign = "center",
-            valign = "center",
-            $fn = curve_steps
-        );
-    }
-}
-
-// Keep decoration options available across bundled fonts without requiring extra font files.
-module legend_text_profile(
-    label,
-    size,
-    width,
-    depth,
-    font_name,
-    outline_delta = 0,
-    curve_steps = 48
-) {
-    if (abs(outline_delta) > 0.0001) {
-        offset(delta = outline_delta)
-            legend_resized_text_shape(
-                label = label,
-                size = size,
-                width = width,
-                depth = depth,
-                font_name = font_name,
-                curve_steps = curve_steps
-            );
-    } else {
-        legend_resized_text_shape(
+        legend_text_shape(
             label = label,
             size = size,
-            width = width,
-            depth = depth,
             font_name = font_name,
             curve_steps = curve_steps
         );
@@ -96,7 +61,7 @@ module legend_block(
     quality = "export"
 ) {
     if (!is_undef(label) && len(label) > 0) {
-        size = legend_text_size(label, width, depth);
+        size = legend_text_size(depth);
         curve_steps = legend_text_curve_steps(quality);
         internal_scale = legend_text_internal_scale(quality);
 
@@ -109,8 +74,6 @@ module legend_block(
                         legend_text_profile(
                             label = label,
                             size = size * internal_scale,
-                            width = width * internal_scale,
-                            depth = depth * internal_scale,
                             font_name = font_name,
                             outline_delta = outline_delta * internal_scale,
                             curve_steps = curve_steps

@@ -521,7 +521,7 @@ const fieldGroups = [
       {
         key: "legendSize",
         label: "文字の大きさ",
-        hint: "基準になる大きさです。文字数が多いと収まるよう自動で少し小さくします",
+        hint: "印字する文字の大きさを変更します。",
         unit: "mm",
         step: 0.1,
         min: LEGEND_MIN_SIZE,

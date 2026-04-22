@@ -3038,7 +3038,7 @@
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "基準になる大きさです。文字数が多いと収まるよう自動で少し小さくします",
+                          "content": "印字する文字の大きさを変更します。",
                           "lineHeight": 1.45,
                           "fontFamily": "Inter",
                           "fontSize": 13,

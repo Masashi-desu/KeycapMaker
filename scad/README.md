@@ -22,6 +22,7 @@
 - `presets/standard-1u.scad`: 1u キー向け既定値
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
 - `samples/keycap-legend-seat.scad`: flush legend の座面切り抜き確認用サンプル
+- `samples/keycap-multi-character-legend.scad`: 複数文字でも明示サイズを保つか確認するサンプル
 - `samples/keycap-rounded-legend.scad`: 丸みのある書体の legend 品質確認用サンプル
 - `samples/keycap-homing-bar.scad`: homing bar 単体出力の確認用サンプル
 - `samples/keycap-stem-clip.scad`: 強い左右傾斜でも stem が内側天井で止まるか確認するサンプル

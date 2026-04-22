@@ -12,7 +12,6 @@ export const KEYCAP_ENTRY_PATH = "/scad/base/keycap.scad";
 export const KEYCAP_JOB_PATH = "/scad/base/keycap-job.scad";
 export const DEFAULT_KEYCAP_LEGEND_FONT_KEY = "mplus1-variable";
 const LEGEND_SIZE_WIDTH_RATIO = 1.8;
-const LEGEND_SINGLE_GLYPH_MIN_TARGET_WIDTH = 4.8;
 const LEGEND_TEXT_MEASURE_SCALE = 100;
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
 const MPLUS1_VARIABLE_STYLE_OPTIONS = Object.freeze([
@@ -297,22 +296,8 @@ function resolveKeycapLegendFontStyle(font, styleKey) {
     ?? nativeStyleOptions[0];
 }
 
-function legendTextLength(label) {
-  return Math.max(String(label ?? "").length, 1);
-}
-
-function legendIsSingleGlyph(label) {
-  return legendTextLength(label) === 1;
-}
-
-function legendTextSize(label, width, depth) {
-  const widthFit = (width * 1.5) / legendTextLength(label);
-  const depthFit = depth * 0.98;
-  return Math.max(Math.min(depthFit, widthFit), 1.0);
-}
-
-function legendSingleGlyphTargetWidth(width, depth) {
-  return Math.min(width * 0.96, Math.max(depth * 1.25, LEGEND_SINGLE_GLYPH_MIN_TARGET_WIDTH));
+function legendTextSize(depth) {
+  return Math.max(Number(depth), 0);
 }
 
 function resolveLegendMeasurementWeight(selectedFont, selectedFontStyle) {
@@ -413,11 +398,9 @@ async function measureLegendTextWidth({ label, size, selectedFont, selectedFontS
   return (context.measureText(label).width / LEGEND_TEXT_MEASURE_SCALE) * size;
 }
 
-async function resolveLegendUnderlineSpanAndScale({
+async function resolveLegendUnderlineSpan({
   label,
   size,
-  width,
-  depth,
   selectedFont,
   selectedFontStyle,
 }) {
@@ -428,28 +411,13 @@ async function resolveLegendUnderlineSpanAndScale({
     selectedFontStyle,
   });
 
-  if (legendIsSingleGlyph(label)) {
-    const targetWidth = legendSingleGlyphTargetWidth(width, depth);
-    const renderScale = measuredTextWidth > 0 ? targetWidth / measuredTextWidth : 0;
-
-    return {
-      span: targetWidth,
-      renderScale,
-    };
-  }
-
-  return {
-    span: measuredTextWidth,
-    renderScale: 1,
-  };
+  return measuredTextWidth;
 }
 
 async function resolveLegendUnderlineGeometry({
   enabled,
   label,
   size,
-  width,
-  depth,
   selectedFont,
   selectedFontStyle,
 }) {
@@ -483,23 +451,20 @@ async function resolveLegendUnderlineGeometry({
     };
   }
 
-  const { span, renderScale } = await resolveLegendUnderlineSpanAndScale({
+  const span = await resolveLegendUnderlineSpan({
     label,
     size,
-    width,
-    depth,
     selectedFont,
     selectedFontStyle,
   });
-  const effectiveSize = size * renderScale;
-  const thickness = fontMetadata.underlineThicknessEm * effectiveSize;
+  const thickness = fontMetadata.underlineThicknessEm * size;
   const centerOffset = (
     fontMetadata.underlinePositionEm
     - (fontMetadata.underlineThicknessEm / 2)
     - fontMetadata.lineBoxCenterEm
-  ) * effectiveSize;
+  ) * size;
 
-  if (!(span > 0) || !(renderScale > 0) || !(thickness > 0)) {
+  if (!(span > 0) || !(thickness > 0)) {
     return {
       enabled: false,
       span: 0,
@@ -534,13 +499,11 @@ async function createKeycapDefinitions({ params, exportTarget }) {
   const selectedFontStyle = resolveKeycapLegendFontStyle(selectedFont, params.legendFontStyleKey);
   const legendWidth = legendSize * LEGEND_SIZE_WIDTH_RATIO;
   const legendDepth = legendSize;
-  const resolvedLegendTextSize = legendTextSize(params.legendText, legendWidth, legendDepth);
+  const resolvedLegendTextSize = legendTextSize(legendDepth);
   const underlineGeometry = await resolveLegendUnderlineGeometry({
     enabled: params.legendUnderlineEnabled,
     label: params.legendText,
     size: resolvedLegendTextSize,
-    width: legendWidth,
-    depth: legendDepth,
     selectedFont,
     selectedFontStyle,
   });
