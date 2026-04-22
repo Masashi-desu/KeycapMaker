@@ -24,6 +24,7 @@ import {
 
 const app = document.querySelector("#app");
 const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
+const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const DEFAULT_EXPORT_BASE_NAME = "keycap-preview";
@@ -66,11 +67,13 @@ const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
 const DEFAULT_KEYCAP_COLORS = Object.freeze({
   bodyColor: "#f8f9fa",
+  rimColor: "#d8ccb8",
   legendColor: "#212529",
   homingBarColor: "#ff7f00",
 });
 const COLORIS_SWATCHES = Object.freeze([
   DEFAULT_KEYCAP_COLORS.bodyColor,
+  DEFAULT_KEYCAP_COLORS.rimColor,
   DEFAULT_KEYCAP_COLORS.legendColor,
   DEFAULT_KEYCAP_COLORS.homingBarColor,
   "#f7efe2",
@@ -163,6 +166,42 @@ function clampTypewriterCornerRadius(value, fallback = 0) {
 function getTypewriterCornerRadiusHint(params) {
   const maxRadius = Math.max(Math.min(Number(params.keyWidth ?? 0), Number(params.keyDepth ?? 0)) / 2, 0);
   return `${formatMillimeter(maxRadius)} で丸、0 mm に近づけると角が立ちます`;
+}
+
+function clampNonNegativeNumber(value, fallback = 0) {
+  const nextValue = Number(value);
+  if (!Number.isFinite(nextValue)) {
+    return Math.max(Number(fallback) || 0, 0);
+  }
+
+  return Math.max(nextValue, 0);
+}
+
+function getTypewriterRimMaxWidth(params = state.keycapParams) {
+  return Math.max(Math.min(Number(params.keyWidth ?? 0), Number(params.keyDepth ?? 0)) / 2, 0);
+}
+
+function clampTypewriterRimWidth(value, params = state.keycapParams, fallback = 0) {
+  const maxWidth = getTypewriterRimMaxWidth(params);
+  const nextValue = Number(value);
+  if (!Number.isFinite(nextValue)) {
+    return Math.min(Math.max(Number(fallback) || 0, 0), maxWidth);
+  }
+
+  return Math.min(Math.max(nextValue, 0), maxWidth);
+}
+
+function getTypewriterRimWidthHint(params) {
+  const maxWidth = getTypewriterRimMaxWidth(params);
+  return `キートップ正面から見た帯の幅です。${formatMillimeter(maxWidth)} で全面まで広がります`;
+}
+
+function getTypewriterRimHeightUpHint() {
+  return "0 でキートップ上面と面一です。プラスで上へ伸びます";
+}
+
+function getTypewriterRimHeightDownHint() {
+  return "0 でキートップ下面と面一です。プラスで下へ伸びます";
 }
 
 function clampLegendOutlineDelta(value, fallback = 0) {
@@ -498,6 +537,47 @@ const fieldGroupTemplates = [
         min: 1,
       },
       {
+        key: "rimEnabled",
+        label: "キーリムを付ける",
+        hint: "キートップ外周を別パーツで覆います",
+        type: "checkbox",
+      },
+      {
+        key: "rimWidth",
+        label: "キーリムの幅",
+        hint: (params) => getTypewriterRimWidthHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: 0,
+        visibleWhen: (params) => params.rimEnabled,
+      },
+      {
+        key: "rimHeightUp",
+        label: "上方向の高さ",
+        hint: () => getTypewriterRimHeightUpHint(),
+        unit: "mm",
+        step: 0.05,
+        min: 0,
+        visibleWhen: (params) => params.rimEnabled,
+      },
+      {
+        key: "rimHeightDown",
+        label: "下方向の高さ",
+        hint: () => getTypewriterRimHeightDownHint(),
+        unit: "mm",
+        step: 0.05,
+        min: 0,
+        visibleWhen: (params) => params.rimEnabled,
+      },
+      {
+        key: "rimColor",
+        label: "キーリムの色",
+        hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+        type: "color",
+        placeholder: DEFAULT_KEYCAP_COLORS.rimColor,
+        visibleWhen: (params) => params.rimEnabled,
+      },
+      {
         key: "topSlopeInputMode",
         label: "傾きの入力方法",
         hint: "角度で入れるか、端の高さで入れるかを選びます",
@@ -819,6 +899,9 @@ function syncDerivedKeycapParams(params = state.keycapParams) {
     params.typewriterCornerRadius,
     defaults.typewriterCornerRadius ?? Math.min(Number(params.keyWidth ?? defaults.keyWidth ?? 18), Number(params.keyDepth ?? defaults.keyDepth ?? 18)) / 2,
   );
+  params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
+  params.rimHeightUp = clampNonNegativeNumber(params.rimHeightUp, defaults.rimHeightUp ?? 0);
+  params.rimHeightDown = clampNonNegativeNumber(params.rimHeightDown, defaults.rimHeightDown ?? 0);
   syncLegendFontParams(params);
   params.legendSize = clampLegendSize(params.legendSize, defaultLegendSize);
   Object.assign(params, resolveTopEdgeHeights(params));
@@ -941,6 +1024,8 @@ function getColorFieldNumber(fieldKey) {
 
 function getPartLabel(partName) {
   switch (partName) {
+    case "rim":
+      return "キーリム";
     case "legend":
       return "印字";
     case "homing":
@@ -1047,6 +1132,12 @@ function isLegendTextSet(value = state.keycapParams.legendText) {
 
 function isLegendRenderable() {
   return state.keycapParams.legendEnabled && isLegendTextSet();
+}
+
+function isTypewriterRimRenderable(params = state.keycapParams) {
+  return isTypewriterShapeProfile(params.shapeProfile)
+    && params.rimEnabled
+    && Number(params.rimWidth) > 0;
 }
 
 function renderShell() {
@@ -1978,6 +2069,14 @@ function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContext = sta
     return clampTypewriterCornerRadius(value, fallback);
   }
 
+  if (fieldKey === "rimWidth") {
+    return clampTypewriterRimWidth(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "rimHeightUp" || fieldKey === "rimHeightDown") {
+    return clampNonNegativeNumber(value, fallback);
+  }
+
   if (colorFieldKeys.has(fieldKey)) {
     return normalizeHexColor(value) ?? fallback;
   }
@@ -2386,6 +2485,7 @@ function handleFieldChange(event) {
   if (
     field === "legendEnabled"
     || field === "homingBarEnabled"
+    || field === "rimEnabled"
     || field === "topSlopeInputMode"
     || EDITOR_SELECTOR_KEYS.includes(field)
   ) {
@@ -2489,6 +2589,16 @@ function createKeycapOffJobs(purpose) {
         outputPath: keycapBodyPreviewPath,
         colorFieldKey: "bodyColor",
       }),
+      ...(isTypewriterRimRenderable(state.keycapParams)
+        ? [
+            createColorLayerJob({
+              name: "rim",
+              exportTarget: "rim",
+              outputPath: keycapRimPreviewPath,
+              colorFieldKey: "rimColor",
+            }),
+          ]
+        : []),
       ...(state.keycapParams.homingBarEnabled
         ? [
             createColorLayerJob({

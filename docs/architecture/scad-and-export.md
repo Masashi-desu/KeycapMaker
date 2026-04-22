@@ -18,6 +18,7 @@
 - `preview`
 - `body`
 - `body_core`
+- `rim`
 - `homing`
 - `legend`
 
@@ -25,9 +26,9 @@
 
 ## separate volume の扱い
 
-- body と legend は別体積を維持する
+- body / rim / legend は別体積を維持する
 - homing bar は body 側の触覚マーカーとして扱い、legend と混ぜない
-- body / legend / homing の相対位置は共有原点で揃える
+- body / rim / legend / homing の相対位置は共有原点で揃える
 - 色だけに依存せず、mesh 自体を part として分ける
 
 ## preview と export の責務分離
@@ -37,7 +38,7 @@
 - export:
   part 分離と形状の意味づけを優先する
 
-現在の preview は OFF メッシュを body / homing / legend ごとに生成して Three.js へ渡します。現在の export は同じ part 群から 3MF を組み立てます。
+現在の preview は OFF メッシュを body / rim / homing / legend ごとに生成して Three.js へ渡します。現在の export は同じ part 群から 3MF を組み立てます。
 
 legend の `text()` は bundled OpenSCAD runtime 上で preview / export の `quality` に応じて曲線分割数を上げ、内部では拡大してから縮小する。これにより、小さい文字サイズでも丸みのある書体の輪郭が過度に角張るのを抑える。font の native style は JS 側で `font` query を組み立てて指定し、ユーザー操作なしの擬似 bold / italic / slanted は行わない。下線は font file の `post` / `head` / `hhea` から `UnderlinePosition` / `UnderlineThickness` / line box 中心を読み、`valign="center"` な text 座標へ変換したうえで実測文字幅と組み合わせる。font metadata を取れない場合の任意フォールバックは行わない。輪郭補正は `legendOutlineDelta` を通した明示入力時だけ `offset()` を使う。
 legend の文字サイズは UI の `legendSize` をそのまま基準にし、文字数に応じた自動縮小や単一文字だけの自動拡大は行わない。
@@ -73,7 +74,7 @@ flowchart TD
   stemNominals["scad/presets/stem-nominals.scad"] --> wrapper
   wrapper --> worker["src/openscad-worker.js"]
   worker --> wasm["bundled OpenSCAD WASM runtime"]
-  wasm --> off["body / homing / legend の OFF"]
+  wasm --> off["body / rim / homing / legend の OFF"]
   off --> preview["preview-scene.js / Three.js"]
   off --> export3mf["export-3mf.js / 3MF"]
 ```
@@ -88,6 +89,8 @@ flowchart TD
 
 - `scad/samples/keycap-1u.scad`
   現行キーキャップ構成の回帰確認用
+- `scad/samples/keycap-typewriter-rim.scad`
+  typewriter shape の key rim 分離確認用
 - `scad/samples/keycap-legend-seat.scad`
   flush legend の座面切り抜き確認用
 - `scad/samples/keycap-multi-character-legend.scad`
@@ -111,8 +114,9 @@ flowchart TD
 
 - 出力元は OFF メッシュ
 - 3MF 内では part ごとに object を分ける
-- 現在の part 候補は `body`、`homing`、`legend`
+- 現在の part 候補は `body`、`rim`、`homing`、`legend`
 - legend が無効なら legend object は含まれない
+- typewriter key rim が無効なら rim object は含まれない
 - homing bar が無効なら homing object は含まれない
 
 ### 編集データ JSON

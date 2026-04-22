@@ -187,3 +187,10 @@
   shape ごとの初期値、geometry defaults、表示グループ定義は `src/data/keycap-shapes/*.json` に集約し、`scad/base/keycap.scad` は SCAD 側のフェイルセーフ default を持たず explicit `user_*` を受ける
 - 理由:
   editor と SCAD の責務境界を明確にし、shape 追加時の初期値と UI 構成を 1 か所の JSON で保守できるようにするため
+
+## 2026-04-22 - typewriter key rim は separate volume にする
+
+- 結論:
+  typewriter shape の key rim は top parameter として扱い、body から flush な seat を差し引いたうえで `rim` part として preview / 3MF へ出す
+- 理由:
+  rim を body と別色で扱う要件では、色 metadata だけでなく mesh 自体を分離した方が preview / export / slicer の整合を保ちやすいため

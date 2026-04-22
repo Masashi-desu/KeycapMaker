@@ -16,6 +16,10 @@ user_dish_radius = 45;
 user_dish_depth = 0;
 user_top_pitch_deg = 0;
 user_top_roll_deg = 0;
+user_rim_enabled = false;
+user_rim_width = 0;
+user_rim_height_up = 0;
+user_rim_height_down = 0;
 
 user_legend_enabled = true;
 user_legend_text = "A";

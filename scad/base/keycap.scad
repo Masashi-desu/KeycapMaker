@@ -88,6 +88,11 @@ dish_radius = positive_dimension(required_param(user_dish_radius, "user_dish_rad
 dish_depth = max(required_param(user_dish_depth, "user_dish_depth"), 0);
 top_pitch_deg = required_param(user_top_pitch_deg, "user_top_pitch_deg");
 top_roll_deg = required_param(user_top_roll_deg, "user_top_roll_deg");
+requested_rim_enabled = required_param(user_rim_enabled, "user_rim_enabled");
+rim_width = max(required_param(user_rim_width, "user_rim_width"), 0);
+rim_height_up = max(required_param(user_rim_height_up, "user_rim_height_up"), 0);
+rim_height_down = max(required_param(user_rim_height_down, "user_rim_height_down"), 0);
+rim_enabled = shape_geometry_type == "typewriter" && requested_rim_enabled && rim_width > 0.001;
 
 legend_enabled = required_param(user_legend_enabled, "user_legend_enabled");
 legend_text = required_param(user_legend_text, "user_legend_text");
@@ -300,6 +305,20 @@ module keycap_body_shell(quality = "export") {
     difference() {
         keycap_body_shell_positive(quality);
         keycap_legend_visible_volume(quality);
+        if (rim_enabled) {
+            keycap_typewriter_rim_seat(
+                width = key_width,
+                depth = key_depth,
+                top_center_height = top_center_height,
+                band_width = rim_width,
+                corner_radius = typewriter_corner_radius,
+                dish_radius = dish_radius,
+                dish_depth = dish_depth,
+                pitch_deg = top_pitch_deg,
+                roll_deg = top_roll_deg,
+                quality = quality
+            );
+        }
     }
 }
 
@@ -420,6 +439,34 @@ module keycap_homing_bar(quality = "export") {
     }
 }
 
+module keycap_rim_positive(quality = "export") {
+    if (rim_enabled) {
+        keycap_typewriter_rim(
+            width = key_width,
+            depth = key_depth,
+            top_center_height = top_center_height,
+            band_width = rim_width,
+            height_up = rim_height_up,
+            height_down = rim_height_down,
+            corner_radius = typewriter_corner_radius,
+            dish_radius = dish_radius,
+            dish_depth = dish_depth,
+            pitch_deg = top_pitch_deg,
+            roll_deg = top_roll_deg,
+            quality = quality
+        );
+    }
+}
+
+module keycap_rim(quality = "export") {
+    if (rim_enabled) {
+        difference() {
+            keycap_rim_positive(quality);
+            keycap_legend_visible_volume(quality);
+        }
+    }
+}
+
 module keycap_body(quality = "export") {
     union() {
         keycap_body_core(quality);
@@ -443,6 +490,10 @@ module export_homing() {
     keycap_homing_bar("export");
 }
 
+module export_rim() {
+    keycap_rim("export");
+}
+
 module export_legend() {
     keycap_legend("export");
 }
@@ -450,6 +501,7 @@ module export_legend() {
 module preview_model() {
     union() {
         keycap_body("preview");
+        keycap_rim("preview");
         keycap_legend("preview");
     }
 }
@@ -460,6 +512,8 @@ if (resolved_export_target == "body") {
     export_body_core();
 } else if (resolved_export_target == "homing") {
     export_homing();
+} else if (resolved_export_target == "rim") {
+    export_rim();
 } else if (resolved_export_target == "legend") {
     export_legend();
 } else {

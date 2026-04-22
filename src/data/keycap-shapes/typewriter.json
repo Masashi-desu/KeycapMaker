@@ -20,6 +20,11 @@
     "topSlopeInputMode": "angle",
     "topPitchDeg": 0,
     "topRollDeg": 0,
+    "rimEnabled": false,
+    "rimWidth": 1.2,
+    "rimHeightUp": 0,
+    "rimHeightDown": 0,
+    "rimColor": "#d8ccb8",
     "wallThickness": 1.1,
     "topScale": 1,
     "dishRadius": 45,
@@ -61,7 +66,7 @@
       "id": "top",
       "title": "キートップ",
       "description": "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
-      "fieldKeys": ["topCenterHeight", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "fieldKeys": ["topCenterHeight", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",

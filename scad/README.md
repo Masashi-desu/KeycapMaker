@@ -11,7 +11,7 @@
 
 ## 現在の主要ファイル
 
-- `base/keycap.scad`: `export_target` で `preview / body / body_core / homing / legend` を切り替える基礎エントリ
+- `base/keycap.scad`: `export_target` で `preview / body / body_core / rim / homing / legend` を切り替える基礎エントリ
 - `modules/keycap_shell.scad`: `top_center_height + pitch / roll` 基準の外形シェル、dish、内側 hollow
 - `modules/stem_mx.scad`: MX 互換 stem ボディ
 - `modules/stem_choc_v1.scad`: Kailh Choc v1 向け 2 本爪 stem
@@ -23,6 +23,7 @@
 - `presets/stem-nominals.scad`: stem 形状の nominal 寸法
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
 - `samples/keycap-typewriter.scad`: タイプライター風キートップの確認用サンプル
+- `samples/keycap-typewriter-rim.scad`: typewriter shape の key rim 分離確認用サンプル
 - `samples/keycap-legend-seat.scad`: flush legend の座面切り抜き確認用サンプル
 - `samples/keycap-multi-character-legend.scad`: 複数文字でも明示サイズを保つか確認するサンプル
 - `samples/keycap-rounded-legend.scad`: 丸みのある書体の legend 品質確認用サンプル
@@ -35,6 +36,7 @@
 
 - preview 用と export 用で重さや精度を分けてよい
 - 色指定だけに依存せず、body と legend の分離可能性を維持する
+- typewriter shape の key rim は body と別体積で扱い、3MF 側でも独立 part を維持する
 - homing bar は body 側の触覚マーカーとして扱い、legend とは別責務にする
 - ブラウザ内 OpenSCAD runtime へ UI パラメータを渡すときは、shape JSON から解決した明示値を wrapper SCAD の `user_*` へ注入する
 - `text()` を使う場合はフォント依存を明示し、アセット配置とライセンスを確認する

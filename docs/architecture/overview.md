@@ -7,6 +7,7 @@ Keycap Maker は、GitHub Pages で配信するクライアントサイド完結
 - キーキャップ形状の編集
 - legend の文字列、書体、font 内 style、明示的な太さ補正、位置、高さ、埋め込み量の編集
 - homing bar と stem 方式の切り替え
+- typewriter shape 専用の key rim 追加
 - Three.js によるプレビュー
 - 3MF の書き出し
 - 編集再開用 JSON の保存とドラッグ & ドロップ読み込み
@@ -89,7 +90,7 @@ flowchart LR
 ## 現在のユーザー向け出力
 
 - `3MF`
-  body / homing / legend の各メッシュを part としてまとめる
+  body / rim / homing / legend の各メッシュを part としてまとめる
 - `編集データ JSON`
   UI 状態を保存し、あとで再読み込みするためのフォーマット
 
