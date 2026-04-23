@@ -17,6 +17,8 @@ function stem_cross_dimension(base_value, margin) =
     positive_dimension(base_value + margin * 2);
 function supported_shape_geometry_type(type) =
     type == "shell" || type == "typewriter";
+function supported_top_shape_type(type) =
+    type == "flat" || type == "cylindrical" || type == "spherical";
 function supported_stem_type(type) =
     type == "none"
     || type == "mx"
@@ -85,7 +87,15 @@ top_thickness = max(required_param(user_top_thickness, "user_top_thickness"), 0.
 bottom_corner_radius = max(required_param(user_bottom_corner_radius, "user_bottom_corner_radius"), 0);
 top_corner_radius = max(required_param(user_top_corner_radius, "user_top_corner_radius"), 0);
 dish_radius = positive_dimension(required_param(user_dish_radius, "user_dish_radius"));
-dish_depth = max(required_param(user_dish_depth, "user_dish_depth"), 0);
+requested_dish_depth = required_param(user_dish_depth, "user_dish_depth");
+requested_top_shape_type = is_undef(user_top_shape_type)
+    ? (abs(requested_dish_depth) > 0.001 ? "spherical" : "flat")
+    : user_top_shape_type;
+top_shape_type = assert(
+    supported_top_shape_type(requested_top_shape_type),
+    str("unsupported user_top_shape_type: ", requested_top_shape_type)
+) requested_top_shape_type;
+dish_depth = top_shape_type == "flat" ? 0 : requested_dish_depth;
 top_pitch_deg = required_param(user_top_pitch_deg, "user_top_pitch_deg");
 top_roll_deg = required_param(user_top_roll_deg, "user_top_roll_deg");
 requested_rim_enabled = required_param(user_rim_enabled, "user_rim_enabled");
@@ -119,23 +129,11 @@ legend_below_surface = legend_surface_height == 0
     ? max(legend_embed, max(top_thickness - legend_bottom_skin, 0))
     : legend_embed;
 legend_total_height = max(legend_below_surface + legend_surface_height, 0);
-legend_anchor_surface_z = keycap_surface_z(
-    legend_offset_x,
-    legend_offset_y,
-    top_center_height,
-    dish_depth,
-    dish_radius,
-    top_pitch_deg,
-    top_roll_deg
-);
-legend_anchor_plane_z = keycap_top_plane_height(
-    legend_offset_x,
-    legend_offset_y,
-    top_center_height,
-    top_pitch_deg,
-    top_roll_deg
-);
-legend_surface_delta = legend_anchor_surface_z - legend_anchor_plane_z;
+legend_plan_left = legend_offset_x - legend_width / 2;
+legend_plan_right = legend_offset_x + legend_width / 2;
+legend_plan_front = legend_offset_y - legend_depth / 2;
+legend_plan_back = legend_offset_y + legend_depth / 2;
+legend_plan_radius = 0;
 
 requested_stem_type = required_param(user_stem_type, "user_stem_type");
 stem_type = assert(
@@ -208,6 +206,7 @@ homing_bar_anchor_surface_z = keycap_surface_z(
     0,
     homing_bar_offset_y,
     top_center_height,
+    top_shape_type,
     dish_depth,
     dish_radius,
     top_pitch_deg,
@@ -222,17 +221,17 @@ homing_bar_anchor_plane_z = keycap_top_plane_height(
 );
 homing_bar_surface_delta = homing_bar_anchor_surface_z - homing_bar_anchor_plane_z;
 
-module keycap_legend_volume(quality = "export") {
+module keycap_legend_flat_block(height = legend_total_height, quality = "export") {
     if (legend_enabled && legend_has_text && legend_total_height > 0) {
         keycap_top_plane_transform(top_center_height, top_pitch_deg, top_roll_deg)
             legend_block(
                 label = legend_text,
                 width = legend_width,
                 depth = legend_depth,
-                height = legend_total_height,
+                height = height,
                 offset_x = legend_offset_x,
                 offset_y = legend_offset_y,
-                base_z = legend_surface_delta - legend_below_surface,
+                base_z = -legend_below_surface,
                 font_name = legend_font_name,
                 underline_enabled = legend_underline_enabled,
                 underline_width = legend_underline_width,
@@ -244,26 +243,40 @@ module keycap_legend_volume(quality = "export") {
     }
 }
 
-module keycap_legend_visible_volume(quality = "export") {
+module keycap_legend_surface_volume(top_overlap = 0, quality = "export") {
     if (legend_enabled && legend_has_text && legend_total_height > 0) {
-        keycap_top_plane_transform(top_center_height, top_pitch_deg, top_roll_deg)
-            legend_block(
-                label = legend_text,
-                width = legend_width,
-                depth = legend_depth,
-                height = legend_total_height + legend_visible_surface_overlap,
-                offset_x = legend_offset_x,
-                offset_y = legend_offset_y,
-                base_z = legend_surface_delta - legend_below_surface,
-                font_name = legend_font_name,
-                underline_enabled = legend_underline_enabled,
-                underline_width = legend_underline_width,
-                underline_thickness = legend_underline_thickness,
-                underline_offset_y = legend_underline_offset_y,
-                outline_delta = legend_outline_delta,
+        intersection() {
+            keycap_legend_flat_block(
+                height = legend_total_height + top_overlap,
                 quality = quality
             );
+
+            keycap_top_surface_region(
+                left = legend_plan_left,
+                right = legend_plan_right,
+                front = legend_plan_front,
+                back = legend_plan_back,
+                radius = legend_plan_radius,
+                top_center_height = top_center_height,
+                dish_type = top_shape_type,
+                dish_depth = dish_depth,
+                dish_radius = dish_radius,
+                pitch_deg = top_pitch_deg,
+                roll_deg = top_roll_deg,
+                base_z = -legend_below_surface,
+                top_extra_z = legend_surface_height + top_overlap,
+                quality = quality
+            );
+        }
     }
+}
+
+module keycap_legend_volume(quality = "export") {
+    keycap_legend_surface_volume(0, quality);
+}
+
+module keycap_legend_visible_volume(quality = "export") {
+    keycap_legend_surface_volume(legend_visible_surface_overlap, quality);
 }
 
 module keycap_body_shell_positive(quality = "export") {
@@ -273,6 +286,7 @@ module keycap_body_shell_positive(quality = "export") {
             depth = key_depth,
             top_center_height = top_center_height,
             corner_radius = typewriter_corner_radius,
+            top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
             pitch_deg = top_pitch_deg,
@@ -292,6 +306,7 @@ module keycap_body_shell_positive(quality = "export") {
             right_angle = profile_right_angle,
             bottom_corner_radius = bottom_corner_radius,
             top_corner_radius = top_corner_radius,
+            top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
             pitch_deg = top_pitch_deg,
@@ -314,6 +329,7 @@ module keycap_body_shell(quality = "export") {
                 height_up = rim_height_up,
                 height_down = rim_height_down,
                 corner_radius = typewriter_corner_radius,
+                top_shape_type = top_shape_type,
                 dish_radius = dish_radius,
                 dish_depth = dish_depth,
                 pitch_deg = top_pitch_deg,
@@ -451,6 +467,7 @@ module keycap_rim_positive(quality = "export") {
             height_up = rim_height_up,
             height_down = rim_height_down,
             corner_radius = typewriter_corner_radius,
+            top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
             pitch_deg = top_pitch_deg,

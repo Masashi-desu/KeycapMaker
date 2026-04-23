@@ -2,6 +2,13 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-04-23 - custom-shell のキートップは flat / cylindrical / spherical を切り替え可能にする
+
+- 結論:
+  custom-shell のキートップ形状は `topSurfaceShape` で切り替え、`dishDepth` はプラスで凹み、マイナスで盛り上がりとして扱う。cylindrical は固定向きとし、`topPitchDeg` / `topRollDeg` を変えても dish 自体の曲率は維持したまま傾ける
+- 理由:
+  フラットだけではキートップの触感と見た目の幅が狭く、cylindrical / spherical の一般的な差を小さな UI 拡張で表現できるため
+
 ## 2026-04-16 - 静的配信前提の採用
 
 - 結論:

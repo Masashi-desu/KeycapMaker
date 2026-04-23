@@ -378,6 +378,7 @@ async function createKeycapDefinitions({ params, exportTarget }) {
   const shapeGeometry = resolveShapeGeometryParameters(params);
   const legendSize = clampLegendSize(params.legendSize);
   const selectedFontStyle = resolveKeycapLegendFontStyle(selectedFont, params.legendFontStyleKey);
+  const topSurfaceShape = params.topSurfaceShape ?? (Math.abs(Number(params.dishDepth ?? 0)) > 0.001 ? "spherical" : "flat");
   const legendWidth = legendSize * LEGEND_SIZE_WIDTH_RATIO;
   const legendDepth = legendSize;
   const resolvedLegendTextSize = legendTextSize(legendDepth);
@@ -407,6 +408,7 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_thickness: shapeGeometry.topThickness,
     user_bottom_corner_radius: shapeGeometry.bottomCornerRadius,
     user_top_corner_radius: shapeGeometry.topCornerRadius,
+    user_top_shape_type: topSurfaceShape,
     user_dish_radius: params.dishRadius,
     user_dish_depth: params.dishDepth,
     user_top_pitch_deg: params.topPitchDeg,

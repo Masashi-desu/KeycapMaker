@@ -12,6 +12,7 @@ user_profile_left_angle = 11;
 user_profile_right_angle = 9;
 user_bottom_corner_radius = 2.2;
 user_top_corner_radius = 3.6;
+user_top_shape_type = "spherical";
 user_dish_radius = 36;
 user_dish_depth = 1.2;
 user_top_pitch_deg = 3;

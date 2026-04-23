@@ -27,6 +27,7 @@
     "rimColor": "#ff7f00",
     "wallThickness": 1.2,
     "topScale": 1,
+    "topSurfaceShape": "flat",
     "dishRadius": 45,
     "dishDepth": 0,
     "typewriterCornerRadius": 9,

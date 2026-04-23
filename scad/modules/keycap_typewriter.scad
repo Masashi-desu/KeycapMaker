@@ -103,13 +103,31 @@ module keycap_typewriter_cap(
     depth,
     top_center_height,
     corner_radius = 9,
+    top_shape_type = "spherical",
     dish_radius = 45,
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
     quality = "export"
 ) {
-    difference() {
+    safe_corner_radius = typewriter_plan_corner_radius(width, depth, corner_radius);
+
+    keycap_apply_top_surface(
+        width = width,
+        depth = depth,
+        top_left = -width / 2,
+        top_right = width / 2,
+        top_front = -depth / 2,
+        top_back = depth / 2,
+        top_radius = safe_corner_radius,
+        top_center_height = top_center_height,
+        dish_type = top_shape_type,
+        dish_depth = dish_depth,
+        dish_radius = dish_radius,
+        pitch_deg = pitch_deg,
+        roll_deg = roll_deg,
+        quality = quality
+    )
         if (typewriter_is_axis_aligned(pitch_deg, roll_deg)) {
             linear_extrude(height = top_center_height)
                 keycap_typewriter_plan_profile(
@@ -129,14 +147,6 @@ module keycap_typewriter_cap(
                 quality = quality
             );
         }
-
-        keycap_dish_cut(
-            top_center_height = top_center_height,
-            dish_depth = dish_depth,
-            dish_radius = dish_radius,
-            quality = quality
-        );
-    }
 }
 
 module keycap_typewriter_band_cap(
@@ -145,6 +155,7 @@ module keycap_typewriter_band_cap(
     top_center_height,
     band_width,
     corner_radius = 9,
+    top_shape_type = "spherical",
     dish_radius = 45,
     dish_depth = 0,
     pitch_deg = 0,
@@ -162,6 +173,7 @@ module keycap_typewriter_band_cap(
             depth = depth,
             top_center_height = top_center_height,
             corner_radius = corner_radius,
+            top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
@@ -175,6 +187,7 @@ module keycap_typewriter_band_cap(
                 depth = inner_depth,
                 top_center_height = top_center_height,
                 corner_radius = inner_corner_radius,
+                top_shape_type = top_shape_type,
                 dish_radius = dish_radius,
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
@@ -191,6 +204,7 @@ module keycap_typewriter_rim_side_shell(
     top_center_height,
     band_width,
     corner_radius = 9,
+    top_shape_type = "spherical",
     dish_radius = 45,
     dish_depth = 0,
     pitch_deg = 0,
@@ -206,6 +220,7 @@ module keycap_typewriter_rim_side_shell(
             top_center_height = top_center_height,
             band_width = safe_band_width,
             corner_radius = corner_radius,
+            top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
@@ -222,6 +237,7 @@ module keycap_typewriter_rim_top_extension(
     band_width,
     height_up = 0,
     corner_radius = 9,
+    top_shape_type = "spherical",
     dish_radius = 45,
     dish_depth = 0,
     pitch_deg = 0,
@@ -238,6 +254,7 @@ module keycap_typewriter_rim_top_extension(
                 top_center_height = top_center_height + height_up,
                 band_width = safe_band_width,
                 corner_radius = corner_radius,
+                top_shape_type = top_shape_type,
                 dish_radius = dish_radius,
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
@@ -251,6 +268,7 @@ module keycap_typewriter_rim_top_extension(
                 top_center_height = top_center_height,
                 band_width = safe_band_width,
                 corner_radius = corner_radius,
+                top_shape_type = top_shape_type,
                 dish_radius = dish_radius,
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
@@ -268,6 +286,7 @@ module keycap_typewriter_rim_bottom_extension(
     band_width,
     height_down = 0,
     corner_radius = 9,
+    top_shape_type = "spherical",
     dish_radius = 45,
     dish_depth = 0,
     pitch_deg = 0,
@@ -297,6 +316,7 @@ module keycap_typewriter_rim(
     height_up = 0,
     height_down = 0,
     corner_radius = 9,
+    top_shape_type = "spherical",
     dish_radius = 45,
     dish_depth = 0,
     pitch_deg = 0,
@@ -310,6 +330,7 @@ module keycap_typewriter_rim(
             top_center_height = top_center_height,
             band_width = band_width,
             corner_radius = corner_radius,
+            top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
@@ -324,6 +345,7 @@ module keycap_typewriter_rim(
             band_width = band_width,
             height_up = height_up,
             corner_radius = corner_radius,
+            top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
@@ -338,6 +360,7 @@ module keycap_typewriter_rim(
             band_width = band_width,
             height_down = height_down,
             corner_radius = corner_radius,
+            top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
@@ -354,6 +377,7 @@ module keycap_typewriter_shell(
     wall,
     top_thickness = 1.2,
     corner_radius = 9,
+    top_shape_type = "spherical",
     dish_radius = 45,
     dish_depth = 0,
     pitch_deg = 0,
@@ -365,6 +389,7 @@ module keycap_typewriter_shell(
         depth = depth,
         top_center_height = top_center_height,
         corner_radius = corner_radius,
+        top_shape_type = top_shape_type,
         dish_radius = dish_radius,
         dish_depth = dish_depth,
         pitch_deg = pitch_deg,

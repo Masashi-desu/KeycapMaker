@@ -35,16 +35,58 @@ function keycap_top_plane_height(x, y, top_center_height, pitch_deg = 0, roll_de
     + x * keycap_top_plane_slope(roll_deg)
     + y * keycap_top_plane_slope(pitch_deg);
 
-function keycap_surface_z(x, y, top_center_height, dish_depth, dish_radius, pitch_deg = 0, roll_deg = 0) =
+function keycap_dish_is_active(dish_type, dish_depth) =
+    dish_type != "flat" && abs(dish_depth) > 0.001;
+
+function keycap_cylindrical_axis_offset(x, y) = x;
+
+function keycap_dish_radial_sq(x, y, dish_type = "spherical") =
+    dish_type == "cylindrical"
+        ? pow(keycap_cylindrical_axis_offset(x, y), 2)
+        : x * x + y * y;
+
+function keycap_dish_surface_offset(
+    x,
+    y,
+    dish_type,
+    dish_depth,
+    dish_radius
+) =
+    let(
+        safe_dish_radius = max(dish_radius, 0.1),
+        radial_sq = keycap_dish_radial_sq(x, y, dish_type),
+        radius_sq = safe_dish_radius * safe_dish_radius,
+        surface_offset = dish_depth >= 0
+            ? safe_dish_radius - dish_depth - sqrt(max(radius_sq - radial_sq, 0))
+            : -dish_depth - safe_dish_radius + sqrt(max(radius_sq - radial_sq, 0))
+    )
+    !keycap_dish_is_active(dish_type, dish_depth) || radial_sq >= radius_sq
+        ? 0
+        : dish_depth >= 0
+            ? min(0, surface_offset)
+            : max(0, surface_offset);
+
+function keycap_surface_z(
+    x,
+    y,
+    top_center_height,
+    dish_type,
+    dish_depth,
+    dish_radius,
+    pitch_deg = 0,
+    roll_deg = 0
+) =
     let(
         plane_z = keycap_top_plane_height(x, y, top_center_height, pitch_deg, roll_deg),
-        safe_dish_depth = max(dish_depth, 0),
-        safe_dish_radius = max(dish_radius, 0.1),
-        radial_sq = x * x + y * y,
-        radius_sq = safe_dish_radius * safe_dish_radius,
-        dish_z = top_center_height + safe_dish_radius - safe_dish_depth - sqrt(max(radius_sq - radial_sq, 0))
+        dish_offset = keycap_dish_surface_offset(
+            x,
+            y,
+            dish_type,
+            dish_depth,
+            dish_radius
+        )
     )
-    safe_dish_depth <= 0 || radial_sq >= radius_sq ? plane_z : min(plane_z, dish_z);
+    plane_z + dish_offset;
 
 module rounded_rect_coords(left, right, front, back, radius, quality = "export") {
     width = max(right - left, 0.2);
@@ -123,6 +165,25 @@ module keycap_top_face(
     keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
         linear_extrude(height = 0.01, center = true)
             rounded_rect_coords(left, right, front, back, radius, quality);
+}
+
+module keycap_top_prism(
+    left,
+    right,
+    front,
+    back,
+    radius,
+    top_center_height,
+    pitch_deg = 0,
+    roll_deg = 0,
+    height = 1,
+    base_z = 0,
+    quality = "export"
+) {
+    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+        translate([0, 0, base_z])
+            linear_extrude(height = max(height, 0.01))
+                rounded_rect_coords(left, right, front, back, radius, quality);
 }
 
 module keycap_outer_shell(
@@ -264,13 +325,22 @@ module keycap_inner_hollow(
 }
 
 module keycap_dish_volume(
+    width,
+    depth,
     top_center_height,
+    dish_type,
     dish_depth,
     dish_radius,
+    pitch_deg = 0,
+    roll_deg = 0,
     quality = "export",
     z_shift = 0
 ) {
     safe_radius = max(dish_radius, 0.1);
+    dish_center_local_z = dish_depth >= 0
+        ? safe_radius - dish_depth + z_shift
+        : -safe_radius - dish_depth + z_shift;
+    dish_length = sqrt(pow(width, 2) + pow(depth, 2)) + safe_radius * 4 + 4;
     dish_steps = keycap_curve_steps(
         safe_radius,
         quality,
@@ -283,24 +353,205 @@ module keycap_dish_volume(
         export_max_steps = 128
     );
 
-    translate([0, 0, top_center_height + safe_radius - dish_depth + z_shift])
-        sphere(r = safe_radius, $fn = dish_steps);
+    // Keep dish curvature in the same local top-plane coordinates as the shell tilt.
+    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+        if (dish_type == "cylindrical") {
+            translate([0, 0, dish_center_local_z])
+                rotate([90, 0, 0])
+                    cylinder(h = dish_length, r = safe_radius, center = true, $fn = dish_steps);
+        } else if (dish_type == "spherical") {
+            translate([0, 0, dish_center_local_z])
+                sphere(r = safe_radius, $fn = dish_steps);
+        }
 }
 
 module keycap_dish_cut(
+    width,
+    depth,
     top_center_height,
+    dish_type,
     dish_depth,
     dish_radius,
+    pitch_deg = 0,
+    roll_deg = 0,
+    surface_z_shift = 0,
     quality = "export"
 ) {
-    if (dish_depth > 0) {
+    if (keycap_dish_is_active(dish_type, dish_depth) && dish_depth > 0) {
         keycap_dish_volume(
+            width = width,
+            depth = depth,
             top_center_height = top_center_height,
+            dish_type = dish_type,
             dish_depth = dish_depth,
             dish_radius = dish_radius,
+            pitch_deg = pitch_deg,
+            roll_deg = roll_deg,
+            z_shift = surface_z_shift,
             quality = quality
         );
     }
+}
+
+module keycap_dish_bump(
+    width,
+    depth,
+    top_left,
+    top_right,
+    top_front,
+    top_back,
+    top_radius,
+    top_center_height,
+    dish_type,
+    dish_depth,
+    dish_radius,
+    pitch_deg = 0,
+    roll_deg = 0,
+    surface_z_shift = 0,
+    quality = "export"
+) {
+    if (keycap_dish_is_active(dish_type, dish_depth) && dish_depth < 0) {
+        bump_clip_height = max(abs(dish_depth) + max(dish_radius, 0.1) + 2, 2);
+
+        intersection() {
+            keycap_dish_volume(
+                width = width,
+                depth = depth,
+                top_center_height = top_center_height,
+                dish_type = dish_type,
+                dish_depth = dish_depth,
+                dish_radius = dish_radius,
+                pitch_deg = pitch_deg,
+                roll_deg = roll_deg,
+                z_shift = surface_z_shift,
+                quality = quality
+            );
+
+            keycap_top_prism(
+                left = top_left,
+                right = top_right,
+                front = top_front,
+                back = top_back,
+                radius = top_radius,
+                top_center_height = top_center_height,
+                pitch_deg = pitch_deg,
+                roll_deg = roll_deg,
+                height = bump_clip_height,
+                quality = quality
+            );
+        }
+    }
+}
+
+module keycap_apply_top_surface(
+    width,
+    depth,
+    top_left,
+    top_right,
+    top_front,
+    top_back,
+    top_radius,
+    top_center_height,
+    dish_type = "spherical",
+    dish_depth = 0,
+    dish_radius = 45,
+    pitch_deg = 0,
+    roll_deg = 0,
+    surface_z_shift = 0,
+    quality = "export"
+) {
+    if (!keycap_dish_is_active(dish_type, dish_depth)) {
+        children();
+    } else if (dish_depth > 0) {
+        difference() {
+            children();
+            keycap_dish_cut(
+                width = width,
+                depth = depth,
+                top_center_height = top_center_height,
+                dish_type = dish_type,
+                dish_depth = dish_depth,
+                dish_radius = dish_radius,
+                pitch_deg = pitch_deg,
+                roll_deg = roll_deg,
+                surface_z_shift = surface_z_shift,
+                quality = quality
+            );
+        }
+    } else {
+        union() {
+            children();
+            keycap_dish_bump(
+                width = width,
+                depth = depth,
+                top_left = top_left,
+                top_right = top_right,
+                top_front = top_front,
+                top_back = top_back,
+                top_radius = top_radius,
+                top_center_height = top_center_height,
+                dish_type = dish_type,
+                dish_depth = dish_depth,
+                dish_radius = dish_radius,
+                pitch_deg = pitch_deg,
+                roll_deg = roll_deg,
+                surface_z_shift = surface_z_shift,
+                quality = quality
+            );
+        }
+    }
+}
+
+module keycap_top_surface_region(
+    left,
+    right,
+    front,
+    back,
+    radius,
+    top_center_height,
+    dish_type = "spherical",
+    dish_depth = 0,
+    dish_radius = 45,
+    pitch_deg = 0,
+    roll_deg = 0,
+    base_z = 0,
+    top_extra_z = 0,
+    quality = "export"
+) {
+    region_width = max(right - left, 0.1);
+    region_depth = max(back - front, 0.1);
+    region_height = max(top_extra_z - base_z, 0.01);
+
+    keycap_apply_top_surface(
+        width = region_width,
+        depth = region_depth,
+        top_left = left,
+        top_right = right,
+        top_front = front,
+        top_back = back,
+        top_radius = radius,
+        top_center_height = top_center_height,
+        dish_type = dish_type,
+        dish_depth = dish_depth,
+        dish_radius = dish_radius,
+        pitch_deg = pitch_deg,
+        roll_deg = roll_deg,
+        surface_z_shift = top_extra_z,
+        quality = quality
+    )
+        keycap_top_prism(
+            left = left,
+            right = right,
+            front = front,
+            back = back,
+            radius = radius,
+            top_center_height = top_center_height,
+            pitch_deg = pitch_deg,
+            roll_deg = roll_deg,
+            height = region_height,
+            base_z = base_z,
+            quality = quality
+        );
 }
 
 module keycap_shell(
@@ -315,27 +566,53 @@ module keycap_shell(
     right_angle = 10,
     bottom_corner_radius = 1.0,
     top_corner_radius = 1.5,
+    top_shape_type = "spherical",
     dish_radius = 45,
     dish_depth = 1.0,
     pitch_deg = 0,
     roll_deg = 0,
     quality = "export"
 ) {
+    base_left = -width / 2;
+    base_right = width / 2;
+    base_front = -depth / 2;
+    base_back = depth / 2;
+    top_left = base_left + top_center_height * tan(left_angle);
+    top_right = base_right - top_center_height * tan(right_angle);
+    top_front = base_front + top_center_height * tan(front_angle);
+    top_back = base_back - top_center_height * tan(back_angle);
+
     difference() {
-        keycap_outer_shell(
+        keycap_apply_top_surface(
             width = width,
             depth = depth,
+            top_left = top_left,
+            top_right = top_right,
+            top_front = top_front,
+            top_back = top_back,
+            top_radius = top_corner_radius,
             top_center_height = top_center_height,
-            front_angle = front_angle,
-            back_angle = back_angle,
-            left_angle = left_angle,
-            right_angle = right_angle,
-            bottom_corner_radius = bottom_corner_radius,
-            top_corner_radius = top_corner_radius,
+            dish_type = top_shape_type,
+            dish_depth = dish_depth,
+            dish_radius = dish_radius,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
             quality = quality
-        );
+        )
+            keycap_outer_shell(
+                width = width,
+                depth = depth,
+                top_center_height = top_center_height,
+                front_angle = front_angle,
+                back_angle = back_angle,
+                left_angle = left_angle,
+                right_angle = right_angle,
+                bottom_corner_radius = bottom_corner_radius,
+                top_corner_radius = top_corner_radius,
+                pitch_deg = pitch_deg,
+                roll_deg = roll_deg,
+                quality = quality
+            );
 
         keycap_inner_clearance_volume(
             width = width,
@@ -352,13 +629,6 @@ module keycap_shell(
             top_corner_radius = top_corner_radius,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
-        );
-
-        keycap_dish_cut(
-            top_center_height = top_center_height,
-            dish_depth = dish_depth,
-            dish_radius = dish_radius,
             quality = quality
         );
     }

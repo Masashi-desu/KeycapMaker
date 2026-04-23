@@ -22,6 +22,7 @@
     "topRollDeg": 0,
     "wallThickness": 1.2,
     "topScale": 0.84,
+    "topSurfaceShape": "flat",
     "dishRadius": 45,
     "dishDepth": 0,
     "bodyColor": "#f8f9fa",
@@ -59,8 +60,8 @@
     {
       "id": "top",
       "title": "キートップ",
-      "description": "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
-      "fieldKeys": ["topCenterHeight", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "description": "上面中央の基準高さを固定したまま、フラット / シンドリカル / スフェリカルを切り替えられます。シンドリカルは一方向だけ曲がります。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",

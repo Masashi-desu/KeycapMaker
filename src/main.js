@@ -14,6 +14,7 @@ import {
   DEFAULT_EXPORT_BASE_NAME,
   createEditorDataPayload,
   createInitialKeycapParams,
+  getTopSurfaceShapePreset,
   listEditableParamKeys,
   parseEditorDataPayload,
   resolveStemType,
@@ -230,6 +231,11 @@ const STEM_TYPE_OPTIONS = Object.freeze([
   { value: "choc_v2", label: "Choc v2" },
   { value: "alps", label: "Alps / Matias" },
 ]);
+const TOP_SURFACE_SHAPE_OPTIONS = Object.freeze([
+  { value: "flat", label: "フラット" },
+  { value: "cylindrical", label: "シンドリカル" },
+  { value: "spherical", label: "スフェリカル" },
+]);
 const CROSS_COMPATIBLE_STEM_TYPES = new Set(["mx", "choc_v2"]);
 const SETTINGS_NAME_FIELD = Object.freeze({
   key: "name",
@@ -242,6 +248,7 @@ const SETTINGS_NAME_FIELD = Object.freeze({
 const GEOMETRY_TYPE_RESET_FIELDS = new Set([
   "topCenterHeight",
   "topScale",
+  "topSurfaceShape",
   "dishRadius",
   "dishDepth",
   "typewriterCornerRadius",
@@ -386,13 +393,16 @@ function resolveTopEdgeHeights(params = {}) {
   const topRollDeg = Number(params.topRollDeg ?? 0);
   const pitchSlope = degTan(topPitchDeg);
   const rollSlope = degTan(topRollDeg);
+  const topSurfaceShape = params.topSurfaceShape ?? "flat";
+  const rawDishDepth = Number(params.dishDepth ?? 0);
+  const activeDishDepth = topSurfaceShape === "flat" || !Number.isFinite(rawDishDepth) ? 0 : rawDishDepth;
 
   return {
     topFrontHeight: geometry.topCenterHeight + geometry.topFront * pitchSlope,
     topBackHeight: geometry.topCenterHeight + geometry.topBack * pitchSlope,
     topLeftHeight: geometry.topCenterHeight + geometry.topLeft * rollSlope,
     topRightHeight: geometry.topCenterHeight + geometry.topRight * rollSlope,
-    topVisibleCenterHeight: geometry.topCenterHeight - Math.max(Number(params.dishDepth ?? 0), 0),
+    topVisibleCenterHeight: geometry.topCenterHeight - activeDishDepth,
   };
 }
 
@@ -426,6 +436,22 @@ function getTopLeftHeightHint(params) {
 
 function getTopRightHeightHint(params) {
   return `上面基準面の右高さです。中央高さは固定され、現在の左右傾斜は ${formatDegree(params.topRollDeg)} です`;
+}
+
+function getTopSurfaceShapeHint() {
+  return "フラットは平面、シンドリカルは一方向、スフェリカルは全方向に曲がります";
+}
+
+function getDishDepthHint(params) {
+  if (params.topSurfaceShape === "cylindrical") {
+    return "プラスで一方向に凹み、マイナスで一方向に盛り上がります";
+  }
+
+  if (params.topSurfaceShape === "spherical") {
+    return "プラスで椀形に凹み、マイナスで盛り上がります";
+  }
+
+  return "フラットでは効きません";
 }
 
 const fieldGroupTemplates = [
@@ -506,6 +532,21 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.1,
         min: 1,
+      },
+      {
+        key: "topSurfaceShape",
+        label: "キートップ形状",
+        hint: () => getTopSurfaceShapeHint(),
+        type: "select",
+        options: TOP_SURFACE_SHAPE_OPTIONS,
+      },
+      {
+        key: "dishDepth",
+        label: "深さ",
+        hint: (params) => getDishDepthHint(params),
+        unit: "mm",
+        step: 0.05,
+        visibleWhen: (params) => params.topSurfaceShape !== "flat",
       },
       {
         key: "rimEnabled",
@@ -2214,6 +2255,11 @@ function applyTopEdgeHeightChange(field, value) {
   }
 }
 
+function applyTopSurfaceShapePreset(surfaceShape) {
+  const preset = getTopSurfaceShapePreset(surfaceShape);
+  state.keycapParams.dishDepth = preset.dishDepth;
+}
+
 function handleFieldChange(event) {
   const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
@@ -2233,6 +2279,9 @@ function handleFieldChange(event) {
       applyShapeProfileParams(input.value);
     } else {
       state.keycapParams[field] = input.value;
+      if (field === "topSurfaceShape") {
+        applyTopSurfaceShapePreset(input.value);
+      }
     }
   } else if (fieldConfig?.type === "color") {
     const normalizedColor = normalizeHexColor(input.value);
@@ -2283,10 +2332,15 @@ function handleFieldChange(event) {
     field === "legendEnabled"
     || field === "homingBarEnabled"
     || field === "rimEnabled"
+    || field === "topSurfaceShape"
     || field === "topSlopeInputMode"
     || EDITOR_SELECTOR_KEYS.includes(field)
   ) {
     render({ animateInspector: true });
+  }
+
+  if (field === "dishDepth") {
+    syncFieldHint("topCenterHeight");
   }
 
   if (!deferPreview && field !== "topSlopeInputMode") {

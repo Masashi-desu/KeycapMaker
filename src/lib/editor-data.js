@@ -22,6 +22,18 @@ export const EDITOR_DATA_COMPAT_SCHEMA_VERSION = 1;
 
 const STEM_TYPE_VALUES = new Set(["none", "mx", "choc_v1", "choc_v2", "alps"]);
 const TOP_SLOPE_INPUT_MODE_VALUES = new Set(["angle", "edge-height"]);
+const TOP_SURFACE_SHAPE_VALUES = new Set(["flat", "cylindrical", "spherical"]);
+const TOP_SURFACE_SHAPE_PRESETS = Object.freeze({
+  flat: Object.freeze({
+    dishDepth: 0,
+  }),
+  cylindrical: Object.freeze({
+    dishDepth: 0.7,
+  }),
+  spherical: Object.freeze({
+    dishDepth: 1.0,
+  }),
+});
 const COLOR_FIELD_KEYS = new Set(["bodyColor", "rimColor", "legendColor", "homingBarColor"]);
 const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
@@ -68,6 +80,40 @@ function degTan(value) {
 
 function resolveTopSlopeInputMode(value, fallback = "angle") {
   return TOP_SLOPE_INPUT_MODE_VALUES.has(value) ? value : fallback;
+}
+
+function resolveTopSurfaceShape(value, fallback = "flat") {
+  if (TOP_SURFACE_SHAPE_VALUES.has(value)) {
+    return value;
+  }
+
+  return TOP_SURFACE_SHAPE_VALUES.has(fallback) ? fallback : "flat";
+}
+
+export function getTopSurfaceShapePreset(value, fallback = "flat") {
+  const resolvedShape = resolveTopSurfaceShape(value, fallback);
+  const preset = TOP_SURFACE_SHAPE_PRESETS[resolvedShape] ?? TOP_SURFACE_SHAPE_PRESETS.flat;
+  return {
+    dishDepth: preset.dishDepth,
+  };
+}
+
+function inferLegacyTopSurfaceShape(params = {}) {
+  const dishDepth = Number(params.dishDepth ?? 0);
+  if (params.topSurfaceShape != null || !Number.isFinite(dishDepth) || Math.abs(dishDepth) <= 0.001) {
+    return null;
+  }
+
+  return "spherical";
+}
+
+function resolveActiveDishDepth(params = {}) {
+  const dishDepth = Number(params.dishDepth ?? 0);
+  if (!Number.isFinite(dishDepth)) {
+    return 0;
+  }
+
+  return resolveTopSurfaceShape(params.topSurfaceShape, "flat") === "flat" ? 0 : dishDepth;
 }
 
 function clampTypewriterCornerRadius(value, fallback = 0) {
@@ -207,13 +253,14 @@ function resolveTopEdgeHeights(params = {}) {
   const topRollDeg = Number(params.topRollDeg ?? 0);
   const pitchSlope = degTan(topPitchDeg);
   const rollSlope = degTan(topRollDeg);
+  const activeDishDepth = resolveActiveDishDepth(params);
 
   return {
     topFrontHeight: geometry.topCenterHeight + geometry.topFront * pitchSlope,
     topBackHeight: geometry.topCenterHeight + geometry.topBack * pitchSlope,
     topLeftHeight: geometry.topCenterHeight + geometry.topLeft * rollSlope,
     topRightHeight: geometry.topCenterHeight + geometry.topRight * rollSlope,
-    topVisibleCenterHeight: geometry.topCenterHeight - Math.max(Number(params.dishDepth ?? 0), 0),
+    topVisibleCenterHeight: geometry.topCenterHeight - activeDishDepth,
   };
 }
 
@@ -241,6 +288,7 @@ export function syncDerivedKeycapParams(params = {}) {
   params.topPitchDeg = Number.isFinite(Number(params.topPitchDeg)) ? Number(params.topPitchDeg) : Number(defaults.topPitchDeg ?? 0);
   params.topRollDeg = Number.isFinite(Number(params.topRollDeg)) ? Number(params.topRollDeg) : Number(defaults.topRollDeg ?? 0);
   params.topSlopeInputMode = resolveTopSlopeInputMode(params.topSlopeInputMode, resolveTopSlopeInputMode(defaults.topSlopeInputMode));
+  params.topSurfaceShape = resolveTopSurfaceShape(params.topSurfaceShape, resolveTopSurfaceShape(defaults.topSurfaceShape, "flat"));
   params.typewriterCornerRadius = clampTypewriterCornerRadius(
     params.typewriterCornerRadius,
     defaults.typewriterCornerRadius ?? Math.min(Number(params.keyWidth ?? defaults.keyWidth ?? 18), Number(params.keyDepth ?? defaults.keyDepth ?? 18)) / 2,
@@ -308,6 +356,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "topSlopeInputMode") {
     return resolveTopSlopeInputMode(value, resolveTopSlopeInputMode(fallback));
+  }
+
+  if (fieldKey === "topSurfaceShape") {
+    return resolveTopSurfaceShape(value, resolveTopSurfaceShape(fallback, "flat"));
   }
 
   if (fieldKey === "legendOutlineDelta") {
@@ -428,10 +480,12 @@ function parseFullEditorDataPayload(payload) {
   }
 
   const defaults = createDefaultKeycapParams(rawProfileKey);
+  const legacyTopSurfaceShape = inferLegacyTopSurfaceShape(params);
   return {
     ...pickEditorSelectors(defaults),
     ...selectors,
     ...params,
+    ...(legacyTopSurfaceShape == null ? {} : { topSurfaceShape: legacyTopSurfaceShape }),
     shapeProfile: rawProfileKey,
   };
 }
@@ -462,10 +516,12 @@ function parseCompatibleEditorDataPayload(payload) {
   }
 
   const defaults = createDefaultKeycapParams(rawProfileKey);
+  const legacyTopSurfaceShape = inferLegacyTopSurfaceShape(mergedInputParams);
   return {
     ...pickEditorSelectors(defaults),
     ...selectors,
     ...mergedInputParams,
+    ...(legacyTopSurfaceShape == null ? {} : { topSurfaceShape: legacyTopSurfaceShape }),
     shapeProfile: rawProfileKey,
   };
 }
