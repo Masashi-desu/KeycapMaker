@@ -14,179 +14,19 @@ import stemChocV1Scad from "../../scad/modules/stem_choc_v1.scad?raw";
 import stemChocV2Scad from "../../scad/modules/stem_choc_v2.scad?raw";
 import stemAlpsScad from "../../scad/modules/stem_alps.scad?raw";
 import stemNominalsScad from "../../scad/presets/stem-nominals.scad?raw";
+import {
+  DEFAULT_KEYCAP_LEGEND_FONT_KEY,
+  getKeycapLegendFontStyleOptions,
+  KEYCAP_LEGEND_FONTS,
+  resolveKeycapLegendFont,
+} from "./keycap-fonts.js";
 
 export const KEYCAP_ENTRY_PATH = "/scad/base/keycap.scad";
 export const KEYCAP_JOB_PATH = "/scad/base/keycap-job.scad";
-export const DEFAULT_KEYCAP_LEGEND_FONT_KEY = "mplus1-variable";
+export { DEFAULT_KEYCAP_LEGEND_FONT_KEY, getKeycapLegendFontStyleOptions, KEYCAP_LEGEND_FONTS, resolveKeycapLegendFont };
 const LEGEND_SIZE_WIDTH_RATIO = 1.8;
 const LEGEND_TEXT_MEASURE_SCALE = 100;
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
-const MPLUS1_VARIABLE_STYLE_OPTIONS = Object.freeze([
-  { key: "thin", label: "Thin", fontQuery: "M PLUS 1:style=Thin", cssWeight: 100 },
-  { key: "extra-light", label: "ExtraLight", fontQuery: "M PLUS 1:style=ExtraLight", cssWeight: 200 },
-  { key: "light", label: "Light", fontQuery: "M PLUS 1:style=Light", cssWeight: 300 },
-  { key: "regular", label: "Regular", fontQuery: "M PLUS 1:style=Regular", cssWeight: 400 },
-  { key: "medium", label: "Medium", fontQuery: "M PLUS 1:style=Medium", cssWeight: 500 },
-  { key: "semi-bold", label: "SemiBold", fontQuery: "M PLUS 1:style=SemiBold", cssWeight: 600 },
-  { key: "bold", label: "Bold", fontQuery: "M PLUS 1:style=Bold", cssWeight: 700 },
-  { key: "extra-bold", label: "ExtraBold", fontQuery: "M PLUS 1:style=ExtraBold", cssWeight: 800 },
-  { key: "black", label: "Black", fontQuery: "M PLUS 1:style=Black", cssWeight: 900 },
-]);
-
-export const KEYCAP_LEGEND_FONTS = Object.freeze([
-  {
-    key: "mplus1-variable",
-    label: "M PLUS 1 Variable",
-    searchLabel: "M PLUS 1 Variable",
-    fontKind: "variable",
-    fontName: "M PLUS 1",
-    fontQuery: "M PLUS 1",
-    nativeStyleOptions: MPLUS1_VARIABLE_STYLE_OPTIONS,
-    defaultStyleKey: "regular",
-    assetPath: "fonts/MPLUS1-Variable.ttf",
-    runtimePath: "/fonts/MPLUS1-Variable.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend M PLUS 1 Variable",
-  },
-  {
-    key: "mplus1p-regular",
-    label: "M PLUS 1p Regular",
-    searchLabel: "M PLUS 1p Regular",
-    fontKind: "static",
-    fontName: "M PLUS 1p",
-    fontQuery: "M PLUS 1p",
-    assetPath: "fonts/MPLUS1p-Regular.ttf",
-    runtimePath: "/fonts/MPLUS1p-Regular.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend M PLUS 1p Regular",
-    cssWeight: 400,
-  },
-  {
-    key: "mplusrounded1c-regular",
-    label: "M PLUS Rounded 1c Regular",
-    searchLabel: "M PLUS Rounded 1c Regular",
-    fontKind: "static",
-    fontName: "M PLUS Rounded 1c",
-    fontQuery: "M PLUS Rounded 1c",
-    assetPath: "fonts/MPLUSRounded1c-Regular.ttf",
-    runtimePath: "/fonts/MPLUSRounded1c-Regular.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend M PLUS Rounded 1c Regular",
-    cssWeight: 400,
-  },
-  {
-    key: "dotgothic16-regular",
-    label: "DotGothic16 Regular",
-    searchLabel: "DotGothic16 Regular",
-    fontKind: "static",
-    fontName: "DotGothic16",
-    fontQuery: "DotGothic16",
-    assetPath: "fonts/DotGothic16-Regular.ttf",
-    runtimePath: "/fonts/DotGothic16-Regular.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend DotGothic16 Regular",
-    cssWeight: 400,
-  },
-  {
-    key: "kurobara-cinderella-regular",
-    label: "黒薔薇シンデレラ",
-    searchLabel: "黒薔薇シンデレラ kurobara-cinderella kurobara cinderella gothic rose",
-    fontKind: "static",
-    fontName: "kurobara-cinderella",
-    fontQuery: "kurobara-cinderella",
-    assetPath: "fonts/KurobaraCinderella-Regular.ttf",
-    runtimePath: "/fonts/KurobaraCinderella-Regular.ttf",
-    licenseLabel: "MODI / M+ FONTS derived",
-    requiredAttributionLines: [
-      "使用フォント: 黒薔薇シンデレラ Version 1.00.20180805",
-      "著作権表示: Copyright(c) 2017 M+ FONTS PROJECT/MODI",
-      "ライセンス表記: This font is free software. Unlimited permission is granted to use, copy, and distribute it, with or without modification, either commercially or noncommercially. THIS FONT IS PROVIDED \"AS IS\" WITHOUT WARRANTY.",
-      "派生元ライセンス: SIL Open Font License, Version 1.1",
-      "配布ページ: https://modi.jpn.org/font_kurobara-cinderella.php",
-    ],
-    measurementFamily: "Keycap Legend Kurobara Cinderella",
-    cssWeight: 400,
-  },
-  {
-    key: "bangers-regular",
-    label: "Bangers Regular",
-    searchLabel: "Bangers Regular comic superhero manga",
-    fontKind: "static",
-    fontName: "Bangers",
-    fontQuery: "Bangers",
-    assetPath: "fonts/Bangers-Regular.ttf",
-    runtimePath: "/fonts/Bangers-Regular.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend Bangers Regular",
-    cssWeight: 400,
-  },
-  {
-    key: "creepster-regular",
-    label: "Creepster Regular",
-    searchLabel: "Creepster Regular horror spooky",
-    fontKind: "static",
-    fontName: "Creepster",
-    fontQuery: "Creepster",
-    assetPath: "fonts/Creepster-Regular.ttf",
-    runtimePath: "/fonts/Creepster-Regular.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend Creepster Regular",
-    cssWeight: 400,
-  },
-  {
-    key: "rye-regular",
-    label: "Rye Regular",
-    searchLabel: "Rye Regular western woodtype cowboy",
-    fontKind: "static",
-    fontName: "Rye",
-    fontQuery: "Rye",
-    assetPath: "fonts/Rye-Regular.ttf",
-    runtimePath: "/fonts/Rye-Regular.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend Rye Regular",
-    cssWeight: 400,
-  },
-  {
-    key: "orbitron-regular",
-    label: "Orbitron Regular",
-    searchLabel: "Orbitron Regular sci-fi scifi futuristic cyberpunk",
-    fontKind: "static",
-    fontName: "Orbitron",
-    fontQuery: "Orbitron",
-    assetPath: "fonts/Orbitron-Variable.ttf",
-    runtimePath: "/fonts/Orbitron-Variable.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend Orbitron Regular",
-    cssWeight: 400,
-  },
-  {
-    key: "grenzegotisch-regular",
-    label: "Grenze Gotisch Regular",
-    searchLabel: "Grenze Gotisch Regular art gothic blackletter gothic",
-    fontKind: "static",
-    fontName: "Grenze Gotisch",
-    fontQuery: "Grenze Gotisch",
-    assetPath: "fonts/GrenzeGotisch-Variable.ttf",
-    runtimePath: "/fonts/GrenzeGotisch-Variable.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend Grenze Gotisch Regular",
-    cssWeight: 400,
-  },
-  {
-    key: "medievalsharp-regular",
-    label: "MedievalSharp Regular",
-    searchLabel: "MedievalSharp Regular art gothic medieval stone gothic",
-    fontKind: "static",
-    fontName: "MedievalSharp",
-    fontQuery: "MedievalSharp",
-    assetPath: "fonts/MedievalSharp-Regular.ttf",
-    runtimePath: "/fonts/MedievalSharp-Regular.ttf",
-    licenseLabel: "SIL Open Font License 1.1",
-    measurementFamily: "Keycap Legend MedievalSharp Regular",
-    cssWeight: 400,
-  },
-]);
-const KEYCAP_LEGEND_FONT_MAP = new Map(KEYCAP_LEGEND_FONTS.map((font) => [font.key, font]));
 const fontBinaryPromises = new Map();
 const fontMetadataPromises = new Map();
 
@@ -623,14 +463,6 @@ async function loadBinaryAsset(relativePath) {
   }
 
   return new Uint8Array(await response.arrayBuffer());
-}
-
-export function resolveKeycapLegendFont(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
-  return KEYCAP_LEGEND_FONT_MAP.get(fontKey) ?? KEYCAP_LEGEND_FONT_MAP.get(DEFAULT_KEYCAP_LEGEND_FONT_KEY);
-}
-
-export function getKeycapLegendFontStyleOptions(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
-  return resolveKeycapLegendFont(fontKey).nativeStyleOptions ?? [];
 }
 
 async function getRuntimeAssets(fontKey) {

@@ -122,10 +122,27 @@ flowchart TD
 ### 編集データ JSON
 
 - UI state の保存と再読み込み用
-- `schemaVersion` を持つ
+- 保存用の canonical JSON は `schemaVersion` を持つ
 - `params.name` に保存名を含める
 - geometry export ではなく、作業再開用フォーマットとして扱う
 - JSON / 3MF のダウンロードファイル名は `params.name` を基準にする
+- 保存時は shape defaults を解決したフル設定を保持し、非活性 UI の値も落とさない
+- 読み込み時は canonical JSON に加えて sparse な互換入力 JSON も受ける
+- 互換入力 JSON は `params` 配下または top-level に既知パラメータを書ける。欠損したキーは shape defaults を使う
+- `shapeProfile` が明示されていればその defaults を基準に bind し、未指定なら既定 profile を使う
+- 未知のキーは無視し、既知キーだけを sanitize して state へ反映する
+
+互換入力 JSON の最小例:
+
+```json
+{
+  "shapeProfile": "typewriter",
+  "legendText": "ESC",
+  "rimEnabled": false
+}
+```
+
+上の例では `rimWidth` や `legendColor` など未指定の値を typewriter の shape JSON defaults で補完したうえで、最終的な editor state を復元する。
 
 ## 現在の既知制約
 

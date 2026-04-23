@@ -1,6 +1,6 @@
-import manifest from "./keycap-shapes/manifest.json";
-import customShell from "./keycap-shapes/custom-shell.json";
-import typewriter from "./keycap-shapes/typewriter.json";
+import manifest from "./keycap-shapes/manifest.json" with { type: "json" };
+import customShell from "./keycap-shapes/custom-shell.json" with { type: "json" };
+import typewriter from "./keycap-shapes/typewriter.json" with { type: "json" };
 
 const SHAPE_PROFILES = Object.freeze([customShell, typewriter]);
 const SHAPE_PROFILE_MAP = new Map(SHAPE_PROFILES.map((profile) => [profile.key, profile]));

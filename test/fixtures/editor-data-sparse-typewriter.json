@@ -1,0 +1,11 @@
+{
+  "kind": "keycap-maker/editor-params-patch",
+  "schemaVersion": 1,
+  "shapeProfile": "typewriter",
+  "name": " Typewriter patch.json ",
+  "rimEnabled": false,
+  "legendText": "ESC",
+  "legendFontKey": "orbitron-regular",
+  "legendFontStyleKey": "not-a-real-style",
+  "unknownParam": 123
+}

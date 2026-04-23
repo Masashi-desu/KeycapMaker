@@ -27,10 +27,14 @@ Keycap Maker は、GitHub Pages で配信するクライアントサイド完結
 
 - `src/main.js`
   アプリ状態、フォーム、プレビュー更新、export、JSON 入出力の中心
+- `src/lib/editor-data.js`
+  編集データ JSON の canonical export と、欠損を defaults で補う互換入力 JSON の import を扱う
 - `src/data/keycap-shape-registry.js`
   shape JSON の集約、selector、既定 shape の解決
 - `src/data/keycap-shapes/*.json`
   shape ごとの初期値、geometry defaults、表示グループ定義
+- `src/lib/keycap-fonts.js`
+  legend font の選択肢と style 解決を UI / export / import で共有する
 
 ### OpenSCAD 実行
 
@@ -68,6 +72,7 @@ Keycap Maker は、GitHub Pages で配信するクライアントサイド完結
 3. worker が bundled OpenSCAD runtime で SCAD を実行する
 4. preview では OFF を解析して Three.js 表示に渡す
 5. export では OFF を part ごとに集め、3MF または編集データ JSON を生成する
+6. import では保存済みの編集データ JSON または sparse な互換入力 JSON を defaults とマージして state を復元する
 
 ### Mermaid で見る全体フロー
 

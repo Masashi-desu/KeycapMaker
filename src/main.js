@@ -7,10 +7,20 @@ import keycapEditorProfiles, {
   getShapeProfileFieldOverride,
   getShapeProfileGeometryDefaults,
   resolveShapeGeometryType,
-  SHAPE_PROFILE_MAP,
 } from "./data/keycap-shape-registry.js";
 import { runOpenScad } from "./lib/openscad-client.js";
 import { hexColorToNumber, normalizeHexColor } from "./lib/color-utils.js";
+import {
+  DEFAULT_EXPORT_BASE_NAME,
+  createEditorDataPayload,
+  createInitialKeycapParams,
+  listEditableParamKeys,
+  parseEditorDataPayload,
+  resolveStemType,
+  sanitizeEditorParamValue,
+  sanitizeExportBaseName,
+  syncDerivedKeycapParams,
+} from "./lib/editor-data.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
 import { parseOff } from "./lib/off-parser.js";
 import {
@@ -27,10 +37,6 @@ const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
-const DEFAULT_EXPORT_BASE_NAME = "keycap-preview";
-const EDITOR_DATA_KIND = "keycap-maker/editor-params";
-const LEGACY_EDITOR_DATA_KINDS = new Set([EDITOR_DATA_KIND.replace("keycap-maker", "keycap" + "s-maker")]);
-const EDITOR_DATA_SCHEMA_VERSION = 4;
 const CHEVRON_ICON_URLS = Object.freeze({
   expanded: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-up.svg",
   collapsed: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-down.svg",
@@ -217,18 +223,6 @@ function getLegendOutlineHint() {
   return "0 が元の輪郭です。プラスで太く、マイナスで細くします";
 }
 
-function syncLegendFontParams(params = state.keycapParams) {
-  params.legendFontKey = resolveLegendFontConfig(params.legendFontKey).key;
-  const styleOptions = getLegendFontStyleFieldOptions(params);
-  const fallbackStyleKey = styleOptions[0]?.value ?? LEGEND_FONT_STYLE_FALLBACK_KEY;
-  const allowedStyleKeys = new Set(styleOptions.map((option) => option.value));
-  params.legendFontStyleKey = allowedStyleKeys.has(params.legendFontStyleKey)
-    ? params.legendFontStyleKey
-    : fallbackStyleKey;
-  params.legendOutlineDelta = clampLegendOutlineDelta(params.legendOutlineDelta, 0);
-  return params;
-}
-
 const STEM_TYPE_OPTIONS = Object.freeze([
   { value: "none", label: "なし" },
   { value: "mx", label: "MX 互換" },
@@ -236,7 +230,6 @@ const STEM_TYPE_OPTIONS = Object.freeze([
   { value: "choc_v2", label: "Choc v2" },
   { value: "alps", label: "Alps / Matias" },
 ]);
-const STEM_TYPE_LABELS = new Map(STEM_TYPE_OPTIONS.map((option) => [option.value, option.label]));
 const CROSS_COMPATIBLE_STEM_TYPES = new Set(["mx", "choc_v2"]);
 const SETTINGS_NAME_FIELD = Object.freeze({
   key: "name",
@@ -254,25 +247,8 @@ const GEOMETRY_TYPE_RESET_FIELDS = new Set([
   "typewriterCornerRadius",
 ]);
 
-function isSupportedStemType(stemType) {
-  return STEM_TYPE_LABELS.has(stemType);
-}
-
 function isCrossCompatibleStemType(stemType) {
   return CROSS_COMPATIBLE_STEM_TYPES.has(stemType);
-}
-
-function resolveDefaultStemType(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
-  const defaults = createDefaultKeycapParams(profileKey);
-  return isSupportedStemType(defaults.stemType) ? defaults.stemType : "choc_v2";
-}
-
-function resolveStemType(params = {}) {
-  if (isSupportedStemType(params.stemType)) {
-    return params.stemType;
-  }
-
-  return resolveDefaultStemType(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
 }
 
 function getStemGroupDescription(params) {
@@ -322,7 +298,6 @@ const TOP_SLOPE_INPUT_MODE_OPTIONS = Object.freeze([
   { value: "angle", label: "角度で調整" },
   { value: "edge-height", label: "端の高さで調整" },
 ]);
-const TOP_SLOPE_INPUT_MODE_LABELS = new Set(TOP_SLOPE_INPUT_MODE_OPTIONS.map((option) => option.value));
 
 function clampMinimum(value, fallback, minimum) {
   const nextValue = Number(value);
@@ -335,10 +310,6 @@ function degTan(value) {
 
 function atanDeg(value) {
   return (Math.atan(value) * 180) / Math.PI;
-}
-
-function resolveTopSlopeInputMode(value) {
-  return TOP_SLOPE_INPUT_MODE_LABELS.has(value) ? value : "angle";
 }
 
 function resolveShapeProfileGeometryDefaults(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
@@ -839,10 +810,6 @@ const fieldConfigByKey = new Map([
   [SETTINGS_NAME_FIELD.key, SETTINGS_NAME_FIELD],
   ...fieldGroupTemplates.flatMap((group) => group.fields).map((field) => [field.key, field]),
 ]);
-const colorFieldKeys = new Set(
-  fieldGroupTemplates.flatMap((group) => group.fields).filter((field) => field.type === "color").map((field) => field.key),
-);
-
 function createFieldGroupCollapseState() {
   const groupIds = keycapEditorProfiles.profiles.flatMap((profile) => (profile.fieldGroups ?? []).map((group) => group.id));
   return Object.fromEntries(Array.from(new Set(groupIds)).map((groupId) => [groupId, true]));
@@ -886,38 +853,6 @@ function getShapeProfileVisibleFieldKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY)
   );
 }
 
-function clampLegendSize(value, fallback = LEGEND_MIN_SIZE) {
-  const nextValue = Number(value);
-  return Number.isFinite(nextValue) ? Math.max(nextValue, LEGEND_MIN_SIZE) : fallback;
-}
-
-function syncDerivedKeycapParams(params = state.keycapParams) {
-  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
-  const defaults = createDefaultKeycapParams(profileKey);
-  const defaultLegendSize = clampLegendSize(
-    defaults.legendSize,
-    LEGEND_MIN_SIZE,
-  );
-
-  params.topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
-  params.topPitchDeg = Number.isFinite(Number(params.topPitchDeg)) ? Number(params.topPitchDeg) : Number(defaults.topPitchDeg ?? 0);
-  params.topRollDeg = Number.isFinite(Number(params.topRollDeg)) ? Number(params.topRollDeg) : Number(defaults.topRollDeg ?? 0);
-  params.topSlopeInputMode = resolveTopSlopeInputMode(params.topSlopeInputMode ?? defaults.topSlopeInputMode);
-  params.typewriterCornerRadius = clampTypewriterCornerRadius(
-    params.typewriterCornerRadius,
-    defaults.typewriterCornerRadius ?? Math.min(Number(params.keyWidth ?? defaults.keyWidth ?? 18), Number(params.keyDepth ?? defaults.keyDepth ?? 18)) / 2,
-  );
-  params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
-  params.rimHeightUp = clampNonNegativeNumber(params.rimHeightUp, defaults.rimHeightUp ?? 0);
-  params.rimHeightDown = clampNonNegativeNumber(params.rimHeightDown, defaults.rimHeightDown ?? 0);
-  syncLegendFontParams(params);
-  params.legendSize = clampLegendSize(params.legendSize, defaultLegendSize);
-  Object.assign(params, resolveTopEdgeHeights(params));
-  params.stemType = resolveStemType(params);
-  params.stemEnabled = params.stemType !== "none";
-  return params;
-}
-
 const state = {
   exportsStatus: "idle",
   exportsSummary: "未生成",
@@ -936,7 +871,7 @@ const state = {
   keycapParams: createInitialKeycapParams(),
 };
 
-syncDerivedKeycapParams();
+syncDerivedKeycapParams(state.keycapParams);
 
 if (!app) {
   throw new Error("#app が見つかりません。");
@@ -966,18 +901,6 @@ function toKebabCase(value) {
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .toLowerCase();
-}
-
-function sanitizeExportBaseName(value, fallback = DEFAULT_EXPORT_BASE_NAME) {
-  const fallbackValue = String(fallback ?? "").trim() || DEFAULT_EXPORT_BASE_NAME;
-  const normalized = String(value ?? "")
-    .trim()
-    .replace(/\.(json|3mf)$/i, "")
-    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-")
-    .replace(/\s+/g, " ")
-    .replace(/\.+$/g, "");
-
-  return normalized || fallbackValue;
 }
 
 function createViewTransitionName(prefix, value) {
@@ -1157,8 +1080,8 @@ function renderShell() {
     <main class="app-shell">
       <div class="drop-overlay" data-import-drop-overlay aria-hidden="true" hidden>
         <div class="drop-overlay__card">
-          <strong>編集データ JSON をドロップ</strong>
-          <span>保存済みの編集データを読み込み、現在の設定へ反映します。</span>
+          <strong>編集データ / 互換入力 JSON をドロップ</strong>
+          <span>保存済みの編集データ、または不足値を既定で補う互換入力 JSON を読み込みます。</span>
         </div>
       </div>
       <section class="editor-screen">
@@ -1323,7 +1246,7 @@ function renderExportTab() {
         <button class="action-card" type="button" data-export="editor-data" ${state.exportsStatus === "running" ? "disabled" : ""}>
           <span class="chip-label">JSON</span>
           <strong>${state.exportsStatus === "running" ? "保存しています..." : "編集データを保存する"}</strong>
-          <span class="action-card__text">保存した JSON は、この画面のどこへでもドラッグ&ドロップして取り込めます。読み込むと現在の設定を置き換えます。</span>
+          <span class="action-card__text">保存したフル設定 JSON は、この画面のどこへでもドラッグ&ドロップして取り込めます。互換入力用の疎 JSON も読み込めます。</span>
         </button>
         <button class="action-card" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
           <span class="chip-label">3MF</span>
@@ -1976,7 +1899,7 @@ function applyLegendFontSelection(font, options = {}) {
   }
 
   state.keycapParams.legendFontKey = font.key;
-  syncDerivedKeycapParams();
+  syncDerivedKeycapParams(state.keycapParams);
   state.editorStatus = "dirty";
   state.editorSummary = "入力内容を反映待ち";
   render({ animateInspector: true });
@@ -2034,163 +1957,12 @@ function handleWindowKeydown(event) {
   closeLegendFontPicker();
 }
 
-function pickEditorSelectors(params) {
-  return Object.fromEntries(
-    EDITOR_SELECTOR_KEYS
-      .filter((key) => key in params)
-      .map((key) => [key, params[key]]),
-  );
-}
-
-function listEditableParamKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
-  const defaults = createDefaultKeycapParams(profileKey);
-
-  // Preserve hidden shape defaults as part of the editor state so profile switches
-  // and JSON round-trips stay aligned with the shape JSON definitions.
-  return Object.keys(defaults);
-}
-
-function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContext = state.keycapParams) {
-  const fieldConfig = fieldConfigByKey.get(fieldKey);
-
-  if (fieldKey === SETTINGS_NAME_FIELD.key) {
-    return sanitizeExportBaseName(value, fallback);
-  }
-
-  if (fieldKey === "legendFontKey") {
-    return resolveLegendFontConfig(value).key;
-  }
-
-  if (fieldKey === "legendFontStyleKey") {
-    const legendFontKey = resolveLegendFontConfig(paramsContext?.legendFontKey).key;
-    const styleOptions = getLegendFontStyleFieldOptions({ legendFontKey });
-    const allowedValues = new Set(styleOptions.map((option) => option.value));
-    const fallbackValue = allowedValues.has(fallback) ? fallback : (styleOptions[0]?.value ?? LEGEND_FONT_STYLE_FALLBACK_KEY);
-    return allowedValues.has(value) ? value : fallbackValue;
-  }
-
-  if (fieldKey === "legendOutlineDelta") {
-    return clampLegendOutlineDelta(value, fallback);
-  }
-
-  if (fieldKey === "typewriterCornerRadius") {
-    return clampTypewriterCornerRadius(value, fallback);
-  }
-
-  if (fieldKey === "rimWidth") {
-    return clampTypewriterRimWidth(value, paramsContext, fallback);
-  }
-
-  if (fieldKey === "rimHeightUp" || fieldKey === "rimHeightDown") {
-    return clampNonNegativeNumber(value, fallback);
-  }
-
-  if (colorFieldKeys.has(fieldKey)) {
-    return normalizeHexColor(value) ?? fallback;
-  }
-
-  if (fieldConfig?.type === "select") {
-    const allowedValues = new Set(resolveFieldOptions(fieldConfig, paramsContext).map((option) => option.value));
-    return allowedValues.has(value) ? value : fallback;
-  }
-
-  if (typeof fallback === "boolean") {
-    return typeof value === "boolean" ? value : fallback;
-  }
-
-  if (typeof fallback === "number") {
-    const nextValue = Number(value);
-    return Number.isFinite(nextValue) ? nextValue : fallback;
-  }
-
-  if (typeof fallback === "string") {
-    return typeof value === "string" ? value : fallback;
-  }
-
-  return value ?? fallback;
-}
-
-function createExportableKeycapParams(params = state.keycapParams) {
-  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
-  const defaults = createDefaultKeycapParams(profileKey);
-  const exportableParams = {};
-
-  for (const key of listEditableParamKeys(profileKey)) {
-    exportableParams[key] = sanitizeEditorParamValue(key, params[key], defaults[key], params);
-  }
-
-  return exportableParams;
-}
-
-function createEditorDataPayloadFromParams(params, savedAt = new Date().toISOString()) {
-  const sanitizedParams = createExportableKeycapParams(params);
-  return {
-    kind: EDITOR_DATA_KIND,
-    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
-    profileSchemaVersion: keycapEditorProfiles.schemaVersion ?? 1,
-    savedAt,
-    selectors: pickEditorSelectors(sanitizedParams),
-    params: sanitizedParams,
-  };
-}
-
-function createEditorDataPayload(params = state.keycapParams) {
-  return createEditorDataPayloadFromParams(params);
-}
-
-function createShapeProfileDefaultPayload(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
-  return createEditorDataPayloadFromParams(createDefaultKeycapParams(profileKey), null);
-}
-
 function buildEditorDataFilename(params = state.keycapParams) {
   return `${sanitizeExportBaseName(params.name)}.json`;
 }
 
 function build3mfFilename(params = state.keycapParams) {
   return `${sanitizeExportBaseName(params.name)}.3mf`;
-}
-
-function parseEditorDataPayload(payload) {
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    throw new Error("編集データ JSON の形式が不正です。");
-  }
-
-  if (payload.kind !== EDITOR_DATA_KIND && !LEGACY_EDITOR_DATA_KINDS.has(payload.kind)) {
-    throw new Error("Keycap Maker の編集データ JSON ではありません。");
-  }
-
-  if (payload.schemaVersion !== EDITOR_DATA_SCHEMA_VERSION) {
-    throw new Error(`未対応の編集データ schemaVersion です: ${payload.schemaVersion}`);
-  }
-
-  if (!payload.params || typeof payload.params !== "object" || Array.isArray(payload.params)) {
-    throw new Error("編集データ JSON に params がありません。");
-  }
-
-  const rawProfileKey = payload.selectors?.shapeProfile ?? payload.params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
-  if (!SHAPE_PROFILE_MAP.has(rawProfileKey)) {
-    throw new Error(`未対応の形のベースです: ${rawProfileKey}`);
-  }
-
-  const defaults = createDefaultKeycapParams(rawProfileKey);
-  const mergedRawParams = {
-    ...pickEditorSelectors(defaults),
-    ...(payload.selectors ?? {}),
-    ...payload.params,
-    shapeProfile: rawProfileKey,
-  };
-
-  const nextParams = {};
-
-  for (const key of listEditableParamKeys(rawProfileKey)) {
-    nextParams[key] = sanitizeEditorParamValue(key, mergedRawParams[key], defaults[key], mergedRawParams);
-  }
-
-  return syncDerivedKeycapParams(nextParams);
-}
-
-function createInitialKeycapParams(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
-  return parseEditorDataPayload(createShapeProfileDefaultPayload(profileKey));
 }
 
 function recordExportHistory(entry) {
@@ -2489,7 +2261,7 @@ function handleFieldChange(event) {
     }
   }
 
-  syncDerivedKeycapParams();
+  syncDerivedKeycapParams(state.keycapParams);
 
   if (
     TOP_LIVE_FIELD_KEYS.has(field)
@@ -2734,7 +2506,7 @@ async function executeExport(format) {
   try {
     if (format === "editor-data") {
       const startedAt = performance.now();
-      const payload = createEditorDataPayload();
+      const payload = createEditorDataPayload(state.keycapParams);
       const json = JSON.stringify(payload, null, 2);
       const blob = new Blob([json], { type: "application/json;charset=utf-8" });
       downloadBlob(blob, buildEditorDataFilename(payload.params));
