@@ -1,5 +1,23 @@
-function stem_quality_steps(quality, preview_steps, export_steps) =
-    quality == "preview" ? preview_steps : export_steps;
+function stem_curve_steps(
+    diameter,
+    quality = "export",
+    preview_angle = 10,
+    export_angle = 5,
+    preview_chord = 0.6,
+    export_chord = 0.25,
+    minimum_steps = 24,
+    preview_max_steps = 48,
+    export_max_steps = 96
+) =
+    let(
+        safe_radius = max(diameter / 2, 0.01),
+        max_angle = quality == "preview" ? preview_angle : export_angle,
+        max_chord = quality == "preview" ? preview_chord : export_chord,
+        max_steps = quality == "preview" ? preview_max_steps : export_max_steps,
+        angle_steps = ceil(360 / max(max_angle, 0.1)),
+        chord_steps = ceil(2 * PI * safe_radius / max(max_chord, 0.01))
+    )
+    min(max(max(angle_steps, chord_steps), minimum_steps), max_steps);
 
 module stem_slot(length, width, height) {
     translate([-length / 2, -width / 2, 0])
@@ -18,7 +36,7 @@ module stem_mx(
     chamfer_height = 0.6,
     quality = "export"
 ) {
-    outer_steps = stem_quality_steps(quality, 36, 64);
+    outer_steps = stem_curve_steps(outer_diameter, quality);
     safe_height = max(stem_height, 0.2);
 
     difference() {

@@ -29,6 +29,7 @@
 - `samples/keycap-rounded-legend.scad`: 丸みのある書体の legend 品質確認用サンプル
 - `samples/keycap-homing-bar.scad`: homing bar 単体出力の確認用サンプル
 - `samples/keycap-stem-clip.scad`: 強い左右傾斜でも stem が内側天井で止まるか確認するサンプル
+- `samples/keycap-surface-quality.scad`: 角丸、dish、stem 外周の曲面品質をまとめて確認するサンプル
 - `samples/keycap-top-orientation.scad`: 上面中央高さ固定 + pitch / roll の確認用サンプル
 - `samples/stem-mounts.scad`: mount 差分の回帰確認用サンプル
 

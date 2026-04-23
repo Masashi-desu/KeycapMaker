@@ -1,5 +1,23 @@
-function keycap_quality_steps(quality, preview_steps, export_steps) =
-    quality == "preview" ? preview_steps : export_steps;
+function keycap_curve_steps(
+    radius,
+    quality = "export",
+    preview_angle = 10,
+    export_angle = 5,
+    preview_chord = 0.8,
+    export_chord = 0.35,
+    minimum_steps = 12,
+    preview_max_steps = 48,
+    export_max_steps = 96
+) =
+    let(
+        safe_radius = max(radius, 0.01),
+        max_angle = quality == "preview" ? preview_angle : export_angle,
+        max_chord = quality == "preview" ? preview_chord : export_chord,
+        max_steps = quality == "preview" ? preview_max_steps : export_max_steps,
+        angle_steps = ceil(360 / max(max_angle, 0.1)),
+        chord_steps = ceil(2 * PI * safe_radius / max(max_chord, 0.01))
+    )
+    min(max(max(angle_steps, chord_steps), minimum_steps), max_steps);
 
 function keycap_inner_height(top_center_height, dish_depth, top_thickness) =
     max(top_center_height - dish_depth - top_thickness, 0.2);
@@ -35,7 +53,13 @@ module rounded_rect_coords(left, right, front, back, radius, quality = "export")
     center_y = (front + back) / 2;
     safe_radius = min(max(radius, 0), width / 2, depth / 2);
     circle_epsilon = 0.001;
-    corner_steps = keycap_quality_steps(quality, 18, 48);
+    corner_steps = keycap_curve_steps(
+        safe_radius,
+        quality,
+        minimum_steps = 18,
+        preview_max_steps = 48,
+        export_max_steps = 96
+    );
 
     translate([center_x, center_y, 0])
         if (safe_radius <= 0.001) {
@@ -246,8 +270,18 @@ module keycap_dish_volume(
     quality = "export",
     z_shift = 0
 ) {
-    dish_steps = keycap_quality_steps(quality, 48, 100);
     safe_radius = max(dish_radius, 0.1);
+    dish_steps = keycap_curve_steps(
+        safe_radius,
+        quality,
+        preview_angle = 8,
+        export_angle = 4,
+        preview_chord = 2.4,
+        export_chord = 1.2,
+        minimum_steps = 48,
+        preview_max_steps = 64,
+        export_max_steps = 128
+    );
 
     translate([0, 0, top_center_height + safe_radius - dish_depth + z_shift])
         sphere(r = safe_radius, $fn = dish_steps);

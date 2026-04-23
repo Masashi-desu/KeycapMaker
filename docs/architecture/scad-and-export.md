@@ -38,7 +38,7 @@
 - export:
   part 分離と形状の意味づけを優先する
 
-現在の preview は OFF メッシュを body / rim / homing / legend ごとに生成して Three.js へ渡します。現在の export は同じ part 群から 3MF を組み立てます。
+現在の preview は OFF メッシュを body / rim / homing / legend ごとに生成して Three.js へ渡します。Three.js 側では shared vertex を保った indexed geometry を基準に creased normals を作り、曲面は滑らかに、急角は残す。SCAD 側の円弧分割は feature の半径と `quality` に応じて上限付きで増やす。現在の export は同じ part 群から 3MF を組み立てます。
 
 legend の `text()` は bundled OpenSCAD runtime 上で preview / export の `quality` に応じて曲線分割数を上げ、内部では拡大してから縮小する。これにより、小さい文字サイズでも丸みのある書体の輪郭が過度に角張るのを抑える。font の native style は JS 側で `font` query を組み立てて指定し、ユーザー操作なしの擬似 bold / italic / slanted は行わない。下線は font file の `post` / `head` / `hhea` から `UnderlinePosition` / `UnderlineThickness` / line box 中心を読み、`valign="center"` な text 座標へ変換したうえで実測文字幅と組み合わせる。font metadata を取れない場合の任意フォールバックは行わない。輪郭補正は `legendOutlineDelta` を通した明示入力時だけ `offset()` を使う。
 legend の文字サイズは UI の `legendSize` をそのまま基準にし、文字数に応じた自動縮小や単一文字だけの自動拡大は行わない。
@@ -101,6 +101,8 @@ flowchart TD
   homing bar の単体確認用
 - `scad/samples/keycap-stem-clip.scad`
   強い左右傾斜で stem の上端が内部天井に沿って止まるか確認する回帰用
+- `scad/samples/keycap-surface-quality.scad`
+  角丸外形、dish、stem 外周の曲面品質をまとめて確認する回帰用
 - `scad/samples/keycap-top-orientation.scad`
   上面中央高さ固定 + pitch / roll の回帰確認用
 - `scad/samples/stem-mounts.scad`
@@ -150,6 +152,7 @@ flowchart TD
 - legend の露出面は top dish 前提
 - side legend は未対応
 - font asset は variable / static の混在を許容するが、native style の有無は font ごとに異なる
+- `high_preview` のような追加品質段階は未採用。必要になったら [../backlog/high-preview-quality-mode.md](../backlog/high-preview-quality-mode.md) を起点に再検討する
 
 これらの拡張 TODO は [../backlog/legend-extensibility-todo.md](../backlog/legend-extensibility-todo.md) にまとめる。
 

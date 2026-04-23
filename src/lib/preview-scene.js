@@ -2,20 +2,71 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 const OVERLAY_LAYER_NAMES = new Set(["legend", "homing"]);
+const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 3;
+const MIN_NORMAL_LENGTH_SQ = 1e-12;
+
+function createFaceNormalData(mesh, face) {
+  const a = mesh.vertices[face[0]];
+  const b = mesh.vertices[face[1]];
+  const c = mesh.vertices[face[2]];
+  const abX = b.x - a.x;
+  const abY = b.y - a.y;
+  const abZ = b.z - a.z;
+  const acX = c.x - a.x;
+  const acY = c.y - a.y;
+  const acZ = c.z - a.z;
+  const raw = new THREE.Vector3(
+    abY * acZ - abZ * acY,
+    abZ * acX - abX * acZ,
+    abX * acY - abY * acX,
+  );
+  const unit = raw.lengthSq() > MIN_NORMAL_LENGTH_SQ
+    ? raw.clone().normalize()
+    : new THREE.Vector3(0, 0, 1);
+  return { raw, unit };
+}
 
 function createGeometry(mesh) {
   const positions = [];
+  const normals = [];
+  const creaseDot = Math.cos(SMOOTH_PREVIEW_CREASE_ANGLE);
+  const faceNormals = mesh.faces.map((face) => createFaceNormalData(mesh, face));
+  const vertexFaces = mesh.vertices.map(() => []);
 
-  for (const face of mesh.faces) {
-    for (const index of face) {
-      const vertex = mesh.vertices[index];
+  mesh.faces.forEach((face, faceIndex) => {
+    face.forEach((vertexIndex) => {
+      vertexFaces[vertexIndex].push(faceIndex);
+    });
+  });
+
+  mesh.faces.forEach((face, faceIndex) => {
+    const currentFaceNormal = faceNormals[faceIndex];
+
+    face.forEach((vertexIndex) => {
+      const vertex = mesh.vertices[vertexIndex];
+      const smoothedNormal = new THREE.Vector3();
+
+      vertexFaces[vertexIndex].forEach((adjacentFaceIndex) => {
+        const adjacentFaceNormal = faceNormals[adjacentFaceIndex];
+        if (currentFaceNormal.unit.dot(adjacentFaceNormal.unit) >= creaseDot) {
+          smoothedNormal.add(adjacentFaceNormal.raw);
+        }
+      });
+
+      if (smoothedNormal.lengthSq() <= MIN_NORMAL_LENGTH_SQ) {
+        smoothedNormal.copy(currentFaceNormal.unit);
+      } else {
+        smoothedNormal.normalize();
+      }
+
       positions.push(vertex.x, vertex.y, vertex.z);
-    }
-  }
+      normals.push(smoothedNormal.x, smoothedNormal.y, smoothedNormal.z);
+    });
+  });
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.computeVertexNormals();
+  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
   return geometry;
 }
 
