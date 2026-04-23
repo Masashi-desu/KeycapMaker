@@ -1,6 +1,6 @@
 {
-  "key": "standard-1u",
-  "label": "標準 1u",
+  "key": "custom-shell",
+  "label": "カスタムシェル",
   "geometryType": "shell",
   "geometryDefaults": {
     "profileFrontAngle": 15,
@@ -13,7 +13,7 @@
   },
   "defaults": {
     "name": "keycap-preview",
-    "shapeProfile": "standard-1u",
+    "shapeProfile": "custom-shell",
     "keyWidth": 18,
     "keyDepth": 18,
     "topCenterHeight": 9.5,

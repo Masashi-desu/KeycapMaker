@@ -727,7 +727,7 @@
                           "type": "text",
                           "id": "Nroz7",
                           "fill": "#2D241C",
-                          "content": "標準 1u",
+                          "content": "カスタムシェル",
                           "fontFamily": "Inter",
                           "fontSize": 14,
                           "fontWeight": "Bold"

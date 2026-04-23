@@ -1,8 +1,8 @@
 import manifest from "./keycap-shapes/manifest.json";
-import standard1u from "./keycap-shapes/standard-1u.json";
+import customShell from "./keycap-shapes/custom-shell.json";
 import typewriter from "./keycap-shapes/typewriter.json";
 
-const SHAPE_PROFILES = Object.freeze([standard1u, typewriter]);
+const SHAPE_PROFILES = Object.freeze([customShell, typewriter]);
 const SHAPE_PROFILE_MAP = new Map(SHAPE_PROFILES.map((profile) => [profile.key, profile]));
 const MANIFEST_SHAPE_KEYS = manifest.shapeKeys ?? SHAPE_PROFILES.map((profile) => profile.key);
 
@@ -20,7 +20,7 @@ if (SHAPE_PROFILE_MAP.size !== MANIFEST_SHAPE_KEYS.length) {
   throw new Error("shape JSON と manifest の shapeKeys が一致していません。");
 }
 
-const DEFAULT_SHAPE_PROFILE_KEY = manifest.defaultProfileKey ?? SHAPE_PROFILES[0]?.key ?? "standard-1u";
+const DEFAULT_SHAPE_PROFILE_KEY = manifest.defaultProfileKey ?? SHAPE_PROFILES[0]?.key ?? "custom-shell";
 const EDITOR_SELECTOR_KEYS = Object.freeze(manifest.selectorKeys ?? ["shapeProfile", "legendFontKey", "stemType"]);
 
 function cloneSerializable(value) {

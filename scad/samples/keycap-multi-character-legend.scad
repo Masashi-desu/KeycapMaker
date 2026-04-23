@@ -1,5 +1,5 @@
 export_target = "preview";
-include <common/standard-1u-params.scad>
+include <common/custom-shell-params.scad>
 
 user_key_width = 18;
 user_key_depth = 18;

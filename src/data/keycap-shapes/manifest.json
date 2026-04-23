@@ -1,6 +1,6 @@
 {
   "schemaVersion": 5,
-  "defaultProfileKey": "standard-1u",
+  "defaultProfileKey": "custom-shell",
   "selectorKeys": ["shapeProfile", "legendFontKey", "stemType"],
-  "shapeKeys": ["standard-1u", "typewriter"]
+  "shapeKeys": ["custom-shell", "typewriter"]
 }
