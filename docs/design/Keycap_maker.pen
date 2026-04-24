@@ -4594,6 +4594,102 @@
                 },
                 {
                   "type": "frame",
+                  "id": "z4mFu",
+                  "name": "homingChamferRow",
+                  "width": "fill_container",
+                  "fill": "#F4ECE129",
+                  "cornerRadius": 16,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#D8CCB83D"
+                  },
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "AOaEz",
+                      "name": "homingChamferText",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "iPn35",
+                          "name": "homingChamferLabel",
+                          "fill": "#2D241C",
+                          "content": "目印の面取り",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "Bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "v4tCq",
+                          "name": "homingChamferHint",
+                          "fill": "#7C6A58",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "小さい値では上端を軽く丸め、大きくすると半円状の山に近づきます",
+                          "lineHeight": 1.45,
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dUVrL",
+                      "name": "homingChamferInput",
+                      "width": 110,
+                      "fill": "#FFFFFF3D",
+                      "cornerRadius": 12,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#D8CCB857"
+                      },
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        12
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "n6EcX",
+                          "name": "homingChamferValue",
+                          "fill": "#2D241C",
+                          "content": "0.3",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "Bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "f7JZd",
+                          "name": "homingChamferUnit",
+                          "fill": "#7C6A58",
+                          "content": "mm",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "Bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
                   "id": "pYiq6",
                   "width": "fill_container",
                   "fill": "#F4ECE129",
