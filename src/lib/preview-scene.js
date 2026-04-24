@@ -109,7 +109,22 @@ function isValidVector3Array(values) {
     && values.every((value) => isFiniteNumber(value));
 }
 
-function captureViewState({ camera, controls, sceneScale }) {
+function isValidVector2Array(values) {
+  return Array.isArray(values)
+    && values.length === 2
+    && values.every((value) => isFiniteNumber(value));
+}
+
+function projectToViewport(camera, point, viewportWidth, viewportHeight) {
+  camera.updateMatrixWorld();
+  const projected = point.clone().project(camera);
+  return new THREE.Vector2(
+    ((projected.x + 1) / 2) * viewportWidth,
+    ((-projected.y + 1) / 2) * viewportHeight,
+  );
+}
+
+function captureViewState({ camera, controls, sceneScale, viewOffsetRatio }) {
   const target = controls.target.clone();
   const offset = camera.position.clone().sub(target);
   const distance = Math.max(offset.length(), 0.001);
@@ -118,6 +133,7 @@ function captureViewState({ camera, controls, sceneScale }) {
     direction: offset.normalize().toArray(),
     distanceScale: distance / sceneScale,
     targetScale: target.divideScalar(sceneScale).toArray(),
+    viewOffsetRatio: viewOffsetRatio.toArray(),
   };
 }
 
@@ -127,7 +143,6 @@ function restoreViewState({ camera, controls, sceneScale, viewState }) {
     || !isFiniteNumber(viewState.distanceScale)
     || viewState.distanceScale <= 0
     || !isValidVector3Array(viewState.direction)
-    || !isValidVector3Array(viewState.targetScale)
   ) {
     camera.position.copy(getDefaultCameraOffset(sceneScale));
     controls.target.set(0, 0, 0);
@@ -144,11 +159,19 @@ function restoreViewState({ camera, controls, sceneScale, viewState }) {
   }
 
   direction.normalize();
-  const target = new THREE.Vector3().fromArray(viewState.targetScale).multiplyScalar(sceneScale);
+  const target = new THREE.Vector3(0, 0, 0);
   const distance = Math.max(viewState.distanceScale * sceneScale, 0.001);
   controls.target.copy(target);
   camera.position.copy(target).addScaledVector(direction, distance);
   controls.update();
+}
+
+function getViewOffsetRatio(viewState) {
+  if (viewState && isValidVector2Array(viewState.viewOffsetRatio)) {
+    return new THREE.Vector2().fromArray(viewState.viewOffsetRatio);
+  }
+
+  return new THREE.Vector2();
 }
 
 export function mountPreviewScene(container, layers, options = {}) {
@@ -203,6 +226,10 @@ export function mountPreviewScene(container, layers, options = {}) {
 
   const sceneScale = Math.max(size.x, size.y, size.z, 1);
   restoreViewState({ camera, controls, sceneScale, viewState: initialViewState });
+  const viewOffsetRatio = getViewOffsetRatio(initialViewState);
+  const orbitTarget = new THREE.Vector3(0, 0, 0);
+  const targetDelta = new THREE.Vector3();
+  const TARGET_EPSILON_SQ = 1e-18;
 
   const interactiveMeshes = layerEntries.map((entry) => entry.previewMesh);
   const raycaster = new THREE.Raycaster();
@@ -216,6 +243,40 @@ export function mountPreviewScene(container, layers, options = {}) {
     if (!isInteracting) {
       canvas.style.cursor = enabled ? "grab" : "default";
     }
+  };
+
+  const applyViewOffset = () => {
+    const width = Math.max(container.clientWidth, 1);
+    const height = Math.max(container.clientHeight, 1);
+    const offsetX = viewOffsetRatio.x * width;
+    const offsetY = viewOffsetRatio.y * height;
+
+    if (Math.abs(offsetX) < 0.001 && Math.abs(offsetY) < 0.001) {
+      camera.clearViewOffset();
+    } else {
+      camera.setViewOffset(width, height, offsetX, offsetY, width, height);
+    }
+    camera.updateProjectionMatrix();
+  };
+
+  const syncOrbitTargetToObjectCenter = () => {
+    targetDelta.copy(controls.target).sub(orbitTarget);
+    if (targetDelta.lengthSq() <= TARGET_EPSILON_SQ) {
+      return;
+    }
+
+    const width = Math.max(container.clientWidth, 1);
+    const height = Math.max(container.clientHeight, 1);
+    const desiredCenter = projectToViewport(camera, orbitTarget, width, height);
+
+    controls.target.copy(orbitTarget);
+    camera.position.sub(targetDelta);
+
+    const resetCenter = projectToViewport(camera, orbitTarget, width, height);
+    const screenDelta = desiredCenter.sub(resetCenter);
+    viewOffsetRatio.x -= screenDelta.x / width;
+    viewOffsetRatio.y -= screenDelta.y / height;
+    applyViewOffset();
   };
 
   const updateHoverState = (clientX, clientY) => {
@@ -285,6 +346,7 @@ export function mountPreviewScene(container, layers, options = {}) {
 
   controls.addEventListener("start", handleControlStart);
   controls.addEventListener("end", handleControlEnd);
+  controls.addEventListener("change", syncOrbitTargetToObjectCenter);
 
   const syncViewportCanvasBounds = () => {
     if (window.innerWidth <= 760) {
@@ -316,7 +378,7 @@ export function mountPreviewScene(container, layers, options = {}) {
     const width = Math.max(container.clientWidth, 1);
     const height = Math.max(container.clientHeight, 1);
     camera.aspect = width / height;
-    camera.updateProjectionMatrix();
+    applyViewOffset();
     renderer.setSize(width, height, false);
   };
 
@@ -330,6 +392,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   let frameId = 0;
   const renderFrame = () => {
     controls.update();
+    syncOrbitTargetToObjectCenter();
     renderer.render(scene, camera);
     frameId = requestAnimationFrame(renderFrame);
   };
@@ -346,6 +409,7 @@ export function mountPreviewScene(container, layers, options = {}) {
     canvas.removeEventListener("wheel", handleWheelCapture, { capture: true });
     controls.removeEventListener("start", handleControlStart);
     controls.removeEventListener("end", handleControlEnd);
+    controls.removeEventListener("change", syncOrbitTargetToObjectCenter);
     controls.dispose();
     layerEntries.forEach((entry) => {
       entry.geometry.dispose();
@@ -356,7 +420,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   };
 
   return {
-    captureViewState: () => captureViewState({ camera, controls, sceneScale }),
+    captureViewState: () => captureViewState({ camera, controls, sceneScale, viewOffsetRatio }),
     dispose,
   };
 }
