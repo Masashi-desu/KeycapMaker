@@ -323,6 +323,63 @@
                   ]
                 }
               ]
+            },
+            {
+              "type": "frame",
+              "id": "DXBIg",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "name": "languageControlLayer",
+              "width": 1392,
+              "height": 40,
+              "justifyContent": "end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Md0M3",
+                  "name": "languageComboboxButton",
+                  "width": 118,
+                  "height": 40,
+                  "fill": "#FCFAF6",
+                  "cornerRadius": 14,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#D8CCB88F"
+                  },
+                  "gap": 8,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "ry5MQ",
+                      "name": "languageGlobeIcon",
+                      "width": 17,
+                      "height": 17,
+                      "iconFontName": "globe",
+                      "iconFontFamily": "lucide",
+                      "fill": "#2D241C"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Kwc3o",
+                      "name": "languageLabelText",
+                      "fill": "#2D241C",
+                      "content": "LANGUAGE",
+                      "lineHeight": 1,
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "Bold"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
