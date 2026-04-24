@@ -50,6 +50,28 @@ const SEARCH_ICON_MARKUP = `
     />
   </svg>
 `;
+const EXPORT_ICON_MARKUP = Object.freeze({
+  file: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+    </svg>
+  `,
+  package: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </svg>
+  `,
+  download: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M12 15V3" />
+    </svg>
+  `,
+});
 let disposePreviewScene = null;
 let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
@@ -1284,16 +1306,34 @@ function renderExportTab() {
       </div>
 
       <div class="export-button-list">
-        <button class="action-card" type="button" data-export="editor-data" ${state.exportsStatus === "running" ? "disabled" : ""}>
-          <span class="chip-label">JSON</span>
-          <strong>${state.exportsStatus === "running" ? "保存しています..." : "編集データを保存する"}</strong>
-          <span class="action-card__text">保存したフル設定 JSON は、この画面のどこへでもドラッグ&ドロップして取り込めます。互換入力用の疎 JSON も読み込めます。</span>
-        </button>
-        <button class="action-card" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
-          <span class="chip-label">3MF</span>
-          <strong>${state.exportsStatus === "running" ? "保存しています..." : "3MFデータを保存する"}</strong>
-          <span class="action-card__text">本体、目印、印字を含む印刷用データを 3MF 形式でまとめて保存します。</span>
-        </button>
+        <section class="export-action-card" aria-labelledby="export-json-title">
+          <div class="export-action-card__header">
+            <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.file}</span>
+            <span class="export-action-card__title-stack">
+              <span class="chip-label">編集再開用 JSON</span>
+              <strong id="export-json-title">編集データを保存</strong>
+            </span>
+          </div>
+          <p class="export-action-card__text">形状、寸法、色、印字を JSON として保存します。あとでドラッグ&ドロップで再読込できます。</p>
+          <button class="export-save-button" type="button" data-export="editor-data" ${state.exportsStatus === "running" ? "disabled" : ""}>
+            ${EXPORT_ICON_MARKUP.download}
+            <span>${state.exportsStatus === "running" ? "保存しています..." : "JSON を保存"}</span>
+          </button>
+        </section>
+        <section class="export-action-card" aria-labelledby="export-3mf-title">
+          <div class="export-action-card__header">
+            <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.package}</span>
+            <span class="export-action-card__title-stack">
+              <span class="chip-label">印刷用 3MF</span>
+              <strong id="export-3mf-title">3MFデータを保存</strong>
+            </span>
+          </div>
+          <p class="export-action-card__text">本体、目印、印字を含む印刷用データを 3MF 形式でまとめて保存します。</p>
+          <button class="export-save-button" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
+            ${EXPORT_ICON_MARKUP.download}
+            <span>${state.exportsStatus === "running" ? "保存しています..." : "3MF を保存"}</span>
+          </button>
+        </section>
       </div>
     </div>
   `;

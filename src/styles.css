@@ -219,6 +219,10 @@ pre {
   view-transition-name: inspector-panel;
 }
 
+.inspector-panel--export {
+  gap: 24px;
+}
+
 .panel-intro {
   display: grid;
   gap: 6px;
@@ -247,6 +251,10 @@ pre {
   gap: 12px;
 }
 
+.export-button-list {
+  gap: 24px;
+}
+
 .info-chip,
 .note-card {
   display: grid;
@@ -272,7 +280,7 @@ pre {
 
 .info-chip strong,
 .note-card strong,
-.action-card strong,
+.export-action-card strong,
 .legend-input__label,
 .field-label,
 .field-group-header h3 {
@@ -857,48 +865,127 @@ pre {
   accent-color: var(--panel-dark);
 }
 
-.action-card {
-  width: 100%;
-  border: 0;
-  cursor: pointer;
-}
-
-.action-card {
+.export-action-card {
   display: grid;
-  gap: 6px;
+  gap: 14px;
   padding: 16px;
   border-radius: 20px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 90%), var(--solid-action);
-  border: 1px solid var(--solid-action-border);
+  background: var(--glass-panel-warm);
+  border: 1px solid var(--glass-border-surface);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 14px 26px rgba(45, 36, 28, 0.12);
-  text-align: left;
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 6px 18px rgba(45, 36, 28, 0.02);
 }
 
-.action-card .chip-label,
-.action-card strong {
-  color: #fff9f0;
+.export-action-card__header {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
 }
 
-.action-card .chip-label {
-  color: var(--muted-soft);
+.export-action-card__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(45, 36, 28, 0.08);
+  color: var(--text);
 }
 
-.action-card strong {
-  font-size: 18px;
+.export-action-card__icon svg,
+.export-save-button svg {
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.export-action-card__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.export-action-card__title-stack {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.export-action-card .chip-label {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.export-action-card strong {
+  font-size: 17px;
   line-height: 1.2;
 }
 
-.action-card__text {
+.export-action-card__text {
   font-size: 13px;
-  line-height: 1.6;
-  color: var(--muted-soft);
+  line-height: 1.5;
+  color: var(--muted);
 }
 
-.action-card:disabled {
+.export-save-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 42px;
+  gap: 8px;
+  border: 0;
+  border-radius: 14px;
+  padding: 11px 14px;
+  background: var(--panel-dark);
+  color: #fff9f0;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.export-save-button:hover {
+  background: #3a2d22;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 18px rgba(45, 36, 28, 0.12);
+}
+
+.export-save-button:focus-visible {
+  outline: 2px solid rgba(123, 155, 191, 0.58);
+  outline-offset: 2px;
+}
+
+.export-save-button:active {
+  transform: translateY(1px);
+}
+
+.export-save-button:disabled {
   opacity: 0.7;
   cursor: wait;
+  background: var(--panel-dark);
+  transform: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.export-save-button svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.export-save-button span {
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .note-card--neutral:last-child {

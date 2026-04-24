@@ -448,87 +448,263 @@
         },
         {
           "type": "frame",
-          "id": "xcHZf",
+          "id": "F89Rz",
           "name": "Export JSON Card",
           "width": "fill_container",
-          "fill": "#2D241C",
+          "fill": "#FFF8EE66",
           "cornerRadius": 20,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#D8CCB83D"
+          },
           "layout": "vertical",
-          "gap": 6,
+          "gap": 14,
           "padding": 16,
           "children": [
             {
-              "type": "text",
-              "id": "dAneZ",
-              "fill": "#CDBFAE",
-              "content": "JSON",
-              "fontFamily": "Inter",
-              "fontSize": 12,
-              "fontWeight": "Bold"
+              "type": "frame",
+              "id": "9Dk6D",
+              "name": "exportJsonHeader",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "kfv8l",
+                  "name": "exportJsonIconBox",
+                  "width": 44,
+                  "height": 44,
+                  "fill": "#2D241C14",
+                  "cornerRadius": 14,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "c165s",
+                      "name": "exportJsonIcon",
+                      "width": 22,
+                      "height": 22,
+                      "iconFontName": "file",
+                      "iconFontFamily": "lucide",
+                      "fill": "#2D241C"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "yZqDl",
+                  "name": "exportJsonTitleStack",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 3,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "7Qvy2",
+                      "name": "exportJsonEyebrow",
+                      "fill": "#7C6A58",
+                      "content": "編集再開用 JSON",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "UEfPx",
+                      "name": "exportJsonTitle",
+                      "fill": "#2D241C",
+                      "content": "編集データを保存",
+                      "fontFamily": "Inter",
+                      "fontSize": 17,
+                      "fontWeight": "Bold"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "type": "text",
-              "id": "bdbma",
-              "fill": "#FFF9F0",
-              "content": "編集データを保存する",
-              "fontFamily": "Inter",
-              "fontSize": 18,
-              "fontWeight": "Bold"
-            },
-            {
-              "type": "text",
-              "id": "dEldy",
-              "fill": "#CDBFAE",
+              "id": "GxbZI",
+              "name": "exportJsonDescription",
+              "fill": "#7C6A58",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "保存した JSON は、この画面のどこへでもドラッグ&ドロップして取り込めます。読み込むと現在の設定を置き換えます。",
-              "lineHeight": 1.6,
+              "content": "形状、寸法、色、印字を JSON として保存します。あとでドラッグ&ドロップで再読込できます。",
+              "lineHeight": 1.5,
               "fontFamily": "Inter",
               "fontSize": 13,
               "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "8kH35",
+              "name": "saveJsonButton",
+              "width": "fill_container",
+              "fill": "#2D241C",
+              "cornerRadius": 14,
+              "gap": 8,
+              "padding": [
+                11,
+                14
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "QYsqn",
+                  "name": "saveJsonButtonIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "download",
+                  "iconFontFamily": "lucide",
+                  "fill": "#FFF9F0"
+                },
+                {
+                  "type": "text",
+                  "id": "CXvrc",
+                  "name": "saveJsonButtonText",
+                  "fill": "#FFF9F0",
+                  "content": "JSON を保存",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "Bold"
+                }
+              ]
             }
           ]
         },
         {
           "type": "frame",
-          "id": "Pwopl",
+          "id": "Sv3Md",
           "name": "Export 3MF Card",
           "width": "fill_container",
-          "fill": "#2D241C",
+          "fill": "#FFF8EE66",
           "cornerRadius": 20,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#D8CCB83D"
+          },
           "layout": "vertical",
-          "gap": 6,
+          "gap": 14,
           "padding": 16,
           "children": [
             {
-              "type": "text",
-              "id": "7Akwj",
-              "fill": "#CDBFAE",
-              "content": "3MF",
-              "fontFamily": "Inter",
-              "fontSize": 12,
-              "fontWeight": "Bold"
+              "type": "frame",
+              "id": "cuT3V",
+              "name": "export3mfHeader",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "P9lBX",
+                  "name": "export3mfIconBox",
+                  "width": 44,
+                  "height": 44,
+                  "fill": "#2D241C14",
+                  "cornerRadius": 14,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "5haxp",
+                      "name": "export3mfIcon",
+                      "width": 22,
+                      "height": 22,
+                      "iconFontName": "box",
+                      "iconFontFamily": "lucide",
+                      "fill": "#2D241C"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "OfWZV",
+                  "name": "export3mfTitleStack",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 3,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fYkSy",
+                      "name": "export3mfEyebrow",
+                      "fill": "#7C6A58",
+                      "content": "印刷用 3MF",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "7oLyx",
+                      "name": "export3mfTitle",
+                      "fill": "#2D241C",
+                      "content": "3MFデータを保存",
+                      "fontFamily": "Inter",
+                      "fontSize": 17,
+                      "fontWeight": "Bold"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "type": "text",
-              "id": "7B9YK",
-              "fill": "#FFF9F0",
-              "content": "3MFデータを保存する",
-              "fontFamily": "Inter",
-              "fontSize": 18,
-              "fontWeight": "Bold"
-            },
-            {
-              "type": "text",
-              "id": "EI8Dn",
-              "fill": "#CDBFAE",
+              "id": "0hNCb",
+              "name": "export3mfDescription",
+              "fill": "#7C6A58",
               "textGrowth": "fixed-width",
               "width": "fill_container",
               "content": "本体、目印、印字を含む印刷用データを 3MF 形式でまとめて保存します。",
-              "lineHeight": 1.6,
+              "lineHeight": 1.5,
               "fontFamily": "Inter",
               "fontSize": 13,
               "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "qLFFA",
+              "name": "save3mfButton",
+              "width": "fill_container",
+              "fill": "#2D241C",
+              "cornerRadius": 14,
+              "gap": 8,
+              "padding": [
+                11,
+                14
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "Japeh",
+                  "name": "save3mfButtonIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "download",
+                  "iconFontFamily": "lucide",
+                  "fill": "#FFF9F0"
+                },
+                {
+                  "type": "text",
+                  "id": "jH0A8",
+                  "name": "save3mfButtonText",
+                  "fill": "#FFF9F0",
+                  "content": "3MF を保存",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "Bold"
+                }
+              ]
             }
           ]
         }
