@@ -24,7 +24,9 @@ import {
 export const KEYCAP_ENTRY_PATH = "/scad/base/keycap.scad";
 export const KEYCAP_JOB_PATH = "/scad/base/keycap-job.scad";
 export { DEFAULT_KEYCAP_LEGEND_FONT_KEY, getKeycapLegendFontStyleOptions, KEYCAP_LEGEND_FONTS, resolveKeycapLegendFont };
-const LEGEND_SIZE_WIDTH_RATIO = 1.8;
+const LEGEND_MIN_PLAN_WIDTH_RATIO = 1.8;
+const LEGEND_PLAN_PADDING_RATIO = 0.15;
+const LEGEND_PLAN_MIN_PADDING = 0.2;
 const LEGEND_TEXT_MEASURE_SCALE = 100;
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
 const fontBinaryPromises = new Map();
@@ -180,6 +182,15 @@ function legendTextSize(depth) {
   return Math.max(Number(depth), 0);
 }
 
+function estimateLegendTextWidth(label, size) {
+  return Array.from(String(label ?? "")).length * size;
+}
+
+function positiveTextMetric(value) {
+  const nextValue = Number(value);
+  return Number.isFinite(nextValue) ? Math.max(nextValue, 0) : 0;
+}
+
 function resolveLegendMeasurementWeight(selectedFont, selectedFontStyle) {
   return selectedFontStyle?.cssWeight ?? selectedFont.cssWeight ?? 400;
 }
@@ -250,32 +261,78 @@ async function getLegendFontMetadata(selectedFont) {
 }
 
 async function measureLegendTextWidth({ label, size, selectedFont, selectedFontStyle }) {
+  const bounds = await measureLegendTextBounds({
+    label,
+    size,
+    selectedFont,
+    selectedFontStyle,
+  });
+
+  return bounds.width;
+}
+
+async function measureLegendTextBounds({ label, size, selectedFont, selectedFontStyle }) {
   if (!label) {
-    return 0;
+    return {
+      width: 0,
+      depth: size,
+    };
   }
 
   if (!LEGEND_FONT_MEASURE_CANVAS) {
-    return 0;
+    return {
+      width: estimateLegendTextWidth(label, size),
+      depth: size,
+    };
   }
 
   let loadedMeasurementFont = null;
   try {
     loadedMeasurementFont = await ensureMeasurementFontLoaded(selectedFont);
   } catch {
-    return 0;
+    return {
+      width: estimateLegendTextWidth(label, size),
+      depth: size,
+    };
   }
   if (!loadedMeasurementFont) {
-    return 0;
+    return {
+      width: estimateLegendTextWidth(label, size),
+      depth: size,
+    };
   }
 
   const context = LEGEND_FONT_MEASURE_CANVAS.getContext("2d");
   if (!context) {
-    return 0;
+    return {
+      width: estimateLegendTextWidth(label, size),
+      depth: size,
+    };
   }
 
   const measurementWeight = resolveLegendMeasurementWeight(selectedFont, selectedFontStyle);
   context.font = `${measurementWeight} ${LEGEND_TEXT_MEASURE_SCALE}px "${selectedFont.measurementFamily}"`;
-  return (context.measureText(label).width / LEGEND_TEXT_MEASURE_SCALE) * size;
+  const metrics = context.measureText(label);
+  const metricScale = size / LEGEND_TEXT_MEASURE_SCALE;
+  const advanceWidth = metrics.width * metricScale;
+  const actualWidth = (
+    positiveTextMetric(metrics.actualBoundingBoxLeft)
+    + positiveTextMetric(metrics.actualBoundingBoxRight)
+  ) * metricScale;
+  const actualDepth = (
+    positiveTextMetric(metrics.actualBoundingBoxAscent)
+    + positiveTextMetric(metrics.actualBoundingBoxDescent)
+  ) * metricScale;
+  const fontDepth = (
+    positiveTextMetric(metrics.fontBoundingBoxAscent)
+    + positiveTextMetric(metrics.fontBoundingBoxDescent)
+  ) * metricScale;
+  const measuredWidth = Math.max(advanceWidth, actualWidth, 0);
+
+  return {
+    width: measuredWidth > 0 ? measuredWidth : estimateLegendTextWidth(label, size),
+    depth: Math.max(actualDepth, fontDepth, size, 0),
+  };
 }
 
 async function resolveLegendUnderlineSpan({
@@ -361,6 +418,24 @@ async function resolveLegendUnderlineGeometry({
   };
 }
 
+function resolveLegendPlanSize({ size, outlineDelta, textBounds, underlineGeometry }) {
+  const padding = Math.max(size * LEGEND_PLAN_PADDING_RATIO, Math.abs(Number(outlineDelta) || 0), LEGEND_PLAN_MIN_PADDING);
+  const underlineDepth = underlineGeometry.enabled
+    ? Math.abs(underlineGeometry.centerOffset) * 2 + underlineGeometry.thickness
+    : 0;
+
+  return {
+    width: Math.max(
+      size * LEGEND_MIN_PLAN_WIDTH_RATIO,
+      Math.max(Number(textBounds.width) || 0, underlineGeometry.span || 0, 0) + padding * 2,
+    ),
+    depth: Math.max(
+      size,
+      Math.max(Number(textBounds.depth) || 0, underlineDepth, 0) + padding * 2,
+    ),
+  };
+}
+
 function formatDefinitionValue(value) {
   if (typeof value === "boolean") {
     return value ? "true" : "false";
@@ -379,15 +454,25 @@ async function createKeycapDefinitions({ params, exportTarget }) {
   const legendSize = clampLegendSize(params.legendSize);
   const selectedFontStyle = resolveKeycapLegendFontStyle(selectedFont, params.legendFontStyleKey);
   const topSurfaceShape = params.topSurfaceShape ?? (Math.abs(Number(params.dishDepth ?? 0)) > 0.001 ? "spherical" : "flat");
-  const legendWidth = legendSize * LEGEND_SIZE_WIDTH_RATIO;
-  const legendDepth = legendSize;
-  const resolvedLegendTextSize = legendTextSize(legendDepth);
+  const resolvedLegendTextSize = legendTextSize(legendSize);
+  const textBounds = await measureLegendTextBounds({
+    label: params.legendText,
+    size: resolvedLegendTextSize,
+    selectedFont,
+    selectedFontStyle,
+  });
   const underlineGeometry = await resolveLegendUnderlineGeometry({
     enabled: params.legendUnderlineEnabled,
     label: params.legendText,
     size: resolvedLegendTextSize,
     selectedFont,
     selectedFontStyle,
+  });
+  const legendPlanSize = resolveLegendPlanSize({
+    size: resolvedLegendTextSize,
+    outlineDelta: params.legendOutlineDelta,
+    textBounds,
+    underlineGeometry,
   });
 
   return {
@@ -424,8 +509,9 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_legend_underline_width: underlineGeometry.span,
     user_legend_underline_thickness: underlineGeometry.thickness,
     user_legend_underline_offset_y: underlineGeometry.centerOffset,
-    user_legend_width: legendWidth,
-    user_legend_depth: legendDepth,
+    user_legend_width: legendPlanSize.width,
+    user_legend_depth: legendPlanSize.depth,
+    user_legend_text_size: resolvedLegendTextSize,
     user_legend_height: params.legendHeight,
     user_legend_embed: params.legendEmbed,
     user_legend_outline_delta: params.legendOutlineDelta,

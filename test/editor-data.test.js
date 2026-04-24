@@ -130,3 +130,8 @@ test("キートップ形状ごとの代表プリセットを返す", () => {
     dishDepth: 1.0,
   });
 });
+
+test("印字サイズの初期値は 5mm にする", () => {
+  assert.equal(createDefaultKeycapParams("custom-shell").legendSize, 5.0);
+  assert.equal(createDefaultKeycapParams("typewriter").legendSize, 5.0);
+});

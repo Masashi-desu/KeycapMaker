@@ -114,6 +114,7 @@ legend_underline_thickness = max(required_param(user_legend_underline_thickness,
 legend_underline_offset_y = required_param(user_legend_underline_offset_y, "user_legend_underline_offset_y");
 legend_width = positive_dimension(required_param(user_legend_width, "user_legend_width"));
 legend_depth = positive_dimension(required_param(user_legend_depth, "user_legend_depth"));
+legend_text_size_value = positive_dimension(is_undef(user_legend_text_size) ? legend_depth : user_legend_text_size);
 legend_height = max(required_param(user_legend_height, "user_legend_height"), 0);
 legend_outline_delta = required_param(user_legend_outline_delta, "user_legend_outline_delta");
 legend_offset_x = required_param(user_legend_offset_x, "user_legend_offset_x");
@@ -240,6 +241,7 @@ module keycap_legend_flat_block(height = legend_total_height, quality = "export"
                 underline_thickness = legend_underline_thickness,
                 underline_offset_y = legend_underline_offset_y,
                 outline_delta = legend_outline_delta,
+                text_size = legend_text_size_value,
                 quality = quality
             );
     }

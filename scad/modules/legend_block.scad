@@ -5,7 +5,7 @@ function legend_text_curve_steps(quality = "export") =
 function legend_text_internal_scale(quality = "export") =
     legend_quality_steps(quality, 6, 10);
 // Keep legend size tied to the user's explicit control value without auto-fitting by label length.
-function legend_text_size(depth) = max(depth, 0);
+function legend_text_size(size) = max(size, 0);
 
 module legend_text_shape(label, size, font_name, curve_steps = 48) {
     text(
@@ -58,10 +58,11 @@ module legend_block(
     underline_thickness = 0,
     underline_offset_y = 0,
     outline_delta = 0,
+    text_size = undef,
     quality = "export"
 ) {
     if (!is_undef(label) && len(label) > 0) {
-        size = legend_text_size(depth);
+        size = legend_text_size(is_undef(text_size) ? depth : text_size);
         curve_steps = legend_text_curve_steps(quality);
         internal_scale = legend_text_internal_scale(quality);
 
