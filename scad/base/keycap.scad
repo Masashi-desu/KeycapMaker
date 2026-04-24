@@ -203,6 +203,7 @@ homing_bar_length = positive_dimension(required_param(user_homing_bar_length, "u
 homing_bar_width = positive_dimension(required_param(user_homing_bar_width, "user_homing_bar_width"));
 homing_bar_offset_y = required_param(user_homing_bar_offset_y, "user_homing_bar_offset_y");
 homing_bar_base_thickness = max(required_param(user_homing_bar_base_thickness, "user_homing_bar_base_thickness"), 0);
+homing_bar_chamfer = max(is_undef(user_homing_bar_chamfer) ? 0 : user_homing_bar_chamfer, 0);
 homing_bar_anchor_surface_z = keycap_surface_z(
     0,
     homing_bar_offset_y,
@@ -461,6 +462,7 @@ module keycap_homing_bar(quality = "export") {
                 base_thickness = homing_bar_base_thickness,
                 offset_y = homing_bar_offset_y,
                 base_z = homing_bar_surface_delta - homing_bar_base_thickness,
+                chamfer = homing_bar_chamfer,
                 quality = quality
             );
     }

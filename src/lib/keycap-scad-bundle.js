@@ -437,6 +437,7 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_homing_bar_height: params.homingBarHeight,
     user_homing_bar_offset_y: params.homingBarOffsetY,
     user_homing_bar_base_thickness: params.homingBarBaseThickness,
+    user_homing_bar_chamfer: Math.max(Number(params.homingBarChamfer ?? 0), 0),
     user_stem_type: params.stemType,
     user_stem_enabled: params.stemEnabled,
     user_stem_outer_delta: params.stemOuterDelta,

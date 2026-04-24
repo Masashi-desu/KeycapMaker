@@ -401,7 +401,7 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
     return clampTypewriterRimWidth(value, paramsContext, fallback);
   }
 
-  if (fieldKey === "rimHeightUp" || fieldKey === "rimHeightDown") {
+  if (fieldKey === "rimHeightUp" || fieldKey === "rimHeightDown" || fieldKey === "homingBarChamfer") {
     return clampNonNegativeNumber(value, fallback);
   }
 

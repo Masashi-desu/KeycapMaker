@@ -803,6 +803,15 @@ const fieldGroupTemplates = [
         visibleWhen: (params) => params.homingBarEnabled,
       },
       {
+        key: "homingBarChamfer",
+        label: "目印の面取り",
+        hint: "小さい値では上端を軽く丸め、大きくすると半円状の山に近づきます",
+        unit: "mm",
+        step: 0.05,
+        min: 0,
+        visibleWhen: (params) => params.homingBarEnabled,
+      },
+      {
         key: "homingBarOffsetY",
         label: "目印の前後位置",
         hint: "目印を前後に動かします",
