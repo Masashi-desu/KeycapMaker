@@ -68,10 +68,107 @@ pre {
 }
 
 .app-shell {
+  position: relative;
   min-height: 100vh;
   padding: 24px;
   overflow-x: clip;
   background: linear-gradient(135deg, var(--page-start) 0%, var(--page-end) 100%);
+}
+
+.language-control {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 80;
+}
+
+.language-combobox {
+  position: relative;
+}
+
+.language-combobox__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 56%, white 44%);
+  border-radius: 14px;
+  background: rgba(252, 250, 246, 0.88);
+  color: var(--text);
+  box-shadow:
+    0 10px 22px rgba(45, 36, 28, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px) saturate(112%);
+  -webkit-backdrop-filter: blur(12px) saturate(112%);
+  cursor: pointer;
+}
+
+.language-combobox__button:focus-visible,
+.language-combobox__option:focus-visible {
+  outline: 2px solid rgba(123, 155, 191, 0.58);
+  outline-offset: 2px;
+}
+
+.language-combobox__icon,
+.language-combobox__icon svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+}
+
+.language-combobox__icon svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.language-combobox__label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.language-combobox__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--border) 58%, white 42%);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow:
+    0 18px 32px rgba(45, 36, 28, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.language-combobox__option {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.language-combobox__option:hover {
+  background: rgba(45, 36, 28, 0.06);
+}
+
+.language-combobox__option.is-selected {
+  background: rgba(45, 36, 28, 0.1);
 }
 
 .drop-overlay {
@@ -231,7 +328,7 @@ pre {
 .panel-title {
   font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   color: var(--text);
 }
 
@@ -1164,6 +1261,20 @@ pre {
 
   .app-shell {
     padding: 16px;
+  }
+
+  .language-control {
+    top: 16px;
+    right: 16px;
+  }
+
+  .language-combobox__button {
+    min-height: 38px;
+    padding: 8px 10px;
+  }
+
+  .language-combobox__menu {
+    min-width: 136px;
   }
 
   .inspector-card {

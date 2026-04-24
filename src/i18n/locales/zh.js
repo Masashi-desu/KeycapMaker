@@ -1,0 +1,408 @@
+const zh = Object.freeze({
+  language: {
+    label: "LANGUAGE",
+    ariaLabel: "选择显示语言",
+    listLabel: "语言选项",
+    options: {
+      ja: "日本語",
+      en: "English",
+      zh: "中文",
+      ko: "한국어",
+    },
+  },
+  navigation: {
+    label: "工作区部分",
+    settings: "设置",
+    export: "导出",
+  },
+  actions: {
+    close: "关闭",
+    choose: "选择",
+    copy: "复制",
+    copied: "已复制",
+    on: "开启",
+    off: "关闭",
+    saving: "正在保存...",
+  },
+  dropOverlay: {
+    title: "拖放编辑数据 / 兼容输入 JSON",
+    body: "读取已保存的编辑数据，或读取缺少值会由默认值补齐的兼容输入 JSON。",
+  },
+  panels: {
+    settings: {
+      title: "设置",
+      body: "可以根据输入调整所选键帽形状和字符，并自动在右侧更新预览。",
+    },
+    export: {
+      title: "导出",
+      body: "可以保存用于打印的 3MF 数据，以及稍后继续编辑用的 JSON。",
+    },
+  },
+  exportPanel: {
+    jsonChip: "可继续编辑的 JSON",
+    jsonTitle: "保存编辑数据",
+    jsonBody: "将形状、尺寸、颜色和字符保存为 JSON。之后可以通过拖放再次读取。",
+    saveJson: "保存 JSON",
+    threeMfChip: "打印用 3MF",
+    threeMfTitle: "保存 3MF 数据",
+    threeMfBody: "将包含本体、定位标记和字符的打印用数据汇总保存为 3MF 格式。",
+    saveThreeMf: "保存 3MF",
+  },
+  nameGroup: {
+    title: "名称",
+    description: "保存时使用的名称。3MF 和编辑数据 JSON 都会使用它，之后读取时也会保留。",
+  },
+  fieldGroup: {
+    expand: "展开{title}",
+    collapse: "折叠{title}",
+  },
+  shapeProfiles: {
+    "custom-shell": {
+      label: "自定义外壳",
+      fieldGroups: {
+        shape: {
+          title: "键帽形状",
+          description: "调整键帽整体尺寸，以及向顶部收窄的程度。键尺寸会与宽度联动，按 18 mm = 1u 换算。",
+        },
+        top: {
+          title: "键顶",
+          description: "在固定上表面中心基准高度的同时，可切换平面 / 圆柱 / 球面。圆柱只在一个方向弯曲。切换为边缘高度输入时，内部仍会规范化为 pitch / roll。",
+        },
+        legend: {
+          title: "字符",
+          description: "集中调整输入文字、字体、外观、位置、凸起高度和嵌入量。也可以直接输入多个字符。",
+        },
+        homing: {
+          title: "手指定位标记",
+          description: "调整类似 F 键和 J 键上的触感凸起。可与字符分开设置。",
+        },
+        stem: {
+          title: "安装部",
+        },
+      },
+    },
+    typewriter: {
+      label: "打字机",
+      fieldGroups: {
+        shape: {
+          title: "键帽形状",
+          description: "调整打字机风格的薄键顶外形。宽度按 18 mm = 1u 换算；R 越大越圆，越小越接近方形。",
+        },
+        top: {
+          title: "键顶",
+          description: "在固定上表面中心基准高度的同时，可用角度或边缘高度编辑前后和左右倾斜。边缘高度输入在内部会规范化为 pitch / roll。",
+        },
+        legend: {
+          title: "字符",
+          description: "集中调整输入文字、字体、外观、位置、凸起高度和嵌入量。也可以直接输入多个字符。",
+        },
+        homing: {
+          title: "手指定位标记",
+          description: "调整类似 F 键和 J 键上的触感凸起。可与字符分开设置。",
+        },
+        stem: {
+          title: "安装部",
+        },
+      },
+    },
+  },
+  fieldGroups: {
+    shapeDescriptionShell: "调整键帽整体尺寸，以及向顶部收窄的程度。键尺寸会与宽度联动，按 18 mm = 1u 换算。",
+    shapeDescriptionTypewriter: "调整打字机风格的薄键顶外形。宽度按 18 mm = 1u 换算；R 越大越圆，越小越接近方形。",
+    topDescription: "在固定上表面中心基准高度的同时，可用角度或边缘高度编辑前后和左右倾斜。边缘高度输入在内部会规范化为 pitch / roll。",
+  },
+  fields: {
+    name: {
+      label: "名称",
+      hint: "用于 3MF 和编辑数据 JSON 的保存文件名",
+    },
+    shapeProfile: {
+      label: "基础形状",
+      hint: "选择要使用的基本形状",
+    },
+    keyWidth: {
+      label: "宽度",
+      hint: "宽度与键尺寸联动。18 mm = 1u。",
+      secondaryLabel: "键尺寸",
+      miniLabel: "宽度",
+    },
+    keyDepth: {
+      label: "深度",
+      hint: "键帽前后方向的尺寸",
+    },
+    wallThickness: {
+      label: "壁厚",
+      hint: "影响键帽强度的厚度",
+    },
+    typewriterCornerRadius: {
+      label: "R",
+      hint: "{maxRadius} 时为圆形，接近 0 mm 时边角更尖。",
+    },
+    topScale: {
+      label: "顶部收窄",
+      hint: "数值越小，顶部看起来越窄",
+    },
+    bodyColor: {
+      label: "本体颜色",
+      hint: "可直接输入颜色代码，或使用颜色选择器",
+    },
+    topCenterHeight: {
+      label: "上表面中心高度",
+      typewriterLabel: "键顶厚度",
+      hint: "添加 dish 前的键顶中心。当前中心表面为 {height}。",
+      typewriterHint: "薄键顶从底部到上表面的厚度",
+    },
+    topSurfaceShape: {
+      label: "键顶形状",
+      hint: "平面为平坦表面，圆柱为单方向弯曲，球面为全方向弯曲",
+    },
+    dishDepth: {
+      label: "深度",
+      cylindricalHint: "正值会形成单方向凹陷，负值会形成单方向凸起。",
+      sphericalHint: "正值会形成碗状凹陷，负值会凸起。",
+      flatHint: "平面时此项不起作用。",
+    },
+    rimEnabled: {
+      label: "添加键圈",
+      hint: "用单独部件覆盖键顶外周",
+    },
+    rimWidth: {
+      label: "键圈宽度",
+      hint: "从键顶正面看到的带状宽度。{maxWidth} 时会扩展到整个表面。",
+    },
+    rimHeightUp: {
+      label: "向上高度",
+      hint: "0 表示与上表面齐平。正值会向上延伸。",
+    },
+    rimHeightDown: {
+      label: "向下高度",
+      hint: "0 表示与下表面齐平。正值会向下延伸。",
+    },
+    rimColor: {
+      label: "键圈颜色",
+      hint: "可直接输入颜色代码，或使用颜色选择器",
+    },
+    topSlopeInputMode: {
+      label: "倾斜输入方式",
+      hint: "选择用角度输入，或用边缘高度输入",
+    },
+    topPitchDeg: {
+      label: "前后倾斜",
+      hint: "正值会抬高后侧。当前: 前 {front} / 后 {back}",
+    },
+    topRollDeg: {
+      label: "左右倾斜",
+      hint: "正值会抬高右侧。当前: 左 {left} / 右 {right}",
+    },
+    topFrontHeight: {
+      label: "前侧高度",
+      hint: "上表面基准面的前侧高度。中心高度固定，当前前后倾斜为 {pitch}。",
+    },
+    topBackHeight: {
+      label: "后侧高度",
+      hint: "上表面基准面的后侧高度。中心高度固定，当前前后倾斜为 {pitch}。",
+    },
+    topLeftHeight: {
+      label: "左侧高度",
+      hint: "上表面基准面的左侧高度。中心高度固定，当前左右倾斜为 {roll}。",
+    },
+    topRightHeight: {
+      label: "右侧高度",
+      hint: "上表面基准面的右侧高度。中心高度固定，当前左右倾斜为 {roll}。",
+    },
+    legendEnabled: {
+      label: "添加字符",
+      hint: "关闭后不会生成文字形状",
+    },
+    legendText: {
+      label: "输入字符",
+      hint: "可以直接输入多个字符",
+      placeholder: "A / Shift / あ",
+    },
+    legendFontKey: {
+      label: "字体",
+      staticHint: "可通过放大镜搜索",
+      variableHint: "可通过放大镜搜索。支持的 style 在右侧选择。",
+    },
+    legendFontStyleKey: {
+      label: "字体内样式",
+      selectableHint: "使用内置 style",
+      defaultHint: "按字体名称默认方式使用",
+    },
+    legendUnderlineEnabled: {
+      label: "添加下划线",
+      hint: "下划线位置和粗细使用 font 文件中的信息，不会替换为任意外观。",
+    },
+    legendSize: {
+      label: "文字大小",
+      hint: "更改字符的大小。",
+    },
+    legendOutlineDelta: {
+      label: "粗细补正",
+      hint: "0 为原始轮廓。正值变粗，负值变细。",
+    },
+    legendHeight: {
+      label: "文字高度",
+      hint: "设为 0 时会成为嵌入式字符，填入上表面壳体的大部分；提高数值则会凸起。",
+    },
+    legendEmbed: {
+      label: "向内嵌入",
+      hint: "凸起文字根部进入键顶内部的距离。高度为 0 时会自动嵌入到上表面壳体的大部分。",
+    },
+    legendColor: {
+      label: "字符颜色",
+      hint: "可直接输入颜色代码，或使用颜色选择器",
+    },
+    legendOffsetX: {
+      label: "左右位置",
+      hint: "左右移动文字",
+    },
+    legendOffsetY: {
+      label: "前后位置",
+      hint: "前后移动文字",
+    },
+    homingBarEnabled: {
+      label: "添加定位标记",
+      hint: "让手指更容易找到位置",
+    },
+    homingBarLength: {
+      label: "定位标记长度",
+      hint: "左右扩展的距离",
+    },
+    homingBarWidth: {
+      label: "定位标记宽度",
+      hint: "定位标记外观上的粗细",
+    },
+    homingBarHeight: {
+      label: "定位标记高度",
+      hint: "从表面凸起的高度",
+    },
+    homingBarChamfer: {
+      label: "定位标记倒角",
+      hint: "较小值会轻微圆化上缘，较大值会接近半圆形凸脊。",
+    },
+    homingBarOffsetY: {
+      label: "定位标记前后位置",
+      hint: "前后移动定位标记",
+    },
+    homingBarBaseThickness: {
+      label: "定位标记底座厚度",
+      hint: "定位标记根部的厚度",
+    },
+    homingBarColor: {
+      label: "定位标记颜色",
+      hint: "可直接输入颜色代码，或使用颜色选择器",
+    },
+    stemType: {
+      label: "安装方式",
+      hint: "选择键帽适配的轴体类型",
+    },
+    stemOuterDelta: {
+      label: "外周补正",
+      hint: "0 为标准值。正值会加粗外周圆，负值会变细。",
+    },
+    stemCrossMargin: {
+      label: "配合余量",
+      mxHint: "0 为标准值。正值会扩大十字孔，负值会收紧。",
+      chocV1Hint: "0 为标准值。正值会让两个爪更细更松，负值会让其更粗更紧。",
+      alpsHint: "0 为标准值。正值会让插入部更细更松，负值会让其更粗更紧。",
+      disabledHint: "不生成安装部时不使用",
+    },
+    stemInsetDelta: {
+      label: "轴部起始位置补正",
+      hint: "0 为标准值。正值会从底面抬高起始位置，以避免内部干涉。",
+      disabledHint: "不生成安装部时不使用",
+    },
+  },
+  options: {
+    stemType: {
+      none: "无",
+      mx: "MX 兼容",
+      choc_v1: "Choc v1",
+      choc_v2: "Choc v2",
+      alps: "Alps / Matias",
+    },
+    topSurfaceShape: {
+      flat: "平面",
+      cylindrical: "圆柱",
+      spherical: "球面",
+    },
+    topSlopeInputMode: {
+      angle: "按角度调整",
+      "edge-height": "按边缘高度调整",
+    },
+  },
+  stemDescriptions: {
+    none: "不生成安装部。适合只检查外形或字符时使用。",
+    mx: "Cherry MX 兼容的十字形状。适配 Cherry / Gateron / Kailh BOX 等常见机械键盘轴。",
+    choc_v1: "Kailh Choc v1 用的双爪形状。适配使用 Choc v1 轴的薄型键盘。",
+    alps: "Alps / Matias 系的插入形状。适配对应的 Alps 系轴体。",
+    choc_v2: "Kailh Choc v2 用的十字形状。生成适配 Choc v2 轴的安装部。",
+  },
+  font: {
+    defaultStyleLabel: "按字体默认",
+    searchAriaLabel: "搜索字体",
+    searchDialogLabel: "字体搜索",
+    searchPlaceholder: "按字体名称搜索",
+    noResults: "没有匹配的字体",
+    variableMeta: "可变 / 命名样式",
+    staticMeta: "静态字形",
+    attributionTitle: "版权与许可标注",
+    attributions: {
+      "kurobara-cinderella-regular": [
+        "使用字体: 黒薔薇シンデレラ Version 1.00.20180805",
+        "版权标注: Copyright(c) 2017 M+ FONTS PROJECT/MODI",
+        "许可标注: This font is free software. Unlimited permission is granted to use, copy, and distribute it, with or without modification, either commercially or noncommercially. THIS FONT IS PROVIDED \"AS IS\" WITHOUT WARRANTY.",
+        "派生源许可: SIL Open Font License, Version 1.1",
+        "发布页面: https://modi.jpn.org/font_kurobara-cinderella.php"
+      ],
+    },
+  },
+  partLabels: {
+    body: "本体",
+    rim: "键圈",
+    legend: "字符",
+    homing: "定位标记",
+  },
+  preview: {
+    placeholder: "尚未显示预览。更改设置后会自动更新为最新形状。",
+    running: "正在更新预览",
+    successSingle: "预览更新完成。正在显示{parts}。",
+    successMultiple: "预览更新完成。正在按颜色分开显示{parts}。",
+    failed: "预览更新失败",
+    summary: "{elapsedMs} ms / {objectCount} objects / {vertexCount} vertices / {faceCount} triangles",
+  },
+  status: {
+    notGenerated: "未生成",
+    dirty: "等待应用输入内容",
+    loadedDirty: "等待应用已读取的编辑数据",
+  },
+  importExport: {
+    loaded: "已读取编辑数据 ({fileName})",
+    loadLabel: "编辑数据读取",
+    loadNote: "已将 {fileName} 应用到当前编辑内容",
+    noJsonFile: "未找到 JSON 文件。",
+    loadFailed: "读取编辑数据失败",
+    loadFailedLabel: "编辑数据读取失败",
+    preparing: "正在准备保存数据",
+    savedEditorData: "已保存编辑数据 ({byteLength} bytes)",
+    editorDataLabel: "编辑数据 JSON",
+    editorDataNote: "将画面中可编辑的参数保存为 JSON 格式",
+    savedThreeMf: "已保存 3MF 数据 ({byteLength} bytes / {partCount} 个部件)",
+    threeMfLabel: "3MF 数据",
+    threeMfNote: "已将{parts}汇总保存为 3MF 格式",
+    saveFailed: "保存失败",
+    saveFailedLabel: "保存失败",
+    unsupportedExport: "不支持的 export 格式: {format}",
+  },
+  errors: {
+    appRootMissing: "找不到 #app。",
+    colorisLoadFailed: "Coloris 读取失败。",
+    unsupportedOffPurpose: "不支持的 OFF 作业用途: {purpose}",
+  },
+  format: {
+    listSeparator: "、",
+  },
+});
+
+export default zh;

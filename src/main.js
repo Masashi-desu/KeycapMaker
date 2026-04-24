@@ -1,4 +1,11 @@
 import "./styles.css";
+import {
+  LOCALE_OPTIONS,
+  getInitialLocale,
+  normalizeLocale,
+  setLocalePreference,
+  translate,
+} from "./i18n/index.js";
 import keycapEditorProfiles, {
   createDefaultKeycapParams,
   DEFAULT_SHAPE_PROFILE_KEY,
@@ -48,6 +55,14 @@ const SEARCH_ICON_MARKUP = `
       d="M10.5 4.5a6 6 0 1 0 0 12a6 6 0 0 0 0-12m0-1.5a7.5 7.5 0 1 1 0 15a7.5 7.5 0 0 1 0-15m8.56 14.94l2.22 2.22a.75.75 0 1 1-1.06 1.06L18 19a.75.75 0 0 1 1.06-1.06"
       fill="currentColor"
     />
+  </svg>
+`;
+const GLOBE_ICON_MARKUP = `
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18" />
+    <path d="M12 3a13.5 13.5 0 0 1 0 18" />
+    <path d="M12 3a13.5 13.5 0 0 0 0 18" />
   </svg>
 `;
 const EXPORT_ICON_MARKUP = Object.freeze({
@@ -113,21 +128,41 @@ const COLORIS_SWATCHES = Object.freeze([
   "#5d9270",
   "#b8884c",
 ]);
-const SHAPE_PROFILE_OPTIONS = keycapEditorProfiles.profiles.map((profile) => ({
-  value: profile.key,
-  label: profile.label,
-}));
 
 const workspaceSections = [
   {
     id: "params",
-    label: "設定",
+    labelKey: "navigation.settings",
   },
   {
     id: "export",
-    label: "書き出し",
+    labelKey: "navigation.export",
   },
 ];
+
+function t(key, values = {}, fallback = key) {
+  return translate(state.locale, key, values, fallback);
+}
+
+function getWorkspaceSectionLabel(section) {
+  return t(section.labelKey, {}, section.id);
+}
+
+function getShapeProfileOptions() {
+  return keycapEditorProfiles.profiles.map((profile) => ({
+    value: profile.key,
+    label: t(`shapeProfiles.${profile.key}.label`, {}, profile.label),
+  }));
+}
+
+function localizeFieldOption(fieldKey, option) {
+  return {
+    ...option,
+    label: option.labelKey
+      ? t(option.labelKey, {}, option.label ?? option.value)
+      : t(`options.${fieldKey}.${option.value}`, {}, option.label ?? option.value),
+  };
+}
 
 function isTypewriterShapeProfile(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   return resolveShapeGeometryType(profileKey) === "typewriter";
@@ -157,14 +192,14 @@ function getLegendFontPickerResults(query = state.legendFontPickerQuery) {
 function getLegendFontFieldHint(params) {
   const selectedFont = resolveLegendFontConfig(params.legendFontKey);
   return selectedFont.fontKind === "variable"
-    ? "虫眼鏡から検索できます。対応 style は右側で選びます"
-    : "虫眼鏡から検索できます";
+    ? t("fields.legendFontKey.variableHint")
+    : t("fields.legendFontKey.staticHint");
 }
 
 function getLegendFontStyleFieldOptions(params = state.keycapParams) {
   const nativeStyleOptions = getKeycapLegendFontStyleOptions(params.legendFontKey);
   if (nativeStyleOptions.length === 0) {
-    return [{ value: LEGEND_FONT_STYLE_FALLBACK_KEY, label: "フォント名どおり" }];
+    return [{ value: LEGEND_FONT_STYLE_FALLBACK_KEY, label: t("font.defaultStyleLabel") }];
   }
 
   return nativeStyleOptions.map((option) => ({
@@ -179,8 +214,8 @@ function isLegendFontStyleSelectable(params = state.keycapParams) {
 
 function getLegendFontStyleHint(params) {
   return isLegendFontStyleSelectable(params)
-    ? "内蔵 style を使います"
-    : "フォント名どおりに使います";
+    ? t("fields.legendFontStyleKey.selectableHint")
+    : t("fields.legendFontStyleKey.defaultHint");
 }
 
 function clampTypewriterCornerRadius(value, fallback = 0) {
@@ -194,7 +229,7 @@ function clampTypewriterCornerRadius(value, fallback = 0) {
 
 function getTypewriterCornerRadiusHint(params) {
   const maxRadius = Math.max(Math.min(Number(params.keyWidth ?? 0), Number(params.keyDepth ?? 0)) / 2, 0);
-  return `${formatMillimeter(maxRadius)} で丸、0 mm に近づけると角が立ちます`;
+  return t("fields.typewriterCornerRadius.hint", { maxRadius: formatMillimeter(maxRadius) });
 }
 
 function clampNonNegativeNumber(value, fallback = 0) {
@@ -222,15 +257,15 @@ function clampTypewriterRimWidth(value, params = state.keycapParams, fallback = 
 
 function getTypewriterRimWidthHint(params) {
   const maxWidth = getTypewriterRimMaxWidth(params);
-  return `キートップ正面から見た帯の幅です。${formatMillimeter(maxWidth)} で全面まで広がります`;
+  return t("fields.rimWidth.hint", { maxWidth: formatMillimeter(maxWidth) });
 }
 
 function getTypewriterRimHeightUpHint() {
-  return "0 で上面と面一です。プラスで上へ伸びます";
+  return t("fields.rimHeightUp.hint");
 }
 
 function getTypewriterRimHeightDownHint() {
-  return "0 で下面と面一です。プラスで下へ伸びます";
+  return t("fields.rimHeightDown.hint");
 }
 
 function clampLegendOutlineDelta(value, fallback = 0) {
@@ -243,26 +278,26 @@ function clampLegendOutlineDelta(value, fallback = 0) {
 }
 
 function getLegendOutlineHint() {
-  return "0 が元の輪郭です。プラスで太く、マイナスで細くします";
+  return t("fields.legendOutlineDelta.hint");
 }
 
 const STEM_TYPE_OPTIONS = Object.freeze([
-  { value: "none", label: "なし" },
-  { value: "mx", label: "MX 互換" },
-  { value: "choc_v1", label: "Choc v1" },
-  { value: "choc_v2", label: "Choc v2" },
-  { value: "alps", label: "Alps / Matias" },
+  { value: "none", labelKey: "options.stemType.none" },
+  { value: "mx", labelKey: "options.stemType.mx" },
+  { value: "choc_v1", labelKey: "options.stemType.choc_v1" },
+  { value: "choc_v2", labelKey: "options.stemType.choc_v2" },
+  { value: "alps", labelKey: "options.stemType.alps" },
 ]);
 const TOP_SURFACE_SHAPE_OPTIONS = Object.freeze([
-  { value: "flat", label: "フラット" },
-  { value: "cylindrical", label: "シンドリカル" },
-  { value: "spherical", label: "スフェリカル" },
+  { value: "flat", labelKey: "options.topSurfaceShape.flat" },
+  { value: "cylindrical", labelKey: "options.topSurfaceShape.cylindrical" },
+  { value: "spherical", labelKey: "options.topSurfaceShape.spherical" },
 ]);
 const CROSS_COMPATIBLE_STEM_TYPES = new Set(["mx", "choc_v2"]);
 const SETTINGS_NAME_FIELD = Object.freeze({
   key: "name",
-  label: "名称",
-  hint: "3MF と編集データ JSON の保存名に使います",
+  label: () => t("fields.name.label"),
+  hint: () => t("fields.name.hint"),
   type: "text",
   maxLength: 80,
   placeholder: DEFAULT_EXPORT_BASE_NAME,
@@ -285,47 +320,47 @@ function getStemGroupDescription(params) {
 
   switch (stemType) {
     case "none":
-      return "取り付け部分を作りません。外形や印字だけを確認したいとき向けです。";
+      return t("stemDescriptions.none");
     case "mx":
-      return "Cherry MX 互換の十字形状です。Cherry / Gateron / Kailh BOX など、一般的なメカニカルキーボード用の軸に合います。";
+      return t("stemDescriptions.mx");
     case "choc_v1":
-      return "Kailh Choc v1 用の 2 本爪形状です。薄型キーボード向けの Choc v1 軸に合います。";
+      return t("stemDescriptions.choc_v1");
     case "alps":
-      return "Alps / Matias 系の差し込み形状です。対応する Alps 系の軸に合います。";
+      return t("stemDescriptions.alps");
     default:
-      return "Kailh Choc v2 用の十字形状です。Choc v2 軸に合う取り付け部分を作ります。";
+      return t("stemDescriptions.choc_v2");
   }
 }
 
 function getStemOuterHint(params) {
   return resolveStemType(params) === "mx"
-    ? "0 が標準です。プラスで外周円を太く、マイナスで細くします"
-    : "0 が標準です。プラスで外周円を太く、マイナスで細くします";
+    ? t("fields.stemOuterDelta.hint")
+    : t("fields.stemOuterDelta.hint");
 }
 
 function getStemFitHint(params) {
   switch (resolveStemType(params)) {
     case "mx":
     case "choc_v2":
-      return "0 が標準です。プラスで十字穴を広げ、マイナスで狭めます";
+      return t("fields.stemCrossMargin.mxHint");
     case "choc_v1":
-      return "0 が標準です。プラスで 2 本爪を細くして緩く、マイナスで太くしてきつくします";
+      return t("fields.stemCrossMargin.chocV1Hint");
     case "alps":
-      return "0 が標準です。プラスで差し込み部を細くして緩く、マイナスで太くしてきつくします";
+      return t("fields.stemCrossMargin.alpsHint");
     default:
-      return "取り付け部分を作らないときは使いません";
+      return t("fields.stemCrossMargin.disabledHint");
   }
 }
 
 function getStemInsetHint(params) {
   return resolveStemType(params) === "none"
-    ? "取り付け部分を作らないときは使いません"
-    : "0 が標準です。プラスで底面からの開始位置を上げ、内部干渉を避けます";
+    ? t("fields.stemInsetDelta.disabledHint")
+    : t("fields.stemInsetDelta.hint");
 }
 
 const TOP_SLOPE_INPUT_MODE_OPTIONS = Object.freeze([
-  { value: "angle", label: "角度で調整" },
-  { value: "edge-height", label: "端の高さで調整" },
+  { value: "angle", labelKey: "options.topSlopeInputMode.angle" },
+  { value: "edge-height", labelKey: "options.topSlopeInputMode.edge-height" },
 ]);
 
 function clampMinimum(value, fallback, minimum) {
@@ -430,95 +465,101 @@ function resolveTopEdgeHeights(params = {}) {
 
 function getTopCenterHeightHint(params) {
   if (isTypewriterShapeProfile(params.shapeProfile)) {
-    return "薄いキートップの底から上面までの厚みです";
+    return t("fields.topCenterHeight.typewriterHint");
   }
 
-  return `dish を付ける前のキートップ中央です。現在の中央表面は ${formatMillimeter(params.topVisibleCenterHeight)} です`;
+  return t("fields.topCenterHeight.hint", { height: formatMillimeter(params.topVisibleCenterHeight) });
 }
 
 function getTopPitchHint(params) {
-  return `プラスで奥が高くなります。現在: 手前 ${formatMillimeter(params.topFrontHeight)} / 奥 ${formatMillimeter(params.topBackHeight)}`;
+  return t("fields.topPitchDeg.hint", {
+    front: formatMillimeter(params.topFrontHeight),
+    back: formatMillimeter(params.topBackHeight),
+  });
 }
 
 function getTopRollHint(params) {
-  return `プラスで右が高くなります。現在: 左 ${formatMillimeter(params.topLeftHeight)} / 右 ${formatMillimeter(params.topRightHeight)}`;
+  return t("fields.topRollDeg.hint", {
+    left: formatMillimeter(params.topLeftHeight),
+    right: formatMillimeter(params.topRightHeight),
+  });
 }
 
 function getTopFrontHeightHint(params) {
-  return `上面基準面の手前高さです。中央高さは固定され、現在の前後傾斜は ${formatDegree(params.topPitchDeg)} です`;
+  return t("fields.topFrontHeight.hint", { pitch: formatDegree(params.topPitchDeg) });
 }
 
 function getTopBackHeightHint(params) {
-  return `上面基準面の奥高さです。中央高さは固定され、現在の前後傾斜は ${formatDegree(params.topPitchDeg)} です`;
+  return t("fields.topBackHeight.hint", { pitch: formatDegree(params.topPitchDeg) });
 }
 
 function getTopLeftHeightHint(params) {
-  return `上面基準面の左高さです。中央高さは固定され、現在の左右傾斜は ${formatDegree(params.topRollDeg)} です`;
+  return t("fields.topLeftHeight.hint", { roll: formatDegree(params.topRollDeg) });
 }
 
 function getTopRightHeightHint(params) {
-  return `上面基準面の右高さです。中央高さは固定され、現在の左右傾斜は ${formatDegree(params.topRollDeg)} です`;
+  return t("fields.topRightHeight.hint", { roll: formatDegree(params.topRollDeg) });
 }
 
 function getTopSurfaceShapeHint() {
-  return "フラットは平面、シンドリカルは一方向、スフェリカルは全方向に曲がります";
+  return t("fields.topSurfaceShape.hint");
 }
 
 function getDishDepthHint(params) {
   if (params.topSurfaceShape === "cylindrical") {
-    return "プラスで一方向に凹み、マイナスで一方向に盛り上がります";
+    return t("fields.dishDepth.cylindricalHint");
   }
 
   if (params.topSurfaceShape === "spherical") {
-    return "プラスで椀形に凹み、マイナスで盛り上がります";
+    return t("fields.dishDepth.sphericalHint");
   }
 
-  return "フラットでは効きません";
+  return t("fields.dishDepth.flatHint");
 }
 
 const fieldGroupTemplates = [
   {
     id: "shape",
-    title: "キーキャップの形",
+    title: () => t("shapeProfiles.custom-shell.fieldGroups.shape.title"),
     description: (params) => (
       isTypewriterShapeProfile(params.shapeProfile)
-        ? "タイプライター風の薄いキートップ外形を調整します。横幅は 18 mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。"
-        : "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。キーサイズは横幅と連動していて、18 mm を 1u として換算します。"
+        ? t("fieldGroups.shapeDescriptionTypewriter")
+        : t("fieldGroups.shapeDescriptionShell")
     ),
     fields: [
       {
         key: "shapeProfile",
-        label: "形のベース",
-        hint: "使う基本形を選びます",
+        label: () => t("fields.shapeProfile.label"),
+        hint: () => t("fields.shapeProfile.hint"),
         type: "select",
-        options: SHAPE_PROFILE_OPTIONS,
+        options: () => getShapeProfileOptions(),
       },
       {
         key: "keyWidth",
-        label: "横幅",
-        hint: "横幅とキーサイズは連動します。18 mm = 1u です",
+        label: () => t("fields.keyWidth.label"),
+        hint: () => t("fields.keyWidth.hint"),
         type: "linked-size",
         unit: "mm",
         step: 0.1,
         min: 10,
-        secondaryLabel: "キーサイズ",
+        secondaryLabel: () => t("fields.keyWidth.secondaryLabel"),
         secondaryField: "keySizeUnits",
         secondaryUnit: "u",
         secondaryStep: 0.05,
         secondaryMin: 0.5,
       },
-      { key: "keyDepth", label: "奥行き", hint: "キーキャップの前後の大きさです", unit: "mm", step: 0.1, min: 10 },
+      { key: "keyDepth", label: () => t("fields.keyDepth.label"), hint: () => t("fields.keyDepth.hint"), unit: "mm", step: 0.1, min: 10 },
       {
         key: "wallThickness",
-        label: "肉厚",
-        hint: "キーキャップの丈夫さに関わる厚みです",
+        label: () => t("fields.wallThickness.label"),
+        hint: () => t("fields.wallThickness.hint"),
         unit: "mm",
         step: 0.05,
         min: 0.4,
       },
       {
         key: "typewriterCornerRadius",
-        label: "R",
+        label: () => t("fields.typewriterCornerRadius.label"),
         hint: (params) => getTypewriterCornerRadiusHint(params),
         unit: "mm",
         step: 0.1,
@@ -526,8 +567,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "topScale",
-        label: "上面のすぼまり",
-        hint: "数字を小さくすると上面が細く見えます",
+        label: () => t("fields.topScale.label"),
+        hint: () => t("fields.topScale.hint"),
         unit: "",
         step: 0.01,
         min: 0.5,
@@ -535,8 +576,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "bodyColor",
-        label: "本体の色",
-        hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+        label: () => t("fields.bodyColor.label"),
+        hint: () => t("fields.bodyColor.hint"),
         type: "color",
         placeholder: DEFAULT_KEYCAP_COLORS.bodyColor,
       },
@@ -544,12 +585,12 @@ const fieldGroupTemplates = [
   },
   {
     id: "top",
-    title: "キートップ",
-    description: "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+    title: () => t("shapeProfiles.custom-shell.fieldGroups.top.title"),
+    description: () => t("fieldGroups.topDescription"),
     fields: [
       {
         key: "topCenterHeight",
-        label: (params) => (isTypewriterShapeProfile(params.shapeProfile) ? "キートップの厚み" : "上面中央の高さ"),
+        label: (params) => (isTypewriterShapeProfile(params.shapeProfile) ? t("fields.topCenterHeight.typewriterLabel") : t("fields.topCenterHeight.label")),
         hint: (params) => getTopCenterHeightHint(params),
         unit: "mm",
         step: 0.1,
@@ -557,14 +598,14 @@ const fieldGroupTemplates = [
       },
       {
         key: "topSurfaceShape",
-        label: "キートップ形状",
+        label: () => t("fields.topSurfaceShape.label"),
         hint: () => getTopSurfaceShapeHint(),
         type: "select",
         options: TOP_SURFACE_SHAPE_OPTIONS,
       },
       {
         key: "dishDepth",
-        label: "深さ",
+        label: () => t("fields.dishDepth.label"),
         hint: (params) => getDishDepthHint(params),
         unit: "mm",
         step: 0.05,
@@ -572,13 +613,13 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimEnabled",
-        label: "キーリムを付ける",
-        hint: "キートップ外周を別パーツで覆います",
+        label: () => t("fields.rimEnabled.label"),
+        hint: () => t("fields.rimEnabled.hint"),
         type: "checkbox",
       },
       {
         key: "rimWidth",
-        label: "キーリムの幅",
+        label: () => t("fields.rimWidth.label"),
         hint: (params) => getTypewriterRimWidthHint(params),
         unit: "mm",
         step: 0.1,
@@ -587,7 +628,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimHeightUp",
-        label: "上方向の高さ",
+        label: () => t("fields.rimHeightUp.label"),
         hint: () => getTypewriterRimHeightUpHint(),
         unit: "mm",
         step: 0.05,
@@ -596,7 +637,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimHeightDown",
-        label: "下方向の高さ",
+        label: () => t("fields.rimHeightDown.label"),
         hint: () => getTypewriterRimHeightDownHint(),
         unit: "mm",
         step: 0.05,
@@ -605,22 +646,22 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimColor",
-        label: "キーリムの色",
-        hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+        label: () => t("fields.rimColor.label"),
+        hint: () => t("fields.rimColor.hint"),
         type: "color",
         placeholder: DEFAULT_KEYCAP_COLORS.rimColor,
         visibleWhen: (params) => params.rimEnabled,
       },
       {
         key: "topSlopeInputMode",
-        label: "傾きの入力方法",
-        hint: "角度で入れるか、端の高さで入れるかを選びます",
+        label: () => t("fields.topSlopeInputMode.label"),
+        hint: () => t("fields.topSlopeInputMode.hint"),
         type: "select",
         options: TOP_SLOPE_INPUT_MODE_OPTIONS,
       },
       {
         key: "topPitchDeg",
-        label: "手前から奥の傾斜",
+        label: () => t("fields.topPitchDeg.label"),
         hint: (params) => getTopPitchHint(params),
         unit: "deg",
         step: 0.1,
@@ -628,7 +669,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topRollDeg",
-        label: "左右の傾斜",
+        label: () => t("fields.topRollDeg.label"),
         hint: (params) => getTopRollHint(params),
         unit: "deg",
         step: 0.1,
@@ -636,7 +677,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topFrontHeight",
-        label: "手前高さ",
+        label: () => t("fields.topFrontHeight.label"),
         hint: (params) => getTopFrontHeightHint(params),
         unit: "mm",
         step: 0.1,
@@ -644,7 +685,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topBackHeight",
-        label: "奥高さ",
+        label: () => t("fields.topBackHeight.label"),
         hint: (params) => getTopBackHeightHint(params),
         unit: "mm",
         step: 0.1,
@@ -652,7 +693,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topLeftHeight",
-        label: "左高さ",
+        label: () => t("fields.topLeftHeight.label"),
         hint: (params) => getTopLeftHeightHint(params),
         unit: "mm",
         step: 0.1,
@@ -660,7 +701,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topRightHeight",
-        label: "右高さ",
+        label: () => t("fields.topRightHeight.label"),
         hint: (params) => getTopRightHeightHint(params),
         unit: "mm",
         step: 0.1,
@@ -670,29 +711,29 @@ const fieldGroupTemplates = [
   },
   {
     id: "legend",
-    title: "印字",
-    description: "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+    title: () => t("shapeProfiles.custom-shell.fieldGroups.legend.title"),
+    description: () => t("shapeProfiles.custom-shell.fieldGroups.legend.description"),
     fields: [
-      { key: "legendEnabled", label: "印字を入れる", hint: "オフにすると文字を作りません", type: "checkbox" },
+      { key: "legendEnabled", label: () => t("fields.legendEnabled.label"), hint: () => t("fields.legendEnabled.hint"), type: "checkbox" },
       {
         key: "legendText",
-        label: "入れる文字",
-        hint: "複数文字をそのまま入力できます",
+        label: () => t("fields.legendText.label"),
+        hint: () => t("fields.legendText.hint"),
         type: "text",
         maxLength: 24,
-        placeholder: "A / Shift / あ",
+        placeholder: () => t("fields.legendText.placeholder"),
         visibleWhen: (params) => params.legendEnabled,
       },
       {
         key: "legendFontKey",
-        label: "書体",
+        label: () => t("fields.legendFontKey.label"),
         hint: (params) => getLegendFontFieldHint(params),
         type: "font-search",
         visibleWhen: (params) => params.legendEnabled,
       },
       {
         key: "legendFontStyleKey",
-        label: "フォント内スタイル",
+        label: () => t("fields.legendFontStyleKey.label"),
         hint: (params) => getLegendFontStyleHint(params),
         type: "select",
         options: (params) => getLegendFontStyleFieldOptions(params),
@@ -701,15 +742,15 @@ const fieldGroupTemplates = [
       },
       {
         key: "legendUnderlineEnabled",
-        label: "下線を付ける",
-        hint: "下線位置と太さは font ファイルの情報を使います。任意の見た目へ置き換えません",
+        label: () => t("fields.legendUnderlineEnabled.label"),
+        hint: () => t("fields.legendUnderlineEnabled.hint"),
         type: "checkbox",
         visibleWhen: (params) => params.legendEnabled,
       },
       {
         key: "legendSize",
-        label: "文字の大きさ",
-        hint: "印字する文字の大きさを変更します。",
+        label: () => t("fields.legendSize.label"),
+        hint: () => t("fields.legendSize.hint"),
         unit: "mm",
         step: 0.1,
         min: LEGEND_MIN_SIZE,
@@ -717,7 +758,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "legendOutlineDelta",
-        label: "太さ補正",
+        label: () => t("fields.legendOutlineDelta.label"),
         hint: () => getLegendOutlineHint(),
         unit: "mm",
         step: 0.02,
@@ -727,8 +768,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "legendHeight",
-        label: "文字の高さ",
-        hint: "0 にすると上面シェルの大半を埋める埋め込み印字になり、数字を上げると盛り上がります",
+        label: () => t("fields.legendHeight.label"),
+        hint: () => t("fields.legendHeight.hint"),
         unit: "mm",
         step: 0.05,
         min: 0,
@@ -736,8 +777,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "legendEmbed",
-        label: "内側への埋め込み",
-        hint: "盛り上がる文字の根元をどれだけキートップ内部へ入れるかです。高さ 0 の場合は上面シェルの大半まで自動で埋め込みます",
+        label: () => t("fields.legendEmbed.label"),
+        hint: () => t("fields.legendEmbed.hint"),
         unit: "mm",
         step: 0.05,
         min: 0,
@@ -745,24 +786,24 @@ const fieldGroupTemplates = [
       },
       {
         key: "legendColor",
-        label: "印字の色",
-        hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+        label: () => t("fields.legendColor.label"),
+        hint: () => t("fields.legendColor.hint"),
         type: "color",
         placeholder: DEFAULT_KEYCAP_COLORS.legendColor,
         visibleWhen: (params) => params.legendEnabled,
       },
       {
         key: "legendOffsetX",
-        label: "左右の位置",
-        hint: "文字を左右に動かします",
+        label: () => t("fields.legendOffsetX.label"),
+        hint: () => t("fields.legendOffsetX.hint"),
         unit: "mm",
         step: 0.1,
         visibleWhen: (params) => params.legendEnabled,
       },
       {
         key: "legendOffsetY",
-        label: "前後の位置",
-        hint: "文字を前後に動かします",
+        label: () => t("fields.legendOffsetY.label"),
+        hint: () => t("fields.legendOffsetY.hint"),
         unit: "mm",
         step: 0.1,
         visibleWhen: (params) => params.legendEnabled,
@@ -771,14 +812,14 @@ const fieldGroupTemplates = [
   },
   {
     id: "homing",
-    title: "指の目印",
-    description: "F キーや J キーのように、指で触って分かる出っ張りを調整します。印字とは別に設定できます。",
+    title: () => t("shapeProfiles.custom-shell.fieldGroups.homing.title"),
+    description: () => t("shapeProfiles.custom-shell.fieldGroups.homing.description"),
     fields: [
-      { key: "homingBarEnabled", label: "目印を付ける", hint: "指で位置を探しやすくします", type: "checkbox" },
+      { key: "homingBarEnabled", label: () => t("fields.homingBarEnabled.label"), hint: () => t("fields.homingBarEnabled.hint"), type: "checkbox" },
       {
         key: "homingBarLength",
-        label: "目印の長さ",
-        hint: "左右にどれくらい広げるかです",
+        label: () => t("fields.homingBarLength.label"),
+        hint: () => t("fields.homingBarLength.hint"),
         unit: "mm",
         step: 0.1,
         min: 0.5,
@@ -786,8 +827,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarWidth",
-        label: "目印の太さ",
-        hint: "目印の見た目の太さです",
+        label: () => t("fields.homingBarWidth.label"),
+        hint: () => t("fields.homingBarWidth.hint"),
         unit: "mm",
         step: 0.05,
         min: 0.1,
@@ -795,8 +836,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarHeight",
-        label: "目印の高さ",
-        hint: "表面からどれだけ出すかです",
+        label: () => t("fields.homingBarHeight.label"),
+        hint: () => t("fields.homingBarHeight.hint"),
         unit: "mm",
         step: 0.05,
         min: 0.05,
@@ -804,8 +845,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarChamfer",
-        label: "目印の面取り",
-        hint: "小さい値では上端を軽く丸め、大きくすると半円状の山に近づきます",
+        label: () => t("fields.homingBarChamfer.label"),
+        hint: () => t("fields.homingBarChamfer.hint"),
         unit: "mm",
         step: 0.05,
         min: 0,
@@ -813,16 +854,16 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarOffsetY",
-        label: "目印の前後位置",
-        hint: "目印を前後に動かします",
+        label: () => t("fields.homingBarOffsetY.label"),
+        hint: () => t("fields.homingBarOffsetY.hint"),
         unit: "mm",
         step: 0.1,
         visibleWhen: (params) => params.homingBarEnabled,
       },
       {
         key: "homingBarBaseThickness",
-        label: "目印の土台の厚み",
-        hint: "目印の根元の厚みです",
+        label: () => t("fields.homingBarBaseThickness.label"),
+        hint: () => t("fields.homingBarBaseThickness.hint"),
         unit: "mm",
         step: 0.05,
         min: 0.05,
@@ -830,8 +871,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarColor",
-        label: "目印の色",
-        hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+        label: () => t("fields.homingBarColor.label"),
+        hint: () => t("fields.homingBarColor.hint"),
         type: "color",
         placeholder: DEFAULT_KEYCAP_COLORS.homingBarColor,
         visibleWhen: (params) => params.homingBarEnabled,
@@ -840,19 +881,19 @@ const fieldGroupTemplates = [
   },
   {
     id: "stem",
-    title: "取り付け部分",
+    title: () => t("shapeProfiles.custom-shell.fieldGroups.stem.title"),
     description: (params) => getStemGroupDescription(params),
     fields: [
       {
         key: "stemType",
-        label: "取り付け方式",
-        hint: "キーキャップが合う軸の種類を選びます",
+        label: () => t("fields.stemType.label"),
+        hint: () => t("fields.stemType.hint"),
         type: "select",
         options: STEM_TYPE_OPTIONS,
       },
       {
         key: "stemOuterDelta",
-        label: "外周の補正",
+        label: () => t("fields.stemOuterDelta.label"),
         hint: (params) => getStemOuterHint(params),
         unit: "mm",
         step: 0.02,
@@ -860,7 +901,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "stemCrossMargin",
-        label: "はまりのゆとり",
+        label: () => t("fields.stemCrossMargin.label"),
         hint: (params) => getStemFitHint(params),
         unit: "mm",
         step: 0.02,
@@ -868,7 +909,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "stemInsetDelta",
-        label: "軸の開始位置補正",
+        label: () => t("fields.stemInsetDelta.label"),
         hint: (params) => getStemInsetHint(params),
         unit: "mm",
         step: 0.05,
@@ -898,22 +939,30 @@ function getFieldConfig(fieldKey, profileKey = state.keycapParams?.shapeProfile 
   }
 
   const override = getShapeProfileFieldOverride(profileKey, fieldKey) ?? {};
-  return {
+  const fieldConfig = {
     ...baseField,
     ...override,
   };
+
+  if (fieldKey === "topCenterHeight") {
+    fieldConfig.label = baseField.label;
+    fieldConfig.hint = baseField.hint;
+  }
+
+  return fieldConfig;
 }
 
 function getActiveFieldGroups(profileKey = state.keycapParams?.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY) {
   return getShapeProfileFieldGroups(profileKey)
     .map((group) => ({
       ...group,
+      title: t(`shapeProfiles.${profileKey}.fieldGroups.${group.id}.title`, {}, resolveDynamicCopy(group.title)),
       fields: (group.fieldKeys ?? [])
         .map((fieldKey) => getFieldConfig(fieldKey, profileKey))
         .filter(Boolean),
       description: group.descriptionKey != null
         ? (FIELD_GROUP_DESCRIPTION_RESOLVERS[group.descriptionKey] ?? group.description ?? "")
-        : group.description,
+        : t(`shapeProfiles.${profileKey}.fieldGroups.${group.id}.description`, {}, resolveDynamicCopy(group.description)),
     }));
 }
 
@@ -925,12 +974,16 @@ function getShapeProfileVisibleFieldKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY)
   );
 }
 
+const initialLocale = getInitialLocale();
+
 const state = {
+  locale: initialLocale,
+  isLanguageMenuOpen: false,
   exportsStatus: "idle",
-  exportsSummary: "未生成",
+  exportsSummary: translate(initialLocale, "status.notGenerated"),
   exportHistory: [],
   editorStatus: "idle",
-  editorSummary: "未生成",
+  editorSummary: translate(initialLocale, "status.notGenerated"),
   editorLogs: [],
   editorError: "",
   previewLayers: [],
@@ -946,7 +999,7 @@ const state = {
 syncDerivedKeycapParams(state.keycapParams);
 
 if (!app) {
-  throw new Error("#app が見つかりません。");
+  throw new Error(t("errors.appRootMissing"));
 }
 
 function getViewportLayoutMode() {
@@ -1028,18 +1081,18 @@ function getColorFieldNumber(fieldKey) {
 function getPartLabel(partName) {
   switch (partName) {
     case "rim":
-      return "キーリム";
+      return t("partLabels.rim");
     case "legend":
-      return "印字";
+      return t("partLabels.legend");
     case "homing":
-      return "目印";
+      return t("partLabels.homing");
     default:
-      return "本体";
+      return t("partLabels.body");
   }
 }
 
 function describePartLabels(parts) {
-  return parts.map((part) => getPartLabel(part)).join("、");
+  return parts.map((part) => getPartLabel(part)).join(t("format.listSeparator"));
 }
 
 function setColorInputValidity(input, isValid) {
@@ -1079,7 +1132,7 @@ function configureColoris() {
     wrap: false,
     margin: 8,
     closeButton: true,
-    closeLabel: "閉じる",
+    closeLabel: t("actions.close"),
     swatches: COLORIS_SWATCHES,
   });
 
@@ -1121,7 +1174,7 @@ function ensureColorisLoaded() {
     }, { once: true });
     script.addEventListener("error", () => {
       colorisLoadPromise = null;
-      reject(new Error("Coloris の読み込みに失敗しました。"));
+      reject(new Error(t("errors.colorisLoadFailed")));
     }, { once: true });
     document.head.append(script);
   });
@@ -1152,16 +1205,17 @@ function renderShell() {
     <main class="app-shell">
       <div class="drop-overlay" data-import-drop-overlay aria-hidden="true" hidden>
         <div class="drop-overlay__card">
-          <strong>編集データ / 互換入力 JSON をドロップ</strong>
-          <span>保存済みの編集データ、または不足値を既定で補う互換入力 JSON を読み込みます。</span>
+          <strong data-i18n="dropOverlay.title"></strong>
+          <span data-i18n="dropOverlay.body"></span>
         </div>
       </div>
+      <div class="language-control" data-language-control></div>
       <section class="editor-screen">
         <aside class="left-column">
           <article class="inspector-card">
             <nav
               class="segment-control"
-              aria-label="workspace sections"
+              data-i18n-aria-label="navigation.label"
               data-segment-control
               style="--segment-count: ${workspaceSections.length}; --segment-index: 0;"
             >
@@ -1175,7 +1229,7 @@ function renderShell() {
                       data-sidebar-tab="${section.id}"
                       aria-pressed="false"
                     >
-                      ${section.label}
+                      ${getWorkspaceSectionLabel(section)}
                     </button>
                   `,
                 )
@@ -1197,12 +1251,15 @@ function renderShell() {
   `;
 
   app.querySelector("[data-segment-control]")?.addEventListener("click", handleSegmentControlClick);
+  app.querySelector("[data-language-control]")?.addEventListener("click", handleLanguageControlClick);
   app.querySelector(".inspector-card")?.addEventListener("click", handleInspectorCardClick);
   app.querySelector(".inspector-card")?.addEventListener("input", handleInspectorCardInput);
   app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
   app.querySelector(".inspector-card")?.addEventListener("compositionend", handleInspectorCardCompositionEnd);
   app.querySelector(".inspector-card")?.addEventListener("keydown", handleInspectorCardKeydown);
   attachEditorDataDropListeners();
+  renderPersistentShellCopy();
+  renderLanguageControl();
   syncImportDropOverlay();
   renderPreviewViewer();
 }
@@ -1216,6 +1273,58 @@ function renderLayout() {
   editorScreen.className = `editor-screen editor-screen--${viewportLayoutMode}`;
 }
 
+function renderPersistentShellCopy() {
+  app.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+
+  app.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+    element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+  });
+}
+
+function renderLanguageControl() {
+  const container = app.querySelector("[data-language-control]");
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="language-combobox ${state.isLanguageMenuOpen ? "is-open" : ""}">
+      <button
+        class="language-combobox__button"
+        type="button"
+        data-language-toggle
+        aria-haspopup="listbox"
+        aria-expanded="${state.isLanguageMenuOpen ? "true" : "false"}"
+        aria-controls="language-options"
+        aria-label="${escapeHtml(t("language.ariaLabel"))}"
+      >
+        <span class="language-combobox__icon" aria-hidden="true">${GLOBE_ICON_MARKUP}</span>
+        <span class="language-combobox__label">${escapeHtml(t("language.label"))}</span>
+      </button>
+      ${state.isLanguageMenuOpen ? `
+        <div class="language-combobox__menu" id="language-options" role="listbox" aria-label="${escapeHtml(t("language.listLabel"))}">
+          ${LOCALE_OPTIONS.map((option) => {
+            const isSelected = option.value === state.locale;
+            return `
+              <button
+                class="language-combobox__option ${isSelected ? "is-selected" : ""}"
+                type="button"
+                role="option"
+                aria-selected="${isSelected ? "true" : "false"}"
+                data-language-option="${option.value}"
+              >
+                ${escapeHtml(t(option.labelKey))}
+              </button>
+            `;
+          }).join("")}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
 function renderSegmentControl() {
   const segmentControl = app.querySelector("[data-segment-control]");
   if (!segmentControl) {
@@ -1227,6 +1336,8 @@ function renderSegmentControl() {
 
   segmentControl.querySelectorAll("[data-sidebar-tab]").forEach((button) => {
     const isActive = button.dataset.sidebarTab === state.sidebarTab;
+    const section = workspaceSections.find((entry) => entry.id === button.dataset.sidebarTab);
+    button.textContent = section ? getWorkspaceSectionLabel(section) : button.dataset.sidebarTab;
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
@@ -1247,6 +1358,8 @@ function render(options = {}) {
 
   const applyUpdate = () => {
     renderLayout();
+    renderPersistentShellCopy();
+    renderLanguageControl();
     renderSegmentControl();
     renderInspectorPanel();
     configureColoris();
@@ -1294,8 +1407,8 @@ function renderParametersTab() {
   return `
     <div class="inspector-panel inspector-panel--params">
       <div class="panel-intro">
-        <h1 class="panel-title">設定</h1>
-        <p class="panel-text">選んだキーキャップの形や印字を、入力に合わせて右側へ自動反映しながら調整できます。</p>
+        <h1 class="panel-title">${t("panels.settings.title")}</h1>
+        <p class="panel-text">${t("panels.settings.body")}</p>
       </div>
 
       <div class="parameter-group-list">
@@ -1310,8 +1423,8 @@ function renderExportTab() {
   return `
     <div class="inspector-panel inspector-panel--export">
       <div class="panel-intro">
-        <h1 class="panel-title">書き出し</h1>
-        <p class="panel-text">3MF の印刷データと、あとで編集を再開するための JSON を保存できます。</p>
+        <h1 class="panel-title">${t("panels.export.title")}</h1>
+        <p class="panel-text">${t("panels.export.body")}</p>
       </div>
 
       <div class="export-button-list">
@@ -1319,28 +1432,28 @@ function renderExportTab() {
           <div class="export-action-card__header">
             <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.file}</span>
             <span class="export-action-card__title-stack">
-              <span class="chip-label">編集再開用 JSON</span>
-              <strong id="export-json-title">編集データを保存</strong>
+              <span class="chip-label">${t("exportPanel.jsonChip")}</span>
+              <strong id="export-json-title">${t("exportPanel.jsonTitle")}</strong>
             </span>
           </div>
-          <p class="export-action-card__text">形状、寸法、色、印字を JSON として保存します。あとでドラッグ&ドロップで再読込できます。</p>
+          <p class="export-action-card__text">${t("exportPanel.jsonBody")}</p>
           <button class="export-save-button" type="button" data-export="editor-data" ${state.exportsStatus === "running" ? "disabled" : ""}>
             ${EXPORT_ICON_MARKUP.download}
-            <span>${state.exportsStatus === "running" ? "保存しています..." : "JSON を保存"}</span>
+            <span>${state.exportsStatus === "running" ? t("actions.saving") : t("exportPanel.saveJson")}</span>
           </button>
         </section>
         <section class="export-action-card" aria-labelledby="export-3mf-title">
           <div class="export-action-card__header">
             <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.package}</span>
             <span class="export-action-card__title-stack">
-              <span class="chip-label">印刷用 3MF</span>
-              <strong id="export-3mf-title">3MFデータを保存</strong>
+              <span class="chip-label">${t("exportPanel.threeMfChip")}</span>
+              <strong id="export-3mf-title">${t("exportPanel.threeMfTitle")}</strong>
             </span>
           </div>
-          <p class="export-action-card__text">本体、目印、印字を含む印刷用データを 3MF 形式でまとめて保存します。</p>
+          <p class="export-action-card__text">${t("exportPanel.threeMfBody")}</p>
           <button class="export-save-button" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
             ${EXPORT_ICON_MARKUP.download}
-            <span>${state.exportsStatus === "running" ? "保存しています..." : "3MF を保存"}</span>
+            <span>${state.exportsStatus === "running" ? t("actions.saving") : t("exportPanel.saveThreeMf")}</span>
           </button>
         </section>
       </div>
@@ -1352,25 +1465,27 @@ function renderNameFieldCard() {
   const groupViewTransitionName = createViewTransitionName("field-group", SETTINGS_NAME_FIELD.key);
   const fieldViewTransitionName = createViewTransitionName("field", SETTINGS_NAME_FIELD.key);
   const value = state.keycapParams[SETTINGS_NAME_FIELD.key];
+  const fieldLabel = resolveDynamicCopy(SETTINGS_NAME_FIELD.label);
+  const fieldPlaceholder = resolveDynamicCopy(SETTINGS_NAME_FIELD.placeholder);
 
   return `
     <section class="field-group-card" style="view-transition-name: ${groupViewTransitionName};">
       <div class="field-group-header">
         <div class="field-group-header__row">
-          <h3>名称</h3>
+          <h3>${t("nameGroup.title")}</h3>
         </div>
       </div>
       <div class="field-group-body">
-        <p class="field-group-description">保存するときの名前です。3MF と編集データ JSON の両方に使われ、あとで読み込んでもこの名前が残ります。</p>
+        <p class="field-group-description">${t("nameGroup.description")}</p>
         <span class="field-control name-field-control" style="view-transition-name: ${fieldViewTransitionName};">
           <input
             id="settings-name-input"
             type="text"
             data-field="${SETTINGS_NAME_FIELD.key}"
             value="${escapeHtml(value)}"
-            aria-label="${escapeHtml(SETTINGS_NAME_FIELD.label)}"
+            aria-label="${escapeHtml(fieldLabel)}"
             ${SETTINGS_NAME_FIELD.maxLength != null ? `maxlength="${SETTINGS_NAME_FIELD.maxLength}"` : ""}
-            ${SETTINGS_NAME_FIELD.placeholder ? `placeholder="${escapeHtml(SETTINGS_NAME_FIELD.placeholder)}"` : ""}
+            ${fieldPlaceholder ? `placeholder="${escapeHtml(fieldPlaceholder)}"` : ""}
             spellcheck="false"
             autocomplete="off"
           />
@@ -1386,7 +1501,9 @@ function renderFieldGroup(group, groupIndex) {
   const isCollapsed = state.collapsedFieldGroups[groupId] === true;
   const groupViewTransitionName = createViewTransitionName("field-group", groupId);
   const groupBodyId = `field-group-body-${groupId}`;
-  const toggleLabel = isCollapsed ? `${group.title}を展開` : `${group.title}を折りたたむ`;
+  const toggleLabel = isCollapsed
+    ? t("fieldGroup.expand", { title: group.title })
+    : t("fieldGroup.collapse", { title: group.title });
   const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const groupDescription = resolveDynamicCopy(group.description);
 
@@ -1430,11 +1547,8 @@ function resolveDynamicCopy(value, params = state.keycapParams) {
 }
 
 function resolveFieldOptions(field, params = state.keycapParams) {
-  if (typeof field.options === "function") {
-    return field.options(params);
-  }
-
-  return field.options ?? [];
+  const options = typeof field.options === "function" ? field.options(params) : field.options ?? [];
+  return options.map((option) => localizeFieldOption(field.key, option));
 }
 
 function isFieldDisabled(field, params = state.keycapParams) {
@@ -1489,10 +1603,15 @@ function buildLegendFontPreviewStyle(font) {
 }
 
 function getLegendFontMetaLabel(font) {
-  return font?.fontKind === "variable" ? "Variable / named style" : "Static face";
+  return font?.fontKind === "variable" ? t("font.variableMeta") : t("font.staticMeta");
 }
 
 function getLegendFontAttributionText(font) {
+  const localizedLines = t(`font.attributions.${font?.key}`, {}, null);
+  if (Array.isArray(localizedLines)) {
+    return localizedLines.join("\n");
+  }
+
   const lines = Array.isArray(font?.requiredAttributionLines) ? font.requiredAttributionLines : [];
   return lines.join("\n");
 }
@@ -1505,15 +1624,15 @@ function renderLegendFontAttributionCard(font) {
 
   const isCopied = state.copiedFontAttributionKey === font.key;
   return `
-    <span class="note-card font-attribution-card">
+      <span class="note-card font-attribution-card">
       <span class="font-attribution-card__header">
-        <strong>著作権・ライセンス表記</strong>
+        <strong>${t("font.attributionTitle")}</strong>
         <button
           class="font-attribution-card__copy"
           type="button"
           data-copy-font-attribution="${font.key}"
         >
-          ${isCopied ? "コピー済み" : "コピー"}
+          ${isCopied ? t("actions.copied") : t("actions.copy")}
         </button>
       </span>
       <pre class="font-attribution-card__body">${escapeHtml(attributionText)}</pre>
@@ -1524,7 +1643,7 @@ function renderLegendFontAttributionCard(font) {
 function renderLegendFontPickerOptions() {
   const matchingFonts = getLegendFontPickerResults();
   if (matchingFonts.length === 0) {
-    return `<div class="font-picker-empty">一致するフォントがありません</div>`;
+    return `<div class="font-picker-empty">${t("font.noResults")}</div>`;
   }
 
   return matchingFonts
@@ -1555,6 +1674,7 @@ function renderField(field) {
   const fieldLabel = resolveDynamicCopy(field.label);
   const fieldHint = resolveDynamicCopy(field.hint);
   const secondaryLabel = resolveDynamicCopy(field.secondaryLabel);
+  const fieldPlaceholder = resolveDynamicCopy(field.placeholder);
   const fieldOptions = resolveFieldOptions(field);
   const isDisabled = isFieldDisabled(field);
 
@@ -1567,7 +1687,7 @@ function renderField(field) {
         </span>
         <span class="checkbox-pill">
           <input type="checkbox" data-field="${field.key}" ${value ? "checked" : ""} />
-          <span>${value ? "オン" : "オフ"}</span>
+          <span>${value ? t("actions.on") : t("actions.off")}</span>
         </span>
       </label>
     `;
@@ -1603,20 +1723,20 @@ function renderField(field) {
                 data-font-picker-open="${field.key}"
                 aria-expanded="${isPickerOpen ? "true" : "false"}"
                 aria-controls="${pickerId}"
-                aria-label="フォントを検索"
+                aria-label="${escapeHtml(t("font.searchAriaLabel"))}"
               >
                 ${SEARCH_ICON_MARKUP}
               </button>
             </span>
             ${isPickerOpen ? `
-              <span class="font-picker-popover" id="${pickerId}" role="dialog" aria-label="フォント検索">
+              <span class="font-picker-popover" id="${pickerId}" role="dialog" aria-label="${escapeHtml(t("font.searchDialogLabel"))}">
                 <label class="field-control font-picker-search-input">
                   <span class="font-picker-search-input__icon">${SEARCH_ICON_MARKUP}</span>
                   <input
                     type="text"
                     data-font-picker-query
                     value="${escapeHtml(state.legendFontPickerQuery)}"
-                    placeholder="フォント名で検索"
+                    placeholder="${escapeHtml(t("font.searchPlaceholder"))}"
                     spellcheck="false"
                     autocomplete="off"
                   />
@@ -1645,7 +1765,7 @@ function renderField(field) {
             ${fieldOptions
               .map(
                 (option) => `
-                  <option value="${option.value}" ${option.value === value ? "selected" : ""}>${option.label}</option>
+                  <option value="${escapeHtml(option.value)}" ${option.value === value ? "selected" : ""}>${escapeHtml(option.label)}</option>
                 `,
               )
               .join("")}
@@ -1668,7 +1788,7 @@ function renderField(field) {
             data-field="${field.key}"
             value="${escapeHtml(value)}"
             ${field.maxLength != null ? `maxlength="${field.maxLength}"` : ""}
-            ${field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : ""}
+            ${fieldPlaceholder ? `placeholder="${escapeHtml(fieldPlaceholder)}"` : ""}
           />
         </span>
       </label>
@@ -1699,11 +1819,11 @@ function renderField(field) {
               aria-invalid="false"
               value="${escapeHtml(normalizedValue)}"
               maxlength="7"
-              ${field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : ""}
+              ${fieldPlaceholder ? `placeholder="${escapeHtml(fieldPlaceholder)}"` : ""}
             />
           </span>
           <button class="field-color-button" type="button" data-color-picker-open="${field.key}">
-            選ぶ
+            ${t("actions.choose")}
           </button>
         </span>
       </div>
@@ -1719,7 +1839,7 @@ function renderField(field) {
         </span>
         <span class="field-control-cluster">
           <span class="field-mini-control">
-            <span class="field-mini-control__label">横幅</span>
+            <span class="field-mini-control__label">${t("fields.keyWidth.miniLabel")}</span>
             <span class="field-control">
               <input
                 type="number"
@@ -1777,6 +1897,31 @@ function getClosestFromEventTarget(event, selector) {
   }
 
   return event.target.closest(selector);
+}
+
+function handleLanguageControlClick(event) {
+  const optionButton = getClosestFromEventTarget(event, "[data-language-option]");
+  if (optionButton) {
+    const nextLocale = normalizeLocale(optionButton.dataset.languageOption);
+    state.isLanguageMenuOpen = false;
+
+    if (nextLocale !== state.locale) {
+      state.locale = setLocalePreference(nextLocale);
+      render({ animateInspector: true });
+    } else {
+      render();
+    }
+
+    return;
+  }
+
+  const toggleButton = getClosestFromEventTarget(event, "[data-language-toggle]");
+  if (!toggleButton) {
+    return;
+  }
+
+  state.isLanguageMenuOpen = !state.isLanguageMenuOpen;
+  render();
 }
 
 function handleSegmentControlClick(event) {
@@ -1991,7 +2136,7 @@ function applyLegendFontSelection(font, options = {}) {
   state.keycapParams.legendFontKey = font.key;
   syncDerivedKeycapParams(state.keycapParams);
   state.editorStatus = "dirty";
-  state.editorSummary = "入力内容を反映待ち";
+  state.editorSummary = t("status.dirty");
   render({ animateInspector: true });
 
   if (!deferPreview) {
@@ -2028,23 +2173,53 @@ function handleLegendFontPickerQueryInput(input) {
 }
 
 function handleWindowPointerDown(event) {
-  if (!state.legendFontPickerOpen) {
-    return;
+  let shouldRender = false;
+
+  if (
+    state.isLanguageMenuOpen
+    && event.target instanceof Element
+    && !event.target.closest("[data-language-control]")
+  ) {
+    state.isLanguageMenuOpen = false;
+    shouldRender = true;
   }
 
-  if (event.target instanceof Element && event.target.closest("[data-font-picker]")) {
-    return;
+  if (
+    state.legendFontPickerOpen
+    && event.target instanceof Element
+    && !event.target.closest("[data-font-picker]")
+  ) {
+    state.legendFontPickerOpen = false;
+    state.legendFontPickerQuery = "";
+    shouldRender = true;
   }
 
-  closeLegendFontPicker();
+  if (shouldRender) {
+    render();
+  }
 }
 
 function handleWindowKeydown(event) {
-  if (event.key !== "Escape" || !state.legendFontPickerOpen) {
+  if (event.key !== "Escape") {
     return;
   }
 
-  closeLegendFontPicker();
+  let shouldRender = false;
+
+  if (state.isLanguageMenuOpen) {
+    state.isLanguageMenuOpen = false;
+    shouldRender = true;
+  }
+
+  if (state.legendFontPickerOpen) {
+    state.legendFontPickerOpen = false;
+    state.legendFontPickerQuery = "";
+    shouldRender = true;
+  }
+
+  if (shouldRender) {
+    render();
+  }
 }
 
 function buildEditorDataFilename(params = state.keycapParams) {
@@ -2151,16 +2326,16 @@ async function importEditorDataFile(file) {
 
   state.keycapParams = nextParams;
   state.editorStatus = "dirty";
-  state.editorSummary = "読み込んだ編集データを反映待ち";
+  state.editorSummary = t("status.loadedDirty");
   setExportStatus(
     "success",
-    `編集データを読み込みました (${file.name})`,
+    t("importExport.loaded", { fileName: file.name }),
     {
       format: "editor-data-import",
-      label: "編集データ読込",
+      label: t("importExport.loadLabel"),
       elapsedMs: Math.round(performance.now() - startedAt),
       byteLength: file.size,
-      notes: `${file.name} を現在の編集内容へ反映`,
+      notes: t("importExport.loadNote", { fileName: file.name }),
     },
   );
 
@@ -2171,7 +2346,7 @@ async function importEditorDataFile(file) {
 async function importEditorDataFromDrop(files) {
   const jsonFile = files.find((file) => file.name.toLowerCase().endsWith(".json"));
   if (!jsonFile) {
-    throw new Error("JSON ファイルが見つかりません。");
+    throw new Error(t("importExport.noJsonFile"));
   }
 
   await importEditorDataFile(jsonFile);
@@ -2225,10 +2400,10 @@ async function handleWindowDrop(event) {
   } catch (error) {
     setExportStatus(
       "error",
-      "編集データの読み込みに失敗しました",
+      t("importExport.loadFailed"),
       {
         format: "editor-data-import",
-        label: "編集データ読込失敗",
+        label: t("importExport.loadFailedLabel"),
         elapsedMs: 0,
         byteLength: 0,
         notes: `${error}`,
@@ -2371,11 +2546,11 @@ function handleFieldChange(event) {
   }
 
   if (input.type === "checkbox") {
-    input.parentElement?.querySelector("span:last-child")?.replaceChildren(input.checked ? "オン" : "オフ");
+    input.parentElement?.querySelector("span:last-child")?.replaceChildren(input.checked ? t("actions.on") : t("actions.off"));
   }
 
   state.editorStatus = "dirty";
-  state.editorSummary = "入力内容を反映待ち";
+  state.editorSummary = t("status.dirty");
 
   if (
     field === "legendEnabled"
@@ -2453,7 +2628,7 @@ async function renderPreviewViewer() {
   if (state.previewLayers.length === 0) {
     container.innerHTML = `
       <div class="preview-placeholder">
-        まだ見た目を表示していません。設定を変えると自動で最新の形に更新されます。
+        ${t("preview.placeholder")}
       </div>
     `;
     return;
@@ -2522,7 +2697,7 @@ function createKeycapOffJobs(purpose) {
     ];
   }
 
-  throw new Error(`未対応の OFF ジョブ用途です: ${purpose}`);
+  throw new Error(t("errors.unsupportedOffPurpose", { purpose }));
 }
 
 async function runKeycapOffJobs(jobs) {
@@ -2557,7 +2732,7 @@ async function executeKeycapPreview(options = {}) {
   const requestId = ++latestPreviewRequestId;
 
   state.editorStatus = "running";
-  state.editorSummary = "見た目を更新しています";
+  state.editorSummary = t("preview.running");
   if (!silent) {
     state.editorLogs = [];
     state.editorError = "";
@@ -2574,13 +2749,18 @@ async function executeKeycapPreview(options = {}) {
     const totalFaces = previewResults.reduce((sum, entry) => sum + entry.mesh.faces.length, 0);
     const visiblePartLabels = describePartLabels(previewResults.map((entry) => entry.name));
     state.editorStatus = "success";
-    state.editorSummary = `${Math.round(totalElapsedMs)} ms / ${previewResults.length} objects / ${totalVertices} vertices / ${totalFaces} triangles`;
+    state.editorSummary = t("preview.summary", {
+      elapsedMs: Math.round(totalElapsedMs),
+      objectCount: previewResults.length,
+      vertexCount: totalVertices,
+      faceCount: totalFaces,
+    });
     state.editorLogs = previewResults.flatMap((entry) =>
       entry.result.logs.map((log) => `[${entry.name}/${log.stream}] ${log.text}`),
     );
     state.editorError = previewResults.length > 1
-      ? `見た目の更新が完了しました。${visiblePartLabels}を色ごとに分けて表示しています。`
-      : `見た目の更新が完了しました。${visiblePartLabels}を表示しています。`;
+      ? t("preview.successMultiple", { parts: visiblePartLabels })
+      : t("preview.successSingle", { parts: visiblePartLabels });
     state.previewLayers = previewResults.map((entry) => ({
       name: entry.name,
       color: entry.color,
@@ -2592,7 +2772,7 @@ async function executeKeycapPreview(options = {}) {
     }
 
     state.editorStatus = "error";
-    state.editorSummary = "見た目の更新に失敗しました";
+    state.editorSummary = t("preview.failed");
     state.editorLogs = [];
     state.editorError = `${error}`;
     state.previewLayers = [];
@@ -2603,7 +2783,7 @@ async function executeKeycapPreview(options = {}) {
 
 async function executeExport(format) {
   state.exportsStatus = "running";
-  state.exportsSummary = "保存データを準備しています";
+  state.exportsSummary = t("importExport.preparing");
   render();
 
   try {
@@ -2615,13 +2795,13 @@ async function executeExport(format) {
       downloadBlob(blob, buildEditorDataFilename(payload.params));
       setExportStatus(
         "success",
-        `編集データを保存しました (${blob.size} bytes)`,
+        t("importExport.savedEditorData", { byteLength: blob.size }),
         {
           format,
-          label: "編集データ JSON",
+          label: t("importExport.editorDataLabel"),
           elapsedMs: Math.round(performance.now() - startedAt),
           byteLength: blob.size,
-          notes: "画面で編集するパラメータを JSON 形式で保存",
+          notes: t("importExport.editorDataNote"),
         },
       );
     } else if (format === "3mf") {
@@ -2638,25 +2818,25 @@ async function executeExport(format) {
 
       setExportStatus(
         "success",
-        `3MFデータを保存しました (${blob.size} bytes / ${offResults.length} 個のパーツ)`,
+        t("importExport.savedThreeMf", { byteLength: blob.size, partCount: offResults.length }),
         {
           format,
-          label: "3MFデータ",
+          label: t("importExport.threeMfLabel"),
           elapsedMs: Math.round(offResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0)),
           byteLength: blob.size,
-          notes: `${savedPartLabels}を 3MF 形式でまとめて保存`,
+          notes: t("importExport.threeMfNote", { parts: savedPartLabels }),
         },
       );
     } else {
-      throw new Error(`未対応の export 形式です: ${format}`);
+      throw new Error(t("importExport.unsupportedExport", { format }));
     }
   } catch (error) {
     setExportStatus(
       "error",
-      "保存に失敗しました",
+      t("importExport.saveFailed"),
       {
         format,
-        label: "保存失敗",
+        label: t("importExport.saveFailedLabel"),
         elapsedMs: 0,
         byteLength: 0,
         notes: `${error}`,
