@@ -58,6 +58,7 @@ function stem_nominal_cross_chamfer_for_type(type) =
 function stem_plane_slope_magnitude(pitch_deg, roll_deg) =
     sqrt(pow(tan(pitch_deg), 2) + pow(tan(roll_deg), 2));
 typewriter_stem_mount_overlap = 0.02;
+typewriter_rim_body_clearance = 0.03;
 function stem_footprint_radius(type, outer_diameter, prong_width, prong_depth, prong_spacing, alps_length, alps_width) =
     type == "mx" || type == "choc_v2"
         ? positive_dimension(outer_diameter) / 2
@@ -321,22 +322,30 @@ module keycap_body_shell(quality = "export") {
         keycap_body_shell_positive(quality);
         keycap_legend_visible_volume(quality);
         if (rim_enabled) {
-            keycap_typewriter_rim(
-                width = key_width,
-                depth = key_depth,
-                top_center_height = top_center_height,
-                band_width = rim_width,
-                height_up = rim_height_up,
-                height_down = rim_height_down,
-                corner_radius = typewriter_corner_radius,
-                top_shape_type = top_shape_type,
-                dish_radius = dish_radius,
-                dish_depth = dish_depth,
-                pitch_deg = top_pitch_deg,
-                roll_deg = top_roll_deg,
-                quality = quality
-            );
+            keycap_body_rim_clearance_volume(quality);
         }
+    }
+}
+
+module keycap_body_rim_clearance_volume(quality = "export") {
+    if (rim_enabled) {
+        clearance = typewriter_rim_body_clearance;
+
+        keycap_typewriter_rim(
+            width = key_width + clearance * 2,
+            depth = key_depth + clearance * 2,
+            top_center_height = top_center_height + clearance,
+            band_width = rim_width + clearance * 2,
+            height_up = rim_height_up + clearance,
+            height_down = rim_height_down + clearance,
+            corner_radius = typewriter_corner_radius + clearance,
+            top_shape_type = top_shape_type,
+            dish_radius = dish_radius,
+            dish_depth = dish_depth,
+            pitch_deg = top_pitch_deg,
+            roll_deg = top_roll_deg,
+            quality = quality
+        );
     }
 }
 

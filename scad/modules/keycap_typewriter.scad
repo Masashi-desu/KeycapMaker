@@ -15,6 +15,7 @@ function typewriter_plan_has_inner_profile(width, depth, inset) =
     && typewriter_plan_inset_dimension(depth, inset) > 0.001;
 function typewriter_is_axis_aligned(pitch_deg, roll_deg) =
     abs(pitch_deg) <= 0.001 && abs(roll_deg) <= 0.001;
+typewriter_rim_cut_overlap = 0.02;
 
 module keycap_typewriter_plan_profile(
     width,
@@ -61,6 +62,26 @@ module keycap_typewriter_plan_ring(
             );
         }
     }
+}
+
+module keycap_typewriter_ring_prism(
+    width,
+    depth,
+    corner_radius,
+    band_width,
+    base_z = -1,
+    height = 8,
+    quality = "export"
+) {
+    translate([0, 0, base_z])
+        linear_extrude(height = max(height, 0.01))
+            keycap_typewriter_plan_ring(
+                width = width,
+                depth = depth,
+                corner_radius = corner_radius,
+                band_width = band_width,
+                quality = quality
+            );
 }
 
 module keycap_typewriter_outer_shell(
@@ -166,27 +187,15 @@ module keycap_typewriter_band_cap(
     inner_width = typewriter_plan_inset_dimension(width, safe_band_width);
     inner_depth = typewriter_plan_inset_dimension(depth, safe_band_width);
     inner_corner_radius = typewriter_plan_inset_corner_radius(width, depth, corner_radius, safe_band_width);
+    ring_clip_height = top_center_height + max(abs(dish_depth), 0) + 2;
 
-    difference() {
-        keycap_typewriter_cap(
-            width = width,
-            depth = depth,
-            top_center_height = top_center_height,
-            corner_radius = corner_radius,
-            top_shape_type = top_shape_type,
-            dish_radius = dish_radius,
-            dish_depth = dish_depth,
-            pitch_deg = pitch_deg,
-            roll_deg = roll_deg,
-            quality = quality
-        );
-
-        if (typewriter_plan_has_inner_profile(width, depth, safe_band_width)) {
+    if (typewriter_is_axis_aligned(pitch_deg, roll_deg)) {
+        intersection() {
             keycap_typewriter_cap(
-                width = inner_width,
-                depth = inner_depth,
+                width = width,
+                depth = depth,
                 top_center_height = top_center_height,
-                corner_radius = inner_corner_radius,
+                corner_radius = corner_radius,
                 top_shape_type = top_shape_type,
                 dish_radius = dish_radius,
                 dish_depth = dish_depth,
@@ -194,6 +203,46 @@ module keycap_typewriter_band_cap(
                 roll_deg = roll_deg,
                 quality = quality
             );
+
+            keycap_typewriter_ring_prism(
+                width = width,
+                depth = depth,
+                corner_radius = corner_radius,
+                band_width = safe_band_width,
+                base_z = -1,
+                height = ring_clip_height,
+                quality = quality
+            );
+        }
+    } else {
+        difference() {
+            keycap_typewriter_cap(
+                width = width,
+                depth = depth,
+                top_center_height = top_center_height,
+                corner_radius = corner_radius,
+                top_shape_type = top_shape_type,
+                dish_radius = dish_radius,
+                dish_depth = dish_depth,
+                pitch_deg = pitch_deg,
+                roll_deg = roll_deg,
+                quality = quality
+            );
+
+            if (typewriter_plan_has_inner_profile(width, depth, safe_band_width)) {
+                keycap_typewriter_cap(
+                    width = inner_width,
+                    depth = inner_depth,
+                    top_center_height = top_center_height,
+                    corner_radius = inner_corner_radius,
+                    top_shape_type = top_shape_type,
+                    dish_radius = dish_radius,
+                    dish_depth = dish_depth,
+                    pitch_deg = pitch_deg,
+                    roll_deg = roll_deg,
+                    quality = quality
+                );
+            }
         }
     }
 }
@@ -265,7 +314,7 @@ module keycap_typewriter_rim_top_extension(
             keycap_typewriter_band_cap(
                 width = width,
                 depth = depth,
-                top_center_height = top_center_height,
+                top_center_height = top_center_height + typewriter_rim_cut_overlap,
                 band_width = safe_band_width,
                 corner_radius = corner_radius,
                 top_shape_type = top_shape_type,

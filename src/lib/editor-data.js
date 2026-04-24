@@ -23,6 +23,7 @@ export const EDITOR_DATA_COMPAT_SCHEMA_VERSION = 1;
 const STEM_TYPE_VALUES = new Set(["none", "mx", "choc_v1", "choc_v2", "alps"]);
 const TOP_SLOPE_INPUT_MODE_VALUES = new Set(["angle", "edge-height"]);
 const TOP_SURFACE_SHAPE_VALUES = new Set(["flat", "cylindrical", "spherical"]);
+const TYPEWRITER_TOP_SURFACE_SHAPE_VALUES = new Set(["flat", "spherical"]);
 const TOP_SURFACE_SHAPE_PRESETS = Object.freeze({
   flat: Object.freeze({
     dishDepth: 0,
@@ -90,6 +91,23 @@ function resolveTopSurfaceShape(value, fallback = "flat") {
   return TOP_SURFACE_SHAPE_VALUES.has(fallback) ? fallback : "flat";
 }
 
+function getAllowedTopSurfaceShapeValues(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  return resolveShapeGeometryType(profileKey) === "typewriter"
+    ? TYPEWRITER_TOP_SURFACE_SHAPE_VALUES
+    : TOP_SURFACE_SHAPE_VALUES;
+}
+
+function resolveProfileTopSurfaceShape(profileKey, value, fallback = "flat") {
+  const allowedValues = getAllowedTopSurfaceShapeValues(profileKey);
+  const resolvedValue = resolveTopSurfaceShape(value, fallback);
+  if (allowedValues.has(resolvedValue)) {
+    return resolvedValue;
+  }
+
+  const resolvedFallback = resolveTopSurfaceShape(fallback, "flat");
+  return allowedValues.has(resolvedFallback) ? resolvedFallback : "flat";
+}
+
 export function getTopSurfaceShapePreset(value, fallback = "flat") {
   const resolvedShape = resolveTopSurfaceShape(value, fallback);
   const preset = TOP_SURFACE_SHAPE_PRESETS[resolvedShape] ?? TOP_SURFACE_SHAPE_PRESETS.flat;
@@ -113,7 +131,7 @@ function resolveActiveDishDepth(params = {}) {
     return 0;
   }
 
-  return resolveTopSurfaceShape(params.topSurfaceShape, "flat") === "flat" ? 0 : dishDepth;
+  return resolveProfileTopSurfaceShape(params.shapeProfile, params.topSurfaceShape, "flat") === "flat" ? 0 : dishDepth;
 }
 
 function clampTypewriterCornerRadius(value, fallback = 0) {
@@ -288,7 +306,11 @@ export function syncDerivedKeycapParams(params = {}) {
   params.topPitchDeg = Number.isFinite(Number(params.topPitchDeg)) ? Number(params.topPitchDeg) : Number(defaults.topPitchDeg ?? 0);
   params.topRollDeg = Number.isFinite(Number(params.topRollDeg)) ? Number(params.topRollDeg) : Number(defaults.topRollDeg ?? 0);
   params.topSlopeInputMode = resolveTopSlopeInputMode(params.topSlopeInputMode, resolveTopSlopeInputMode(defaults.topSlopeInputMode));
-  params.topSurfaceShape = resolveTopSurfaceShape(params.topSurfaceShape, resolveTopSurfaceShape(defaults.topSurfaceShape, "flat"));
+  params.topSurfaceShape = resolveProfileTopSurfaceShape(
+    profileKey,
+    params.topSurfaceShape,
+    resolveProfileTopSurfaceShape(profileKey, defaults.topSurfaceShape, "flat"),
+  );
   params.typewriterCornerRadius = clampTypewriterCornerRadius(
     params.typewriterCornerRadius,
     defaults.typewriterCornerRadius ?? Math.min(Number(params.keyWidth ?? defaults.keyWidth ?? 18), Number(params.keyDepth ?? defaults.keyDepth ?? 18)) / 2,
@@ -359,7 +381,12 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
   }
 
   if (fieldKey === "topSurfaceShape") {
-    return resolveTopSurfaceShape(value, resolveTopSurfaceShape(fallback, "flat"));
+    const profileKey = paramsContext?.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+    return resolveProfileTopSurfaceShape(
+      profileKey,
+      value,
+      resolveProfileTopSurfaceShape(profileKey, fallback, "flat"),
+    );
   }
 
   if (fieldKey === "legendOutlineDelta") {

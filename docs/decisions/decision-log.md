@@ -2,12 +2,26 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-04-24 - typewriter rim の body 側座面は微小 clearance で削る
+
+- 結論:
+  typewriter rim は visible rim と同じ体積を body から引かず、body 側だけ 0.03 mm 大きい rim clearance volume で座面を削る
+- 理由:
+  body と rim が同一面を共有すると、preview と export の separate volume 境界で body 色が rim 表面に薄く残るため
+
 ## 2026-04-23 - custom-shell のキートップは flat / cylindrical / spherical を切り替え可能にする
 
 - 結論:
   custom-shell のキートップ形状は `topSurfaceShape` で切り替え、`dishDepth` はプラスで凹み、マイナスで盛り上がりとして扱う。cylindrical は固定向きとし、`topPitchDeg` / `topRollDeg` を変えても dish 自体の曲率は維持したまま傾ける
 - 理由:
   フラットだけではキートップの触感と見た目の幅が狭く、cylindrical / spherical の一般的な差を小さな UI 拡張で表現できるため
+
+## 2026-04-23 - typewriter のキートップ形状は flat / spherical に限定する
+
+- 結論:
+  typewriter shape では `topSurfaceShape` に `flat` と `spherical` だけを出し、state / import でも `cylindrical` は受けず profile default へ丸める
+- 理由:
+  今回の要件は typewriter へ spherical を追加することであり、custom-shell 向けに定義した cylindrical をそのまま露出すると UI と保存データの意味がぶれるため
 
 ## 2026-04-16 - 静的配信前提の採用
 

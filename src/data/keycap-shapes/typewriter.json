@@ -67,7 +67,7 @@
       "id": "top",
       "title": "キートップ",
       "description": "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
-      "fieldKeys": ["topCenterHeight", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",
@@ -92,6 +92,12 @@
     "topCenterHeight": {
       "label": "キートップの厚み",
       "hint": "薄いキートップの底から上面までの厚みです"
+    },
+    "topSurfaceShape": {
+      "options": [
+        { "value": "flat", "label": "フラット" },
+        { "value": "spherical", "label": "スフェリカル" }
+      ]
     }
   }
 }

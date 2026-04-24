@@ -93,6 +93,8 @@ flowchart TD
   現行キーキャップ構成の回帰確認用
 - `scad/samples/keycap-typewriter-rim.scad`
   typewriter shape の key rim 分離確認用
+- `scad/samples/keycap-typewriter-spherical-top.scad`
+  typewriter shape で spherical top が破綻しないか確認する回帰用
 - `scad/samples/keycap-legend-seat.scad`
   flush legend の座面切り抜き確認用
 - `scad/samples/keycap-curved-legend-seat.scad`

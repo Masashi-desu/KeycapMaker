@@ -86,6 +86,29 @@ test("負の深さは盛り上がりとして中央表面を上げる", () => {
   assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight + 0.6);
 });
 
+test("typewriter は spherical top を受ける", () => {
+  const parsed = parseEditorDataPayload({
+    shapeProfile: "typewriter",
+    topSurfaceShape: "spherical",
+    dishDepth: 0.8,
+  });
+
+  assert.equal(parsed.topSurfaceShape, "spherical");
+  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight - 0.8);
+});
+
+test("typewriter は cylindrical top を受けず default へ戻す", () => {
+  const defaults = createDefaultKeycapParams("typewriter");
+  const parsed = parseEditorDataPayload({
+    shapeProfile: "typewriter",
+    topSurfaceShape: "cylindrical",
+    dishDepth: 0.7,
+  });
+
+  assert.equal(parsed.topSurfaceShape, defaults.topSurfaceShape);
+  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight);
+});
+
 test("キートップ形状ごとの代表プリセットを返す", () => {
   assert.deepEqual(getTopSurfaceShapePreset("flat"), {
     dishDepth: 0,
