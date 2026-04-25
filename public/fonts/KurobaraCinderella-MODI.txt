@@ -6,6 +6,9 @@ https://modi.jpn.org/font_kurobara-cinderella.php
 Downloaded archive:
 https://modi.jpn.org/download/MODI_kurobara-cinderella_2018_0805.zip
 
+Review date:
+2026-04-25
+
 Downloaded for this repository:
 2026-04-21
 
@@ -15,6 +18,9 @@ Archive contents used here:
 
 Bundled font file in this repository:
 - KurobaraCinderella-Regular.ttf
+
+Bundled SHA-256:
+- KurobaraCinderella-Regular.ttf: 7eb144f6781107438b35f8d761efff9a6db6a8c2710b560bee520f73e5928025
 
 Bundled readme summary (UTF-8 transcription):
 - 黒薔薇シンデレラ Version 1.00.20180805

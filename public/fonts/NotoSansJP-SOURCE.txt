@@ -4,6 +4,9 @@ Noto Sans JP source and license note
 Source page:
 https://github.com/google/fonts/tree/main/ofl/notosansjp
 
+Source page at review:
+https://github.com/google/fonts/tree/46d8a043641ec6f446cddf39749c0b8d0dc71467/ofl/notosansjp
+
 Bundled download URL:
 https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf
 
@@ -13,9 +16,16 @@ https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/OFL.txt
 Download date:
 2026-04-25
 
+Review date:
+2026-04-25
+
 Bundled files in this repository:
 - NotoSansJP-Variable.ttf
 - NotoSansJP-OFL.txt
+
+Bundled SHA-256:
+- NotoSansJP-Variable.ttf: c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f
+- NotoSansJP-OFL.txt: babcfe66c8a098b2fa279bc724a3a342f8124f77ce18941fbcc1bbb39823cded
 
 License evidence:
 - The Google Fonts OFL.txt in the same directory says:
