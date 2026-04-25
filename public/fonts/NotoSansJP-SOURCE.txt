@@ -1,0 +1,35 @@
+Noto Sans JP source and license note
+====================================
+
+Source page:
+https://github.com/google/fonts/tree/main/ofl/notosansjp
+
+Bundled download URL:
+https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf
+
+Bundled license URL:
+https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/OFL.txt
+
+Download date:
+2026-04-25
+
+Bundled files in this repository:
+- NotoSansJP-Variable.ttf
+- NotoSansJP-OFL.txt
+
+License evidence:
+- The Google Fonts OFL.txt in the same directory says:
+  Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
+  This Font Software is licensed under the SIL Open Font License, Version 1.1.
+- The bundled TTF name table has nameID 13:
+  This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL
+
+Font metadata observed from the bundled TTF:
+- nameID 0: (c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+- nameID 1: Noto Sans JP Thin
+- nameID 4: Noto Sans JP Thin
+- nameID 5: Version 2.004-H2;hotconv 1.0.118;makeotfexe 2.5.65603
+- nameID 14: http://scripts.sil.org/OFL
+
+Use note:
+The bundled font is used unmodified as a legend font asset and redistributed with its OFL text. Do not use the reserved font name "Source" for modified versions unless the copyright holder grants permission.

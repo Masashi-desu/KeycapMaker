@@ -15,6 +15,22 @@
   - 出典: Google Fonts `ofl/mplus1p`
   - ライセンス: `MPLUS1p-OFL.txt`
 
+- `NotoSans-Variable.ttf`
+  - 表示名: `Noto Sans Variable`
+  - OpenSCAD 名: `Noto Sans`
+  - 利用方針: variable font。named style は `Thin` から `Black` まで選択する
+  - 出典: Google Fonts `ofl/notosans`
+  - ライセンス: `NotoSans-OFL.txt`
+  - 出典メモ: `NotoSans-SOURCE.txt`
+
+- `NotoSansJP-Variable.ttf`
+  - 表示名: `Noto Sans JP Variable`
+  - OpenSCAD 名: `Noto Sans JP`
+  - 利用方針: variable font。named style は `Thin` から `Black` まで選択する
+  - 出典: Google Fonts `ofl/notosansjp`
+  - ライセンス: `NotoSansJP-OFL.txt`
+  - 出典メモ: `NotoSansJP-SOURCE.txt`
+
 - `MPLUSRounded1c-Regular.ttf`
   - 表示名: `M PLUS Rounded 1c Regular`
   - OpenSCAD 名: `M PLUS Rounded 1c`

@@ -1,16 +1,27 @@
 export const DEFAULT_KEYCAP_LEGEND_FONT_KEY = "mplus1-variable";
 
-const MPLUS1_VARIABLE_STYLE_OPTIONS = Object.freeze([
-  { key: "thin", label: "Thin", fontQuery: "M PLUS 1:style=Thin", cssWeight: 100 },
-  { key: "extra-light", label: "ExtraLight", fontQuery: "M PLUS 1:style=ExtraLight", cssWeight: 200 },
-  { key: "light", label: "Light", fontQuery: "M PLUS 1:style=Light", cssWeight: 300 },
-  { key: "regular", label: "Regular", fontQuery: "M PLUS 1:style=Regular", cssWeight: 400 },
-  { key: "medium", label: "Medium", fontQuery: "M PLUS 1:style=Medium", cssWeight: 500 },
-  { key: "semi-bold", label: "SemiBold", fontQuery: "M PLUS 1:style=SemiBold", cssWeight: 600 },
-  { key: "bold", label: "Bold", fontQuery: "M PLUS 1:style=Bold", cssWeight: 700 },
-  { key: "extra-bold", label: "ExtraBold", fontQuery: "M PLUS 1:style=ExtraBold", cssWeight: 800 },
-  { key: "black", label: "Black", fontQuery: "M PLUS 1:style=Black", cssWeight: 900 },
+const VARIABLE_WEIGHT_STYLE_DEFINITIONS = Object.freeze([
+  { key: "thin", label: "Thin", cssWeight: 100 },
+  { key: "extra-light", label: "ExtraLight", cssWeight: 200 },
+  { key: "light", label: "Light", cssWeight: 300 },
+  { key: "regular", label: "Regular", cssWeight: 400 },
+  { key: "medium", label: "Medium", cssWeight: 500 },
+  { key: "semi-bold", label: "SemiBold", cssWeight: 600 },
+  { key: "bold", label: "Bold", cssWeight: 700 },
+  { key: "extra-bold", label: "ExtraBold", cssWeight: 800 },
+  { key: "black", label: "Black", cssWeight: 900 },
 ]);
+
+function createVariableWeightStyleOptions(fontName) {
+  return Object.freeze(VARIABLE_WEIGHT_STYLE_DEFINITIONS.map((style) => ({
+    ...style,
+    fontQuery: `${fontName}:style=${style.label}`,
+  })));
+}
+
+const MPLUS1_VARIABLE_STYLE_OPTIONS = createVariableWeightStyleOptions("M PLUS 1");
+const NOTO_SANS_VARIABLE_STYLE_OPTIONS = createVariableWeightStyleOptions("Noto Sans");
+const NOTO_SANS_JP_VARIABLE_STYLE_OPTIONS = createVariableWeightStyleOptions("Noto Sans JP");
 
 export const KEYCAP_LEGEND_FONTS = Object.freeze([
   {
@@ -39,6 +50,34 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend M PLUS 1p Regular",
     cssWeight: 400,
+  },
+  {
+    key: "noto-sans-variable",
+    label: "Noto Sans Variable",
+    searchLabel: "Noto Sans Variable Latin Greek Cyrillic Devanagari standard sans",
+    fontKind: "variable",
+    fontName: "Noto Sans",
+    fontQuery: "Noto Sans",
+    nativeStyleOptions: NOTO_SANS_VARIABLE_STYLE_OPTIONS,
+    defaultStyleKey: "regular",
+    assetPath: "fonts/NotoSans-Variable.ttf",
+    runtimePath: "/fonts/NotoSans-Variable.ttf",
+    licenseLabel: "SIL Open Font License 1.1",
+    measurementFamily: "Keycap Legend Noto Sans Variable",
+  },
+  {
+    key: "noto-sans-jp-variable",
+    label: "Noto Sans JP Variable",
+    searchLabel: "Noto Sans JP Variable Japanese 日本語 ゴシック gothic standard sans",
+    fontKind: "variable",
+    fontName: "Noto Sans JP",
+    fontQuery: "Noto Sans JP",
+    nativeStyleOptions: NOTO_SANS_JP_VARIABLE_STYLE_OPTIONS,
+    defaultStyleKey: "regular",
+    assetPath: "fonts/NotoSansJP-Variable.ttf",
+    runtimePath: "/fonts/NotoSansJP-Variable.ttf",
+    licenseLabel: "SIL Open Font License 1.1",
+    measurementFamily: "Keycap Legend Noto Sans JP Variable",
   },
   {
     key: "mplusrounded1c-regular",

@@ -16,6 +16,9 @@
 - `vendor/openscad/`: OpenSCAD WASM runtime
 - `fonts/MPLUS1-Variable.ttf`: `M PLUS 1` variable font
 - `fonts/MPLUS1p-Regular.ttf`: 標準ゴシック
+- `fonts/NotoSans-Variable.ttf`: `Noto Sans` variable font
+- `fonts/NotoSansJP-Variable.ttf`: `Noto Sans JP` variable font
 - `fonts/MPLUSRounded1c-Regular.ttf`: 丸みのあるゴシック
 - `fonts/DotGothic16-Regular.ttf`: ドット風ゴシック
 - `fonts/*-OFL.txt`: 各フォントのライセンス
+- `fonts/*-SOURCE.txt`: 一部フォントの出典・メタデータ確認メモ
