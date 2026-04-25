@@ -40,6 +40,8 @@ const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
 const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
+const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
+const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const RESERVED_COMPAT_PAYLOAD_KEYS = new Set(["kind", "schemaVersion", "profileSchemaVersion", "savedAt", "selectors", "params"]);
 const KNOWN_EDITOR_PARAM_KEYS = Object.freeze(
   Array.from(new Set(keycapEditorProfiles.profiles.flatMap((profile) => Object.keys(profile.defaults ?? {})))),
@@ -164,6 +166,22 @@ function clampTypewriterRimWidth(value, params = {}, fallback = 0) {
   }
 
   return Math.min(Math.max(nextValue, 0), maxWidth);
+}
+
+function getTypewriterMountHeightMinimum(params = {}) {
+  const topCenterHeight = clampMinimum(params.topCenterHeight, 5.2, 0.1);
+  return topCenterHeight + TYPEWRITER_MIN_STEM_HEIGHT - TYPEWRITER_STEM_MOUNT_OVERLAP;
+}
+
+function clampTypewriterMountHeight(value, params = {}, fallback = 0) {
+  const minimum = getTypewriterMountHeightMinimum(params);
+  const fallbackValue = Number(fallback);
+  const nextValue = Number(value);
+  const resolvedFallback = Number.isFinite(fallbackValue) && fallbackValue > 0
+    ? fallbackValue
+    : minimum;
+
+  return Math.max(Number.isFinite(nextValue) ? nextValue : resolvedFallback, minimum);
 }
 
 function clampLegendOutlineDelta(value, fallback = 0) {
@@ -315,6 +333,13 @@ export function syncDerivedKeycapParams(params = {}) {
     params.typewriterCornerRadius,
     defaults.typewriterCornerRadius ?? Math.min(Number(params.keyWidth ?? defaults.keyWidth ?? 18), Number(params.keyDepth ?? defaults.keyDepth ?? 18)) / 2,
   );
+  if (resolveShapeGeometryType(profileKey) === "typewriter") {
+    params.typewriterMountHeight = clampTypewriterMountHeight(
+      params.typewriterMountHeight,
+      params,
+      defaults.typewriterMountHeight ?? 0,
+    );
+  }
   params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
   params.rimHeightUp = clampNonNegativeNumber(params.rimHeightUp, defaults.rimHeightUp ?? 0);
   params.rimHeightDown = clampNonNegativeNumber(params.rimHeightDown, defaults.rimHeightDown ?? 0);
@@ -399,6 +424,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "rimWidth") {
     return clampTypewriterRimWidth(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "typewriterMountHeight") {
+    return clampTypewriterMountHeight(value, paramsContext, fallback);
   }
 
   if (fieldKey === "rimHeightUp" || fieldKey === "rimHeightDown" || fieldKey === "homingBarChamfer") {

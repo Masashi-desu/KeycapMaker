@@ -152,6 +152,10 @@ const en = Object.freeze({
       hint: "The keytop center before adding the dish. Current center surface: {height}.",
       typewriterHint: "The thickness from the bottom of the thin keytop to the top surface",
     },
+    typewriterMountHeight: {
+      label: "Top-Referenced Height",
+      hint: "Distance from the keytop body top center to the lower end of the mount. Current minimum: {minHeight}.",
+    },
     topSurfaceShape: {
       label: "Keytop Surface",
       hint: "Flat is planar, cylindrical curves in one direction, and spherical curves in all directions",

@@ -5,6 +5,7 @@ user_top_center_height = 9.5;
 user_wall_thickness = 1.2;
 user_top_scale = 0.84;
 user_typewriter_corner_radius = 9;
+user_typewriter_mount_height = 11.68;
 user_profile_front_angle = 15;
 user_profile_back_angle = 15;
 user_profile_left_angle = 10;

@@ -152,6 +152,10 @@ const ja = Object.freeze({
       hint: "dish を付ける前のキートップ中央です。現在の中央表面は {height} です",
       typewriterHint: "薄いキートップの底から上面までの厚みです",
     },
+    typewriterMountHeight: {
+      label: "上面基準の高さ",
+      hint: "キートップ本体の上面中央から取り付け部分の下端までの距離です。現在の最小値は {minHeight} です",
+    },
     topSurfaceShape: {
       label: "キートップ形状",
       hint: "フラットは平面、シンドリカルは一方向、スフェリカルは全方向に曲がります",

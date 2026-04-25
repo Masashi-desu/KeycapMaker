@@ -60,6 +60,8 @@ SCAD 側では dish も top plane と同じ座標変換へ載せるため、`top
 shell shape の `topScale` は UI パラメータとして保持しつつ、JS bridge で shape JSON の geometry defaults から最終的な前後左右角度へ解決してから SCAD へ渡す。
 shape ごとの初期値、geometry defaults、表示グループ構成は `src/data/keycap-shapes/*.json` に置き、SCAD 側は top-level user parameter に対してフェイルセーフ default を持たない。JS bridge が shape JSON から必要値をすべて解決して `user_*` として注入する。
 
+typewriter shape の取り付け高さは `typewriterMountHeight` で保持し、キートップ本体の上面中央から stem 下端までの距離として扱う。SCAD 側では `user_typewriter_mount_height` と `topCenterHeight` から実際の `stem_height` へ変換するため、`topCenterHeight` はキートップ本体の厚み、`typewriterMountHeight` は装着時の高さとして独立して調整できる。
+
 stem は希望高さの nominal 形状を先に作り、最後に keycap 内部クリアランス volume と `intersection()` して止める。これにより、強い `pitch / roll` があっても stem はキートップ裏面に当たった位置で自動的に止まり、単純な高さ抑制より自然に追従する。
 
 ### Mermaid で見る画面 JSON SCAD WASM の流れ
@@ -93,6 +95,8 @@ flowchart TD
   現行キーキャップ構成の回帰確認用
 - `scad/samples/keycap-typewriter-rim.scad`
   typewriter shape の key rim 分離確認用
+- `scad/samples/keycap-typewriter-mount-height.scad`
+  typewriter shape の上面基準取り付け高さ確認用
 - `scad/samples/keycap-typewriter-spherical-top.scad`
   typewriter shape で spherical top が破綻しないか確認する回帰用
 - `scad/samples/keycap-legend-seat.scad`

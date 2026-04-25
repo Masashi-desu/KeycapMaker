@@ -107,6 +107,8 @@ const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
 const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
+const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
+const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
 const DEFAULT_KEYCAP_COLORS = Object.freeze({
@@ -268,6 +270,17 @@ function getTypewriterRimHeightDownHint() {
   return t("fields.rimHeightDown.hint");
 }
 
+function getTypewriterMountHeightMinimum(params = state.keycapParams) {
+  const topCenterHeight = clampMinimum(params.topCenterHeight, 5.2, 0.1);
+  return topCenterHeight + TYPEWRITER_MIN_STEM_HEIGHT - TYPEWRITER_STEM_MOUNT_OVERLAP;
+}
+
+function getTypewriterMountHeightHint(params) {
+  return t("fields.typewriterMountHeight.hint", {
+    minHeight: formatMillimeter(getTypewriterMountHeightMinimum(params)),
+  });
+}
+
 function clampLegendOutlineDelta(value, fallback = 0) {
   const nextValue = Number(value);
   if (!Number.isFinite(nextValue)) {
@@ -309,6 +322,7 @@ const GEOMETRY_TYPE_RESET_FIELDS = new Set([
   "dishRadius",
   "dishDepth",
   "typewriterCornerRadius",
+  "typewriterMountHeight",
 ]);
 
 function isCrossCompatibleStemType(stemType) {
@@ -890,6 +904,15 @@ const fieldGroupTemplates = [
         hint: () => t("fields.stemType.hint"),
         type: "select",
         options: STEM_TYPE_OPTIONS,
+      },
+      {
+        key: "typewriterMountHeight",
+        label: () => t("fields.typewriterMountHeight.label"),
+        hint: (params) => getTypewriterMountHeightHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: 1,
+        visibleWhen: (params) => params.stemEnabled,
       },
       {
         key: "stemOuterDelta",
@@ -2421,6 +2444,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topBackHeight",
   "topLeftHeight",
   "topRightHeight",
+  "typewriterMountHeight",
 ]);
 
 function syncFieldHint(fieldKey) {

@@ -152,6 +152,10 @@ const ko = Object.freeze({
       hint: "dish를 적용하기 전의 키톱 중앙입니다. 현재 중앙 표면은 {height}입니다.",
       typewriterHint: "얇은 키톱의 바닥에서 상면까지의 두께입니다",
     },
+    typewriterMountHeight: {
+      label: "상면 기준 높이",
+      hint: "키톱 본체의 상면 중앙에서 장착부 하단까지의 거리입니다. 현재 최솟값은 {minHeight}입니다.",
+    },
     topSurfaceShape: {
       label: "키톱 형상",
       hint: "평면은 납작한 면, 원통은 한 방향, 구면은 모든 방향으로 휘어집니다",

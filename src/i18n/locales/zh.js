@@ -152,6 +152,10 @@ const zh = Object.freeze({
       hint: "添加 dish 前的键顶中心。当前中心表面为 {height}。",
       typewriterHint: "薄键顶从底部到上表面的厚度",
     },
+    typewriterMountHeight: {
+      label: "以上表面为基准的高度",
+      hint: "从键顶本体上表面中心到安装部下端的距离。当前最小值为 {minHeight}。",
+    },
     topSurfaceShape: {
       label: "键顶形状",
       hint: "平面为平坦表面，圆柱为单方向弯曲，球面为全方向弯曲",

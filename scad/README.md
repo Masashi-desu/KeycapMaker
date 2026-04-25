@@ -23,6 +23,7 @@
 - `presets/stem-nominals.scad`: stem 形状の nominal 寸法
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
 - `samples/keycap-typewriter.scad`: タイプライター風キートップの確認用サンプル
+- `samples/keycap-typewriter-mount-height.scad`: typewriter shape の上面基準取り付け高さ確認用サンプル
 - `samples/keycap-typewriter-rim.scad`: typewriter shape の key rim 分離確認用サンプル
 - `samples/keycap-legend-seat.scad`: flush legend の座面切り抜き確認用サンプル
 - `samples/keycap-multi-character-legend.scad`: 複数文字でも明示サイズを保つか確認するサンプル

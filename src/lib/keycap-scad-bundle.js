@@ -28,6 +28,8 @@ const LEGEND_MIN_PLAN_WIDTH_RATIO = 1.8;
 const LEGEND_PLAN_PADDING_RATIO = 0.15;
 const LEGEND_PLAN_MIN_PADDING = 0.2;
 const LEGEND_TEXT_MEASURE_SCALE = 100;
+const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
+const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
 const fontBinaryPromises = new Map();
 const fontMetadataPromises = new Map();
@@ -54,6 +56,27 @@ function clampTypewriterCornerRadius(value, fallback = 0) {
   }
 
   return Math.max(nextValue, 0);
+}
+
+function clampMinimum(value, fallback, minimum) {
+  const nextValue = Number(value);
+  return Number.isFinite(nextValue) ? Math.max(nextValue, minimum) : fallback;
+}
+
+function getTypewriterMountHeightMinimum(params = {}) {
+  const topCenterHeight = clampMinimum(params.topCenterHeight, 5.2, 0.1);
+  return topCenterHeight + TYPEWRITER_MIN_STEM_HEIGHT - TYPEWRITER_STEM_MOUNT_OVERLAP;
+}
+
+function clampTypewriterMountHeight(value, params = {}, fallback = 0) {
+  const minimum = getTypewriterMountHeightMinimum(params);
+  const fallbackValue = Number(fallback);
+  const nextValue = Number(value);
+  const resolvedFallback = Number.isFinite(fallbackValue) && fallbackValue > 0
+    ? fallbackValue
+    : minimum;
+
+  return Math.max(Number.isFinite(nextValue) ? nextValue : resolvedFallback, minimum);
 }
 
 function resolveShapeGeometryParameters(params = {}) {
@@ -482,6 +505,11 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_key_depth: params.keyDepth,
     user_top_center_height: params.topCenterHeight,
     user_wall_thickness: params.wallThickness,
+    user_typewriter_mount_height: clampTypewriterMountHeight(
+      params.typewriterMountHeight,
+      params,
+      createDefaultKeycapParams("typewriter").typewriterMountHeight,
+    ),
     user_typewriter_corner_radius: clampTypewriterCornerRadius(
       params.typewriterCornerRadius,
       Math.min(Number(params.keyWidth ?? 18), Number(params.keyDepth ?? 18)) / 2,

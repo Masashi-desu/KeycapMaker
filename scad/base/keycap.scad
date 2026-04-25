@@ -59,6 +59,8 @@ function stem_plane_slope_magnitude(pitch_deg, roll_deg) =
     sqrt(pow(tan(pitch_deg), 2) + pow(tan(roll_deg), 2));
 typewriter_stem_mount_overlap = 0.02;
 typewriter_rim_body_clearance = 0.03;
+function typewriter_stem_height_from_mount_height(mount_height, top_height) =
+    max(mount_height - top_height + typewriter_stem_mount_overlap, 0.6);
 function stem_footprint_radius(type, outer_diameter, prong_width, prong_depth, prong_spacing, alps_length, alps_width) =
     type == "mx" || type == "choc_v2"
         ? positive_dimension(outer_diameter) / 2
@@ -77,6 +79,9 @@ shape_geometry_type = assert(
     supported_shape_geometry_type(requested_shape_geometry_type),
     str("unsupported user_shape_geometry_type: ", requested_shape_geometry_type)
 ) requested_shape_geometry_type;
+typewriter_mount_height = shape_geometry_type == "typewriter"
+    ? positive_dimension(required_param(user_typewriter_mount_height, "user_typewriter_mount_height"))
+    : 0;
 typewriter_corner_radius = max(required_param(user_typewriter_corner_radius, "user_typewriter_corner_radius"), 0);
 
 profile_front_angle = required_param(user_profile_front_angle, "user_profile_front_angle");
@@ -193,8 +198,13 @@ stem_auto_contact_height = keycap_inner_height(top_center_height, dish_depth, to
     + stem_safe_radius * stem_plane_slope_magnitude(top_pitch_deg, top_roll_deg)
     - stem_inset
     + stem_clip_overlap;
+typewriter_stem_height = typewriter_stem_height_from_mount_height(typewriter_mount_height, top_center_height);
 requested_stem_height = is_undef(user_stem_height)
-    ? max(stem_nominal_height_for_type(stem_type), stem_auto_contact_height)
+    ? (
+        shape_geometry_type == "typewriter"
+            ? typewriter_stem_height
+            : max(stem_nominal_height_for_type(stem_type), stem_auto_contact_height)
+    )
     : max(user_stem_height, 0.6);
 stem_height = max(requested_stem_height, 0.6);
 

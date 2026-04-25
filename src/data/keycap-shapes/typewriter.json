@@ -53,6 +53,7 @@
     "homingBarBaseThickness": 0.35,
     "homingBarColor": "#ff7f00",
     "stemType": "choc_v2",
+    "typewriterMountHeight": 11.68,
     "stemOuterDelta": 0,
     "stemCrossMargin": 0,
     "stemInsetDelta": 0
@@ -68,7 +69,7 @@
       "id": "top",
       "title": "キートップ",
       "description": "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
-      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "fieldKeys": ["typewriterMountHeight", "topCenterHeight", "topSurfaceShape", "dishDepth", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",

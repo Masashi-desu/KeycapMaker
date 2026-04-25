@@ -106,3 +106,42 @@ test("印字の作業領域は実測した複数文字の外形を含む", async
     restoreBrowserMocks();
   }
 });
+
+test("typewriter の上面基準高さを SCAD wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("typewriter"),
+        typewriterMountHeight: 14.2,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.equal(readScadDefinition(jobScad, "user_typewriter_mount_height"), 14.2);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
