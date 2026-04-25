@@ -107,7 +107,7 @@ test("印字の作業領域は実測した複数文字の外形を含む", async
   }
 });
 
-test("大きなキーキャップの印字作業領域はキーの footprint まで広げる", async () => {
+test("印字作業領域はキーの footprint を上限にしない", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,
     actualBoundingBoxLeft: 60,
@@ -135,14 +135,16 @@ test("大きなキーキャップの印字作業領域はキーの footprint ま
         ...registry.createDefaultKeycapParams("custom-shell"),
         keyWidth: 36,
         keyDepth: 18,
+        legendSize: 10,
         legendText: "デジタル",
       },
     });
     const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
 
     assert.ok(jobScad, "keycap job SCAD should be generated");
-    assert.equal(readScadDefinition(jobScad, "user_legend_width"), 36);
-    assert.equal(readScadDefinition(jobScad, "user_legend_depth"), 18);
+    assert.equal(readScadDefinition(jobScad, "user_legend_text_size"), 10);
+    assert.ok(readScadDefinition(jobScad, "user_legend_width") > 36);
+    assert.ok(readScadDefinition(jobScad, "user_legend_depth") > 18);
   } finally {
     await server.close();
     restoreBrowserMocks();

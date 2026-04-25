@@ -27,6 +27,8 @@ export { DEFAULT_KEYCAP_LEGEND_FONT_KEY, getKeycapLegendFontStyleOptions, KEYCAP
 const LEGEND_MIN_PLAN_WIDTH_RATIO = 1.8;
 const LEGEND_PLAN_PADDING_RATIO = 0.15;
 const LEGEND_PLAN_MIN_PADDING = 0.2;
+const LEGEND_OVERFLOW_GUARD_WIDTH_RATIO = 2.5;
+const LEGEND_OVERFLOW_GUARD_DEPTH_RATIO = 3.0;
 const LEGEND_TEXT_MEASURE_SCALE = 100;
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
@@ -441,11 +443,29 @@ async function resolveLegendUnderlineGeometry({
   };
 }
 
-function resolveLegendPlanSize({ size, outlineDelta, textBounds, underlineGeometry, minimumWidth = 0, minimumDepth = 0 }) {
-  const padding = Math.max(size * LEGEND_PLAN_PADDING_RATIO, Math.abs(Number(outlineDelta) || 0), LEGEND_PLAN_MIN_PADDING);
-  const underlineDepth = underlineGeometry.enabled
+function resolveLegendPlanPadding(size, outlineDelta) {
+  return Math.max(size * LEGEND_PLAN_PADDING_RATIO, Math.abs(Number(outlineDelta) || 0), LEGEND_PLAN_MIN_PADDING);
+}
+
+function resolveLegendUnderlineDepth(underlineGeometry) {
+  return underlineGeometry.enabled
     ? Math.abs(underlineGeometry.centerOffset) * 2 + underlineGeometry.thickness
     : 0;
+}
+
+function resolveLegendOverflowGuardSize({ label, size, outlineDelta, underlineGeometry }) {
+  const padding = resolveLegendPlanPadding(size, outlineDelta);
+  const characterCount = Math.max(Array.from(String(label ?? "")).length, 1);
+
+  return {
+    width: (characterCount * size * LEGEND_OVERFLOW_GUARD_WIDTH_RATIO) + padding * 2,
+    depth: Math.max(size * LEGEND_OVERFLOW_GUARD_DEPTH_RATIO, resolveLegendUnderlineDepth(underlineGeometry)) + padding * 2,
+  };
+}
+
+function resolveLegendPlanSize({ size, outlineDelta, textBounds, underlineGeometry, minimumWidth = 0, minimumDepth = 0 }) {
+  const padding = resolveLegendPlanPadding(size, outlineDelta);
+  const underlineDepth = resolveLegendUnderlineDepth(underlineGeometry);
 
   return {
     width: Math.max(
@@ -493,15 +513,21 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     selectedFont,
     selectedFontStyle,
   });
+  const legendOverflowGuard = resolveLegendOverflowGuardSize({
+    label: params.legendText,
+    size: resolvedLegendTextSize,
+    outlineDelta: params.legendOutlineDelta,
+    underlineGeometry,
+  });
   const legendPlanSize = resolveLegendPlanSize({
     size: resolvedLegendTextSize,
     outlineDelta: params.legendOutlineDelta,
     textBounds,
     underlineGeometry,
-    // Let larger keys provide a wider clipping region so Canvas/OpenSCAD font
-    // metric differences do not trim multi-character legends.
-    minimumWidth: params.keyWidth,
-    minimumDepth: params.keyDepth,
+    // Keep this as an overlarge surface-fitting region, not a key footprint cap.
+    // Oversized legends are allowed to overhang instead of being clipped.
+    minimumWidth: Math.max(positiveTextMetric(params.keyWidth), legendOverflowGuard.width),
+    minimumDepth: Math.max(positiveTextMetric(params.keyDepth), legendOverflowGuard.depth),
   });
 
   return {

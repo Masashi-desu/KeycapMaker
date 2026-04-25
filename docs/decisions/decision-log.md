@@ -257,3 +257,10 @@
   同梱 font は `public/fonts/` にライセンス本文または配布元条件メモを置き、あわせて `*-SOURCE.txt` または同等の provenance note に配布元 URL、review date、bundled filename、metadata、SHA-256 を残す
 - 理由:
   Web 配信された過去版が残る可能性を前提に、ライセンス変更や配布元変更が起きても、どの版をどの条件で取り込んだかを軽量に追跡できるようにするため
+
+## 2026-04-25 - oversized legend はキー footprint でクリップしない
+
+- 結論:
+  legend の作業領域はキーキャップ上面の footprint を上限にせず、文字数と文字サイズに応じた十分大きい surface-fitting 領域を JS bridge から SCAD へ渡す。文字がキー上面からはみ出す場合も、自動縮小せず legend part の overhang として扱う
+- 理由:
+  ユーザーが意図的に大きな文字や複数文字を置く創作余地を残し、フォント測定差やキー幅による意図しない欠けを避けるため
