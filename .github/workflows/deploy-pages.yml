@@ -1,6 +1,18 @@
 name: Deploy GitHub Pages
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "public/**"
+      - "scad/**/*.scad"
+      - "src/**"
+      - "!src/**/*.md"
+      - "vite.config.js"
   workflow_dispatch:
 
 permissions:
@@ -14,6 +26,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

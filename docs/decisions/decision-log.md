@@ -2,6 +2,13 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-04-25 - GitHub Pages デプロイは main と Web 資源変更に限定する
+
+- 結論:
+  `main` と `dev` は継続運用するブランチとして削除せず、通常開発は `dev` に集約する。`.github/workflows/deploy-pages.yml` は `main` への push と手動実行を入口にし、job 側でも `refs/heads/main` を条件にする。自動デプロイ対象パスは `src/` の実装ファイル、`public/`、`scad/**/*.scad`、`index.html`、Vite / npm 設定に限定する
+- 理由:
+  feature branch の作業や docs だけの更新を GitHub Pages へ反映せず、配信物に関係する変更だけをデプロイするため
+
 ## 2026-04-25 - typewriter の取り付け高さは本体上面基準で持つ
 
 - 結論:
