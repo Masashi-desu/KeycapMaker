@@ -215,3 +215,24 @@
   typewriter shape の key rim は top parameter として扱い、body から flush な seat を差し引いたうえで `rim` part として preview / 3MF へ出す
 - 理由:
   rim を body と別色で扱う要件では、色 metadata だけでなく mesh 自体を分離した方が preview / export / slicer の整合を保ちやすいため
+
+## 2026-04-25 - 3MF export は part を components 親 object に束ねる
+
+- 結論:
+  3MF の body / rim / homing / legend は separate volume の object resource として残し、`build` にはそれらを `components` で束ねた親 object を 1 件だけ置く
+- 理由:
+  Bambu Studio が小さい legend / homing を独立造形物として判定するのを避けつつ、フィラメント切り替え用の part 分離と相対位置を維持するため
+
+## 2026-04-25 - 3MF part 名は標準属性と slicer metadata の両方に入れる
+
+- 結論:
+  標準3MFの子 object `name` / `partnumber` を維持しつつ、Bambu Studio / OrcaSlicer 用に `Metadata/model_settings.config`、PrusaSlicer / Slic3r PE 用に `Metadata/Slic3r_PE_model.config` を追加する
+- 理由:
+  components の子 part 名表示は標準3MFだけでは slicer 実装依存になり、Bambu / Orca / Prusa 系では Slic3r 由来の model config metadata が part / volume 名の復元に使われるため
+
+## 2026-04-25 - 3MF 親 object 名は UI の名称を使う
+
+- 結論:
+  components 親 object の `name` と Bambu Studio / OrcaSlicer 用 `Metadata/model_settings.config` の親 object metadata には、UI の `名称` を入れる
+- 理由:
+  ファイル名だけでなくスライサー内の object list でもユーザーが付けた名前で識別できるようにするため

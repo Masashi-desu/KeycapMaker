@@ -121,11 +121,16 @@ flowchart TD
 ### 3MF
 
 - 出力元は OFF メッシュ
-- 3MF 内では part ごとに object を分ける
+- 3MF 内では part ごとに object resource を分ける
+- `build` には part 直列ではなく、body / rim / homing / legend を `components` として束ねた親 object を 1 件だけ置く
+- 親 object の `name` には UI の `名称` を使う
 - 現在の part 候補は `body`、`rim`、`homing`、`legend`
 - legend が無効なら legend object は含まれない
 - typewriter key rim が無効なら rim object は含まれない
 - homing bar が無効なら homing object は含まれない
+- 親 object には material / color を付けず、子 part object の material / color を維持する
+- Bambu Studio / OrcaSlicer 向けに `Metadata/model_settings.config`、PrusaSlicer / Slic3r PE 向けに `Metadata/Slic3r_PE_model.config` を追加し、part 表示名を `body` / `rim` / `homing` / `legend` として保持する
+- Cura など標準3MF中心の importer 向けには、子 object の `name` と `partnumber` を保持する
 
 ### 編集データ JSON
 

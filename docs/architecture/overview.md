@@ -95,7 +95,7 @@ flowchart LR
 ## 現在のユーザー向け出力
 
 - `3MF`
-  body / rim / homing / legend の各メッシュを part としてまとめる
+  body / rim / homing / legend の各メッシュを part object として保持し、components 親 object にまとめる
 - `編集データ JSON`
   UI 状態を保存し、あとで再読み込みするためのフォーマット
 

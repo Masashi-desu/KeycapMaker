@@ -2813,6 +2813,9 @@ async function executeExport(format) {
           colorHex: entry.colorHex,
           ...entry.mesh,
         })),
+        {
+          assemblyName: sanitizeExportBaseName(state.keycapParams.name),
+        },
       );
       downloadBlob(blob, build3mfFilename());
 
