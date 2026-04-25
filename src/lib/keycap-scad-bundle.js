@@ -441,7 +441,7 @@ async function resolveLegendUnderlineGeometry({
   };
 }
 
-function resolveLegendPlanSize({ size, outlineDelta, textBounds, underlineGeometry }) {
+function resolveLegendPlanSize({ size, outlineDelta, textBounds, underlineGeometry, minimumWidth = 0, minimumDepth = 0 }) {
   const padding = Math.max(size * LEGEND_PLAN_PADDING_RATIO, Math.abs(Number(outlineDelta) || 0), LEGEND_PLAN_MIN_PADDING);
   const underlineDepth = underlineGeometry.enabled
     ? Math.abs(underlineGeometry.centerOffset) * 2 + underlineGeometry.thickness
@@ -449,10 +449,12 @@ function resolveLegendPlanSize({ size, outlineDelta, textBounds, underlineGeomet
 
   return {
     width: Math.max(
+      positiveTextMetric(minimumWidth),
       size * LEGEND_MIN_PLAN_WIDTH_RATIO,
       Math.max(Number(textBounds.width) || 0, underlineGeometry.span || 0, 0) + padding * 2,
     ),
     depth: Math.max(
+      positiveTextMetric(minimumDepth),
       size,
       Math.max(Number(textBounds.depth) || 0, underlineDepth, 0) + padding * 2,
     ),
@@ -496,6 +498,10 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     outlineDelta: params.legendOutlineDelta,
     textBounds,
     underlineGeometry,
+    // Let larger keys provide a wider clipping region so Canvas/OpenSCAD font
+    // metric differences do not trim multi-character legends.
+    minimumWidth: params.keyWidth,
+    minimumDepth: params.keyDepth,
   });
 
   return {
