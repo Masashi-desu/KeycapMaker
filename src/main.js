@@ -616,6 +616,7 @@ const fieldGroupTemplates = [
         hint: () => getTopSurfaceShapeHint(),
         type: "select",
         options: TOP_SURFACE_SHAPE_OPTIONS,
+        dependentFieldKeys: ["dishDepth"],
       },
       {
         key: "dishDepth",
@@ -672,6 +673,14 @@ const fieldGroupTemplates = [
         hint: () => t("fields.topSlopeInputMode.hint"),
         type: "select",
         options: TOP_SLOPE_INPUT_MODE_OPTIONS,
+        dependentFieldKeys: [
+          "topPitchDeg",
+          "topRollDeg",
+          "topFrontHeight",
+          "topBackHeight",
+          "topLeftHeight",
+          "topRightHeight",
+        ],
       },
       {
         key: "topPitchDeg",
@@ -1519,11 +1528,13 @@ function renderNameFieldCard() {
 }
 
 function renderFieldGroup(group, groupIndex) {
-  const visibleFields = group.fields.filter((field) => isFieldVisible(field));
   const groupId = group.id ?? `group-${groupIndex}`;
   const isCollapsed = state.collapsedFieldGroups[groupId] === true;
   const groupViewTransitionName = createViewTransitionName("field-group", groupId);
   const groupBodyId = `field-group-body-${groupId}`;
+  const groupFieldByKey = new Map(group.fields.map((field) => [field.key, field]));
+  const dependentFieldKeys = getVisibleDependentFieldKeys(group.fields, groupFieldByKey);
+  const visibleFields = group.fields.filter((field) => isFieldVisible(field) && !dependentFieldKeys.has(field.key));
   const toggleLabel = isCollapsed
     ? t("fieldGroup.expand", { title: group.title })
     : t("fieldGroup.collapse", { title: group.title });
@@ -1550,10 +1561,72 @@ function renderFieldGroup(group, groupIndex) {
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
         <p class="field-group-description">${groupDescription}</p>
         <div class="field-grid">
-          ${visibleFields.map((field) => renderField(field)).join("")}
+          ${visibleFields.map((field) => renderFieldWithDependents(field, groupFieldByKey)).join("")}
         </div>
       </div>
     </section>
+  `;
+}
+
+function getVisibleDependentFieldKeys(fields, fieldByKey) {
+  return new Set(
+    fields
+      .filter((field) => isFieldVisible(field) && canRenderDependentFields(field))
+      .flatMap((field) => field.dependentFieldKeys ?? [])
+      .filter((fieldKey) => fieldByKey.has(fieldKey)),
+  );
+}
+
+function canRenderDependentFields(field) {
+  return field.type === "select";
+}
+
+function renderFieldWithDependents(field, fieldByKey) {
+  const dependentFieldKeys = field.dependentFieldKeys ?? [];
+  if (dependentFieldKeys.length === 0 || !canRenderDependentFields(field)) {
+    return renderField(field);
+  }
+
+  const dependentFields = dependentFieldKeys
+    .map((fieldKey) => fieldByKey.get(fieldKey))
+    .filter(Boolean)
+    .filter((dependentField) => isFieldVisible(dependentField));
+
+  return renderFieldWithDependentFields(field, dependentFields);
+}
+
+function renderFieldWithDependentFields(field, dependentFields) {
+  const value = state.keycapParams[field.key];
+  const fieldViewTransitionName = createViewTransitionName("field", field.key);
+  const fieldLabel = resolveDynamicCopy(field.label);
+  const fieldHint = resolveDynamicCopy(field.hint);
+  const fieldOptions = resolveFieldOptions(field);
+  const isDisabled = isFieldDisabled(field);
+  const inputId = `field-control-${field.key}`;
+
+  return `
+    <div class="field field--with-dependents" style="view-transition-name: ${fieldViewTransitionName};">
+      <label class="field-copy" for="${inputId}">
+        <span class="field-label">${fieldLabel}</span>
+        <span class="field-hint">${fieldHint}</span>
+      </label>
+      <span class="field-control field-control--select">
+        <select id="${inputId}" data-field="${field.key}" ${isDisabled ? "disabled" : ""}>
+          ${fieldOptions
+            .map(
+              (option) => `
+                <option value="${escapeHtml(option.value)}" ${option.value === value ? "selected" : ""}>${escapeHtml(option.label)}</option>
+              `,
+            )
+            .join("")}
+        </select>
+      </span>
+      ${dependentFields.length > 0 ? `
+        <div class="field-dependent-list">
+          ${dependentFields.map((dependentField) => renderField(dependentField, { className: "field--dependent" })).join("")}
+        </div>
+      ` : ""}
+    </div>
   `;
 }
 
@@ -1691,7 +1764,7 @@ function renderLegendFontPickerOptions() {
     .join("");
 }
 
-function renderField(field) {
+function renderField(field, options = {}) {
   const value = state.keycapParams[field.key];
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
   const fieldLabel = resolveDynamicCopy(field.label);
@@ -1700,10 +1773,11 @@ function renderField(field) {
   const fieldPlaceholder = resolveDynamicCopy(field.placeholder);
   const fieldOptions = resolveFieldOptions(field);
   const isDisabled = isFieldDisabled(field);
+  const fieldClassName = options.className ? ` ${options.className}` : "";
 
   if (field.type === "checkbox") {
     return `
-      <label class="field field--checkbox" style="view-transition-name: ${fieldViewTransitionName};">
+      <label class="field field--checkbox${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -1726,7 +1800,7 @@ function renderField(field) {
     const isPickerOpen = state.legendFontPickerOpen;
 
     return `
-      <label class="field field--font-search ${isPickerOpen ? "is-open" : ""}" style="view-transition-name: ${fieldViewTransitionName};">
+      <label class="field field--font-search ${isPickerOpen ? "is-open" : ""}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -1778,7 +1852,7 @@ function renderField(field) {
 
   if (field.type === "select") {
     return `
-      <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
+      <label class="field${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -1800,7 +1874,7 @@ function renderField(field) {
 
   if (field.type === "text") {
     return `
-      <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
+      <label class="field${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -1823,7 +1897,7 @@ function renderField(field) {
     const inputId = `field-${field.key}`;
 
     return `
-      <div class="field field--color" style="view-transition-name: ${fieldViewTransitionName};">
+      <div class="field field--color${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         <label class="field-copy" for="${inputId}">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -1855,7 +1929,7 @@ function renderField(field) {
 
   if (field.type === "linked-size") {
     return `
-      <label class="field field--linked-size" style="view-transition-name: ${fieldViewTransitionName};">
+      <label class="field field--linked-size${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -1894,7 +1968,7 @@ function renderField(field) {
   }
 
   return `
-    <label class="field" style="view-transition-name: ${fieldViewTransitionName};">
+    <label class="field${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
       <span class="field-copy">
         <span class="field-label">${fieldLabel}</span>
         <span class="field-hint">${fieldHint}</span>
