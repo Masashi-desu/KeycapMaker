@@ -95,6 +95,8 @@ flowchart TD
   現行キーキャップ構成の回帰確認用
 - `scad/samples/keycap-typewriter-rim.scad`
   typewriter shape の key rim 分離確認用
+- `scad/samples/keycap-typewriter-rim-tilted.scad`
+  pitch / roll 付き typewriter key rim の接合確認用
 - `scad/samples/keycap-typewriter-mount-height.scad`
   typewriter shape の上面基準取り付け高さ確認用
 - `scad/samples/keycap-typewriter-spherical-top.scad`

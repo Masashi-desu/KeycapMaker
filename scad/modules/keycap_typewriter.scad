@@ -15,7 +15,7 @@ function typewriter_plan_has_inner_profile(width, depth, inset) =
     && typewriter_plan_inset_dimension(depth, inset) > 0.001;
 function typewriter_is_axis_aligned(pitch_deg, roll_deg) =
     abs(pitch_deg) <= 0.001 && abs(roll_deg) <= 0.001;
-typewriter_rim_cut_overlap = 0.02;
+typewriter_rim_join_overlap = 0.02;
 
 module keycap_typewriter_plan_profile(
     width,
@@ -311,10 +311,11 @@ module keycap_typewriter_rim_top_extension(
                 quality = quality
             );
 
+            // Cut below the nominal top so the extension overlaps the side shell.
             keycap_typewriter_band_cap(
                 width = width,
                 depth = depth,
-                top_center_height = top_center_height + typewriter_rim_cut_overlap,
+                top_center_height = max(top_center_height - typewriter_rim_join_overlap, 0.01),
                 band_width = safe_band_width,
                 corner_radius = corner_radius,
                 top_shape_type = top_shape_type,
@@ -346,7 +347,8 @@ module keycap_typewriter_rim_bottom_extension(
 
     if (safe_band_width > 0 && height_down > 0) {
         translate([0, 0, -height_down])
-            linear_extrude(height = height_down)
+            // Extend through z=0 so the lower extension joins the side shell.
+            linear_extrude(height = height_down + typewriter_rim_join_overlap)
                 keycap_typewriter_plan_ring(
                     width = width,
                     depth = depth,

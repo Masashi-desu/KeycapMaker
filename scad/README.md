@@ -25,6 +25,7 @@
 - `samples/keycap-typewriter.scad`: タイプライター風キートップの確認用サンプル
 - `samples/keycap-typewriter-mount-height.scad`: typewriter shape の上面基準取り付け高さ確認用サンプル
 - `samples/keycap-typewriter-rim.scad`: typewriter shape の key rim 分離確認用サンプル
+- `samples/keycap-typewriter-rim-tilted.scad`: pitch / roll 付き typewriter key rim の接合確認用サンプル
 - `samples/keycap-legend-seat.scad`: flush legend の座面切り抜き確認用サンプル
 - `samples/keycap-multi-character-legend.scad`: 複数文字でも明示サイズを保つか確認するサンプル
 - `samples/keycap-rounded-legend.scad`: 丸みのある書体の legend 品質確認用サンプル
