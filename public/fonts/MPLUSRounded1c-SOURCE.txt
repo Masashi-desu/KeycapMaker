@@ -13,8 +13,8 @@ https://github.com/google/fonts/tree/46d8a043641ec6f446cddf39749c0b8d0dc71467/of
 Bundled download URL:
 https://raw.githubusercontent.com/google/fonts/46d8a043641ec6f446cddf39749c0b8d0dc71467/ofl/mplusrounded1c/MPLUSRounded1c-Regular.ttf
 
-Bundled license URL:
-https://raw.githubusercontent.com/google/fonts/46d8a043641ec6f446cddf39749c0b8d0dc71467/ofl/mplusrounded1c/OFL.txt
+License metadata URL:
+https://raw.githubusercontent.com/google/fonts/46d8a043641ec6f446cddf39749c0b8d0dc71467/ofl/mplusrounded1c/METADATA.pb
 
 Bundled files in this repository:
 - MPLUSRounded1c-Regular.ttf
@@ -25,7 +25,8 @@ Bundled SHA-256:
 - MPLUSRounded1c-OFL.txt: 1bd6eceefce3edcb25cad3d5a4fbec6405d66946a6672daf69fe667c7e52f591
 
 License evidence:
-- Google Fonts OFL.txt says this Font Software is licensed under the SIL Open Font License, Version 1.1.
+- Google Fonts METADATA.pb at the reviewed commit says license: "OFL". The reviewed Google Fonts directory did not include a standalone OFL.txt file.
+- The bundled MPLUSRounded1c-OFL.txt in this repository contains the SIL Open Font License, Version 1.1 text.
 - The bundled TTF nameID 13 says this Font Software is licensed under the SIL Open Font License, Version 1.1.
 
 Font metadata observed from the bundled TTF:

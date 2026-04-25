@@ -8,10 +8,10 @@ Source page at review:
 https://github.com/google/fonts/tree/46d8a043641ec6f446cddf39749c0b8d0dc71467/ofl/notosans
 
 Bundled download URL:
-https://raw.githubusercontent.com/google/fonts/main/ofl/notosans/NotoSans%5Bwdth,wght%5D.ttf
+https://raw.githubusercontent.com/google/fonts/46d8a043641ec6f446cddf39749c0b8d0dc71467/ofl/notosans/NotoSans%5Bwdth,wght%5D.ttf
 
 Bundled license URL:
-https://raw.githubusercontent.com/google/fonts/main/ofl/notosans/OFL.txt
+https://raw.githubusercontent.com/google/fonts/46d8a043641ec6f446cddf39749c0b8d0dc71467/ofl/notosans/OFL.txt
 
 Download date:
 2026-04-25

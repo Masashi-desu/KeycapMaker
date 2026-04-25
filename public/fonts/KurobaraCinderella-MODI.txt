@@ -16,7 +16,7 @@ Archive contents used here:
 - kurobara-cinderella.ttf
 - readme.txt
 
-Bundled font file in this repository:
+Bundled files in this repository:
 - KurobaraCinderella-Regular.ttf
 
 Bundled SHA-256:
@@ -29,6 +29,10 @@ Bundled readme summary (UTF-8 transcription):
 - 飴鞭シンデレラの後継フォントとして作成
 - M+ FONTS TESTFLIGHT-063 使用
 - 使用は無保証
+
+License evidence:
+- The bundled TTF nameID 13 grants unlimited commercial/noncommercial use, copy, and distribution, with or without modification, and disclaims warranty.
+- The official MODI source page identifies 黒薔薇シンデレラ as an M+ FONTS derived font and allows use as a web font, embedding, redistribution, modification, and inclusion in material books for M+ FONTS derived fonts when copyright and license notices are retained.
 
 License notes from the official MODI site:
 - 「商用、非商用問わずお使いいただけます。」
