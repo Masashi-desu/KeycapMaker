@@ -2546,6 +2546,34 @@ function syncVisibleTopFieldState(activeField = null) {
   });
 }
 
+function getNumericFieldMinimum(fieldKey, fieldConfig) {
+  if (fieldKey === "keySizeUnits") {
+    return 0.5;
+  }
+
+  const minimum = Number(fieldConfig?.min);
+  return Number.isFinite(minimum) ? minimum : null;
+}
+
+function parseNumericInputValue(input, fieldKey, fieldConfig) {
+  const rawValue = String(input.value ?? "").trim();
+  if (rawValue.length === 0) {
+    return null;
+  }
+
+  const nextValue = Number(rawValue);
+  if (!Number.isFinite(nextValue)) {
+    return null;
+  }
+
+  const minimum = getNumericFieldMinimum(fieldKey, fieldConfig);
+  if (minimum != null && nextValue < minimum) {
+    return null;
+  }
+
+  return nextValue;
+}
+
 function isTopEdgeHeightField(field) {
   return field === "topFrontHeight"
     || field === "topBackHeight"
@@ -2592,7 +2620,12 @@ function handleFieldChange(event) {
   }
 
   if (field === "keySizeUnits") {
-    state.keycapParams.keyWidth = Number(input.value) * KEY_UNIT_MM;
+    const nextValue = parseNumericInputValue(input, field, fieldConfig);
+    if (nextValue == null) {
+      return;
+    }
+
+    state.keycapParams.keyWidth = nextValue * KEY_UNIT_MM;
     syncLinkedShapeInputs("keySizeUnits");
   } else if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
@@ -2619,7 +2652,10 @@ function handleFieldChange(event) {
   } else if (input.type === "text") {
     state.keycapParams[field] = input.value;
   } else {
-    const nextValue = Number(input.value);
+    const nextValue = parseNumericInputValue(input, field, fieldConfig);
+    if (nextValue == null) {
+      return;
+    }
 
     if (isTopEdgeHeightField(field)) {
       applyTopEdgeHeightChange(field, nextValue);

@@ -77,6 +77,18 @@ function clampMinimum(value, fallback, minimum) {
   return Number.isFinite(nextValue) ? Math.max(nextValue, minimum) : fallback;
 }
 
+function clampPositiveDimension(value, fallback, minimum = 1) {
+  const nextValue = Number(value);
+  const fallbackValue = Number(fallback);
+  const resolvedFallback = Number.isFinite(fallbackValue) && fallbackValue > 0
+    ? fallbackValue
+    : minimum;
+
+  return Number.isFinite(nextValue) && nextValue > 0
+    ? Math.max(nextValue, minimum)
+    : Math.max(resolvedFallback, minimum);
+}
+
 function degTan(value) {
   return Math.tan((Number(value) * Math.PI) / 180);
 }
@@ -320,6 +332,8 @@ export function syncDerivedKeycapParams(params = {}) {
     LEGEND_MIN_SIZE,
   );
 
+  params.keyWidth = clampPositiveDimension(params.keyWidth, defaults.keyWidth ?? 18);
+  params.keyDepth = clampPositiveDimension(params.keyDepth, defaults.keyDepth ?? 18);
   params.topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
   params.topPitchDeg = Number.isFinite(Number(params.topPitchDeg)) ? Number(params.topPitchDeg) : Number(defaults.topPitchDeg ?? 0);
   params.topRollDeg = Number.isFinite(Number(params.topRollDeg)) ? Number(params.topRollDeg) : Number(defaults.topRollDeg ?? 0);
@@ -434,6 +448,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
     return clampNonNegativeNumber(value, fallback);
   }
 
+  if (fieldKey === "keyWidth" || fieldKey === "keyDepth") {
+    return clampPositiveDimension(value, fallback);
+  }
+
   if (COLOR_FIELD_KEYS.has(fieldKey)) {
     return normalizeHexColor(value) ?? fallback;
   }
@@ -462,10 +480,12 @@ export function createExportableKeycapParams(params = {}) {
     ...params,
     shapeProfile: profileKey,
   };
+  const sanitizedContext = { ...paramsContext };
   const exportableParams = {};
 
   for (const key of listEditableParamKeys(profileKey)) {
-    exportableParams[key] = sanitizeEditorParamValue(key, paramsContext[key], defaults[key], paramsContext);
+    exportableParams[key] = sanitizeEditorParamValue(key, sanitizedContext[key], defaults[key], sanitizedContext);
+    sanitizedContext[key] = exportableParams[key];
   }
 
   return exportableParams;
@@ -601,10 +621,12 @@ export function parseEditorDataPayload(payload) {
     ...mergedRawParams,
     shapeProfile: rawProfileKey,
   };
+  const sanitizedContext = { ...paramsContext };
   const nextParams = {};
 
   for (const key of listEditableParamKeys(rawProfileKey)) {
-    nextParams[key] = sanitizeEditorParamValue(key, paramsContext[key], defaults[key], paramsContext);
+    nextParams[key] = sanitizeEditorParamValue(key, sanitizedContext[key], defaults[key], sanitizedContext);
+    sanitizedContext[key] = nextParams[key];
   }
 
   return syncDerivedKeycapParams(nextParams);

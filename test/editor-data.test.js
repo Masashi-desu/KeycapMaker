@@ -9,6 +9,7 @@ import {
   EDITOR_DATA_SCHEMA_VERSION,
   getTopSurfaceShapePreset,
   parseEditorDataPayload,
+  syncDerivedKeycapParams,
 } from "../src/lib/editor-data.js";
 
 async function loadFixture(name) {
@@ -128,6 +129,34 @@ test("typewriter の上面基準高さは本体厚みより下に丸める", () 
   });
 
   assert.ok(Math.abs(parsed.typewriterMountHeight - 5.78) < 1e-9);
+});
+
+test("typewriter のキー寸法が一時的に 0 になってもキーリム幅を失わない", () => {
+  const defaults = createDefaultKeycapParams("typewriter");
+  const params = syncDerivedKeycapParams({
+    ...defaults,
+    keyWidth: 0,
+    rimEnabled: true,
+    rimWidth: defaults.rimWidth,
+  });
+
+  assert.equal(params.keyWidth, defaults.keyWidth);
+  assert.equal(params.rimWidth, defaults.rimWidth);
+});
+
+test("typewriter の空キー寸法入力は default で補完しキーリム幅を維持する", () => {
+  const defaults = createDefaultKeycapParams("typewriter");
+  const parsed = parseEditorDataPayload({
+    shapeProfile: "typewriter",
+    keyWidth: "",
+    keyDepth: "",
+    rimEnabled: true,
+    rimWidth: defaults.rimWidth,
+  });
+
+  assert.equal(parsed.keyWidth, defaults.keyWidth);
+  assert.equal(parsed.keyDepth, defaults.keyDepth);
+  assert.equal(parsed.rimWidth, defaults.rimWidth);
 });
 
 test("キートップ形状ごとの代表プリセットを返す", () => {
