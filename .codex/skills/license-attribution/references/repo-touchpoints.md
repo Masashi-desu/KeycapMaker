@@ -2,7 +2,7 @@
 
 ## Primary Files
 
-- `src/lib/keycap-scad-bundle.js`
+- `src/lib/keycap-fonts.js`
   Font registry for legend fonts. Add attribution data here when the UI must expose real text.
 - `src/main.js`
   Font picker rendering and copy-to-clipboard behavior for attribution text.

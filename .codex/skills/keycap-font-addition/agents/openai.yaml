@@ -1,0 +1,4 @@
+interface:
+  display_name: "Keycap Font Addition"
+  short_description: "Keycap Maker にフォントを追加するときのライセンス・provenance・検査手順を徹底する"
+  default_prompt: "Use $keycap-font-addition when adding, updating, or auditing bundled legend fonts in Keycap Maker. Verify license evidence, provenance notes, source URLs, SHA-256, attribution text, and run the font asset validator before finishing."

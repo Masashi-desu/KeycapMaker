@@ -10,6 +10,7 @@
 - できるだけ commit / tag 固定の URL で取得する。既存資産で当初の取得日が未記録のものは、review date と Git 上の初回追加日を記録する。
 - サブセット化、形式変換、glyph 改変は原則しない。必要な場合は別 font として扱い、Reserved Font Name とライセンス条件を再確認する。
 - UI 上の attribution が必要な font は、抽象的な注意ではなく実際の表記文を font 定義へ入れる。
+- font を追加・更新したら `.codex/skills/keycap-font-addition/scripts/validate-font-assets.mjs` を実行し、登録、同梱ファイル、provenance、license text、SHA-256、TTF metadata の整合性を確認する。
 
 - `MPLUS1-Variable.ttf`
   - 表示名: `M PLUS 1 Variable`

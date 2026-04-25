@@ -49,4 +49,7 @@ Related upstream license:
 - M+ FONTS is released under the SIL Open Font License.
 - Keep the SIL OFL text available in this directory as MPLUS1-OFL.txt.
 
+Use note:
+The bundled font is used unmodified as a legend font asset. Keep the MODI/M+ attribution lines exposed from the font definition when this font is selected.
+
 For the original terms, consult the source page above.

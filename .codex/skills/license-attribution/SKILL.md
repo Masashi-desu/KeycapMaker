@@ -9,18 +9,19 @@ description: Add or update copyright and license attribution workflows in this r
 
 1. Use this skill when the task involves bundled fonts or assets whose license requires copyright or license text to be preserved, shown, copied, or redistributed.
 2. Read [references/repo-touchpoints.md](references/repo-touchpoints.md) before editing attribution-related files.
-3. Confirm which obligation is needed:
+3. For adding, updating, or auditing bundled legend fonts, also use `$keycap-font-addition` and run `.codex/skills/keycap-font-addition/scripts/validate-font-assets.mjs`.
+4. Confirm which obligation is needed:
    - provenance only in repo files
    - bundled license text in `public/fonts/`
    - visible attribution in the UI
    - copyable attribution text for reuse in docs or exports
-4. Prefer official sources for license confirmation: the creator site, the upstream repository, or the font metadata embedded in the file.
+5. Prefer official sources for license confirmation: the creator site, the upstream repository, or the font metadata embedded in the file.
 
 ## Repo Rules
 
 - Do not show abstract warnings such as “license may be required” when the repo can instead show the actual attribution text the user needs.
 - For bundled fonts, keep provenance and source URLs in a dedicated text file under `public/fonts/`.
-- When the UI needs to expose attribution, store the actual lines in `src/lib/keycap-scad-bundle.js` and render them from data.
+- When the UI needs to expose attribution, store the actual lines in `src/lib/keycap-fonts.js` and render them from data.
 - Preserve the distinction between:
   - legal source notes kept in repo files
   - user-facing attribution text shown in the app
