@@ -35,7 +35,7 @@ const zh = Object.freeze({
     },
     export: {
       title: "导出",
-      body: "可以保存用于打印的 3MF 数据，以及稍后继续编辑用的 JSON。",
+      body: "可以保存用于打印的 3MF / STL 数据，以及稍后继续编辑用的 JSON。",
     },
   },
   exportPanel: {
@@ -47,10 +47,18 @@ const zh = Object.freeze({
     threeMfTitle: "保存 3MF 数据",
     threeMfBody: "将包含本体、定位标记和字符的打印用数据汇总保存为 3MF 格式。",
     saveThreeMf: "保存 3MF",
+    optionsTitle: "选项",
+    optionsBody: "普通打印数据推荐使用 3MF。只有切片软件或制造要求需要时才使用 STL。",
+    optionsExpand: "展开选项",
+    optionsCollapse: "折叠选项",
+    stlChip: "单色 STL",
+    stlTitle: "保存 STL",
+    stlBody: "保存为单一材料、单一网格的 STL。颜色和字符会被忽略，只导出形状。如果需要颜色区分或字符，请保存为 3MF。",
+    saveStl: "保存 STL",
   },
   nameGroup: {
     title: "名称",
-    description: "保存时使用的名称。3MF 和编辑数据 JSON 都会使用它，之后读取时也会保留。",
+    description: "保存时使用的名称。3MF、STL 和编辑数据 JSON 都会使用它，之后读取时也会保留。",
   },
   fieldGroup: {
     expand: "展开{title}",
@@ -114,7 +122,7 @@ const zh = Object.freeze({
   fields: {
     name: {
       label: "名称",
-      hint: "用于 3MF 和编辑数据 JSON 的保存文件名",
+      hint: "用于 3MF、STL 和编辑数据 JSON 的保存文件名",
     },
     shapeProfile: {
       label: "基础形状",
@@ -395,6 +403,9 @@ const zh = Object.freeze({
     savedThreeMf: "已保存 3MF 数据 ({byteLength} bytes / {partCount} 个部件)",
     threeMfLabel: "3MF 数据",
     threeMfNote: "已将{parts}汇总保存为 3MF 格式",
+    savedStl: "已保存 STL ({byteLength} bytes)",
+    stlLabel: "单色 STL",
+    stlNote: "不包含颜色和字符，作为单一网格形状保存",
     saveFailed: "保存失败",
     saveFailedLabel: "保存失败",
     unsupportedExport: "不支持的 export 格式: {format}",

@@ -200,7 +200,7 @@
                           "fill": "#7C6A58",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "保存するときの名前です。3MF と編集データ JSON の両方に使われ、あとで読み込んでもこの名前が残ります。",
+                          "content": "保存するときの名前です。3MF、STL、編集データ JSON に使われ、あとで読み込んでもこの名前が残ります。",
                           "lineHeight": 1.45,
                           "fontFamily": "Inter",
                           "fontSize": 13,
@@ -495,7 +495,7 @@
               "fill": "#7C6A58",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "3MF の印刷データと、あとで編集を再開するための JSON を保存できます。",
+              "content": "3MF / STL の印刷データと、あとで編集を再開するための JSON を保存できます。",
               "lineHeight": 1.45,
               "fontFamily": "Inter",
               "fontSize": 13,
@@ -760,6 +760,218 @@
                   "fontFamily": "Inter",
                   "fontSize": 14,
                   "fontWeight": "Bold"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "LUlna",
+          "name": "Export Options Card",
+          "width": "fill_container",
+          "fill": "#FFF8EE66",
+          "cornerRadius": 20,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#D8CCB83D"
+          },
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "MGbzs",
+              "name": "exportOptionsHeader",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bBxf2",
+                  "name": "exportOptionsTitleStack",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EhEfb",
+                      "name": "exportOptionsTitle",
+                      "fill": "#2D241C",
+                      "content": "オプション",
+                      "fontFamily": "Inter",
+                      "fontSize": 17,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "0TkOU",
+                      "name": "exportOptionsDescription",
+                      "fill": "#7C6A58",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "通常の印刷データは 3MF を推奨します。スライサーや製造要件で必要な場合だけ STL を使います。",
+                      "lineHeight": 1.45,
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "g7Dkl",
+                  "name": "exportOptionsToggle",
+                  "width": 30,
+                  "height": 30,
+                  "fill": "#FFFFFF3D",
+                  "cornerRadius": 12,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#E0D5C3"
+                  },
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "U6SR3",
+                      "name": "exportOptionsToggleIcon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "chevron-up",
+                      "iconFontFamily": "lucide",
+                      "fill": "#7C6A58"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "a6B6W",
+              "name": "exportOptionsBody",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 14,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "5PENf",
+                  "name": "exportStlHeader",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "bC1Lg",
+                      "name": "exportStlIconBox",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#2D241C14",
+                      "cornerRadius": 14,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "pdTaa",
+                          "name": "exportStlIcon",
+                          "width": 22,
+                          "height": 22,
+                          "iconFontName": "box",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2D241C"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "YRxUf",
+                      "name": "exportStlTitleStack",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 3,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "uiSwg",
+                          "name": "exportStlEyebrow",
+                          "fill": "#7C6A58",
+                          "content": "単色用 STL",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "Bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "1vPTf",
+                          "name": "exportStlTitle",
+                          "fill": "#2D241C",
+                          "content": "STL を保存",
+                          "fontFamily": "Inter",
+                          "fontSize": 17,
+                          "fontWeight": "Bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "CLCPc",
+                  "name": "exportStlDescription",
+                  "fill": "#7C6A58",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "単一素材・単一メッシュの STL として保存します。色と印字は無視され、形状のみが出力されます。色分けや印字が必要な場合は 3MF を保存してください。",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "pwJAJ",
+                  "name": "saveStlButton",
+                  "width": "fill_container",
+                  "fill": "#2D241C",
+                  "cornerRadius": 14,
+                  "gap": 8,
+                  "padding": [
+                    11,
+                    14
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "p9azg",
+                      "name": "saveStlButtonIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "download",
+                      "iconFontFamily": "lucide",
+                      "fill": "#FFF9F0"
+                    },
+                    {
+                      "type": "text",
+                      "id": "J3twU",
+                      "name": "saveStlButtonText",
+                      "fill": "#FFF9F0",
+                      "content": "STL を保存",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "Bold"
+                    }
+                  ]
                 }
               ]
             }

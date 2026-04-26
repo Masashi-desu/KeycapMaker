@@ -11,7 +11,7 @@
 
 ## 現在の主要ファイル
 
-- `base/keycap.scad`: `export_target` で `preview / body / body_core / rim / homing / legend` を切り替える基礎エントリ
+- `base/keycap.scad`: `export_target` で `preview / body / body_core / rim / homing / legend / single_material_shape` を切り替える基礎エントリ
 - `modules/keycap_shell.scad`: `top_center_height + pitch / roll` 基準の外形シェル、dish、内側 hollow
 - `modules/stem_mx.scad`: MX 互換 stem ボディ
 - `modules/stem_choc_v1.scad`: Kailh Choc v1 向け 2 本爪 stem

@@ -45,6 +45,7 @@ const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
+const keycapStlExportPath = "/outputs/keycap-single-material.stl";
 const CHEVRON_ICON_URLS = Object.freeze({
   expanded: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-up.svg",
   collapsed: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-down.svg",
@@ -1014,6 +1015,7 @@ const state = {
   exportsStatus: "idle",
   exportsSummary: translate(initialLocale, "status.notGenerated"),
   exportHistory: [],
+  isExportOptionsOpen: false,
   editorStatus: "idle",
   editorSummary: translate(initialLocale, "status.notGenerated"),
   editorLogs: [],
@@ -1401,6 +1403,8 @@ function render(options = {}) {
 
   if (animateInspector && isUiMotionEnabled()) {
     const transition = document.startViewTransition(applyUpdate);
+    transition.ready.catch(() => {});
+    transition.updateCallbackDone.catch(() => {});
     transition.finished.catch(() => {});
     return;
   }
@@ -1488,8 +1492,56 @@ function renderExportTab() {
             <span>${state.exportsStatus === "running" ? t("actions.saving") : t("exportPanel.saveThreeMf")}</span>
           </button>
         </section>
+        ${renderExportOptionsCard()}
       </div>
+      <p class="visually-hidden" aria-live="polite" data-export-status>${state.exportsSummary}</p>
     </div>
+  `;
+}
+
+function renderExportOptionsCard() {
+  const isOpen = state.isExportOptionsOpen;
+  const optionsBodyId = "export-options-body";
+  const toggleIconUrl = isOpen ? CHEVRON_ICON_URLS.expanded : CHEVRON_ICON_URLS.collapsed;
+  const toggleLabel = isOpen ? t("exportPanel.optionsCollapse") : t("exportPanel.optionsExpand");
+
+  return `
+    <section class="export-options-card" aria-labelledby="export-options-title">
+      <div class="field-group-header">
+        <div class="field-group-header__row">
+          <div class="export-options-card__title-stack">
+            <h3 id="export-options-title">${t("exportPanel.optionsTitle")}</h3>
+            <p>${t("exportPanel.optionsBody")}</p>
+          </div>
+          <button
+            class="field-group-toggle"
+            type="button"
+            data-export-options-toggle
+            aria-expanded="${isOpen ? "true" : "false"}"
+            aria-controls="${optionsBodyId}"
+            aria-label="${toggleLabel}"
+          >
+            <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <div class="export-options-card__body" id="${optionsBodyId}" ${isOpen ? "" : "hidden"}>
+        <section class="export-option-action" aria-labelledby="export-stl-title">
+          <div class="export-action-card__header">
+            <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.package}</span>
+            <span class="export-action-card__title-stack">
+              <span class="chip-label">${t("exportPanel.stlChip")}</span>
+              <strong id="export-stl-title">${t("exportPanel.stlTitle")}</strong>
+            </span>
+          </div>
+          <p class="export-action-card__text">${t("exportPanel.stlBody")}</p>
+          <button class="export-save-button" type="button" data-export="stl" ${state.exportsStatus === "running" ? "disabled" : ""}>
+            ${EXPORT_ICON_MARKUP.download}
+            <span>${state.exportsStatus === "running" ? t("actions.saving") : t("exportPanel.saveStl")}</span>
+          </button>
+        </section>
+      </div>
+    </section>
   `;
 }
 
@@ -1989,11 +2041,24 @@ function renderField(field, options = {}) {
 }
 
 function getClosestFromEventTarget(event, selector) {
-  if (!(event.target instanceof Element)) {
-    return null;
+  for (const target of event.composedPath?.() ?? []) {
+    if (target instanceof Element) {
+      const closest = target.closest(selector);
+      if (closest) {
+        return closest;
+      }
+    }
   }
 
-  return event.target.closest(selector);
+  if (event.target instanceof Element) {
+    return event.target.closest(selector);
+  }
+
+  if (event.target instanceof Node) {
+    return event.target.parentElement?.closest(selector) ?? null;
+  }
+
+  return null;
 }
 
 function handleLanguageControlClick(event) {
@@ -2068,6 +2133,12 @@ function handleInspectorCardClick(event) {
   const exportButton = getClosestFromEventTarget(event, "[data-export]");
   if (exportButton) {
     executeExport(exportButton.dataset.export);
+    return;
+  }
+
+  const exportOptionsToggleButton = getClosestFromEventTarget(event, "[data-export-options-toggle]");
+  if (exportOptionsToggleButton) {
+    toggleExportOptions();
   }
 }
 
@@ -2148,6 +2219,11 @@ function toggleFieldGroup(groupId) {
   }
 
   state.collapsedFieldGroups[groupId] = !state.collapsedFieldGroups[groupId];
+  render({ animateInspector: true });
+}
+
+function toggleExportOptions() {
+  state.isExportOptionsOpen = !state.isExportOptionsOpen;
   render({ animateInspector: true });
 }
 
@@ -2325,6 +2401,10 @@ function buildEditorDataFilename(params = state.keycapParams) {
 
 function build3mfFilename(params = state.keycapParams) {
   return `${sanitizeExportBaseName(params.name)}.3mf`;
+}
+
+function buildStlFilename(params = state.keycapParams) {
+  return `${sanitizeExportBaseName(params.name)}.stl`;
 }
 
 function recordExportHistory(entry) {
@@ -2962,6 +3042,33 @@ async function executeExport(format) {
           elapsedMs: Math.round(offResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0)),
           byteLength: blob.size,
           notes: t("importExport.threeMfNote", { parts: savedPartLabels }),
+        },
+      );
+    } else if (format === "stl") {
+      const result = await runOpenScad({
+        files: await createKeycapFiles({
+          params: state.keycapParams,
+          exportTarget: "single_material_shape",
+        }),
+        args: buildKeycapArgs({
+          outputPath: keycapStlExportPath,
+          outputFormat: "stl",
+        }),
+        outputPaths: [keycapStlExportPath],
+      });
+      const [output] = result.outputs;
+      const blob = new Blob([output.bytes], { type: "model/stl" });
+      downloadBlob(blob, buildStlFilename());
+
+      setExportStatus(
+        "success",
+        t("importExport.savedStl", { byteLength: blob.size }),
+        {
+          format,
+          label: t("importExport.stlLabel"),
+          elapsedMs: Math.round(result.elapsedMs),
+          byteLength: blob.size,
+          notes: t("importExport.stlNote"),
         },
       );
     } else {

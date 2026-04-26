@@ -67,6 +67,18 @@ pre {
   margin: 0;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .app-shell {
   position: relative;
   min-height: 100vh;
@@ -378,6 +390,7 @@ pre {
 .info-chip strong,
 .note-card strong,
 .export-action-card strong,
+.export-option-action strong,
 .legend-input__label,
 .field-label,
 .field-group-header h3 {
@@ -1031,12 +1044,14 @@ pre {
   min-width: 0;
 }
 
-.export-action-card .chip-label {
+.export-action-card .chip-label,
+.export-option-action .chip-label {
   color: var(--muted);
   font-weight: 700;
 }
 
-.export-action-card strong {
+.export-action-card strong,
+.export-option-action strong {
   font-size: 17px;
   line-height: 1.2;
 }
@@ -1045,6 +1060,40 @@ pre {
   font-size: 13px;
   line-height: 1.5;
   color: var(--muted);
+}
+
+.export-options-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--glass-panel-warm);
+  border: 1px solid var(--glass-border-surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 6px 18px rgba(45, 36, 28, 0.02);
+}
+
+.export-options-card__title-stack {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.export-options-card__body {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border-surface);
+}
+
+.export-options-card__body[hidden] {
+  display: none;
+}
+
+.export-option-action {
+  display: grid;
+  gap: 14px;
 }
 
 .export-save-button {

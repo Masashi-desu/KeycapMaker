@@ -35,7 +35,7 @@ const en = Object.freeze({
     },
     export: {
       title: "Export",
-      body: "Save 3MF print data and JSON editor data for resuming edits later.",
+      body: "Save 3MF / STL print data and JSON editor data for resuming edits later.",
     },
   },
   exportPanel: {
@@ -47,10 +47,18 @@ const en = Object.freeze({
     threeMfTitle: "Save 3MF Data",
     threeMfBody: "Save print-ready 3MF data containing the body, homing mark, and legend.",
     saveThreeMf: "Save 3MF",
+    optionsTitle: "Options",
+    optionsBody: "3MF is recommended for normal print data. Use STL only when your slicer or manufacturing requirement needs it.",
+    optionsExpand: "Expand options",
+    optionsCollapse: "Collapse options",
+    stlChip: "Single-color STL",
+    stlTitle: "Save STL",
+    stlBody: "Save a single-material, single-mesh STL. Colors and legends are ignored, and only the shape is exported. Save as 3MF when you need colors or legends.",
+    saveStl: "Save STL",
   },
   nameGroup: {
     title: "Name",
-    description: "This name is used for both the 3MF and editor-data JSON files, and it remains when the data is loaded again.",
+    description: "This name is used for 3MF, STL, and editor-data JSON files, and it remains when the data is loaded again.",
   },
   fieldGroup: {
     expand: "Expand {title}",
@@ -114,7 +122,7 @@ const en = Object.freeze({
   fields: {
     name: {
       label: "Name",
-      hint: "Used as the file name for 3MF and editor-data JSON exports",
+      hint: "Used as the file name for 3MF, STL, and editor-data JSON exports",
     },
     shapeProfile: {
       label: "Base Shape",
@@ -395,6 +403,9 @@ const en = Object.freeze({
     savedThreeMf: "Saved 3MF data ({byteLength} bytes / {partCount} parts)",
     threeMfLabel: "3MF Data",
     threeMfNote: "Saved {parts} together as 3MF data",
+    savedStl: "Saved STL ({byteLength} bytes)",
+    stlLabel: "Single-color STL",
+    stlNote: "Saved the shape as a single mesh without colors or legends",
     saveFailed: "Failed to save",
     saveFailedLabel: "Save Failed",
     unsupportedExport: "Unsupported export format: {format}",

@@ -35,7 +35,7 @@ const ko = Object.freeze({
     },
     export: {
       title: "내보내기",
-      body: "3MF 인쇄 데이터와 나중에 편집을 다시 시작하기 위한 JSON을 저장할 수 있습니다.",
+      body: "3MF / STL 인쇄 데이터와 나중에 편집을 다시 시작하기 위한 JSON을 저장할 수 있습니다.",
     },
   },
   exportPanel: {
@@ -47,10 +47,18 @@ const ko = Object.freeze({
     threeMfTitle: "3MF 데이터 저장",
     threeMfBody: "본체, 위치 표시, 각인을 포함한 인쇄용 데이터를 3MF 형식으로 묶어 저장합니다.",
     saveThreeMf: "3MF 저장",
+    optionsTitle: "옵션",
+    optionsBody: "일반 인쇄 데이터는 3MF를 권장합니다. 슬라이서나 제작 요구사항상 필요한 경우에만 STL을 사용합니다.",
+    optionsExpand: "옵션 펼치기",
+    optionsCollapse: "옵션 접기",
+    stlChip: "단색용 STL",
+    stlTitle: "STL 저장",
+    stlBody: "단일 소재, 단일 메시 STL로 저장합니다. 색상과 각인은 무시되고 형상만 출력됩니다. 색상 구분이나 각인이 필요하면 3MF로 저장하세요.",
+    saveStl: "STL 저장",
   },
   nameGroup: {
     title: "이름",
-    description: "저장할 때 사용하는 이름입니다. 3MF와 편집 데이터 JSON 양쪽에 사용되며, 나중에 불러와도 이 이름이 유지됩니다.",
+    description: "저장할 때 사용하는 이름입니다. 3MF, STL, 편집 데이터 JSON에 사용되며, 나중에 불러와도 이 이름이 유지됩니다.",
   },
   fieldGroup: {
     expand: "{title} 펼치기",
@@ -114,7 +122,7 @@ const ko = Object.freeze({
   fields: {
     name: {
       label: "이름",
-      hint: "3MF와 편집 데이터 JSON의 저장 파일 이름으로 사용됩니다",
+      hint: "3MF, STL, 편집 데이터 JSON의 저장 파일 이름으로 사용됩니다",
     },
     shapeProfile: {
       label: "기본 형상",
@@ -395,6 +403,9 @@ const ko = Object.freeze({
     savedThreeMf: "3MF 데이터를 저장했습니다 ({byteLength} bytes / 부품 {partCount}개)",
     threeMfLabel: "3MF 데이터",
     threeMfNote: "{parts}을(를) 3MF 형식으로 묶어 저장",
+    savedStl: "STL을 저장했습니다 ({byteLength} bytes)",
+    stlLabel: "단색 STL",
+    stlNote: "색상과 각인을 포함하지 않고 단일 메시 형상으로 저장",
     saveFailed: "저장에 실패했습니다",
     saveFailedLabel: "저장 실패",
     unsupportedExport: "지원하지 않는 export 형식입니다: {format}",

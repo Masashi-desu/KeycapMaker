@@ -21,6 +21,7 @@
 - `rim`
 - `homing`
 - `legend`
+- `single_material_shape`
 
 この構成により、preview 用表示と part 単位 export を同じ基礎形状から扱います。
 
@@ -38,7 +39,7 @@
 - export:
   part 分離と形状の意味づけを優先する
 
-現在の preview は OFF メッシュを body / rim / homing / legend ごとに生成して Three.js へ渡します。Three.js 側では shared vertex を保った indexed geometry を基準に creased normals を作り、曲面は滑らかに、急角は残す。SCAD 側の円弧分割は feature の半径と `quality` に応じて上限付きで増やす。現在の export は同じ part 群から 3MF を組み立てます。
+現在の preview は OFF メッシュを body / rim / homing / legend ごとに生成して Three.js へ渡します。Three.js 側では shared vertex を保った indexed geometry を基準に creased normals を作り、曲面は滑らかに、急角は残す。SCAD 側の円弧分割は feature の半径と `quality` に応じて上限付きで増やす。現在の 3MF export は同じ part 群から 3MF を組み立てます。STL export は `single_material_shape` target から OpenSCAD runtime の STL 出力を直接使い、色と legend を含まない単一メッシュとして扱います。
 
 legend の `text()` は bundled OpenSCAD runtime 上で preview / export の `quality` に応じて曲線分割数を上げ、内部では拡大してから縮小する。これにより、小さい文字サイズでも丸みのある書体の輪郭が過度に角張るのを抑える。font の native style は JS 側で `font` query を組み立てて指定し、ユーザー操作なしの擬似 bold / italic / slanted は行わない。下線は font file の `post` / `head` / `hhea` から `UnderlinePosition` / `UnderlineThickness` / line box 中心を読み、`valign="center"` な text 座標へ変換したうえで実測文字幅と組み合わせる。font metadata を取れない場合の任意フォールバックは行わない。輪郭補正は `legendOutlineDelta` を通した明示入力時だけ `offset()` を使う。
 legend の文字サイズは UI の `legendSize` をそのまま基準にし、文字数に応じた自動縮小や単一文字だけの自動拡大は行わない。
@@ -82,6 +83,7 @@ flowchart TD
   wasm --> off["body / rim / homing / legend の OFF"]
   off --> preview["preview-scene.js / Three.js"]
   off --> export3mf["export-3mf.js / 3MF"]
+  wasm --> exportStl["single_material_shape / STL"]
 ```
 
 ルール:
@@ -139,13 +141,23 @@ flowchart TD
 - Bambu Studio / OrcaSlicer 向けに `Metadata/model_settings.config`、PrusaSlicer / Slic3r PE 向けに `Metadata/Slic3r_PE_model.config` を追加し、part 表示名を `body` / `rim` / `homing` / `legend` として保持する
 - Cura など標準3MF中心の importer 向けには、子 object の `name` と `partnumber` を保持する
 
+### STL
+
+- 出力元は `single_material_shape` target
+- OpenSCAD runtime から binary STL として直接出力する
+- body shell、stem、homing bar、typewriter rim を単一メッシュとして union する
+- legend は出力に含めない
+- 色、material、part 名、separate volume 情報は含めない
+- 色分けや legend が必要な場合は 3MF を使う
+- JSON / 3MF と同じく、ダウンロードファイル名は `params.name` を基準にする
+
 ### 編集データ JSON
 
 - UI state の保存と再読み込み用
 - 保存用の canonical JSON は `schemaVersion` を持つ
 - `params.name` に保存名を含める
 - geometry export ではなく、作業再開用フォーマットとして扱う
-- JSON / 3MF のダウンロードファイル名は `params.name` を基準にする
+- JSON / 3MF / STL のダウンロードファイル名は `params.name` を基準にする
 - 保存時は shape defaults を解決したフル設定を保持し、非活性 UI の値も落とさない
 - 読み込み時は canonical JSON に加えて sparse な互換入力 JSON も受ける
 - 互換入力 JSON は `params` 配下または top-level に既知パラメータを書ける。欠損したキーは shape defaults を使う

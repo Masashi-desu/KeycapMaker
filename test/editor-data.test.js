@@ -9,6 +9,7 @@ import {
   EDITOR_DATA_SCHEMA_VERSION,
   getTopSurfaceShapePreset,
   parseEditorDataPayload,
+  sanitizeExportBaseName,
   syncDerivedKeycapParams,
 } from "../src/lib/editor-data.js";
 
@@ -174,4 +175,10 @@ test("キートップ形状ごとの代表プリセットを返す", () => {
 test("印字サイズの初期値は 5mm にする", () => {
   assert.equal(createDefaultKeycapParams("custom-shell").legendSize, 5.0);
   assert.equal(createDefaultKeycapParams("typewriter").legendSize, 5.0);
+});
+
+test("保存名の拡張子正規化は STL も対象にする", () => {
+  assert.equal(sanitizeExportBaseName("sample.stl"), "sample");
+  assert.equal(sanitizeExportBaseName("sample.3mf"), "sample");
+  assert.equal(sanitizeExportBaseName("sample.json"), "sample");
 });

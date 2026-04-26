@@ -520,6 +520,15 @@ module keycap_body(quality = "export") {
     }
 }
 
+module keycap_single_material_shape(quality = "export") {
+    union() {
+        keycap_body_shell_positive(quality);
+        keycap_stem(quality);
+        keycap_homing_bar(quality);
+        keycap_rim_positive(quality);
+    }
+}
+
 module keycap_legend(quality = "export") {
     keycap_legend_volume(quality);
 }
@@ -544,6 +553,10 @@ module export_legend() {
     keycap_legend("export");
 }
 
+module export_single_material_shape() {
+    keycap_single_material_shape("export");
+}
+
 module preview_model() {
     union() {
         keycap_body("preview");
@@ -562,6 +575,8 @@ if (resolved_export_target == "body") {
     export_rim();
 } else if (resolved_export_target == "legend") {
     export_legend();
+} else if (resolved_export_target == "single_material_shape") {
+    export_single_material_shape();
 } else {
     preview_model();
 }
