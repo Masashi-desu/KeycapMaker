@@ -818,6 +818,14 @@ const fieldGroupTemplates = [
     fields: [
       { key: "legendEnabled", label: () => t("fields.legendEnabled.label"), hint: () => t("fields.legendEnabled.hint"), type: "checkbox" },
       {
+        key: "legendColor",
+        label: () => t("fields.legendColor.label"),
+        hint: () => t("fields.legendColor.hint"),
+        type: "color",
+        placeholder: DEFAULT_KEYCAP_COLORS.legendColor,
+        visibleWhen: (params) => params.legendEnabled,
+      },
+      {
         key: "legendText",
         label: () => t("fields.legendText.label"),
         hint: () => t("fields.legendText.hint"),
@@ -831,6 +839,7 @@ const fieldGroupTemplates = [
         label: () => t("fields.legendFontKey.label"),
         hint: (params) => getLegendFontFieldHint(params),
         type: "font-search",
+        dependentFieldKeys: ["legendFontStyleKey", "legendUnderlineEnabled"],
         visibleWhen: (params) => params.legendEnabled,
       },
       {
@@ -856,6 +865,7 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.1,
         min: LEGEND_MIN_SIZE,
+        dependentFieldKeys: ["legendOutlineDelta"],
         visibleWhen: (params) => params.legendEnabled,
       },
       {
@@ -875,6 +885,7 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.05,
         min: 0,
+        dependentFieldKeys: ["legendEmbed"],
         visibleWhen: (params) => params.legendEnabled,
       },
       {
@@ -887,19 +898,12 @@ const fieldGroupTemplates = [
         visibleWhen: (params) => params.legendEnabled,
       },
       {
-        key: "legendColor",
-        label: () => t("fields.legendColor.label"),
-        hint: () => t("fields.legendColor.hint"),
-        type: "color",
-        placeholder: DEFAULT_KEYCAP_COLORS.legendColor,
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
         key: "legendOffsetX",
         label: () => t("fields.legendOffsetX.label"),
         hint: () => t("fields.legendOffsetX.hint"),
         unit: "mm",
         step: 0.1,
+        dependentFieldKeys: ["legendOffsetY"],
         visibleWhen: (params) => params.legendEnabled,
       },
       {
@@ -1708,7 +1712,7 @@ function getVisibleDependentFieldKeys(fields, fieldByKey) {
 }
 
 function canRenderDependentFields(field) {
-  return field.type === "select";
+  return field.type == null || field.type === "select" || field.type === "font-search";
 }
 
 function renderFieldWithDependents(field, fieldByKey) {
@@ -1722,7 +1726,23 @@ function renderFieldWithDependents(field, fieldByKey) {
     .filter(Boolean)
     .filter((dependentField) => isFieldVisible(dependentField));
 
-  return renderFieldWithDependentFields(field, dependentFields);
+  if (field.type === "select") {
+    return renderFieldWithDependentFields(field, dependentFields);
+  }
+
+  return renderField(field, { dependentFields });
+}
+
+function renderDependentFieldList(dependentFields) {
+  if (dependentFields.length === 0) {
+    return "";
+  }
+
+  return `
+    <div class="field-dependent-list">
+      ${dependentFields.map((dependentField) => renderField(dependentField, { className: "field--dependent" })).join("")}
+    </div>
+  `;
 }
 
 function renderFieldWithDependentFields(field, dependentFields) {
@@ -1751,11 +1771,7 @@ function renderFieldWithDependentFields(field, dependentFields) {
             .join("")}
         </select>
       </span>
-      ${dependentFields.length > 0 ? `
-        <div class="field-dependent-list">
-          ${dependentFields.map((dependentField) => renderField(dependentField, { className: "field--dependent" })).join("")}
-        </div>
-      ` : ""}
+      ${renderDependentFieldList(dependentFields)}
     </div>
   `;
 }
@@ -1904,6 +1920,8 @@ function renderField(field, options = {}) {
   const fieldOptions = resolveFieldOptions(field);
   const isDisabled = isFieldDisabled(field);
   const fieldClassName = options.className ? ` ${options.className}` : "";
+  const dependentFields = options.dependentFields ?? [];
+  const dependentClassName = dependentFields.length > 0 ? " field--with-dependents" : "";
 
   if (field.type === "checkbox") {
     return `
@@ -1930,7 +1948,7 @@ function renderField(field, options = {}) {
     const isPickerOpen = state.legendFontPickerOpen;
 
     return `
-      <label class="field field--font-search ${isPickerOpen ? "is-open" : ""}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      <div class="field field--font-search${dependentClassName} ${isPickerOpen ? "is-open" : ""}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -1976,7 +1994,8 @@ function renderField(field, options = {}) {
           </span>
           ${selectedFontAttributionCard}
         </span>
-      </label>
+        ${renderDependentFieldList(dependentFields)}
+      </div>
     `;
   }
 
@@ -2094,6 +2113,32 @@ function renderField(field, options = {}) {
           </span>
         </span>
       </label>
+    `;
+  }
+
+  if (dependentFields.length > 0) {
+    const inputId = `field-control-${field.key}`;
+
+    return `
+      <div class="field${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        <label class="field-copy" for="${inputId}">
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
+        </label>
+        <span class="field-control">
+          <input
+            id="${inputId}"
+            type="number"
+            data-field="${field.key}"
+            value="${formatNumericFieldValue(field.key, value)}"
+            ${field.min != null ? `min="${field.min}"` : ""}
+            ${field.max != null ? `max="${field.max}"` : ""}
+            ${field.step != null ? `step="${field.step}"` : ""}
+          />
+          ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
+        </span>
+        ${renderDependentFieldList(dependentFields)}
+      </div>
     `;
   }
 

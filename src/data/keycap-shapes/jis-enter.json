@@ -70,7 +70,7 @@
       "id": "legend",
       "title": "印字",
       "description": "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
-      "fieldKeys": ["legendEnabled", "legendText", "legendFontKey", "legendFontStyleKey", "legendUnderlineEnabled", "legendSize", "legendOutlineDelta", "legendHeight", "legendEmbed", "legendColor", "legendOffsetX", "legendOffsetY"]
+      "fieldKeys": ["legendEnabled", "legendColor", "legendText", "legendFontKey", "legendFontStyleKey", "legendUnderlineEnabled", "legendSize", "legendOutlineDelta", "legendHeight", "legendEmbed", "legendOffsetX", "legendOffsetY"]
     },
     {
       "id": "homing",
