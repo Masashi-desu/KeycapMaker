@@ -1,4 +1,4 @@
-# Keycap Maker
+# KeycapMaker
 
 GitHub Pages で配信する、キーキャップ編集 Web アプリのためのリポジトリです。
 

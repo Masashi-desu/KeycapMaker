@@ -568,7 +568,7 @@ function parseFullEditorDataPayload(payload) {
 
 function parseCompatibleEditorDataPayload(payload) {
   if (payload.kind != null && !isCompatiblePatchKind(payload.kind)) {
-    throw new Error("Keycap Maker の編集データ JSON / 互換入力 JSON ではありません。");
+    throw new Error("KeycapMaker の編集データ JSON / 互換入力 JSON ではありません。");
   }
 
   if (isCompatiblePatchKind(payload.kind) && payload.schemaVersion != null && payload.schemaVersion !== EDITOR_DATA_COMPAT_SCHEMA_VERSION) {
@@ -608,7 +608,7 @@ export function parseEditorDataPayload(payload) {
   }
 
   if (payload.kind != null && !isCurrentOrLegacyEditorDataKind(payload.kind) && !isCompatiblePatchKind(payload.kind)) {
-    throw new Error("Keycap Maker の編集データ JSON / 互換入力 JSON ではありません。");
+    throw new Error("KeycapMaker の編集データ JSON / 互換入力 JSON ではありません。");
   }
 
   const mergedRawParams = isCurrentOrLegacyEditorDataKind(payload.kind)

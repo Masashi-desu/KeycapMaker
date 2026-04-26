@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
-  <title>Keycap Maker Open Graph Card</title>
+  <title>KeycapMaker Open Graph Card</title>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#F4F1EA" />
@@ -68,22 +68,22 @@
     </g>
   </g>
   <text x="462" y="172" fill="#7C6A58" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="18" font-weight="700" letter-spacing="0.18em">BROWSER KEYCAP EDITOR</text>
-  <text x="462" y="316" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="86" font-weight="750" letter-spacing="-0.04em">Keycap Maker</text>
-  <text x="462" y="386" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="28" font-weight="600">Prototype keycap geometry in the browser.</text>
-  <text x="462" y="422" fill="#7C6A58" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="25" font-weight="500">Preview legends, export 3MF, and resume from JSON.</text>
+  <text x="462" y="316" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="86" font-weight="750">KeycapMaker</text>
+  <text x="462" y="386" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="28" font-weight="600">キーキャップをブラウザで作成</text>
+  <text x="462" y="422" fill="#7C6A58" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="24" font-weight="500">形状・印字を調整、3MF / JSONで保存。</text>
   <g>
     <rect x="462" y="463" width="220" height="46" rx="23" fill="url(#chip)" />
     <rect x="462.75" y="463.75" width="218.5" height="44.5" rx="22.25" stroke="#D8CCB8" stroke-width="1.5" />
-    <text x="572" y="492" text-anchor="middle" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="20" font-weight="700">OpenSCAD WASM</text>
+    <text x="572" y="492" text-anchor="middle" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="20" font-weight="700">形状編集</text>
   </g>
   <g>
     <rect x="700" y="463" width="164" height="46" rx="23" fill="url(#chip)" />
     <rect x="700.75" y="463.75" width="162.5" height="44.5" rx="22.25" stroke="#D8CCB8" stroke-width="1.5" />
-    <text x="782" y="492" text-anchor="middle" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="20" font-weight="700">3MF Export</text>
+    <text x="782" y="492" text-anchor="middle" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="20" font-weight="700">印字調整</text>
   </g>
   <g>
     <rect x="882" y="463" width="196" height="46" rx="23" fill="url(#chip)" />
     <rect x="882.75" y="463.75" width="194.5" height="44.5" rx="22.25" stroke="#D8CCB8" stroke-width="1.5" />
-    <text x="980" y="492" text-anchor="middle" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="20" font-weight="700">JSON Resume</text>
+    <text x="980" y="492" text-anchor="middle" fill="#2D241C" font-family="Avenir Next, Hiragino Sans, Yu Gothic UI, sans-serif" font-size="20" font-weight="700">3MF / JSON</text>
   </g>
 </svg>
