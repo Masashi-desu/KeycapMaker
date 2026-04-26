@@ -113,6 +113,30 @@ const en = Object.freeze({
         },
       },
     },
+    "jis-enter": {
+      label: "JIS Enter",
+      fieldGroups: {
+        shape: {
+          title: "Keycap Shape",
+          description: "Adjust the overall size and lower-left notch from a common JIS / ISO-style tall Enter footprint. Width is converted using 18 mm as 1u.",
+        },
+        top: {
+          title: "Keytop",
+          description: "Like Custom Shell, this can edit the top center reference height, flat / cylindrical / spherical surface, and front/back or left/right tilt.",
+        },
+        legend: {
+          title: "Legend",
+          description: "Adjust the text, typeface, appearance, position, height, and embedding depth. Multi-character legends can be entered as-is.",
+        },
+        homing: {
+          title: "Homing Mark",
+          description: "Adjust a tactile bump like the one on F and J keys. It can be configured separately from the legend.",
+        },
+        stem: {
+          title: "Mount",
+        },
+      },
+    },
   },
   fieldGroups: {
     shapeDescriptionShell: "Adjust the overall keycap size and the amount of taper toward the top. Key size follows the width, using 18 mm as 1u.",
@@ -145,6 +169,14 @@ const en = Object.freeze({
     typewriterCornerRadius: {
       label: "R",
       hint: "{maxRadius} is fully round; values near 0 mm make the corners sharper.",
+    },
+    jisEnterNotchWidth: {
+      label: "Notch Width",
+      hint: "Horizontal width of the lower-left notch. Maximum: {maxWidth}.",
+    },
+    jisEnterNotchDepth: {
+      label: "Notch Depth",
+      hint: "Front-to-back depth of the lower-left notch. Maximum: {maxDepth}.",
     },
     topScale: {
       label: "Top Taper",

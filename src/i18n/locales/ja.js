@@ -113,6 +113,30 @@ const ja = Object.freeze({
         },
       },
     },
+    "jis-enter": {
+      label: "JISエンター",
+      fieldGroups: {
+        shape: {
+          title: "キーキャップの形",
+          description: "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法と左下の欠き込みを調整します。横幅は 18 mm を 1u として換算します。",
+        },
+        top: {
+          title: "キートップ",
+          description: "カスタムシェルと同じく、上面中央の基準高さ、フラット / シンドリカル / スフェリカル、前後左右の傾きを調整できます。",
+        },
+        legend: {
+          title: "印字",
+          description: "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+        },
+        homing: {
+          title: "指の目印",
+          description: "F キーや J キーのように、指で触って分かる出っ張りを調整します。印字とは別に設定できます。",
+        },
+        stem: {
+          title: "取り付け部分",
+        },
+      },
+    },
   },
   fieldGroups: {
     shapeDescriptionShell: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。キーサイズは横幅と連動していて、18 mm を 1u として換算します。",
@@ -145,6 +169,14 @@ const ja = Object.freeze({
     typewriterCornerRadius: {
       label: "R",
       hint: "{maxRadius} で丸、0 mm に近づけると角が立ちます",
+    },
+    jisEnterNotchWidth: {
+      label: "欠き込み幅",
+      hint: "左下に空ける横方向の欠き込みです。最大 {maxWidth} です",
+    },
+    jisEnterNotchDepth: {
+      label: "欠き込み奥行き",
+      hint: "左下に空ける前後方向の欠き込みです。最大 {maxDepth} です",
     },
     topScale: {
       label: "上面のすぼまり",

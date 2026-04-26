@@ -1,0 +1,88 @@
+{
+  "key": "jis-enter",
+  "label": "JISエンター",
+  "geometryType": "jis_enter",
+  "geometryDefaults": {
+    "profileFrontAngle": 15,
+    "profileBackAngle": 15,
+    "profileLeftAngle": 10,
+    "profileRightAngle": 10,
+    "topThickness": 1.5,
+    "bottomCornerRadius": 1.0,
+    "topCornerRadius": 1.5
+  },
+  "defaults": {
+    "name": "jis-enter-keycap",
+    "shapeProfile": "jis-enter",
+    "keyWidth": 27,
+    "keyDepth": 36,
+    "jisEnterNotchWidth": 4.5,
+    "jisEnterNotchDepth": 18,
+    "topCenterHeight": 9.5,
+    "topSlopeInputMode": "angle",
+    "topPitchDeg": 0,
+    "topRollDeg": 0,
+    "wallThickness": 1.2,
+    "topScale": 0.84,
+    "topSurfaceShape": "flat",
+    "dishRadius": 45,
+    "dishDepth": 0,
+    "bodyColor": "#f8f9fa",
+    "legendEnabled": true,
+    "legendText": "Enter",
+    "legendFontKey": "mplus1-variable",
+    "legendFontStyleKey": "regular",
+    "legendUnderlineEnabled": false,
+    "legendSize": 5.0,
+    "legendOutlineDelta": 0,
+    "legendHeight": 0,
+    "legendEmbed": 0.6,
+    "legendColor": "#212529",
+    "legendOffsetX": 0,
+    "legendOffsetY": 0,
+    "homingBarEnabled": false,
+    "homingBarLength": 4.0,
+    "homingBarWidth": 1.58,
+    "homingBarHeight": 0.6,
+    "homingBarChamfer": 0.3,
+    "homingBarOffsetY": -3.5,
+    "homingBarBaseThickness": 0.35,
+    "homingBarColor": "#ff7f00",
+    "stemType": "choc_v2",
+    "stemOuterDelta": 0,
+    "stemCrossMargin": 0,
+    "stemInsetDelta": 0
+  },
+  "fieldGroups": [
+    {
+      "id": "shape",
+      "title": "キーキャップの形",
+      "description": "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法と左下の欠き込みを調整します。横幅は 18 mm を 1u として換算します。",
+      "fieldKeys": ["shapeProfile", "keyWidth", "keyDepth", "jisEnterNotchWidth", "jisEnterNotchDepth", "wallThickness", "topScale", "bodyColor"]
+    },
+    {
+      "id": "top",
+      "title": "キートップ",
+      "description": "カスタムシェルと同じく、上面中央の基準高さ、フラット / シンドリカル / スフェリカル、前後左右の傾きを調整できます。",
+      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+    },
+    {
+      "id": "legend",
+      "title": "印字",
+      "description": "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+      "fieldKeys": ["legendEnabled", "legendText", "legendFontKey", "legendFontStyleKey", "legendUnderlineEnabled", "legendSize", "legendOutlineDelta", "legendHeight", "legendEmbed", "legendColor", "legendOffsetX", "legendOffsetY"]
+    },
+    {
+      "id": "homing",
+      "title": "指の目印",
+      "description": "F キーや J キーのように、指で触って分かる出っ張りを調整します。印字とは別に設定できます。",
+      "fieldKeys": ["homingBarEnabled", "homingBarLength", "homingBarWidth", "homingBarHeight", "homingBarChamfer", "homingBarOffsetY", "homingBarBaseThickness", "homingBarColor"]
+    },
+    {
+      "id": "stem",
+      "title": "取り付け部分",
+      "descriptionKey": "stem-group",
+      "fieldKeys": ["stemType", "stemOuterDelta", "stemCrossMargin", "stemInsetDelta"]
+    }
+  ]
+}

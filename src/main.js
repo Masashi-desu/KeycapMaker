@@ -271,6 +271,16 @@ function getTypewriterRimHeightDownHint() {
   return t("fields.rimHeightDown.hint");
 }
 
+function getJisEnterNotchWidthHint(params) {
+  const maxWidth = Math.max(Number(params.keyWidth ?? 0) - 0.2, 0);
+  return t("fields.jisEnterNotchWidth.hint", { maxWidth: formatMillimeter(maxWidth) });
+}
+
+function getJisEnterNotchDepthHint(params) {
+  const maxDepth = Math.max(Number(params.keyDepth ?? 0) - 0.2, 0);
+  return t("fields.jisEnterNotchDepth.hint", { maxDepth: formatMillimeter(maxDepth) });
+}
+
 function getTypewriterMountHeightMinimum(params = state.keycapParams) {
   const topCenterHeight = clampMinimum(params.topCenterHeight, 5.2, 0.1);
   return topCenterHeight + TYPEWRITER_MIN_STEM_HEIGHT - TYPEWRITER_STEM_MOUNT_OVERLAP;
@@ -324,6 +334,12 @@ const GEOMETRY_TYPE_RESET_FIELDS = new Set([
   "dishDepth",
   "typewriterCornerRadius",
   "typewriterMountHeight",
+]);
+const FOOTPRINT_RESET_FIELDS = new Set([
+  "keyWidth",
+  "keyDepth",
+  "jisEnterNotchWidth",
+  "jisEnterNotchDepth",
 ]);
 
 function isCrossCompatibleStemType(stemType) {
@@ -564,6 +580,22 @@ const fieldGroupTemplates = [
         secondaryMin: 0.5,
       },
       { key: "keyDepth", label: () => t("fields.keyDepth.label"), hint: () => t("fields.keyDepth.hint"), unit: "mm", step: 0.1, min: 10 },
+      {
+        key: "jisEnterNotchWidth",
+        label: () => t("fields.jisEnterNotchWidth.label"),
+        hint: (params) => getJisEnterNotchWidthHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: 0,
+      },
+      {
+        key: "jisEnterNotchDepth",
+        label: () => t("fields.jisEnterNotchDepth.label"),
+        hint: (params) => getJisEnterNotchDepthHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: 0,
+      },
       {
         key: "wallThickness",
         label: () => t("fields.wallThickness.label"),
@@ -2429,14 +2461,20 @@ function applyShapeProfileParams(profileKey) {
   const previousVisibleFieldKeys = getShapeProfileVisibleFieldKeys(previousProfileKey);
   const nextVisibleFieldKeys = getShapeProfileVisibleFieldKeys(profileKey);
   const geometryTypeChanged = previousGeometryType !== nextGeometryType;
+  const footprintTypeChanged = previousGeometryType === "jis_enter" || nextGeometryType === "jis_enter";
   const nextParams = {};
 
   for (const key of listEditableParamKeys(profileKey)) {
     const shouldResetToProfileDefault = geometryTypeChanged && GEOMETRY_TYPE_RESET_FIELDS.has(key)
+      || footprintTypeChanged && FOOTPRINT_RESET_FIELDS.has(key)
       || !previousVisibleFieldKeys.has(key)
       || !nextVisibleFieldKeys.has(key);
     const sourceValue = shouldResetToProfileDefault ? defaultParams[key] : state.keycapParams[key];
-    nextParams[key] = sanitizeEditorParamValue(key, sourceValue, defaults[key], state.keycapParams);
+    nextParams[key] = sanitizeEditorParamValue(key, sourceValue, defaults[key], {
+      ...state.keycapParams,
+      ...nextParams,
+      shapeProfile: profileKey,
+    });
   }
 
   nextParams.name = state.keycapParams.name ?? defaultParams.name ?? defaults.name;
@@ -2779,6 +2817,14 @@ function handleFieldChange(event) {
 
   if (field === "dishDepth") {
     syncFieldHint("topCenterHeight");
+  }
+
+  if (field === "keyWidth") {
+    syncFieldHint("jisEnterNotchWidth");
+  }
+
+  if (field === "keyDepth") {
+    syncFieldHint("jisEnterNotchDepth");
   }
 
   if (!deferPreview && field !== "topSlopeInputMode") {

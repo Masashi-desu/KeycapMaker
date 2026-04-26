@@ -174,7 +174,37 @@ test("キートップ形状ごとの代表プリセットを返す", () => {
 
 test("印字サイズの初期値は 5mm にする", () => {
   assert.equal(createDefaultKeycapParams("custom-shell").legendSize, 5.0);
+  assert.equal(createDefaultKeycapParams("jis-enter").legendSize, 5.0);
   assert.equal(createDefaultKeycapParams("typewriter").legendSize, 5.0);
+});
+
+test("JISエンターは欠き込み寸法をキー寸法内に丸める", () => {
+  const parsed = parseEditorDataPayload({
+    shapeProfile: "jis-enter",
+    keyWidth: 27,
+    keyDepth: 36,
+    jisEnterNotchWidth: 99,
+    jisEnterNotchDepth: 99,
+  });
+
+  assert.equal(parsed.shapeProfile, "jis-enter");
+  assert.equal(parsed.jisEnterNotchWidth, 26.8);
+  assert.equal(parsed.jisEnterNotchDepth, 35.8);
+  assert.equal(parsed.topSurfaceShape, "flat");
+});
+
+test("JISエンターの既定寸法はステム原点を下胴中央に置く", () => {
+  const params = createDefaultKeycapParams("jis-enter");
+  const left = -params.keyWidth / 2 - params.jisEnterNotchWidth / 2;
+  const right = params.keyWidth / 2 - params.jisEnterNotchWidth / 2;
+  const notchX = left + params.jisEnterNotchWidth;
+  const lowerBodyCenterX = (notchX + right) / 2;
+  const lowerBodyWidth = right - notchX;
+
+  assert.equal(lowerBodyCenterX, 0);
+  assert.equal(lowerBodyWidth, 22.5);
+  assert.equal(params.keyDepth, 36);
+  assert.equal(params.jisEnterNotchDepth, 18);
 });
 
 test("保存名の拡張子正規化は STL も対象にする", () => {

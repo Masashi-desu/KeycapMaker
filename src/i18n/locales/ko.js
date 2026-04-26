@@ -113,6 +113,30 @@ const ko = Object.freeze({
         },
       },
     },
+    "jis-enter": {
+      label: "JIS Enter",
+      fieldGroups: {
+        shape: {
+          title: "키캡 형상",
+          description: "일반적인 JIS / ISO 계열 세로형 Enter footprint를 기준으로 전체 치수와 왼쪽 아래 파임을 조정합니다. 폭은 18 mm를 1u로 환산합니다.",
+        },
+        top: {
+          title: "키톱",
+          description: "커스텀 셸처럼 상면 중앙 기준 높이, 평면 / 원통 / 구면, 앞뒤와 좌우 기울기를 조정할 수 있습니다.",
+        },
+        legend: {
+          title: "각인",
+          description: "입력할 문자, 서체, 모양, 위치, 돌출 높이, 매립량을 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
+        },
+        homing: {
+          title: "손가락 위치 표시",
+          description: "F 키나 J 키처럼 손끝으로 위치를 알 수 있는 돌출부를 조정합니다. 각인과 별도로 설정할 수 있습니다.",
+        },
+        stem: {
+          title: "장착부",
+        },
+      },
+    },
   },
   fieldGroups: {
     shapeDescriptionShell: "키캡 전체 크기와 위쪽으로 좁아지는 정도를 조정합니다. 키 크기는 폭과 연동되며 18 mm를 1u로 환산합니다.",
@@ -145,6 +169,14 @@ const ko = Object.freeze({
     typewriterCornerRadius: {
       label: "R",
       hint: "{maxRadius}이면 둥글고, 0 mm에 가까울수록 모서리가 살아납니다.",
+    },
+    jisEnterNotchWidth: {
+      label: "파임 폭",
+      hint: "왼쪽 아래 파임의 가로 폭입니다. 최댓값은 {maxWidth}입니다.",
+    },
+    jisEnterNotchDepth: {
+      label: "파임 깊이",
+      hint: "왼쪽 아래 파임의 앞뒤 깊이입니다. 최댓값은 {maxDepth}입니다.",
     },
     topScale: {
       label: "상면 좁아짐",

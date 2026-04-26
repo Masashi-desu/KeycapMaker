@@ -180,6 +180,33 @@ function clampTypewriterRimWidth(value, params = {}, fallback = 0) {
   return Math.min(Math.max(nextValue, 0), maxWidth);
 }
 
+function getJisEnterNotchWidthMax(params = {}) {
+  return Math.max(Number(params.keyWidth ?? 0) - 0.2, 0);
+}
+
+function getJisEnterNotchDepthMax(params = {}) {
+  return Math.max(Number(params.keyDepth ?? 0) - 0.2, 0);
+}
+
+function clampJisEnterNotchDimension(value, maxValue, fallback = 0) {
+  const nextValue = Number(value);
+  const fallbackValue = Number(fallback);
+  const resolvedFallback = Number.isFinite(fallbackValue) ? Math.max(fallbackValue, 0) : 0;
+  if (!Number.isFinite(nextValue)) {
+    return Math.min(resolvedFallback, maxValue);
+  }
+
+  return Math.min(Math.max(nextValue, 0), maxValue);
+}
+
+function clampJisEnterNotchWidth(value, params = {}, fallback = 0) {
+  return clampJisEnterNotchDimension(value, getJisEnterNotchWidthMax(params), fallback);
+}
+
+function clampJisEnterNotchDepth(value, params = {}, fallback = 0) {
+  return clampJisEnterNotchDimension(value, getJisEnterNotchDepthMax(params), fallback);
+}
+
 function getTypewriterMountHeightMinimum(params = {}) {
   const topCenterHeight = clampMinimum(params.topCenterHeight, 5.2, 0.1);
   return topCenterHeight + TYPEWRITER_MIN_STEM_HEIGHT - TYPEWRITER_STEM_MOUNT_OVERLAP;
@@ -354,6 +381,18 @@ export function syncDerivedKeycapParams(params = {}) {
       defaults.typewriterMountHeight ?? 0,
     );
   }
+  if (resolveShapeGeometryType(profileKey) === "jis_enter") {
+    params.jisEnterNotchWidth = clampJisEnterNotchWidth(
+      params.jisEnterNotchWidth,
+      params,
+      defaults.jisEnterNotchWidth ?? 0,
+    );
+    params.jisEnterNotchDepth = clampJisEnterNotchDepth(
+      params.jisEnterNotchDepth,
+      params,
+      defaults.jisEnterNotchDepth ?? 0,
+    );
+  }
   params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
   params.rimHeightUp = clampNonNegativeNumber(params.rimHeightUp, defaults.rimHeightUp ?? 0);
   params.rimHeightDown = clampNonNegativeNumber(params.rimHeightDown, defaults.rimHeightDown ?? 0);
@@ -442,6 +481,14 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "typewriterMountHeight") {
     return clampTypewriterMountHeight(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "jisEnterNotchWidth") {
+    return clampJisEnterNotchWidth(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "jisEnterNotchDepth") {
+    return clampJisEnterNotchDepth(value, paramsContext, fallback);
   }
 
   if (fieldKey === "rimHeightUp" || fieldKey === "rimHeightDown" || fieldKey === "homingBarChamfer") {

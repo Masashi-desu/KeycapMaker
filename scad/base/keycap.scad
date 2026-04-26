@@ -1,5 +1,6 @@
 include <../presets/stem-nominals.scad>
 use <../modules/keycap_shell.scad>
+use <../modules/keycap_jis_enter.scad>
 use <../modules/keycap_typewriter.scad>
 use <../modules/legend_block.scad>
 use <../modules/stem_mx.scad>
@@ -16,7 +17,7 @@ function positive_dimension(value, minimum = 0.1) = max(value, minimum);
 function stem_cross_dimension(base_value, margin) =
     positive_dimension(base_value + margin * 2);
 function supported_shape_geometry_type(type) =
-    type == "shell" || type == "typewriter";
+    type == "shell" || type == "jis_enter" || type == "typewriter";
 function supported_top_shape_type(type) =
     type == "flat" || type == "cylindrical" || type == "spherical";
 function supported_stem_type(type) =
@@ -83,6 +84,12 @@ typewriter_mount_height = shape_geometry_type == "typewriter"
     ? positive_dimension(required_param(user_typewriter_mount_height, "user_typewriter_mount_height"))
     : 0;
 typewriter_corner_radius = max(required_param(user_typewriter_corner_radius, "user_typewriter_corner_radius"), 0);
+jis_enter_notch_width = shape_geometry_type == "jis_enter"
+    ? max(required_param(user_jis_enter_notch_width, "user_jis_enter_notch_width"), 0)
+    : 0;
+jis_enter_notch_depth = shape_geometry_type == "jis_enter"
+    ? max(required_param(user_jis_enter_notch_depth, "user_jis_enter_notch_depth"), 0)
+    : 0;
 
 profile_front_angle = required_param(user_profile_front_angle, "user_profile_front_angle");
 profile_back_angle = required_param(user_profile_back_angle, "user_profile_back_angle");
@@ -311,6 +318,28 @@ module keycap_body_shell_positive(quality = "export") {
             roll_deg = top_roll_deg,
             quality = quality
         );
+    } else if (shape_geometry_type == "jis_enter") {
+        keycap_jis_enter_shell(
+            width = key_width,
+            depth = key_depth,
+            top_center_height = top_center_height,
+            notch_width = jis_enter_notch_width,
+            notch_depth = jis_enter_notch_depth,
+            wall = wall_thickness,
+            top_thickness = top_thickness,
+            front_angle = profile_front_angle,
+            back_angle = profile_back_angle,
+            left_angle = profile_left_angle,
+            right_angle = profile_right_angle,
+            bottom_corner_radius = bottom_corner_radius,
+            top_corner_radius = top_corner_radius,
+            top_shape_type = top_shape_type,
+            dish_radius = dish_radius,
+            dish_depth = dish_depth,
+            pitch_deg = top_pitch_deg,
+            roll_deg = top_roll_deg,
+            quality = quality
+        );
     } else {
         keycap_shell(
             width = key_width,
@@ -435,23 +464,45 @@ module keycap_stem_nominal(quality = "export") {
 module keycap_stem_clip_volume(quality = "export") {
     if (stem_enabled) {
         translate([0, 0, stem_clip_overlap])
-            keycap_inner_clearance_volume(
-                width = key_width,
-                depth = key_depth,
-                top_center_height = top_center_height,
-                wall = wall_thickness,
-                top_thickness = top_thickness,
-                dish_depth = dish_depth,
-                front_angle = profile_front_angle,
-                back_angle = profile_back_angle,
-                left_angle = profile_left_angle,
-                right_angle = profile_right_angle,
-                bottom_corner_radius = bottom_corner_radius,
-                top_corner_radius = top_corner_radius,
-                pitch_deg = top_pitch_deg,
-                roll_deg = top_roll_deg,
-                quality = quality
-            );
+            if (shape_geometry_type == "jis_enter") {
+                keycap_jis_enter_inner_clearance_volume(
+                    width = key_width,
+                    depth = key_depth,
+                    top_center_height = top_center_height,
+                    notch_width = jis_enter_notch_width,
+                    notch_depth = jis_enter_notch_depth,
+                    wall = wall_thickness,
+                    top_thickness = top_thickness,
+                    dish_depth = dish_depth,
+                    front_angle = profile_front_angle,
+                    back_angle = profile_back_angle,
+                    left_angle = profile_left_angle,
+                    right_angle = profile_right_angle,
+                    bottom_corner_radius = bottom_corner_radius,
+                    top_corner_radius = top_corner_radius,
+                    pitch_deg = top_pitch_deg,
+                    roll_deg = top_roll_deg,
+                    quality = quality
+                );
+            } else {
+                keycap_inner_clearance_volume(
+                    width = key_width,
+                    depth = key_depth,
+                    top_center_height = top_center_height,
+                    wall = wall_thickness,
+                    top_thickness = top_thickness,
+                    dish_depth = dish_depth,
+                    front_angle = profile_front_angle,
+                    back_angle = profile_back_angle,
+                    left_angle = profile_left_angle,
+                    right_angle = profile_right_angle,
+                    bottom_corner_radius = bottom_corner_radius,
+                    top_corner_radius = top_corner_radius,
+                    pitch_deg = top_pitch_deg,
+                    roll_deg = top_roll_deg,
+                    quality = quality
+                );
+            }
     }
 }
 

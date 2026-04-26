@@ -6,6 +6,7 @@ import {
 } from "../data/keycap-shape-registry.js";
 import keycapBaseScad from "../../scad/base/keycap.scad?raw";
 import shellModuleScad from "../../scad/modules/keycap_shell.scad?raw";
+import jisEnterModuleScad from "../../scad/modules/keycap_jis_enter.scad?raw";
 import typewriterModuleScad from "../../scad/modules/keycap_typewriter.scad?raw";
 import homingBarScad from "../../scad/modules/homing_bar.scad?raw";
 import legendBlockScad from "../../scad/modules/legend_block.scad?raw";
@@ -39,6 +40,7 @@ const fontMetadataPromises = new Map();
 const SCAD_FILES = [
   { path: "/scad/base/keycap.scad", content: keycapBaseScad },
   { path: "/scad/modules/keycap_shell.scad", content: shellModuleScad },
+  { path: "/scad/modules/keycap_jis_enter.scad", content: jisEnterModuleScad },
   { path: "/scad/modules/keycap_typewriter.scad", content: typewriterModuleScad },
   { path: "/scad/modules/homing_bar.scad", content: homingBarScad },
   { path: "/scad/modules/legend_block.scad", content: legendBlockScad },
@@ -535,6 +537,8 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_shape_geometry_type: shapeGeometry.shapeGeometryType,
     user_key_width: params.keyWidth,
     user_key_depth: params.keyDepth,
+    user_jis_enter_notch_width: Math.max(Number(params.jisEnterNotchWidth ?? 0), 0),
+    user_jis_enter_notch_depth: Math.max(Number(params.jisEnterNotchDepth ?? 0), 0),
     user_top_center_height: params.topCenterHeight,
     user_wall_thickness: params.wallThickness,
     user_typewriter_mount_height: clampTypewriterMountHeight(

@@ -189,3 +189,45 @@ test("typewriter の上面基準高さを SCAD wrapper へ渡す", async () => {
     restoreBrowserMocks();
   }
 });
+
+test("JISエンターの geometry と欠き込み寸法を SCAD wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("jis-enter"),
+        jisEnterNotchWidth: 4.5,
+        jisEnterNotchDepth: 18,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.match(jobScad, /^user_shape_geometry_type = "jis_enter";/m);
+    assert.equal(readScadDefinition(jobScad, "user_jis_enter_notch_width"), 4.5);
+    assert.equal(readScadDefinition(jobScad, "user_jis_enter_notch_depth"), 18);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
