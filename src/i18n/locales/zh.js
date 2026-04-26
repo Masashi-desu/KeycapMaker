@@ -353,10 +353,6 @@ const zh = Object.freeze({
       label: "定位标记前后位置",
       hint: "前后移动定位标记",
     },
-    homingBarBaseThickness: {
-      label: "定位标记底座厚度",
-      hint: "定位标记根部的厚度",
-    },
     homingBarColor: {
       label: "定位标记颜色",
       hint: "可直接输入颜色代码，或使用颜色选择器",

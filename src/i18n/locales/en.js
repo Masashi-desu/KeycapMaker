@@ -353,10 +353,6 @@ const en = Object.freeze({
       label: "Homing Mark Y Position",
       hint: "Move the homing mark forward or backward",
     },
-    homingBarBaseThickness: {
-      label: "Homing Mark Base Thickness",
-      hint: "The thickness at the base of the homing mark",
-    },
     homingBarColor: {
       label: "Homing Mark Color",
       hint: "Enter a color code directly or use the color picker",

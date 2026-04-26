@@ -353,10 +353,6 @@ const ja = Object.freeze({
       label: "目印の前後位置",
       hint: "目印を前後に動かします",
     },
-    homingBarBaseThickness: {
-      label: "目印の土台の厚み",
-      hint: "目印の根元の厚みです",
-    },
     homingBarColor: {
       label: "目印の色",
       hint: "カラーコードを直接入力するか、カラーピッカーで選べます",

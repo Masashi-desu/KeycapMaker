@@ -227,7 +227,7 @@ homing_bar_height = max(required_param(user_homing_bar_height, "user_homing_bar_
 homing_bar_length = positive_dimension(required_param(user_homing_bar_length, "user_homing_bar_length"));
 homing_bar_width = positive_dimension(required_param(user_homing_bar_width, "user_homing_bar_width"));
 homing_bar_offset_y = required_param(user_homing_bar_offset_y, "user_homing_bar_offset_y");
-homing_bar_base_thickness = max(required_param(user_homing_bar_base_thickness, "user_homing_bar_base_thickness"), 0);
+homing_bar_base_thickness = 0.35;
 homing_bar_chamfer = max(is_undef(user_homing_bar_chamfer) ? 0 : user_homing_bar_chamfer, 0);
 homing_bar_anchor_surface_z = keycap_surface_z(
     0,

@@ -52,7 +52,6 @@
     "homingBarHeight": 0.6,
     "homingBarChamfer": 0.3,
     "homingBarOffsetY": -3.5,
-    "homingBarBaseThickness": 0.35,
     "homingBarColor": "#ff7f00",
     "stemType": "choc_v2",
     "typewriterMountHeight": 11.68,
@@ -83,7 +82,7 @@
       "id": "homing",
       "title": "指の目印",
       "description": "F キーや J キーのように、指で触って分かる出っ張りを調整します。印字とは別に設定できます。",
-      "fieldKeys": ["homingBarEnabled", "homingBarLength", "homingBarWidth", "homingBarHeight", "homingBarChamfer", "homingBarOffsetY", "homingBarBaseThickness", "homingBarColor"]
+      "fieldKeys": ["homingBarEnabled", "homingBarColor", "homingBarLength", "homingBarWidth", "homingBarHeight", "homingBarChamfer", "homingBarOffsetY"]
     },
     {
       "id": "stem",

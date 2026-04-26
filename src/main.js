@@ -923,12 +923,21 @@ const fieldGroupTemplates = [
     fields: [
       { key: "homingBarEnabled", label: () => t("fields.homingBarEnabled.label"), hint: () => t("fields.homingBarEnabled.hint"), type: "checkbox" },
       {
+        key: "homingBarColor",
+        label: () => t("fields.homingBarColor.label"),
+        hint: () => t("fields.homingBarColor.hint"),
+        type: "color",
+        placeholder: DEFAULT_KEYCAP_COLORS.homingBarColor,
+        visibleWhen: (params) => params.homingBarEnabled,
+      },
+      {
         key: "homingBarLength",
         label: () => t("fields.homingBarLength.label"),
         hint: () => t("fields.homingBarLength.hint"),
         unit: "mm",
         step: 0.1,
         min: 0.5,
+        dependentFieldKeys: ["homingBarWidth", "homingBarChamfer"],
         visibleWhen: (params) => params.homingBarEnabled,
       },
       {
@@ -947,6 +956,7 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.05,
         min: 0.05,
+        dependentFieldKeys: ["homingBarOffsetY"],
         visibleWhen: (params) => params.homingBarEnabled,
       },
       {
@@ -964,23 +974,6 @@ const fieldGroupTemplates = [
         hint: () => t("fields.homingBarOffsetY.hint"),
         unit: "mm",
         step: 0.1,
-        visibleWhen: (params) => params.homingBarEnabled,
-      },
-      {
-        key: "homingBarBaseThickness",
-        label: () => t("fields.homingBarBaseThickness.label"),
-        hint: () => t("fields.homingBarBaseThickness.hint"),
-        unit: "mm",
-        step: 0.05,
-        min: 0.05,
-        visibleWhen: (params) => params.homingBarEnabled,
-      },
-      {
-        key: "homingBarColor",
-        label: () => t("fields.homingBarColor.label"),
-        hint: () => t("fields.homingBarColor.hint"),
-        type: "color",
-        placeholder: DEFAULT_KEYCAP_COLORS.homingBarColor,
         visibleWhen: (params) => params.homingBarEnabled,
       },
     ],

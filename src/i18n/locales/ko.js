@@ -353,10 +353,6 @@ const ko = Object.freeze({
       label: "위치 표시 앞뒤 위치",
       hint: "위치 표시를 앞뒤로 움직입니다",
     },
-    homingBarBaseThickness: {
-      label: "위치 표시 받침 두께",
-      hint: "위치 표시 뿌리의 두께입니다",
-    },
     homingBarColor: {
       label: "위치 표시 색상",
       hint: "색상 코드를 직접 입력하거나 색상 선택기로 고를 수 있습니다",
