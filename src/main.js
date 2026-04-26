@@ -110,6 +110,11 @@ const LEGEND_OUTLINE_MAX = 1.2;
 const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
+const TOP_HAT_MIN_SIZE = 0.2;
+const TOP_HAT_MIN_HEIGHT = 0.05;
+const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
+const TOP_HAT_MAX_SHOULDER_ANGLE = 85;
+const TOP_HAT_EDGE_CLEARANCE = 0.2;
 const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
 const DEFAULT_KEYCAP_COLORS = Object.freeze({
@@ -594,6 +599,64 @@ function getDishDepthHint(params) {
   return t("fields.dishDepth.flatHint");
 }
 
+function getTopHatFootprintLimits(params = state.keycapParams) {
+  const geometry = resolveTopPlaneGeometry(params);
+  return {
+    width: Math.max(geometry.topRight - geometry.topLeft, TOP_HAT_MIN_SIZE),
+    depth: Math.max(geometry.topBack - geometry.topFront, TOP_HAT_MIN_SIZE),
+  };
+}
+
+function getTopHatUsableFootprintLimits(params = state.keycapParams) {
+  const limits = getTopHatFootprintLimits(params);
+  return {
+    width: Math.max(limits.width - TOP_HAT_EDGE_CLEARANCE * 2, TOP_HAT_MIN_SIZE),
+    depth: Math.max(limits.depth - TOP_HAT_EDGE_CLEARANCE * 2, TOP_HAT_MIN_SIZE),
+  };
+}
+
+function getTopHatSafeShoulderAngle(params = state.keycapParams) {
+  const angle = Number(params.topHatShoulderAngle ?? 45);
+  return Math.min(Math.max(Number.isFinite(angle) ? angle : 45, TOP_HAT_MIN_SHOULDER_ANGLE), TOP_HAT_MAX_SHOULDER_ANGLE);
+}
+
+function getTopHatHeightMax(params = state.keycapParams) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  const topWidth = Math.min(Math.max(Number(params.topHatTopWidth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.width);
+  const topDepth = Math.min(Math.max(Number(params.topHatTopDepth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.depth);
+  const availableOutset = Math.min(
+    Math.max((limits.width - topWidth) / 2, 0),
+    Math.max((limits.depth - topDepth) / 2, 0),
+  );
+  const maxHeight = availableOutset * Math.tan((getTopHatSafeShoulderAngle(params) * Math.PI) / 180);
+
+  return Math.max(maxHeight, TOP_HAT_MIN_HEIGHT);
+}
+
+function getTopHatTopRadiusMax(params = state.keycapParams) {
+  const width = Math.min(Math.max(Number(params.topHatTopWidth ?? 0), 0), getTopHatUsableFootprintLimits(params).width);
+  const depth = Math.min(Math.max(Number(params.topHatTopDepth ?? 0), 0), getTopHatUsableFootprintLimits(params).depth);
+  return Math.max(Math.min(width, depth) / 2, 0);
+}
+
+function getTopHatTopWidthHint(params) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  return t("fields.topHatTopWidth.hint", { maxWidth: formatMillimeter(limits.width) });
+}
+
+function getTopHatTopDepthHint(params) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  return t("fields.topHatTopDepth.hint", { maxDepth: formatMillimeter(limits.depth) });
+}
+
+function getTopHatTopRadiusHint(params) {
+  return t("fields.topHatTopRadius.hint", { maxRadius: formatMillimeter(getTopHatTopRadiusMax(params)) });
+}
+
+function getTopHatHeightHint(params) {
+  return t("fields.topHatHeight.hint", { maxHeight: formatMillimeter(getTopHatHeightMax(params), 2) });
+}
+
 const fieldGroupTemplates = [
   {
     id: "shape",
@@ -704,6 +767,58 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.05,
         visibleWhen: (params) => params.topSurfaceShape !== "flat",
+      },
+      {
+        key: "topHatEnabled",
+        label: () => t("fields.topHatEnabled.label"),
+        hint: () => t("fields.topHatEnabled.hint"),
+        type: "checkbox",
+      },
+      {
+        key: "topHatTopWidth",
+        label: () => t("fields.topHatTopWidth.label"),
+        hint: (params) => getTopHatTopWidthHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: TOP_HAT_MIN_SIZE,
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatTopDepth",
+        label: () => t("fields.topHatTopDepth.label"),
+        hint: (params) => getTopHatTopDepthHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: TOP_HAT_MIN_SIZE,
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatTopRadius",
+        label: () => t("fields.topHatTopRadius.label"),
+        hint: (params) => getTopHatTopRadiusHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: 0,
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatHeight",
+        label: () => t("fields.topHatHeight.label"),
+        hint: (params) => getTopHatHeightHint(params),
+        unit: "mm",
+        step: 0.05,
+        min: TOP_HAT_MIN_HEIGHT,
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatShoulderAngle",
+        label: () => t("fields.topHatShoulderAngle.label"),
+        hint: () => t("fields.topHatShoulderAngle.hint"),
+        unit: "deg",
+        step: 0.5,
+        min: TOP_HAT_MIN_SHOULDER_ANGLE,
+        max: TOP_HAT_MAX_SHOULDER_ANGLE,
+        visibleWhen: (params) => params.topHatEnabled,
       },
       {
         key: "rimEnabled",
@@ -2721,6 +2836,11 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topLeftHeight",
   "topRightHeight",
   "typewriterMountHeight",
+  "topHatTopWidth",
+  "topHatTopDepth",
+  "topHatTopRadius",
+  "topHatHeight",
+  "topHatShoulderAngle",
 ]);
 
 function syncFieldHint(fieldKey) {
@@ -2892,6 +3012,7 @@ function handleFieldChange(event) {
     field === "legendEnabled"
     || field === "homingBarEnabled"
     || field === "rimEnabled"
+    || field === "topHatEnabled"
     || field === "topSurfaceShape"
     || field === "topSlopeInputMode"
     || EDITOR_SELECTOR_KEYS.includes(field)
@@ -2907,17 +3028,28 @@ function handleFieldChange(event) {
     syncFieldHint("jisEnterNotchWidth");
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("rimWidth");
+    syncFieldHint("topHatTopWidth");
+    syncFieldHint("topHatTopRadius");
   }
 
   if (field === "keyDepth") {
     syncFieldHint("jisEnterNotchDepth");
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("rimWidth");
+    syncFieldHint("topHatTopDepth");
+    syncFieldHint("topHatTopRadius");
   }
 
   if (field === "jisEnterNotchWidth" || field === "jisEnterNotchDepth") {
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("rimWidth");
+  }
+
+  if (field === "topScale" || field === "topHatTopWidth" || field === "topHatTopDepth" || field === "topHatShoulderAngle") {
+    syncFieldHint("topHatTopWidth");
+    syncFieldHint("topHatTopDepth");
+    syncFieldHint("topHatTopRadius");
+    syncFieldHint("topHatHeight");
   }
 
   if (!deferPreview && field !== "topSlopeInputMode") {

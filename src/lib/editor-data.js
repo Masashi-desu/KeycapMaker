@@ -42,6 +42,11 @@ const LEGEND_OUTLINE_MAX = 1.2;
 const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
+const TOP_HAT_MIN_SIZE = 0.2;
+const TOP_HAT_MIN_HEIGHT = 0.05;
+const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
+const TOP_HAT_MAX_SHOULDER_ANGLE = 85;
+const TOP_HAT_EDGE_CLEARANCE = 0.2;
 const RESERVED_COMPAT_PAYLOAD_KEYS = new Set(["kind", "schemaVersion", "profileSchemaVersion", "savedAt", "selectors", "params"]);
 const KNOWN_EDITOR_PARAM_KEYS = Object.freeze(
   Array.from(new Set(keycapEditorProfiles.profiles.flatMap((profile) => Object.keys(profile.defaults ?? {})))),
@@ -210,6 +215,75 @@ function clampNonNegativeNumber(value, fallback = 0) {
   }
 
   return Math.max(nextValue, 0);
+}
+
+function clampNumberRange(value, fallback, minimum, maximum) {
+  const safeMaximum = Math.max(Number(maximum) || minimum, minimum);
+  const fallbackValue = Number(fallback);
+  const nextValue = Number(value);
+  const resolvedFallback = Number.isFinite(fallbackValue)
+    ? Math.min(Math.max(fallbackValue, minimum), safeMaximum)
+    : minimum;
+  if (!Number.isFinite(nextValue)) {
+    return resolvedFallback;
+  }
+
+  return Math.min(Math.max(nextValue, minimum), safeMaximum);
+}
+
+function getTopHatFootprintLimits(params = {}) {
+  const geometry = resolveTopPlaneGeometry(params);
+  return {
+    width: Math.max(geometry.topRight - geometry.topLeft, TOP_HAT_MIN_SIZE),
+    depth: Math.max(geometry.topBack - geometry.topFront, TOP_HAT_MIN_SIZE),
+  };
+}
+
+function getTopHatUsableFootprintLimits(params = {}) {
+  const limits = getTopHatFootprintLimits(params);
+  return {
+    width: Math.max(limits.width - TOP_HAT_EDGE_CLEARANCE * 2, TOP_HAT_MIN_SIZE),
+    depth: Math.max(limits.depth - TOP_HAT_EDGE_CLEARANCE * 2, TOP_HAT_MIN_SIZE),
+  };
+}
+
+function clampTopHatShoulderAngle(value, fallback = 45) {
+  return clampNumberRange(value, fallback, TOP_HAT_MIN_SHOULDER_ANGLE, TOP_HAT_MAX_SHOULDER_ANGLE);
+}
+
+function clampTopHatTopWidth(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
+  return clampNumberRange(value, fallback, TOP_HAT_MIN_SIZE, getTopHatUsableFootprintLimits(params).width);
+}
+
+function clampTopHatTopDepth(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
+  return clampNumberRange(value, fallback, TOP_HAT_MIN_SIZE, getTopHatUsableFootprintLimits(params).depth);
+}
+
+function getTopHatTopRadiusMax(params = {}) {
+  const width = clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth);
+  const depth = clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth);
+  return Math.max(Math.min(width, depth) / 2, 0);
+}
+
+function clampTopHatTopRadius(value, params = {}, fallback = 0) {
+  return clampNumberRange(value, fallback, 0, getTopHatTopRadiusMax(params));
+}
+
+function getTopHatHeightMax(params = {}) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  const topWidth = clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth);
+  const topDepth = clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth);
+  const availableOutset = Math.min(
+    Math.max((limits.width - topWidth) / 2, 0),
+    Math.max((limits.depth - topDepth) / 2, 0),
+  );
+  const shoulderAngle = clampTopHatShoulderAngle(params.topHatShoulderAngle, params.topHatShoulderAngle ?? 45);
+
+  return Math.max(availableOutset * degTan(shoulderAngle), TOP_HAT_MIN_HEIGHT);
+}
+
+function clampTopHatHeight(value, params = {}, fallback = TOP_HAT_MIN_HEIGHT) {
+  return clampNumberRange(value, fallback, TOP_HAT_MIN_HEIGHT, getTopHatHeightMax(params));
 }
 
 function getTypewriterRimMaxWidth(params = {}) {
@@ -451,6 +525,16 @@ export function syncDerivedKeycapParams(params = {}) {
       defaults.jisEnterNotchDepth ?? 0,
     );
   }
+  if ("topHatEnabled" in defaults || "topHatEnabled" in params) {
+    params.topHatEnabled = typeof params.topHatEnabled === "boolean"
+      ? params.topHatEnabled
+      : Boolean(defaults.topHatEnabled);
+    params.topHatShoulderAngle = clampTopHatShoulderAngle(params.topHatShoulderAngle, defaults.topHatShoulderAngle ?? 45);
+    params.topHatTopWidth = clampTopHatTopWidth(params.topHatTopWidth, params, defaults.topHatTopWidth ?? 10.5);
+    params.topHatTopDepth = clampTopHatTopDepth(params.topHatTopDepth, params, defaults.topHatTopDepth ?? 9.5);
+    params.topHatHeight = clampTopHatHeight(params.topHatHeight, params, defaults.topHatHeight ?? 1.4);
+    params.topHatTopRadius = clampTopHatTopRadius(params.topHatTopRadius, params, defaults.topHatTopRadius ?? 0);
+  }
   params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
   params.rimHeightUp = clampNonNegativeNumber(params.rimHeightUp, defaults.rimHeightUp ?? 0);
   params.rimHeightDown = clampNonNegativeNumber(params.rimHeightDown, defaults.rimHeightDown ?? 0);
@@ -547,6 +631,26 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "jisEnterNotchDepth") {
     return clampJisEnterNotchDepth(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "topHatTopWidth") {
+    return clampTopHatTopWidth(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "topHatTopDepth") {
+    return clampTopHatTopDepth(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "topHatTopRadius") {
+    return clampTopHatTopRadius(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "topHatHeight") {
+    return clampTopHatHeight(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "topHatShoulderAngle") {
+    return clampTopHatShoulderAngle(value, fallback);
   }
 
   if (fieldKey === "rimHeightUp" || fieldKey === "rimHeightDown" || fieldKey === "homingBarChamfer") {

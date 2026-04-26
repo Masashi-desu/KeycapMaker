@@ -74,7 +74,7 @@ const ko = Object.freeze({
         },
         top: {
           title: "키톱",
-          description: "상면 중앙 기준 높이를 고정한 채 평면 / 원통 / 구면을 전환할 수 있습니다. 원통은 한 방향으로만 휘어집니다. 모서리 높이 입력으로 전환해도 내부에서는 pitch / roll로 정규화됩니다.",
+          description: "상면 중앙 기준 높이를 고정한 채 평면 / 원통 / 구면과 top-hat 추가 여부를 전환할 수 있습니다. 모서리 높이 입력으로 전환해도 내부에서는 pitch / roll로 정규화됩니다.",
         },
         legend: {
           title: "각인",
@@ -229,6 +229,30 @@ const ko = Object.freeze({
       cylindricalHint: "양수이면 한 방향으로 오목해지고, 음수이면 한 방향으로 솟아오릅니다.",
       sphericalHint: "양수이면 그릇 모양으로 오목해지고, 음수이면 솟아오릅니다.",
       flatHint: "평면에서는 적용되지 않습니다.",
+    },
+    topHatEnabled: {
+      label: "탑햇 추가",
+      hint: "기존 키톱 위에 별도 형상의 작은 키톱을 추가합니다.",
+    },
+    topHatTopWidth: {
+      label: "상면 가로폭",
+      hint: "추가 키톱 상면의 가로폭입니다. 현재 최대값은 {maxWidth}입니다.",
+    },
+    topHatTopDepth: {
+      label: "상면 깊이",
+      hint: "추가 키톱 상면의 앞뒤 치수입니다. 현재 최대값은 {maxDepth}입니다.",
+    },
+    topHatTopRadius: {
+      label: "상면 R",
+      hint: "추가 키톱 상면의 모서리 반경입니다. 현재 최대값은 {maxRadius}입니다.",
+    },
+    topHatHeight: {
+      label: "높이",
+      hint: "기존 키톱 면에서 추가 상면까지의 높이입니다. 현재 최대값은 {maxHeight}입니다.",
+    },
+    topHatShoulderAngle: {
+      label: "shoulder 각도",
+      hint: "추가 상면에서 어깨로 내려가는 각도입니다. 값이 클수록 급해집니다.",
     },
     rimEnabled: {
       label: "키 림 추가",

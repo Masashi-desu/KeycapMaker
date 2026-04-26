@@ -74,7 +74,7 @@ const en = Object.freeze({
         },
         top: {
           title: "Keytop",
-          description: "Switch the top surface between flat, cylindrical, and spherical while keeping the center reference height fixed. Cylindrical curves in one direction only. Edge-height input is normalized internally to pitch / roll.",
+          description: "Switch the top surface between flat, cylindrical, spherical, and a top-hat addition while keeping the center reference height fixed. Edge-height input is normalized internally to pitch / roll.",
         },
         legend: {
           title: "Legend",
@@ -229,6 +229,30 @@ const en = Object.freeze({
       cylindricalHint: "Positive values make a one-direction recess; negative values make it raised in one direction.",
       sphericalHint: "Positive values make a bowl-shaped recess; negative values make it raised.",
       flatHint: "This has no effect when flat is selected.",
+    },
+    topHatEnabled: {
+      label: "Add Top Hat",
+      hint: "Add a smaller independently shaped keytop above the existing keytop.",
+    },
+    topHatTopWidth: {
+      label: "Top Width",
+      hint: "Width of the added keytop's top surface. Current maximum: {maxWidth}.",
+    },
+    topHatTopDepth: {
+      label: "Top Depth",
+      hint: "Front-to-back size of the added keytop's top surface. Current maximum: {maxDepth}.",
+    },
+    topHatTopRadius: {
+      label: "Top Radius",
+      hint: "Corner radius of the added keytop's top surface. Current maximum: {maxRadius}.",
+    },
+    topHatHeight: {
+      label: "Height",
+      hint: "Height from the existing keytop surface to the added top surface. Current maximum: {maxHeight}.",
+    },
+    topHatShoulderAngle: {
+      label: "Shoulder Angle",
+      hint: "Angle of the shoulder falling away from the added top. Higher values make it steeper.",
     },
     rimEnabled: {
       label: "Add Key Rim",

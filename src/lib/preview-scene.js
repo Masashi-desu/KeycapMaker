@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 const OVERLAY_LAYER_NAMES = new Set(["legend", "homing"]);
-const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 3;
+const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 6;
 const MIN_NORMAL_LENGTH_SQ = 1e-12;
 
 function createFaceNormalData(mesh, face) {
@@ -26,18 +26,84 @@ function createFaceNormalData(mesh, face) {
   return { raw, unit };
 }
 
-function createGeometry(mesh) {
+function createEdgeKey(a, b) {
+  return a < b ? `${a}:${b}` : `${b}:${a}`;
+}
+
+function addSmoothNeighbor(vertexFaceNeighbors, vertexIndex, faceIndex, adjacentFaceIndex) {
+  if (!vertexFaceNeighbors[vertexIndex].has(faceIndex)) {
+    vertexFaceNeighbors[vertexIndex].set(faceIndex, new Set());
+  }
+  vertexFaceNeighbors[vertexIndex].get(faceIndex).add(adjacentFaceIndex);
+}
+
+function createVertexFaceNeighbors(mesh, faceNormals, creaseDot) {
+  const edgeFaces = new Map();
+
+  mesh.faces.forEach((face, faceIndex) => {
+    for (let edgeIndex = 0; edgeIndex < face.length; edgeIndex += 1) {
+      const a = face[edgeIndex];
+      const b = face[(edgeIndex + 1) % face.length];
+      const edgeKey = createEdgeKey(a, b);
+      if (!edgeFaces.has(edgeKey)) {
+        edgeFaces.set(edgeKey, { vertices: [a, b], faces: [] });
+      }
+      edgeFaces.get(edgeKey).faces.push(faceIndex);
+    }
+  });
+
+  const vertexFaceNeighbors = mesh.vertices.map(() => new Map());
+
+  edgeFaces.forEach(({ vertices, faces }) => {
+    if (faces.length !== 2) {
+      return;
+    }
+
+    const [firstFaceIndex, secondFaceIndex] = faces;
+    const firstNormal = faceNormals[firstFaceIndex].unit;
+    const secondNormal = faceNormals[secondFaceIndex].unit;
+    if (firstNormal.dot(secondNormal) < creaseDot) {
+      return;
+    }
+
+    vertices.forEach((vertexIndex) => {
+      addSmoothNeighbor(vertexFaceNeighbors, vertexIndex, firstFaceIndex, secondFaceIndex);
+      addSmoothNeighbor(vertexFaceNeighbors, vertexIndex, secondFaceIndex, firstFaceIndex);
+    });
+  });
+
+  return vertexFaceNeighbors;
+}
+
+function collectSmoothFaceGroup(vertexFaceNeighbors, vertexIndex, faceIndex) {
+  const neighborsByFace = vertexFaceNeighbors[vertexIndex];
+  const visited = new Set([faceIndex]);
+  const pending = [faceIndex];
+
+  while (pending.length > 0) {
+    const currentFaceIndex = pending.pop();
+    const neighbors = neighborsByFace.get(currentFaceIndex);
+    if (!neighbors) {
+      continue;
+    }
+
+    neighbors.forEach((neighborFaceIndex) => {
+      if (!visited.has(neighborFaceIndex)) {
+        visited.add(neighborFaceIndex);
+        pending.push(neighborFaceIndex);
+      }
+    });
+  }
+
+  return visited;
+}
+
+export function createPreviewGeometry(mesh) {
   const positions = [];
   const normals = [];
   const creaseDot = Math.cos(SMOOTH_PREVIEW_CREASE_ANGLE);
   const faceNormals = mesh.faces.map((face) => createFaceNormalData(mesh, face));
-  const vertexFaces = mesh.vertices.map(() => []);
-
-  mesh.faces.forEach((face, faceIndex) => {
-    face.forEach((vertexIndex) => {
-      vertexFaces[vertexIndex].push(faceIndex);
-    });
-  });
+  const vertexFaceNeighbors = createVertexFaceNeighbors(mesh, faceNormals, creaseDot);
 
   mesh.faces.forEach((face, faceIndex) => {
     const currentFaceNormal = faceNormals[faceIndex];
@@ -45,12 +111,10 @@ function createGeometry(mesh) {
     face.forEach((vertexIndex) => {
       const vertex = mesh.vertices[vertexIndex];
       const smoothedNormal = new THREE.Vector3();
+      const smoothFaceGroup = collectSmoothFaceGroup(vertexFaceNeighbors, vertexIndex, faceIndex);
 
-      vertexFaces[vertexIndex].forEach((adjacentFaceIndex) => {
-        const adjacentFaceNormal = faceNormals[adjacentFaceIndex];
-        if (currentFaceNormal.unit.dot(adjacentFaceNormal.unit) >= creaseDot) {
-          smoothedNormal.add(adjacentFaceNormal.raw);
-        }
+      smoothFaceGroup.forEach((smoothFaceIndex) => {
+        smoothedNormal.add(faceNormals[smoothFaceIndex].raw);
       });
 
       if (smoothedNormal.lengthSq() <= MIN_NORMAL_LENGTH_SQ) {
@@ -200,7 +264,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   scene.add(rimLight);
 
   const layerEntries = normalizeLayers(layers).map((layer) => {
-    const geometry = createGeometry(layer.mesh);
+    const geometry = createPreviewGeometry(layer.mesh);
     const isOverlayLayer = OVERLAY_LAYER_NAMES.has(layer.name);
     const material = new THREE.MeshStandardMaterial({
       color: layer.color ?? 0x4d8fd8,

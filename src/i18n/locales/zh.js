@@ -74,7 +74,7 @@ const zh = Object.freeze({
         },
         top: {
           title: "键顶",
-          description: "在固定上表面中心基准高度的同时，可切换平面 / 圆柱 / 球面。圆柱只在一个方向弯曲。切换为边缘高度输入时，内部仍会规范化为 pitch / roll。",
+          description: "在固定上表面中心基准高度的同时，可切换平面 / 圆柱 / 球面以及 top-hat 追加。切换为边缘高度输入时，内部仍会规范化为 pitch / roll。",
         },
         legend: {
           title: "字符",
@@ -229,6 +229,30 @@ const zh = Object.freeze({
       cylindricalHint: "正值会形成单方向凹陷，负值会形成单方向凸起。",
       sphericalHint: "正值会形成碗状凹陷，负值会凸起。",
       flatHint: "平面时此项不起作用。",
+    },
+    topHatEnabled: {
+      label: "添加 Top Hat",
+      hint: "在现有键顶上添加一个可独立设置形状的小键顶。",
+    },
+    topHatTopWidth: {
+      label: "上面宽度",
+      hint: "追加键顶上表面的宽度。当前最大值为 {maxWidth}。",
+    },
+    topHatTopDepth: {
+      label: "上面深度",
+      hint: "追加键顶上表面的前后尺寸。当前最大值为 {maxDepth}。",
+    },
+    topHatTopRadius: {
+      label: "上面 R",
+      hint: "追加键顶上表面的圆角。当前最大值为 {maxRadius}。",
+    },
+    topHatHeight: {
+      label: "高度",
+      hint: "从现有键顶面到追加上表面的高度。当前最大值为 {maxHeight}。",
+    },
+    topHatShoulderAngle: {
+      label: "shoulder 角度",
+      hint: "从追加上表面向肩部下降的角度。数值越大肩部越陡。",
     },
     rimEnabled: {
       label: "添加键圈",

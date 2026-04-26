@@ -67,6 +67,11 @@ function clampMinimum(value, fallback, minimum) {
   return Number.isFinite(nextValue) ? Math.max(nextValue, minimum) : fallback;
 }
 
+function numberOr(value, fallback) {
+  const nextValue = Number(value);
+  return Number.isFinite(nextValue) ? nextValue : fallback;
+}
+
 function isTypewriterGeometryType(geometryType) {
   return geometryType === "typewriter" || geometryType === "typewriter_jis_enter";
 }
@@ -567,6 +572,12 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_dish_depth: params.dishDepth,
     user_top_pitch_deg: params.topPitchDeg,
     user_top_roll_deg: params.topRollDeg,
+    user_top_hat_enabled: shapeGeometry.shapeGeometryType === "shell" && Boolean(params.topHatEnabled),
+    user_top_hat_top_width: Math.max(numberOr(params.topHatTopWidth, 10.5), 0.2),
+    user_top_hat_top_depth: Math.max(numberOr(params.topHatTopDepth, 9.5), 0.2),
+    user_top_hat_top_radius: Math.max(numberOr(params.topHatTopRadius, 1.8), 0),
+    user_top_hat_height: Math.max(numberOr(params.topHatHeight, 1.4), 0),
+    user_top_hat_shoulder_angle: Math.min(Math.max(numberOr(params.topHatShoulderAngle, 45), 5), 85),
     user_rim_enabled: Boolean(params.rimEnabled),
     user_rim_width: Math.max(Number(params.rimWidth ?? 0), 0),
     user_rim_height_up: Math.max(Number(params.rimHeightUp ?? 0), 0),

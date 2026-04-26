@@ -232,6 +232,67 @@ test("JISエンターの geometry と欠き込み寸法を SCAD wrapper へ渡�
   }
 });
 
+test("custom shell の top-hat パラメータだけを SCAD wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const customFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topHatEnabled: true,
+        topHatTopWidth: 11.2,
+        topHatTopDepth: 9.4,
+        topHatTopRadius: 1.3,
+        topHatHeight: 1.1,
+        topHatShoulderAngle: 50,
+      },
+    });
+    const jisFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("jis-enter"),
+        topHatEnabled: true,
+      },
+    });
+    const customJobScad = customFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const jisJobScad = jisFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(customJobScad, "custom shell job SCAD should be generated");
+    assert.ok(jisJobScad, "JIS Enter job SCAD should be generated");
+    assert.match(customJobScad, /^user_shape_geometry_type = "shell";/m);
+    assert.match(customJobScad, /^user_top_hat_enabled = true;/m);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_width"), 11.2);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_depth"), 9.4);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_radius"), 1.3);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_height"), 1.1);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_shoulder_angle"), 50);
+    assert.match(jisJobScad, /^user_shape_geometry_type = "jis_enter";/m);
+    assert.match(jisJobScad, /^user_top_hat_enabled = false;/m);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("タイプライターJISエンターの geometry と mount / 欠き込み寸法を SCAD wrapper へ渡す", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,

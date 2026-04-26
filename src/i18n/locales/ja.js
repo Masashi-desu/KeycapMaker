@@ -74,7 +74,7 @@ const ja = Object.freeze({
         },
         top: {
           title: "キートップ",
-          description: "上面中央の基準高さを固定したまま、フラット / シンドリカル / スフェリカルを切り替えられます。シンドリカルは一方向だけ曲がります。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+          description: "上面中央の基準高さを固定したまま、フラット / シンドリカル / スフェリカルと top-hat の有無を切り替えられます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
         },
         legend: {
           title: "印字",
@@ -229,6 +229,30 @@ const ja = Object.freeze({
       cylindricalHint: "プラスで一方向に凹み、マイナスで一方向に盛り上がります",
       sphericalHint: "プラスで椀形に凹み、マイナスで盛り上がります",
       flatHint: "フラットでは効きません",
+    },
+    topHatEnabled: {
+      label: "トップハットを付ける",
+      hint: "既存のキートップ上に、別形状の小さいキートップを追加します",
+    },
+    topHatTopWidth: {
+      label: "上面の横幅",
+      hint: "追加するキートップ上面の横幅です。現在の最大は {maxWidth} です",
+    },
+    topHatTopDepth: {
+      label: "上面の奥行き",
+      hint: "追加するキートップ上面の前後寸法です。現在の最大は {maxDepth} です",
+    },
+    topHatTopRadius: {
+      label: "上面のR",
+      hint: "追加するキートップ上面の角丸です。現在の最大は {maxRadius} です",
+    },
+    topHatHeight: {
+      label: "高さ",
+      hint: "既存のキートップ面から追加上面までの高さです。現在の最大は {maxHeight} です",
+    },
+    topHatShoulderAngle: {
+      label: "shoulder角度",
+      hint: "追加上面から肩へ落ちる角度です。大きいほど肩が急になります",
     },
     rimEnabled: {
       label: "キーリムを付ける",

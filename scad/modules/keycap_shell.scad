@@ -28,6 +28,12 @@ function keycap_center_surface_z(top_center_height, dish_depth) =
 function keycap_inner_corner_radius(corner_radius, wall) =
     max(corner_radius - wall, 0);
 
+function keycap_top_hat_safe_shoulder_angle(angle) =
+    min(max(angle, 5), 85);
+
+function keycap_top_hat_shoulder_outset(height, shoulder_angle) =
+    max(height, 0) / tan(keycap_top_hat_safe_shoulder_angle(shoulder_angle));
+
 function keycap_top_plane_slope(angle) = tan(angle);
 
 function keycap_top_plane_height(x, y, top_center_height, pitch_deg = 0, roll_deg = 0) =
@@ -611,6 +617,62 @@ module keycap_top_surface_region(
         );
 }
 
+module keycap_top_hat_cap(
+    parent_top_width,
+    parent_top_depth,
+    top_width,
+    top_depth,
+    top_radius,
+    height,
+    shoulder_angle,
+    top_center_height,
+    pitch_deg = 0,
+    roll_deg = 0,
+    surface_z_shift = 0,
+    quality = "export"
+) {
+    parent_width = max(parent_top_width, 0.2);
+    parent_depth = max(parent_top_depth, 0.2);
+    safe_top_width = min(max(top_width, 0.2), parent_width);
+    safe_top_depth = min(max(top_depth, 0.2), parent_depth);
+    safe_height = max(height, 0);
+    requested_outset = keycap_top_hat_shoulder_outset(safe_height, shoulder_angle);
+    base_width = min(safe_top_width + requested_outset * 2, parent_width);
+    base_depth = min(safe_top_depth + requested_outset * 2, parent_depth);
+    actual_outset = min((base_width - safe_top_width) / 2, (base_depth - safe_top_depth) / 2);
+    safe_top_radius = min(max(top_radius, 0), safe_top_width / 2, safe_top_depth / 2);
+    base_radius = min(safe_top_radius + max(actual_outset, 0), base_width / 2, base_depth / 2);
+    join_overlap = 0.05;
+
+    if (safe_height > 0.001) {
+        keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+            translate([0, 0, surface_z_shift])
+                hull() {
+                    translate([0, 0, -join_overlap])
+                        linear_extrude(height = 0.01, center = true)
+                            rounded_rect_coords(
+                                -base_width / 2,
+                                base_width / 2,
+                                -base_depth / 2,
+                                base_depth / 2,
+                                base_radius,
+                                quality
+                            );
+
+                    translate([0, 0, safe_height])
+                        linear_extrude(height = 0.01, center = true)
+                            rounded_rect_coords(
+                                -safe_top_width / 2,
+                                safe_top_width / 2,
+                                -safe_top_depth / 2,
+                                safe_top_depth / 2,
+                                safe_top_radius,
+                                quality
+                            );
+                }
+    }
+}
+
 module keycap_shell(
     width,
     depth,
@@ -626,6 +688,12 @@ module keycap_shell(
     top_shape_type = "spherical",
     dish_radius = 45,
     dish_depth = 1.0,
+    top_hat_enabled = false,
+    top_hat_top_width = 10.5,
+    top_hat_top_depth = 9.5,
+    top_hat_top_radius = 1.8,
+    top_hat_height = 1.4,
+    top_hat_shoulder_angle = 45,
     pitch_deg = 0,
     roll_deg = 0,
     quality = "export"
@@ -640,36 +708,63 @@ module keycap_shell(
     top_back = base_back - top_center_height * tan(back_angle);
 
     difference() {
-        keycap_apply_top_surface(
-            width = width,
-            depth = depth,
-            top_left = top_left,
-            top_right = top_right,
-            top_front = top_front,
-            top_back = top_back,
-            top_radius = top_corner_radius,
-            top_center_height = top_center_height,
-            dish_type = top_shape_type,
-            dish_depth = dish_depth,
-            dish_radius = dish_radius,
-            pitch_deg = pitch_deg,
-            roll_deg = roll_deg,
-            quality = quality
-        )
-            keycap_outer_shell(
+        union() {
+            keycap_apply_top_surface(
                 width = width,
                 depth = depth,
+                top_left = top_left,
+                top_right = top_right,
+                top_front = top_front,
+                top_back = top_back,
+                top_radius = top_corner_radius,
                 top_center_height = top_center_height,
-                front_angle = front_angle,
-                back_angle = back_angle,
-                left_angle = left_angle,
-                right_angle = right_angle,
-                bottom_corner_radius = bottom_corner_radius,
-                top_corner_radius = top_corner_radius,
+                dish_type = top_shape_type,
+                dish_depth = dish_depth,
+                dish_radius = dish_radius,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 quality = quality
-            );
+            )
+                keycap_outer_shell(
+                    width = width,
+                    depth = depth,
+                    top_center_height = top_center_height,
+                    front_angle = front_angle,
+                    back_angle = back_angle,
+                    left_angle = left_angle,
+                    right_angle = right_angle,
+                    bottom_corner_radius = bottom_corner_radius,
+                    top_corner_radius = top_corner_radius,
+                    pitch_deg = pitch_deg,
+                    roll_deg = roll_deg,
+                    quality = quality
+                );
+
+            if (top_hat_enabled) {
+                keycap_top_hat_cap(
+                    parent_top_width = top_right - top_left,
+                    parent_top_depth = top_back - top_front,
+                    top_width = top_hat_top_width,
+                    top_depth = top_hat_top_depth,
+                    top_radius = top_hat_top_radius,
+                    height = top_hat_height,
+                    shoulder_angle = top_hat_shoulder_angle,
+                    top_center_height = top_center_height,
+                    pitch_deg = pitch_deg,
+                    roll_deg = roll_deg,
+                    surface_z_shift = keycap_dish_surface_offset(
+                        0,
+                        0,
+                        top_shape_type,
+                        dish_depth,
+                        dish_radius,
+                        width,
+                        depth
+                    ),
+                    quality = quality
+                );
+            }
+        }
 
         keycap_inner_clearance_volume(
             width = width,

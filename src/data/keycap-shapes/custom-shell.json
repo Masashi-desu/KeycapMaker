@@ -25,6 +25,12 @@
     "topSurfaceShape": "flat",
     "dishRadius": 45,
     "dishDepth": 0,
+    "topHatEnabled": false,
+    "topHatTopWidth": 10.5,
+    "topHatTopDepth": 9.5,
+    "topHatTopRadius": 1.8,
+    "topHatHeight": 1.4,
+    "topHatShoulderAngle": 45,
     "bodyColor": "#f8f9fa",
     "legendEnabled": true,
     "legendText": "A",
@@ -60,8 +66,8 @@
     {
       "id": "top",
       "title": "キートップ",
-      "description": "上面中央の基準高さを固定したまま、フラット / シンドリカル / スフェリカルを切り替えられます。シンドリカルは一方向だけ曲がります。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
-      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "description": "上面中央の基準高さを固定したまま、フラット / シンドリカル / スフェリカルと top-hat の有無を切り替えられます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "topHatEnabled", "topHatTopWidth", "topHatTopDepth", "topHatTopRadius", "topHatHeight", "topHatShoulderAngle", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",

@@ -224,6 +224,37 @@ test("JISエンターの既定寸法はステム原点を下胴中央に置く",
   assert.equal(params.jisEnterNotchDepth, 18);
 });
 
+test("top-hat パラメータは custom shell だけで保持し上面内に丸める", () => {
+  const wideTopHat = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topHatEnabled: true,
+    topHatTopWidth: 99,
+    topHatTopDepth: 99,
+    topHatTopRadius: 99,
+    topHatHeight: 20,
+    topHatShoulderAngle: 100,
+  });
+  const smallTopHat = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topHatEnabled: true,
+    topHatTopWidth: 3,
+    topHatTopDepth: 3,
+    topHatTopRadius: 99,
+    topHatHeight: 20,
+    topHatShoulderAngle: 45,
+  });
+  const jisEnterDefaults = createDefaultKeycapParams("jis-enter");
+
+  assert.equal(wideTopHat.topHatEnabled, true);
+  assert.ok(wideTopHat.topHatTopWidth < wideTopHat.keyWidth);
+  assert.ok(wideTopHat.topHatTopDepth < wideTopHat.keyDepth);
+  assert.equal(wideTopHat.topHatTopRadius, Math.min(wideTopHat.topHatTopWidth, wideTopHat.topHatTopDepth) / 2);
+  assert.equal(wideTopHat.topHatShoulderAngle, 85);
+  assert.ok(wideTopHat.topHatHeight <= 0.051);
+  assert.ok(smallTopHat.topHatHeight > wideTopHat.topHatHeight);
+  assert.equal("topHatEnabled" in jisEnterDefaults, false);
+});
+
 test("タイプライターJISエンターの既定寸法もステム原点を下胴中央に置く", () => {
   const params = createDefaultKeycapParams("typewriter-jis-enter");
   const left = -params.keyWidth / 2 - params.jisEnterNotchWidth / 2;

@@ -118,6 +118,31 @@ top_shape_type = assert(
 dish_depth = top_shape_type == "flat" ? 0 : requested_dish_depth;
 top_pitch_deg = required_param(user_top_pitch_deg, "user_top_pitch_deg");
 top_roll_deg = required_param(user_top_roll_deg, "user_top_roll_deg");
+requested_top_hat_enabled = required_param(user_top_hat_enabled, "user_top_hat_enabled");
+top_hat_top_width = positive_dimension(required_param(user_top_hat_top_width, "user_top_hat_top_width"));
+top_hat_top_depth = positive_dimension(required_param(user_top_hat_top_depth, "user_top_hat_top_depth"));
+top_hat_top_radius = max(required_param(user_top_hat_top_radius, "user_top_hat_top_radius"), 0);
+top_hat_height = max(required_param(user_top_hat_height, "user_top_hat_height"), 0);
+top_hat_shoulder_angle = keycap_top_hat_safe_shoulder_angle(required_param(user_top_hat_shoulder_angle, "user_top_hat_shoulder_angle"));
+top_hat_enabled = shape_geometry_type == "shell"
+    && requested_top_hat_enabled
+    && top_hat_height > 0.001;
+top_hat_surface_z_shift = top_hat_enabled
+    ? keycap_dish_surface_offset(
+        0,
+        0,
+        top_shape_type,
+        dish_depth,
+        dish_radius,
+        key_width,
+        key_depth
+    )
+    : 0;
+active_top_center_height = top_hat_enabled
+    ? top_center_height + top_hat_surface_z_shift + top_hat_height
+    : top_center_height;
+active_top_shape_type = top_hat_enabled ? "flat" : top_shape_type;
+active_dish_depth = top_hat_enabled ? 0 : dish_depth;
 requested_rim_enabled = required_param(user_rim_enabled, "user_rim_enabled");
 rim_width = max(required_param(user_rim_width, "user_rim_width"), 0);
 rim_height_up = max(required_param(user_rim_height_up, "user_rim_height_up"), 0);
@@ -232,9 +257,9 @@ homing_bar_chamfer = max(is_undef(user_homing_bar_chamfer) ? 0 : user_homing_bar
 homing_bar_anchor_surface_z = keycap_surface_z(
     0,
     homing_bar_offset_y,
-    top_center_height,
-    top_shape_type,
-    dish_depth,
+    active_top_center_height,
+    active_top_shape_type,
+    active_dish_depth,
     dish_radius,
     top_pitch_deg,
     top_roll_deg,
@@ -244,7 +269,7 @@ homing_bar_anchor_surface_z = keycap_surface_z(
 homing_bar_anchor_plane_z = keycap_top_plane_height(
     0,
     homing_bar_offset_y,
-    top_center_height,
+    active_top_center_height,
     top_pitch_deg,
     top_roll_deg
 );
@@ -252,7 +277,7 @@ homing_bar_surface_delta = homing_bar_anchor_surface_z - homing_bar_anchor_plane
 
 module keycap_legend_flat_block(height = legend_total_height, quality = "export") {
     if (legend_enabled && legend_has_text && legend_total_height > 0) {
-        keycap_top_plane_transform(top_center_height, top_pitch_deg, top_roll_deg)
+        keycap_top_plane_transform(active_top_center_height, top_pitch_deg, top_roll_deg)
             legend_block(
                 label = legend_text,
                 width = legend_width,
@@ -287,9 +312,9 @@ module keycap_legend_surface_volume(top_overlap = 0, quality = "export") {
                 front = legend_plan_front,
                 back = legend_plan_back,
                 radius = legend_plan_radius,
-                top_center_height = top_center_height,
-                dish_type = top_shape_type,
-                dish_depth = dish_depth,
+                top_center_height = active_top_center_height,
+                dish_type = active_top_shape_type,
+                dish_depth = active_dish_depth,
                 dish_radius = dish_radius,
                 pitch_deg = top_pitch_deg,
                 roll_deg = top_roll_deg,
@@ -378,6 +403,12 @@ module keycap_body_shell_positive(quality = "export") {
             top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
+            top_hat_enabled = top_hat_enabled,
+            top_hat_top_width = top_hat_top_width,
+            top_hat_top_depth = top_hat_top_depth,
+            top_hat_top_radius = top_hat_top_radius,
+            top_hat_height = top_hat_height,
+            top_hat_shoulder_angle = top_hat_shoulder_angle,
             pitch_deg = top_pitch_deg,
             roll_deg = top_roll_deg,
             quality = quality
@@ -563,7 +594,7 @@ module keycap_stem(quality = "export") {
 
 module keycap_homing_bar(quality = "export") {
     if (homing_bar_enabled) {
-        keycap_top_plane_transform(top_center_height, top_pitch_deg, top_roll_deg)
+        keycap_top_plane_transform(active_top_center_height, top_pitch_deg, top_roll_deg)
             homing_bar_blank(
                 length = homing_bar_length,
                 width = homing_bar_width,
