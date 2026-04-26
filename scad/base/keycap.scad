@@ -223,7 +223,9 @@ homing_bar_anchor_surface_z = keycap_surface_z(
     dish_depth,
     dish_radius,
     top_pitch_deg,
-    top_roll_deg
+    top_roll_deg,
+    key_width,
+    key_depth
 );
 homing_bar_anchor_plane_z = keycap_top_plane_height(
     0,
@@ -279,6 +281,8 @@ module keycap_legend_surface_volume(top_overlap = 0, quality = "export") {
                 roll_deg = top_roll_deg,
                 base_z = -legend_below_surface,
                 top_extra_z = legend_surface_height + top_overlap,
+                dish_plan_width = key_width,
+                dish_plan_depth = key_depth,
                 quality = quality
             );
         }

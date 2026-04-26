@@ -3,7 +3,7 @@ export_target = "preview";
 include <common/typewriter-params.scad>
 
 user_shape_geometry_type = "typewriter";
-user_key_width = 18;
+user_key_width = 36;
 user_key_depth = 18;
 user_top_center_height = 5.2;
 user_top_shape_type = "spherical";

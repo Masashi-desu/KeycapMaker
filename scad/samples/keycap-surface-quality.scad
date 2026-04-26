@@ -2,7 +2,7 @@ export_target = "preview";
 
 include <common/custom-shell-params.scad>
 
-user_key_width = 19;
+user_key_width = 36;
 user_key_depth = 18;
 user_top_center_height = 9.8;
 user_wall_thickness = 1.2;
