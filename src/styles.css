@@ -32,6 +32,7 @@
   --text: #2d241c;
   --muted: #7c6a58;
   --muted-soft: #cdbfae;
+  --divider-gap: 14px;
 }
 
 * {
@@ -562,17 +563,17 @@ pre {
 }
 
 .field--with-dependents {
-  gap: 12px;
+  gap: var(--divider-gap);
 }
 
 .field-dependent-list {
   display: grid;
-  gap: 0;
+  gap: var(--divider-gap);
 }
 
 .field--dependent {
-  margin-top: 2px;
-  padding: 14px 0 0;
+  margin-top: 0;
+  padding: var(--divider-gap) 0 0;
   border: 0;
   border-top: 1px solid var(--glass-border-surface);
   border-radius: 0;
@@ -1082,8 +1083,8 @@ pre {
 
 .export-options-card__body {
   display: grid;
-  gap: 12px;
-  padding-top: 12px;
+  gap: var(--divider-gap);
+  padding-top: var(--divider-gap);
   border-top: 1px solid var(--glass-border-surface);
 }
 
