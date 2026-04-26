@@ -137,6 +137,30 @@ const zh = Object.freeze({
         },
       },
     },
+    "typewriter-jis-enter": {
+      label: "打字机 JIS Enter",
+      fieldGroups: {
+        shape: {
+          title: "键帽形状",
+          description: "以打字机风格的薄型 JIS Enter 轮廓为基准，调整整体尺寸、左下缺口和 R。宽度按 18 mm = 1u 换算。",
+        },
+        top: {
+          title: "键顶",
+          description: "与打字机形状一样，可调整薄键顶厚度、边框以及前后和左右倾斜。",
+        },
+        legend: {
+          title: "字符",
+          description: "集中调整输入文字、字体、外观、位置、凸起高度和嵌入量。也可以直接输入多个字符。",
+        },
+        homing: {
+          title: "手指定位标记",
+          description: "调整类似 F 键和 J 键上的触感凸起。可与字符分开设置。",
+        },
+        stem: {
+          title: "安装部",
+        },
+      },
+    },
   },
   fieldGroups: {
     shapeDescriptionShell: "调整键帽整体尺寸，以及向顶部收窄的程度。键尺寸会与宽度联动，按 18 mm = 1u 换算。",

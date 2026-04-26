@@ -110,6 +110,22 @@ test("typewriter は spherical top を受ける", () => {
   assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight - 0.8);
 });
 
+test("タイプライターJISエンターは spherical top と欠き込み寸法を受ける", () => {
+  const parsed = parseEditorDataPayload({
+    shapeProfile: "typewriter-jis-enter",
+    topSurfaceShape: "spherical",
+    keyWidth: 27,
+    keyDepth: 36,
+    jisEnterNotchWidth: 4.5,
+    jisEnterNotchDepth: 18,
+  });
+
+  assert.equal(parsed.shapeProfile, "typewriter-jis-enter");
+  assert.equal(parsed.topSurfaceShape, "spherical");
+  assert.equal(parsed.jisEnterNotchWidth, 4.5);
+  assert.equal(parsed.jisEnterNotchDepth, 18);
+});
+
 test("typewriter は cylindrical top を受けず default へ戻す", () => {
   const defaults = createDefaultKeycapParams("typewriter");
   const parsed = parseEditorDataPayload({
@@ -176,6 +192,7 @@ test("印字サイズの初期値は 5mm にする", () => {
   assert.equal(createDefaultKeycapParams("custom-shell").legendSize, 5.0);
   assert.equal(createDefaultKeycapParams("jis-enter").legendSize, 5.0);
   assert.equal(createDefaultKeycapParams("typewriter").legendSize, 5.0);
+  assert.equal(createDefaultKeycapParams("typewriter-jis-enter").legendSize, 5.0);
 });
 
 test("JISエンターは欠き込み寸法をキー寸法内に丸める", () => {
@@ -205,6 +222,33 @@ test("JISエンターの既定寸法はステム原点を下胴中央に置く",
   assert.equal(lowerBodyWidth, 22.5);
   assert.equal(params.keyDepth, 36);
   assert.equal(params.jisEnterNotchDepth, 18);
+});
+
+test("タイプライターJISエンターの既定寸法もステム原点を下胴中央に置く", () => {
+  const params = createDefaultKeycapParams("typewriter-jis-enter");
+  const left = -params.keyWidth / 2 - params.jisEnterNotchWidth / 2;
+  const right = params.keyWidth / 2 - params.jisEnterNotchWidth / 2;
+  const notchX = left + params.jisEnterNotchWidth;
+  const lowerBodyCenterX = (notchX + right) / 2;
+
+  assert.equal(lowerBodyCenterX, 0);
+  assert.equal(params.typewriterMountHeight, 11.68);
+  assert.equal(params.rimEnabled, true);
+});
+
+test("タイプライターJISエンターはRとリム幅をJIS footprint内に丸める", () => {
+  const parsed = parseEditorDataPayload({
+    shapeProfile: "typewriter-jis-enter",
+    keyWidth: 27,
+    keyDepth: 36,
+    jisEnterNotchWidth: 4.5,
+    jisEnterNotchDepth: 18,
+    typewriterCornerRadius: 99,
+    rimWidth: 99,
+  });
+
+  assert.equal(parsed.typewriterCornerRadius, 9);
+  assert.equal(parsed.rimWidth, 9);
 });
 
 test("保存名の拡張子正規化は STL も対象にする", () => {

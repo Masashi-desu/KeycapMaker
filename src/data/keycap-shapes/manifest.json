@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 8,
+  "schemaVersion": 9,
   "defaultProfileKey": "custom-shell",
   "selectorKeys": ["shapeProfile", "legendFontKey", "stemType"],
-  "shapeKeys": ["custom-shell", "jis-enter", "typewriter"]
+  "shapeKeys": ["custom-shell", "jis-enter", "typewriter", "typewriter-jis-enter"]
 }

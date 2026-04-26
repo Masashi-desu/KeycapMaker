@@ -1,0 +1,107 @@
+{
+  "key": "typewriter-jis-enter",
+  "label": "タイプライターJISエンター",
+  "geometryType": "typewriter_jis_enter",
+  "geometryDefaults": {
+    "profileFrontAngle": 0,
+    "profileBackAngle": 0,
+    "profileLeftAngle": 0,
+    "profileRightAngle": 0,
+    "topThickness": 1.2,
+    "bottomCornerRadius": 0,
+    "topCornerRadius": 0
+  },
+  "defaults": {
+    "name": "typewriter-jis-enter-keytop",
+    "shapeProfile": "typewriter-jis-enter",
+    "keyWidth": 27,
+    "keyDepth": 36,
+    "jisEnterNotchWidth": 4.5,
+    "jisEnterNotchDepth": 18,
+    "topCenterHeight": 5.2,
+    "topSlopeInputMode": "angle",
+    "topPitchDeg": 0,
+    "topRollDeg": 0,
+    "rimEnabled": true,
+    "rimWidth": 1,
+    "rimHeightUp": 0.5,
+    "rimHeightDown": 0.5,
+    "rimColor": "#ff7f00",
+    "wallThickness": 1.2,
+    "topScale": 1,
+    "topSurfaceShape": "flat",
+    "dishRadius": 45,
+    "dishDepth": 0,
+    "typewriterCornerRadius": 2.2,
+    "bodyColor": "#f8f9fa",
+    "legendEnabled": true,
+    "legendText": "Enter",
+    "legendFontKey": "mplus1-variable",
+    "legendFontStyleKey": "regular",
+    "legendUnderlineEnabled": false,
+    "legendSize": 5.0,
+    "legendOutlineDelta": 0,
+    "legendHeight": 0,
+    "legendEmbed": 0.6,
+    "legendColor": "#212529",
+    "legendOffsetX": 0,
+    "legendOffsetY": 0,
+    "homingBarEnabled": false,
+    "homingBarLength": 4.0,
+    "homingBarWidth": 1.58,
+    "homingBarHeight": 0.6,
+    "homingBarChamfer": 0.3,
+    "homingBarOffsetY": -3.5,
+    "homingBarBaseThickness": 0.35,
+    "homingBarColor": "#ff7f00",
+    "stemType": "choc_v2",
+    "typewriterMountHeight": 11.68,
+    "stemOuterDelta": 0,
+    "stemCrossMargin": 0,
+    "stemInsetDelta": 0
+  },
+  "fieldGroups": [
+    {
+      "id": "shape",
+      "title": "キーキャップの形",
+      "description": "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、左下の欠き込み、R を調整します。横幅は 18 mm を 1u として換算します。",
+      "fieldKeys": ["shapeProfile", "keyWidth", "keyDepth", "jisEnterNotchWidth", "jisEnterNotchDepth", "typewriterCornerRadius", "bodyColor"]
+    },
+    {
+      "id": "top",
+      "title": "キートップ",
+      "description": "タイプライターと同じく、薄いキートップの厚み、リム、前後左右の傾きを調整できます。",
+      "fieldKeys": ["typewriterMountHeight", "topCenterHeight", "topSurfaceShape", "dishDepth", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+    },
+    {
+      "id": "legend",
+      "title": "印字",
+      "description": "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+      "fieldKeys": ["legendEnabled", "legendText", "legendFontKey", "legendFontStyleKey", "legendUnderlineEnabled", "legendSize", "legendOutlineDelta", "legendHeight", "legendEmbed", "legendColor", "legendOffsetX", "legendOffsetY"]
+    },
+    {
+      "id": "homing",
+      "title": "指の目印",
+      "description": "F キーや J キーのように、指で触って分かる出っ張りを調整します。印字とは別に設定できます。",
+      "fieldKeys": ["homingBarEnabled", "homingBarLength", "homingBarWidth", "homingBarHeight", "homingBarChamfer", "homingBarOffsetY", "homingBarBaseThickness", "homingBarColor"]
+    },
+    {
+      "id": "stem",
+      "title": "取り付け部分",
+      "descriptionKey": "stem-group",
+      "fieldKeys": ["stemType", "stemOuterDelta", "stemCrossMargin"]
+    }
+  ],
+  "fieldOverrides": {
+    "topCenterHeight": {
+      "label": "キートップの厚み",
+      "hint": "薄いキートップの底から上面までの厚みです"
+    },
+    "topSurfaceShape": {
+      "options": [
+        { "value": "flat", "label": "フラット" },
+        { "value": "spherical", "label": "スフェリカル" }
+      ]
+    }
+  }
+}

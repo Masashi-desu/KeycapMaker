@@ -137,6 +137,30 @@ const ja = Object.freeze({
         },
       },
     },
+    "typewriter-jis-enter": {
+      label: "タイプライターJISエンター",
+      fieldGroups: {
+        shape: {
+          title: "キーキャップの形",
+          description: "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、左下の欠き込み、R を調整します。横幅は 18 mm を 1u として換算します。",
+        },
+        top: {
+          title: "キートップ",
+          description: "タイプライターと同じく、薄いキートップの厚み、リム、前後左右の傾きを調整できます。",
+        },
+        legend: {
+          title: "印字",
+          description: "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+        },
+        homing: {
+          title: "指の目印",
+          description: "F キーや J キーのように、指で触って分かる出っ張りを調整します。印字とは別に設定できます。",
+        },
+        stem: {
+          title: "取り付け部分",
+        },
+      },
+    },
   },
   fieldGroups: {
     shapeDescriptionShell: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。キーサイズは横幅と連動していて、18 mm を 1u として換算します。",

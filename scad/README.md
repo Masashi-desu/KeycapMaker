@@ -13,7 +13,7 @@
 
 - `base/keycap.scad`: `export_target` で `preview / body / body_core / rim / homing / legend / single_material_shape` を切り替える基礎エントリ
 - `modules/keycap_shell.scad`: `top_center_height + pitch / roll` 基準の外形シェル、dish、内側 hollow
-- `modules/keycap_jis_enter.scad`: JIS / ISO 系の縦長 Enter footprint 用シェルと内側 hollow
+- `modules/keycap_jis_enter.scad`: JIS / ISO 系の縦長 Enter footprint 用シェル、typewriter variant、内側 hollow
 - `modules/stem_mx.scad`: MX 互換 stem ボディ
 - `modules/stem_choc_v1.scad`: Kailh Choc v1 向け 2 本爪 stem
 - `modules/stem_choc_v2.scad`: Kailh Choc v2 向け MX 互換 stem
@@ -24,6 +24,7 @@
 - `presets/stem-nominals.scad`: stem 形状の nominal 寸法
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
 - `samples/keycap-jis-enter.scad`: JIS / ISO 系の縦長 Enter footprint 確認用サンプル
+- `samples/keycap-typewriter-jis-enter.scad`: typewriter style の JIS Enter footprint 確認用サンプル
 - `samples/keycap-typewriter.scad`: タイプライター風キートップの確認用サンプル
 - `samples/keycap-typewriter-mount-height.scad`: typewriter shape の上面基準取り付け高さ確認用サンプル
 - `samples/keycap-typewriter-rim.scad`: typewriter shape の key rim 分離確認用サンプル

@@ -67,6 +67,10 @@ function clampMinimum(value, fallback, minimum) {
   return Number.isFinite(nextValue) ? Math.max(nextValue, minimum) : fallback;
 }
 
+function isTypewriterGeometryType(geometryType) {
+  return geometryType === "typewriter" || geometryType === "typewriter_jis_enter";
+}
+
 function getTypewriterMountHeightMinimum(params = {}) {
   const topCenterHeight = clampMinimum(params.topCenterHeight, 5.2, 0.1);
   return topCenterHeight + TYPEWRITER_MIN_STEM_HEIGHT - TYPEWRITER_STEM_MOUNT_OVERLAP;
@@ -96,10 +100,10 @@ function resolveShapeGeometryParameters(params = {}) {
 
   return {
     shapeGeometryType: geometryType,
-    profileFrontAngle: geometryType === "typewriter" ? 0 : Math.max(Number(geometryDefaults.profileFrontAngle ?? 0) * taperFactor, 0.1),
-    profileBackAngle: geometryType === "typewriter" ? 0 : Math.max(Number(geometryDefaults.profileBackAngle ?? 0) * taperFactor, 0.1),
-    profileLeftAngle: geometryType === "typewriter" ? 0 : Math.max(Number(geometryDefaults.profileLeftAngle ?? 0) * taperFactor, 0.1),
-    profileRightAngle: geometryType === "typewriter" ? 0 : Math.max(Number(geometryDefaults.profileRightAngle ?? 0) * taperFactor, 0.1),
+    profileFrontAngle: isTypewriterGeometryType(geometryType) ? 0 : Math.max(Number(geometryDefaults.profileFrontAngle ?? 0) * taperFactor, 0.1),
+    profileBackAngle: isTypewriterGeometryType(geometryType) ? 0 : Math.max(Number(geometryDefaults.profileBackAngle ?? 0) * taperFactor, 0.1),
+    profileLeftAngle: isTypewriterGeometryType(geometryType) ? 0 : Math.max(Number(geometryDefaults.profileLeftAngle ?? 0) * taperFactor, 0.1),
+    profileRightAngle: isTypewriterGeometryType(geometryType) ? 0 : Math.max(Number(geometryDefaults.profileRightAngle ?? 0) * taperFactor, 0.1),
     topThickness: Math.max(Number(geometryDefaults.topThickness ?? 0.05), 0.05),
     bottomCornerRadius: Math.max(Number(geometryDefaults.bottomCornerRadius ?? 0), 0),
     topCornerRadius: Math.max(Number(geometryDefaults.topCornerRadius ?? 0), 0),
@@ -544,7 +548,8 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_typewriter_mount_height: clampTypewriterMountHeight(
       params.typewriterMountHeight,
       params,
-      createDefaultKeycapParams("typewriter").typewriterMountHeight,
+      createDefaultKeycapParams(params.shapeProfile ?? "typewriter").typewriterMountHeight
+        ?? createDefaultKeycapParams("typewriter").typewriterMountHeight,
     ),
     user_typewriter_corner_radius: clampTypewriterCornerRadius(
       params.typewriterCornerRadius,

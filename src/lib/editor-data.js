@@ -56,6 +56,14 @@ function isRecognizedShapeProfileKey(profileKey) {
   return SHAPE_PROFILE_MAP.has(profileKey);
 }
 
+function isTypewriterGeometryType(geometryType) {
+  return geometryType === "typewriter" || geometryType === "typewriter_jis_enter";
+}
+
+function isJisEnterGeometryType(geometryType) {
+  return geometryType === "jis_enter" || geometryType === "typewriter_jis_enter";
+}
+
 function resolveLegendFontConfig(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
   return resolveKeycapLegendFont(fontKey);
 }
@@ -106,7 +114,7 @@ function resolveTopSurfaceShape(value, fallback = "flat") {
 }
 
 function getAllowedTopSurfaceShapeValues(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
-  return resolveShapeGeometryType(profileKey) === "typewriter"
+  return isTypewriterGeometryType(resolveShapeGeometryType(profileKey))
     ? TYPEWRITER_TOP_SURFACE_SHAPE_VALUES
     : TOP_SURFACE_SHAPE_VALUES;
 }
@@ -148,13 +156,51 @@ function resolveActiveDishDepth(params = {}) {
   return resolveProfileTopSurfaceShape(params.shapeProfile, params.topSurfaceShape, "flat") === "flat" ? 0 : dishDepth;
 }
 
-function clampTypewriterCornerRadius(value, fallback = 0) {
-  const nextValue = Number(value);
-  if (!Number.isFinite(nextValue)) {
-    return Math.max(Number(fallback) || 0, 0);
+function clampTypewriterCornerRadius(value, fallback = 0, params = {}) {
+  return clampTypewriterCornerRadiusForParams(value, params, fallback);
+}
+
+function getJisEnterFootprintLimits(params = {}) {
+  const keyWidth = Math.max(Number(params.keyWidth ?? 0), 0);
+  const keyDepth = Math.max(Number(params.keyDepth ?? 0), 0);
+  const notchWidth = Math.min(Math.max(Number(params.jisEnterNotchWidth ?? 0), 0), Math.max(keyWidth - 0.2, 0));
+  const notchDepth = Math.min(Math.max(Number(params.jisEnterNotchDepth ?? 0), 0), Math.max(keyDepth - 0.2, 0));
+
+  return {
+    keyWidth,
+    keyDepth,
+    notchWidth,
+    notchDepth,
+    lowerBodyWidth: Math.max(keyWidth - notchWidth, 0),
+    upperBodyDepth: Math.max(keyDepth - notchDepth, 0),
+  };
+}
+
+function getTypewriterCornerRadiusMax(params = {}) {
+  const keyWidth = Math.max(Number(params.keyWidth ?? 0), 0);
+  const keyDepth = Math.max(Number(params.keyDepth ?? 0), 0);
+  if (isJisEnterGeometryType(resolveShapeGeometryType(params.shapeProfile))) {
+    const limits = getJisEnterFootprintLimits(params);
+    return Math.max(Math.min(
+      limits.keyWidth,
+      limits.keyDepth,
+      limits.lowerBodyWidth,
+      limits.upperBodyDepth,
+    ) / 2, 0);
   }
 
-  return Math.max(nextValue, 0);
+  return Math.max(Math.min(keyWidth, keyDepth) / 2, 0);
+}
+
+function clampTypewriterCornerRadiusForParams(value, params = {}, fallback = 0) {
+  const maxRadius = getTypewriterCornerRadiusMax(params);
+  const nextValue = Number(value);
+  const fallbackValue = Math.min(Math.max(Number(fallback) || 0, 0), maxRadius);
+  if (!Number.isFinite(nextValue)) {
+    return fallbackValue;
+  }
+
+  return Math.min(Math.max(nextValue, 0), maxRadius);
 }
 
 function clampNonNegativeNumber(value, fallback = 0) {
@@ -167,6 +213,16 @@ function clampNonNegativeNumber(value, fallback = 0) {
 }
 
 function getTypewriterRimMaxWidth(params = {}) {
+  if (isJisEnterGeometryType(resolveShapeGeometryType(params.shapeProfile))) {
+    const limits = getJisEnterFootprintLimits(params);
+    return Math.max(Math.min(
+      limits.keyWidth,
+      limits.keyDepth,
+      limits.lowerBodyWidth,
+      limits.upperBodyDepth,
+    ) / 2, 0);
+  }
+
   return Math.max(Math.min(Number(params.keyWidth ?? 0), Number(params.keyDepth ?? 0)) / 2, 0);
 }
 
@@ -275,7 +331,7 @@ function resolveProfileAngles(params = {}) {
   const defaults = createDefaultKeycapParams(profileKey);
   const geometryDefaults = resolveShapeProfileGeometryDefaults(profileKey);
 
-  if (geometryDefaults.geometryType === "typewriter") {
+  if (isTypewriterGeometryType(geometryDefaults.geometryType)) {
     return {
       front: 0,
       back: 0,
@@ -372,16 +428,18 @@ export function syncDerivedKeycapParams(params = {}) {
   );
   params.typewriterCornerRadius = clampTypewriterCornerRadius(
     params.typewriterCornerRadius,
-    defaults.typewriterCornerRadius ?? Math.min(Number(params.keyWidth ?? defaults.keyWidth ?? 18), Number(params.keyDepth ?? defaults.keyDepth ?? 18)) / 2,
+    defaults.typewriterCornerRadius ?? getTypewriterCornerRadiusMax(params),
+    params,
   );
-  if (resolveShapeGeometryType(profileKey) === "typewriter") {
+  const geometryType = resolveShapeGeometryType(profileKey);
+  if (isTypewriterGeometryType(geometryType)) {
     params.typewriterMountHeight = clampTypewriterMountHeight(
       params.typewriterMountHeight,
       params,
       defaults.typewriterMountHeight ?? 0,
     );
   }
-  if (resolveShapeGeometryType(profileKey) === "jis_enter") {
+  if (isJisEnterGeometryType(geometryType)) {
     params.jisEnterNotchWidth = clampJisEnterNotchWidth(
       params.jisEnterNotchWidth,
       params,
@@ -472,7 +530,7 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
   }
 
   if (fieldKey === "typewriterCornerRadius") {
-    return clampTypewriterCornerRadius(value, fallback);
+    return clampTypewriterCornerRadius(value, fallback, paramsContext);
   }
 
   if (fieldKey === "rimWidth") {

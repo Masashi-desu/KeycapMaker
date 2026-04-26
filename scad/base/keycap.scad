@@ -17,7 +17,14 @@ function positive_dimension(value, minimum = 0.1) = max(value, minimum);
 function stem_cross_dimension(base_value, margin) =
     positive_dimension(base_value + margin * 2);
 function supported_shape_geometry_type(type) =
-    type == "shell" || type == "jis_enter" || type == "typewriter";
+    type == "shell"
+    || type == "jis_enter"
+    || type == "typewriter"
+    || type == "typewriter_jis_enter";
+function typewriter_shape_geometry_type(type) =
+    type == "typewriter" || type == "typewriter_jis_enter";
+function jis_enter_shape_geometry_type(type) =
+    type == "jis_enter" || type == "typewriter_jis_enter";
 function supported_top_shape_type(type) =
     type == "flat" || type == "cylindrical" || type == "spherical";
 function supported_stem_type(type) =
@@ -80,14 +87,14 @@ shape_geometry_type = assert(
     supported_shape_geometry_type(requested_shape_geometry_type),
     str("unsupported user_shape_geometry_type: ", requested_shape_geometry_type)
 ) requested_shape_geometry_type;
-typewriter_mount_height = shape_geometry_type == "typewriter"
+typewriter_mount_height = typewriter_shape_geometry_type(shape_geometry_type)
     ? positive_dimension(required_param(user_typewriter_mount_height, "user_typewriter_mount_height"))
     : 0;
 typewriter_corner_radius = max(required_param(user_typewriter_corner_radius, "user_typewriter_corner_radius"), 0);
-jis_enter_notch_width = shape_geometry_type == "jis_enter"
+jis_enter_notch_width = jis_enter_shape_geometry_type(shape_geometry_type)
     ? max(required_param(user_jis_enter_notch_width, "user_jis_enter_notch_width"), 0)
     : 0;
-jis_enter_notch_depth = shape_geometry_type == "jis_enter"
+jis_enter_notch_depth = jis_enter_shape_geometry_type(shape_geometry_type)
     ? max(required_param(user_jis_enter_notch_depth, "user_jis_enter_notch_depth"), 0)
     : 0;
 
@@ -115,7 +122,7 @@ requested_rim_enabled = required_param(user_rim_enabled, "user_rim_enabled");
 rim_width = max(required_param(user_rim_width, "user_rim_width"), 0);
 rim_height_up = max(required_param(user_rim_height_up, "user_rim_height_up"), 0);
 rim_height_down = max(required_param(user_rim_height_down, "user_rim_height_down"), 0);
-rim_enabled = shape_geometry_type == "typewriter" && requested_rim_enabled && rim_width > 0.001;
+rim_enabled = typewriter_shape_geometry_type(shape_geometry_type) && requested_rim_enabled && rim_width > 0.001;
 
 legend_enabled = required_param(user_legend_enabled, "user_legend_enabled");
 legend_text = required_param(user_legend_text, "user_legend_text");
@@ -208,7 +215,7 @@ stem_auto_contact_height = keycap_inner_height(top_center_height, dish_depth, to
 typewriter_stem_height = typewriter_stem_height_from_mount_height(typewriter_mount_height, top_center_height);
 requested_stem_height = is_undef(user_stem_height)
     ? (
-        shape_geometry_type == "typewriter"
+        typewriter_shape_geometry_type(shape_geometry_type)
             ? typewriter_stem_height
             : max(stem_nominal_height_for_type(stem_type), stem_auto_contact_height)
     )
@@ -318,6 +325,21 @@ module keycap_body_shell_positive(quality = "export") {
             roll_deg = top_roll_deg,
             quality = quality
         );
+    } else if (shape_geometry_type == "typewriter_jis_enter") {
+        keycap_jis_enter_typewriter_shell(
+            width = key_width,
+            depth = key_depth,
+            top_center_height = top_center_height,
+            notch_width = jis_enter_notch_width,
+            notch_depth = jis_enter_notch_depth,
+            corner_radius = typewriter_corner_radius,
+            top_shape_type = top_shape_type,
+            dish_radius = dish_radius,
+            dish_depth = dish_depth,
+            pitch_deg = top_pitch_deg,
+            roll_deg = top_roll_deg,
+            quality = quality
+        );
     } else if (shape_geometry_type == "jis_enter") {
         keycap_jis_enter_shell(
             width = key_width,
@@ -377,21 +399,41 @@ module keycap_body_rim_clearance_volume(quality = "export") {
     if (rim_enabled) {
         clearance = typewriter_rim_body_clearance;
 
-        keycap_typewriter_rim(
-            width = key_width + clearance * 2,
-            depth = key_depth + clearance * 2,
-            top_center_height = top_center_height + clearance,
-            band_width = rim_width + clearance * 2,
-            height_up = rim_height_up + clearance,
-            height_down = rim_height_down + clearance,
-            corner_radius = typewriter_corner_radius + clearance,
-            top_shape_type = top_shape_type,
-            dish_radius = dish_radius,
-            dish_depth = dish_depth,
-            pitch_deg = top_pitch_deg,
-            roll_deg = top_roll_deg,
-            quality = quality
-        );
+        if (shape_geometry_type == "typewriter_jis_enter") {
+            keycap_jis_enter_typewriter_rim(
+                width = key_width + clearance * 2,
+                depth = key_depth + clearance * 2,
+                top_center_height = top_center_height + clearance,
+                notch_width = jis_enter_notch_width,
+                notch_depth = jis_enter_notch_depth,
+                band_width = rim_width + clearance * 2,
+                height_up = rim_height_up + clearance,
+                height_down = rim_height_down + clearance,
+                corner_radius = typewriter_corner_radius + clearance,
+                top_shape_type = top_shape_type,
+                dish_radius = dish_radius,
+                dish_depth = dish_depth,
+                pitch_deg = top_pitch_deg,
+                roll_deg = top_roll_deg,
+                quality = quality
+            );
+        } else {
+            keycap_typewriter_rim(
+                width = key_width + clearance * 2,
+                depth = key_depth + clearance * 2,
+                top_center_height = top_center_height + clearance,
+                band_width = rim_width + clearance * 2,
+                height_up = rim_height_up + clearance,
+                height_down = rim_height_down + clearance,
+                corner_radius = typewriter_corner_radius + clearance,
+                top_shape_type = top_shape_type,
+                dish_radius = dish_radius,
+                dish_depth = dish_depth,
+                pitch_deg = top_pitch_deg,
+                roll_deg = top_roll_deg,
+                quality = quality
+            );
+        }
     }
 }
 
@@ -451,7 +493,7 @@ module keycap_stem_positive(base_clearance = stem_inset, quality = "export") {
 
 module keycap_stem_nominal(quality = "export") {
     if (stem_enabled) {
-        if (shape_geometry_type == "typewriter") {
+        if (typewriter_shape_geometry_type(shape_geometry_type)) {
             translate([0, 0, typewriter_stem_mount_overlap])
                 mirror([0, 0, 1])
                     keycap_stem_positive(base_clearance = 0, quality = quality);
@@ -508,7 +550,7 @@ module keycap_stem_clip_volume(quality = "export") {
 
 module keycap_stem(quality = "export") {
     if (stem_enabled) {
-        if (shape_geometry_type == "typewriter") {
+        if (typewriter_shape_geometry_type(shape_geometry_type)) {
             keycap_stem_nominal(quality);
         } else {
             intersection() {
@@ -537,21 +579,41 @@ module keycap_homing_bar(quality = "export") {
 
 module keycap_rim_positive(quality = "export") {
     if (rim_enabled) {
-        keycap_typewriter_rim(
-            width = key_width,
-            depth = key_depth,
-            top_center_height = top_center_height,
-            band_width = rim_width,
-            height_up = rim_height_up,
-            height_down = rim_height_down,
-            corner_radius = typewriter_corner_radius,
-            top_shape_type = top_shape_type,
-            dish_radius = dish_radius,
-            dish_depth = dish_depth,
-            pitch_deg = top_pitch_deg,
-            roll_deg = top_roll_deg,
-            quality = quality
-        );
+        if (shape_geometry_type == "typewriter_jis_enter") {
+            keycap_jis_enter_typewriter_rim(
+                width = key_width,
+                depth = key_depth,
+                top_center_height = top_center_height,
+                notch_width = jis_enter_notch_width,
+                notch_depth = jis_enter_notch_depth,
+                band_width = rim_width,
+                height_up = rim_height_up,
+                height_down = rim_height_down,
+                corner_radius = typewriter_corner_radius,
+                top_shape_type = top_shape_type,
+                dish_radius = dish_radius,
+                dish_depth = dish_depth,
+                pitch_deg = top_pitch_deg,
+                roll_deg = top_roll_deg,
+                quality = quality
+            );
+        } else {
+            keycap_typewriter_rim(
+                width = key_width,
+                depth = key_depth,
+                top_center_height = top_center_height,
+                band_width = rim_width,
+                height_up = rim_height_up,
+                height_down = rim_height_down,
+                corner_radius = typewriter_corner_radius,
+                top_shape_type = top_shape_type,
+                dish_radius = dish_radius,
+                dish_depth = dish_depth,
+                pitch_deg = top_pitch_deg,
+                roll_deg = top_roll_deg,
+                quality = quality
+            );
+        }
     }
 }
 

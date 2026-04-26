@@ -137,6 +137,30 @@ const en = Object.freeze({
         },
       },
     },
+    "typewriter-jis-enter": {
+      label: "Typewriter JIS Enter",
+      fieldGroups: {
+        shape: {
+          title: "Keycap Shape",
+          description: "Adjust a thin typewriter-style JIS Enter footprint, including overall size, lower-left notch, and R. Width is converted using 18 mm as 1u.",
+        },
+        top: {
+          title: "Keytop",
+          description: "Like Typewriter, this can edit the thin keytop thickness, rim, and front/back or left/right tilt.",
+        },
+        legend: {
+          title: "Legend",
+          description: "Adjust the text, typeface, appearance, position, height, and embedding depth. Multi-character legends can be entered as-is.",
+        },
+        homing: {
+          title: "Homing Mark",
+          description: "Adjust a tactile bump like the one on F and J keys. It can be configured separately from the legend.",
+        },
+        stem: {
+          title: "Mount",
+        },
+      },
+    },
   },
   fieldGroups: {
     shapeDescriptionShell: "Adjust the overall keycap size and the amount of taper toward the top. Key size follows the width, using 18 mm as 1u.",

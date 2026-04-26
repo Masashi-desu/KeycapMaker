@@ -137,6 +137,30 @@ const ko = Object.freeze({
         },
       },
     },
+    "typewriter-jis-enter": {
+      label: "타자기 JIS Enter",
+      fieldGroups: {
+        shape: {
+          title: "키캡 형상",
+          description: "타자기풍의 얇은 JIS Enter footprint를 기준으로 전체 치수, 왼쪽 아래 파임, R을 조정합니다. 폭은 18 mm를 1u로 환산합니다.",
+        },
+        top: {
+          title: "키톱",
+          description: "타자기 형상처럼 얇은 키톱 두께, 림, 앞뒤와 좌우 기울기를 조정할 수 있습니다.",
+        },
+        legend: {
+          title: "각인",
+          description: "입력할 문자, 서체, 모양, 위치, 돌출 높이, 매립량을 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
+        },
+        homing: {
+          title: "손가락 위치 표시",
+          description: "F 키나 J 키처럼 손끝으로 위치를 알 수 있는 돌출부를 조정합니다. 각인과 별도로 설정할 수 있습니다.",
+        },
+        stem: {
+          title: "장착부",
+        },
+      },
+    },
   },
   fieldGroups: {
     shapeDescriptionShell: "키캡 전체 크기와 위쪽으로 좁아지는 정도를 조정합니다. 키 크기는 폭과 연동되며 18 mm를 1u로 환산합니다.",

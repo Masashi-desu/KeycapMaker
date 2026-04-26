@@ -168,7 +168,13 @@ function localizeFieldOption(fieldKey, option) {
 }
 
 function isTypewriterShapeProfile(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
-  return resolveShapeGeometryType(profileKey) === "typewriter";
+  const geometryType = resolveShapeGeometryType(profileKey);
+  return geometryType === "typewriter" || geometryType === "typewriter_jis_enter";
+}
+
+function isJisEnterShapeProfile(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  const geometryType = resolveShapeGeometryType(profileKey);
+  return geometryType === "jis_enter" || geometryType === "typewriter_jis_enter";
 }
 
 function resolveLegendFontConfig(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
@@ -230,8 +236,38 @@ function clampTypewriterCornerRadius(value, fallback = 0) {
   return Math.max(nextValue, 0);
 }
 
+function getJisEnterFootprintLimits(params = state.keycapParams) {
+  const keyWidth = Math.max(Number(params.keyWidth ?? 0), 0);
+  const keyDepth = Math.max(Number(params.keyDepth ?? 0), 0);
+  const notchWidth = Math.min(Math.max(Number(params.jisEnterNotchWidth ?? 0), 0), Math.max(keyWidth - 0.2, 0));
+  const notchDepth = Math.min(Math.max(Number(params.jisEnterNotchDepth ?? 0), 0), Math.max(keyDepth - 0.2, 0));
+
+  return {
+    keyWidth,
+    keyDepth,
+    notchWidth,
+    notchDepth,
+    lowerBodyWidth: Math.max(keyWidth - notchWidth, 0),
+    upperBodyDepth: Math.max(keyDepth - notchDepth, 0),
+  };
+}
+
+function getTypewriterCornerRadiusMax(params = state.keycapParams) {
+  if (isJisEnterShapeProfile(params.shapeProfile)) {
+    const limits = getJisEnterFootprintLimits(params);
+    return Math.max(Math.min(
+      limits.keyWidth,
+      limits.keyDepth,
+      limits.lowerBodyWidth,
+      limits.upperBodyDepth,
+    ) / 2, 0);
+  }
+
+  return Math.max(Math.min(Number(params.keyWidth ?? 0), Number(params.keyDepth ?? 0)) / 2, 0);
+}
+
 function getTypewriterCornerRadiusHint(params) {
-  const maxRadius = Math.max(Math.min(Number(params.keyWidth ?? 0), Number(params.keyDepth ?? 0)) / 2, 0);
+  const maxRadius = getTypewriterCornerRadiusMax(params);
   return t("fields.typewriterCornerRadius.hint", { maxRadius: formatMillimeter(maxRadius) });
 }
 
@@ -245,6 +281,16 @@ function clampNonNegativeNumber(value, fallback = 0) {
 }
 
 function getTypewriterRimMaxWidth(params = state.keycapParams) {
+  if (isJisEnterShapeProfile(params.shapeProfile)) {
+    const limits = getJisEnterFootprintLimits(params);
+    return Math.max(Math.min(
+      limits.keyWidth,
+      limits.keyDepth,
+      limits.lowerBodyWidth,
+      limits.upperBodyDepth,
+    ) / 2, 0);
+  }
+
   return Math.max(Math.min(Number(params.keyWidth ?? 0), Number(params.keyDepth ?? 0)) / 2, 0);
 }
 
@@ -428,7 +474,7 @@ function resolveProfileAngles(params = {}) {
   const defaults = createDefaultKeycapParams(profileKey);
   const geometryDefaults = resolveShapeProfileGeometryDefaults(profileKey);
 
-  if (geometryDefaults.geometryType === "typewriter") {
+  if (isTypewriterShapeProfile(profileKey)) {
     return {
       front: 0,
       back: 0,
@@ -2461,7 +2507,7 @@ function applyShapeProfileParams(profileKey) {
   const previousVisibleFieldKeys = getShapeProfileVisibleFieldKeys(previousProfileKey);
   const nextVisibleFieldKeys = getShapeProfileVisibleFieldKeys(profileKey);
   const geometryTypeChanged = previousGeometryType !== nextGeometryType;
-  const footprintTypeChanged = previousGeometryType === "jis_enter" || nextGeometryType === "jis_enter";
+  const footprintTypeChanged = isJisEnterShapeProfile(previousProfileKey) || isJisEnterShapeProfile(profileKey);
   const nextParams = {};
 
   for (const key of listEditableParamKeys(profileKey)) {
@@ -2821,10 +2867,19 @@ function handleFieldChange(event) {
 
   if (field === "keyWidth") {
     syncFieldHint("jisEnterNotchWidth");
+    syncFieldHint("typewriterCornerRadius");
+    syncFieldHint("rimWidth");
   }
 
   if (field === "keyDepth") {
     syncFieldHint("jisEnterNotchDepth");
+    syncFieldHint("typewriterCornerRadius");
+    syncFieldHint("rimWidth");
+  }
+
+  if (field === "jisEnterNotchWidth" || field === "jisEnterNotchDepth") {
+    syncFieldHint("typewriterCornerRadius");
+    syncFieldHint("rimWidth");
   }
 
   if (!deferPreview && field !== "topSlopeInputMode") {

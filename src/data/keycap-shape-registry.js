@@ -2,8 +2,9 @@ import manifest from "./keycap-shapes/manifest.json" with { type: "json" };
 import customShell from "./keycap-shapes/custom-shell.json" with { type: "json" };
 import jisEnter from "./keycap-shapes/jis-enter.json" with { type: "json" };
 import typewriter from "./keycap-shapes/typewriter.json" with { type: "json" };
+import typewriterJisEnter from "./keycap-shapes/typewriter-jis-enter.json" with { type: "json" };
 
-const SHAPE_PROFILES = Object.freeze([customShell, jisEnter, typewriter]);
+const SHAPE_PROFILES = Object.freeze([customShell, jisEnter, typewriter, typewriterJisEnter]);
 const SHAPE_PROFILE_MAP = new Map(SHAPE_PROFILES.map((profile) => [profile.key, profile]));
 const MANIFEST_SHAPE_KEYS = manifest.shapeKeys ?? SHAPE_PROFILES.map((profile) => profile.key);
 
@@ -47,7 +48,7 @@ export function resolveShapeProfileConfig(profileKey = DEFAULT_SHAPE_PROFILE_KEY
 
 export function resolveShapeGeometryType(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   const geometryType = resolveShapeProfileConfig(profileKey)?.geometryType;
-  if (geometryType === "typewriter" || geometryType === "jis_enter") {
+  if (geometryType === "typewriter" || geometryType === "jis_enter" || geometryType === "typewriter_jis_enter") {
     return geometryType;
   }
 
