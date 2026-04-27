@@ -115,6 +115,7 @@ const TOP_HAT_MIN_HEIGHT = 0.05;
 const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
 const TOP_HAT_MAX_SHOULDER_ANGLE = 85;
 const TOP_HAT_EDGE_CLEARANCE = 0.2;
+const TOP_HAT_RECESS_CLEARANCE = 0.05;
 const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
 const DEFAULT_KEYCAP_COLORS = Object.freeze({
@@ -633,6 +634,11 @@ function getTopHatHeightMax(params = state.keycapParams) {
   return Math.max(maxHeight, TOP_HAT_MIN_HEIGHT);
 }
 
+function getTopHatHeightMin(params = state.keycapParams) {
+  const geometry = resolveTopPlaneGeometry(params);
+  return -Math.max(Number(geometry.topThickness ?? 0) - TOP_HAT_RECESS_CLEARANCE, 0);
+}
+
 function getTopHatTopRadiusMax(params = state.keycapParams) {
   const width = Math.min(Math.max(Number(params.topHatTopWidth ?? 0), 0), getTopHatUsableFootprintLimits(params).width);
   const depth = Math.min(Math.max(Number(params.topHatTopDepth ?? 0), 0), getTopHatUsableFootprintLimits(params).depth);
@@ -654,7 +660,10 @@ function getTopHatTopRadiusHint(params) {
 }
 
 function getTopHatHeightHint(params) {
-  return t("fields.topHatHeight.hint", { maxHeight: formatMillimeter(getTopHatHeightMax(params), 2) });
+  return t("fields.topHatHeight.hint", {
+    minHeight: formatMillimeter(getTopHatHeightMin(params), 2),
+    maxHeight: formatMillimeter(getTopHatHeightMax(params), 2),
+  });
 }
 
 const fieldGroupTemplates = [
@@ -807,7 +816,7 @@ const fieldGroupTemplates = [
         hint: (params) => getTopHatHeightHint(params),
         unit: "mm",
         step: 0.05,
-        min: TOP_HAT_MIN_HEIGHT,
+        min: (params) => getTopHatHeightMin(params),
         visibleWhen: (params) => params.topHatEnabled,
       },
       {
@@ -1896,6 +1905,10 @@ function resolveDynamicCopy(value, params = state.keycapParams) {
   return typeof value === "function" ? value(params) : (value ?? "");
 }
 
+function resolveFieldAttribute(value, params = state.keycapParams) {
+  return typeof value === "function" ? value(params) : value;
+}
+
 function resolveFieldOptions(field, params = state.keycapParams) {
   const options = typeof field.options === "function" ? field.options(params) : field.options ?? [];
   return options.map((option) => localizeFieldOption(field.key, option));
@@ -2027,6 +2040,11 @@ function renderField(field, options = {}) {
   const fieldPlaceholder = resolveDynamicCopy(field.placeholder);
   const fieldOptions = resolveFieldOptions(field);
   const isDisabled = isFieldDisabled(field);
+  const fieldMin = resolveFieldAttribute(field.min);
+  const fieldMax = resolveFieldAttribute(field.max);
+  const fieldStep = resolveFieldAttribute(field.step);
+  const secondaryMin = resolveFieldAttribute(field.secondaryMin);
+  const secondaryStep = resolveFieldAttribute(field.secondaryStep);
   const fieldClassName = options.className ? ` ${options.className}` : "";
   const dependentFields = options.dependentFields ?? [];
   const dependentClassName = dependentFields.length > 0 ? " field--with-dependents" : "";
@@ -2199,9 +2217,9 @@ function renderField(field, options = {}) {
                 type="number"
                 data-field="${field.key}"
                 value="${formatNumericFieldValue(field.key, value)}"
-                ${field.min != null ? `min="${field.min}"` : ""}
-                ${field.max != null ? `max="${field.max}"` : ""}
-                ${field.step != null ? `step="${field.step}"` : ""}
+                ${fieldMin != null ? `min="${fieldMin}"` : ""}
+                ${fieldMax != null ? `max="${fieldMax}"` : ""}
+                ${fieldStep != null ? `step="${fieldStep}"` : ""}
               />
               ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
             </span>
@@ -2213,8 +2231,8 @@ function renderField(field, options = {}) {
                 type="number"
                 data-field="${field.secondaryField}"
                 value="${formatUnitInputValue(value)}"
-                ${field.secondaryMin != null ? `min="${field.secondaryMin}"` : ""}
-                ${field.secondaryStep != null ? `step="${field.secondaryStep}"` : ""}
+                ${secondaryMin != null ? `min="${secondaryMin}"` : ""}
+                ${secondaryStep != null ? `step="${secondaryStep}"` : ""}
               />
               ${field.secondaryUnit ? `<span class="field-unit">${field.secondaryUnit}</span>` : ""}
             </span>
@@ -2239,9 +2257,9 @@ function renderField(field, options = {}) {
             type="number"
             data-field="${field.key}"
             value="${formatNumericFieldValue(field.key, value)}"
-            ${field.min != null ? `min="${field.min}"` : ""}
-            ${field.max != null ? `max="${field.max}"` : ""}
-            ${field.step != null ? `step="${field.step}"` : ""}
+            ${fieldMin != null ? `min="${fieldMin}"` : ""}
+            ${fieldMax != null ? `max="${fieldMax}"` : ""}
+            ${fieldStep != null ? `step="${fieldStep}"` : ""}
           />
           ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
         </span>
@@ -2261,9 +2279,9 @@ function renderField(field, options = {}) {
           type="number"
           data-field="${field.key}"
           value="${formatNumericFieldValue(field.key, value)}"
-          ${field.min != null ? `min="${field.min}"` : ""}
-          ${field.max != null ? `max="${field.max}"` : ""}
-          ${field.step != null ? `step="${field.step}"` : ""}
+          ${fieldMin != null ? `min="${fieldMin}"` : ""}
+          ${fieldMax != null ? `max="${fieldMax}"` : ""}
+          ${fieldStep != null ? `step="${fieldStep}"` : ""}
         />
         ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
       </span>
@@ -2873,7 +2891,7 @@ function getNumericFieldMinimum(fieldKey, fieldConfig) {
     return 0.5;
   }
 
-  const minimum = Number(fieldConfig?.min);
+  const minimum = Number(resolveFieldAttribute(fieldConfig?.min));
   return Number.isFinite(minimum) ? minimum : null;
 }
 

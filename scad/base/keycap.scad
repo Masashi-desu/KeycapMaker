@@ -122,11 +122,15 @@ requested_top_hat_enabled = required_param(user_top_hat_enabled, "user_top_hat_e
 top_hat_top_width = positive_dimension(required_param(user_top_hat_top_width, "user_top_hat_top_width"));
 top_hat_top_depth = positive_dimension(required_param(user_top_hat_top_depth, "user_top_hat_top_depth"));
 top_hat_top_radius = max(required_param(user_top_hat_top_radius, "user_top_hat_top_radius"), 0);
-top_hat_height = max(required_param(user_top_hat_height, "user_top_hat_height"), 0);
+requested_top_hat_height = required_param(user_top_hat_height, "user_top_hat_height");
+top_hat_recess_limit = max(top_thickness - 0.05, 0);
+top_hat_height = requested_top_hat_height < 0
+    ? max(requested_top_hat_height, -top_hat_recess_limit)
+    : requested_top_hat_height;
 top_hat_shoulder_angle = keycap_top_hat_safe_shoulder_angle(required_param(user_top_hat_shoulder_angle, "user_top_hat_shoulder_angle"));
 top_hat_enabled = shape_geometry_type == "shell"
     && requested_top_hat_enabled
-    && top_hat_height > 0.001;
+    && abs(top_hat_height) > 0.001;
 top_hat_surface_z_shift = top_hat_enabled
     ? keycap_dish_surface_offset(
         0,

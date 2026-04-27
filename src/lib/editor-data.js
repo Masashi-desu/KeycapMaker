@@ -47,6 +47,7 @@ const TOP_HAT_MIN_HEIGHT = 0.05;
 const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
 const TOP_HAT_MAX_SHOULDER_ANGLE = 85;
 const TOP_HAT_EDGE_CLEARANCE = 0.2;
+const TOP_HAT_RECESS_CLEARANCE = 0.05;
 const RESERVED_COMPAT_PAYLOAD_KEYS = new Set(["kind", "schemaVersion", "profileSchemaVersion", "savedAt", "selectors", "params"]);
 const KNOWN_EDITOR_PARAM_KEYS = Object.freeze(
   Array.from(new Set(keycapEditorProfiles.profiles.flatMap((profile) => Object.keys(profile.defaults ?? {})))),
@@ -282,8 +283,13 @@ function getTopHatHeightMax(params = {}) {
   return Math.max(availableOutset * degTan(shoulderAngle), TOP_HAT_MIN_HEIGHT);
 }
 
+function getTopHatHeightMin(params = {}) {
+  const geometry = resolveTopPlaneGeometry(params);
+  return -Math.max(Number(geometry.topThickness ?? 0) - TOP_HAT_RECESS_CLEARANCE, 0);
+}
+
 function clampTopHatHeight(value, params = {}, fallback = TOP_HAT_MIN_HEIGHT) {
-  return clampNumberRange(value, fallback, TOP_HAT_MIN_HEIGHT, getTopHatHeightMax(params));
+  return clampNumberRange(value, fallback, getTopHatHeightMin(params), getTopHatHeightMax(params));
 }
 
 function getTypewriterRimMaxWidth(params = {}) {

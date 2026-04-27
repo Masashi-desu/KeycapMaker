@@ -248,7 +248,7 @@ const ko = Object.freeze({
     },
     topHatHeight: {
       label: "높이",
-      hint: "기존 키톱 면에서 추가 상면까지의 높이입니다. 현재 최대값은 {maxHeight}입니다.",
+      hint: "기존 키톱 면에서 추가 상면까지의 높이입니다. 음수는 키톱을 파냅니다. 현재 범위는 {minHeight}부터 {maxHeight}까지입니다.",
     },
     topHatShoulderAngle: {
       label: "shoulder 각도",

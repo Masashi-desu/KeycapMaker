@@ -248,7 +248,7 @@ const ja = Object.freeze({
     },
     topHatHeight: {
       label: "高さ",
-      hint: "既存のキートップ面から追加上面までの高さです。現在の最大は {maxHeight} です",
+      hint: "既存のキートップ面から追加上面までの高さです。マイナスで凹ませます。現在の範囲は {minHeight} から {maxHeight} です",
     },
     topHatShoulderAngle: {
       label: "shoulder角度",

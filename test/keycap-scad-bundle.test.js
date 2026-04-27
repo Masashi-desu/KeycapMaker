@@ -266,6 +266,14 @@ test("custom shell の top-hat パラメータだけを SCAD wrapper へ渡す",
         topHatShoulderAngle: 50,
       },
     });
+    const recessedFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topHatEnabled: true,
+        topHatHeight: -0.8,
+      },
+    });
     const jisFiles = await bundle.createKeycapFiles({
       exportTarget: "preview",
       params: {
@@ -274,9 +282,11 @@ test("custom shell の top-hat パラメータだけを SCAD wrapper へ渡す",
       },
     });
     const customJobScad = customFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const recessedJobScad = recessedFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
     const jisJobScad = jisFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
 
     assert.ok(customJobScad, "custom shell job SCAD should be generated");
+    assert.ok(recessedJobScad, "custom shell recessed top-hat job SCAD should be generated");
     assert.ok(jisJobScad, "JIS Enter job SCAD should be generated");
     assert.match(customJobScad, /^user_shape_geometry_type = "shell";/m);
     assert.match(customJobScad, /^user_top_hat_enabled = true;/m);
@@ -285,6 +295,7 @@ test("custom shell の top-hat パラメータだけを SCAD wrapper へ渡す",
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_radius"), 1.3);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_height"), 1.1);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_shoulder_angle"), 50);
+    assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_height"), -0.8);
     assert.match(jisJobScad, /^user_shape_geometry_type = "jis_enter";/m);
     assert.match(jisJobScad, /^user_top_hat_enabled = false;/m);
   } finally {

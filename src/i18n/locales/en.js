@@ -248,7 +248,7 @@ const en = Object.freeze({
     },
     topHatHeight: {
       label: "Height",
-      hint: "Height from the existing keytop surface to the added top surface. Current maximum: {maxHeight}.",
+      hint: "Height from the existing keytop surface to the added top surface. Negative values recess it. Current range: {minHeight} to {maxHeight}.",
     },
     topHatShoulderAngle: {
       label: "Shoulder Angle",

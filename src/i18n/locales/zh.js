@@ -248,7 +248,7 @@ const zh = Object.freeze({
     },
     topHatHeight: {
       label: "高度",
-      hint: "从现有键顶面到追加上表面的高度。当前最大值为 {maxHeight}。",
+      hint: "从现有键顶面到追加上表面的高度。负值会向下凹陷。当前范围为 {minHeight} 到 {maxHeight}。",
     },
     topHatShoulderAngle: {
       label: "shoulder 角度",
