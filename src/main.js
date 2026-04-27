@@ -3196,6 +3196,9 @@ function handleFieldChange(event) {
 
   syncDerivedKeycapParams(state.keycapParams);
   const changedPrimaryField = LINKED_SIZE_UNIT_FIELDS[field] ?? field;
+  if (field in LINKED_SIZE_UNIT_FIELDS || Object.values(LINKED_SIZE_UNIT_FIELDS).includes(field)) {
+    syncLinkedSizeInputs(field);
+  }
 
   if (
     TOP_LIVE_FIELD_KEYS.has(field)
@@ -3308,11 +3311,16 @@ function syncLinkedSizeInputs(changedField) {
   const unitInput = changedUnitField ? app.querySelector(`[data-field="${changedUnitField}"]`) : null;
 
   if (LINKED_SIZE_UNIT_FIELDS[changedField] && primaryInput) {
-    primaryInput.value = `${state.keycapParams[changedPrimaryField]}`;
+    primaryInput.value = formatNumericFieldValue(changedPrimaryField, state.keycapParams[changedPrimaryField]);
   }
 
-  if (changedField === changedPrimaryField && unitInput) {
-    unitInput.value = formatUnitInputValue(state.keycapParams[changedPrimaryField]);
+  if (!unitInput) {
+    return;
+  }
+
+  const syncedUnitValue = formatUnitInputValue(state.keycapParams[changedPrimaryField]);
+  if (changedField === changedPrimaryField || !isInputNumericallySynced(unitInput, syncedUnitValue)) {
+    unitInput.value = syncedUnitValue;
   }
 }
 
