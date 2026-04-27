@@ -119,7 +119,9 @@ const TOP_HAT_EDGE_CLEARANCE = 0.2;
 const TOP_HAT_RECESS_CLEARANCE = 0.05;
 const LINKED_SIZE_UNIT_FIELDS = Object.freeze({
   keySizeUnits: "keyWidth",
+  keyDepthUnits: "keyDepth",
   topHatTopWidthUnits: "topHatTopWidth",
+  topHatTopDepthUnits: "topHatTopDepth",
 });
 const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
@@ -774,7 +776,21 @@ const fieldGroupTemplates = [
         secondaryStep: 0.05,
         secondaryMin: 0.5,
       },
-      { key: "keyDepth", label: () => t("fields.keyDepth.label"), hint: () => t("fields.keyDepth.hint"), unit: "mm", step: 0.1, min: 10 },
+      {
+        key: "keyDepth",
+        label: () => t("fields.keyDepth.label"),
+        hint: () => t("fields.keyDepth.hint"),
+        type: "linked-size",
+        unit: "mm",
+        step: 0.1,
+        min: 10,
+        primaryMiniLabel: () => t("fields.keyDepth.miniLabel"),
+        secondaryLabel: () => t("fields.keyDepth.secondaryLabel"),
+        secondaryField: "keyDepthUnits",
+        secondaryUnit: "u",
+        secondaryStep: 0.05,
+        secondaryMin: 0.5,
+      },
       {
         key: "jisEnterNotchWidth",
         label: () => t("fields.jisEnterNotchWidth.label"),
@@ -889,9 +905,16 @@ const fieldGroupTemplates = [
         key: "topHatTopDepth",
         label: () => t("fields.topHatTopDepth.label"),
         hint: (params) => getTopHatTopDepthHint(params),
+        type: "linked-size",
         unit: "mm",
         step: 0.1,
         min: TOP_HAT_MIN_SIZE,
+        primaryMiniLabel: () => t("fields.topHatTopDepth.miniLabel"),
+        secondaryLabel: () => t("fields.topHatTopDepth.secondaryLabel"),
+        secondaryField: "topHatTopDepthUnits",
+        secondaryUnit: "u",
+        secondaryStep: 0.05,
+        secondaryMin: TOP_HAT_MIN_SIZE / KEY_UNIT_MM,
         visibleWhen: (params) => params.topHatEnabled,
       },
       {
@@ -3046,11 +3069,11 @@ function syncVisibleTopFieldState(activeField = null) {
 }
 
 function getNumericFieldMinimum(fieldKey, fieldConfig) {
-  if (fieldKey === "keySizeUnits") {
+  if (fieldKey === "keySizeUnits" || fieldKey === "keyDepthUnits") {
     return 0.5;
   }
 
-  if (fieldKey === "topHatTopWidthUnits") {
+  if (fieldKey === "topHatTopWidthUnits" || fieldKey === "topHatTopDepthUnits") {
     return TOP_HAT_MIN_SIZE / KEY_UNIT_MM;
   }
 
@@ -3172,15 +3195,16 @@ function handleFieldChange(event) {
   }
 
   syncDerivedKeycapParams(state.keycapParams);
+  const changedPrimaryField = LINKED_SIZE_UNIT_FIELDS[field] ?? field;
 
   if (
     TOP_LIVE_FIELD_KEYS.has(field)
-    || TOP_LIVE_FIELD_KEYS.has(LINKED_SIZE_UNIT_FIELDS[field])
-    || field === "topScale"
-    || field === "keyWidth"
-    || field === "keyDepth"
-    || field === "jisEnterNotchWidth"
-    || field === "jisEnterNotchDepth"
+    || TOP_LIVE_FIELD_KEYS.has(changedPrimaryField)
+    || changedPrimaryField === "topScale"
+    || changedPrimaryField === "keyWidth"
+    || changedPrimaryField === "keyDepth"
+    || changedPrimaryField === "jisEnterNotchWidth"
+    || changedPrimaryField === "jisEnterNotchDepth"
   ) {
     syncVisibleTopFieldState(field);
   }
@@ -3208,7 +3232,7 @@ function handleFieldChange(event) {
     syncFieldHint("topCenterHeight");
   }
 
-  if (field === "keyWidth") {
+  if (changedPrimaryField === "keyWidth") {
     syncFieldHint("jisEnterNotchWidth");
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("rimWidth");
@@ -3218,7 +3242,7 @@ function handleFieldChange(event) {
     syncFieldHint("topHatShoulderRadius");
   }
 
-  if (field === "keyDepth") {
+  if (changedPrimaryField === "keyDepth") {
     syncFieldHint("jisEnterNotchDepth");
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("rimWidth");
@@ -3228,7 +3252,7 @@ function handleFieldChange(event) {
     syncFieldHint("topHatShoulderRadius");
   }
 
-  if (field === "jisEnterNotchWidth" || field === "jisEnterNotchDepth") {
+  if (changedPrimaryField === "jisEnterNotchWidth" || changedPrimaryField === "jisEnterNotchDepth") {
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatInset");
@@ -3237,7 +3261,7 @@ function handleFieldChange(event) {
     syncFieldHint("topHatShoulderRadius");
   }
 
-  if (field === "topScale" || field === "topHatTopWidth" || field === "topHatTopWidthUnits" || field === "topHatTopDepth" || field === "topHatInset" || field === "topHatShoulderAngle") {
+  if (changedPrimaryField === "topScale" || changedPrimaryField === "topHatTopWidth" || changedPrimaryField === "topHatTopDepth" || changedPrimaryField === "topHatInset" || changedPrimaryField === "topHatShoulderAngle") {
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatInset");

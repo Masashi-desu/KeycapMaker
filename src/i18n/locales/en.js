@@ -70,7 +70,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust the overall keycap size and the amount of taper toward the top. Key size follows the width, using 18 mm as 1u.",
+          description: "Adjust the overall keycap size and the amount of taper toward the top. Width and depth are each converted using 18 mm as 1u.",
         },
         top: {
           title: "Keytop",
@@ -94,7 +94,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust a thin typewriter-style keytop outline. Width is converted using 18 mm as 1u; a larger R makes it rounder, and a smaller R makes it more square.",
+          description: "Adjust a thin typewriter-style keytop outline. Width and depth are each converted using 18 mm as 1u; a larger R makes it rounder, and a smaller R makes it more square.",
         },
         top: {
           title: "Keytop",
@@ -118,7 +118,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust the overall size and lower-left notch from a common JIS / ISO-style tall Enter footprint. Width is converted using 18 mm as 1u.",
+          description: "Adjust the overall size and lower-left notch from a common JIS / ISO-style tall Enter footprint. Width and depth are each converted using 18 mm as 1u.",
         },
         top: {
           title: "Keytop",
@@ -142,7 +142,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust a thin typewriter-style JIS Enter footprint, including overall size, lower-left notch, and R. Width is converted using 18 mm as 1u.",
+          description: "Adjust a thin typewriter-style JIS Enter footprint, including overall size, lower-left notch, and R. Width and depth are each converted using 18 mm as 1u.",
         },
         top: {
           title: "Keytop",
@@ -163,8 +163,8 @@ const en = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "Adjust the overall keycap size and the amount of taper toward the top. Key size follows the width, using 18 mm as 1u.",
-    shapeDescriptionTypewriter: "Adjust a thin typewriter-style keytop outline. Width is converted using 18 mm as 1u; a larger R makes it rounder, and a smaller R makes it more square.",
+    shapeDescriptionShell: "Adjust the overall keycap size and the amount of taper toward the top. Width and depth are each converted using 18 mm as 1u.",
+    shapeDescriptionTypewriter: "Adjust a thin typewriter-style keytop outline. Width and depth are each converted using 18 mm as 1u; a larger R makes it rounder, and a smaller R makes it more square.",
     topDescription: "Edit front/back and left/right tilt by angle or edge height while keeping the center reference height fixed. Edge-height input is normalized internally to pitch / roll.",
   },
   fields: {
@@ -184,7 +184,9 @@ const en = Object.freeze({
     },
     keyDepth: {
       label: "Depth",
-      hint: "The front-to-back size of the keycap",
+      hint: "Depth and depth size are linked. 18 mm = 1u.",
+      secondaryLabel: "Depth Size",
+      miniLabel: "Depth",
     },
     wallThickness: {
       label: "Wall Thickness",
@@ -243,6 +245,8 @@ const en = Object.freeze({
     topHatTopDepth: {
       label: "Top Depth",
       hint: "Front-to-back size of the added keytop's top surface. Current maximum: {maxDepth}.",
+      secondaryLabel: "Top Depth Size",
+      miniLabel: "Depth",
     },
     topHatInset: {
       label: "Top Inset",

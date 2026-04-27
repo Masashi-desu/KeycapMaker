@@ -70,7 +70,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "调整键帽整体尺寸，以及向顶部收窄的程度。键尺寸会与宽度联动，按 18 mm = 1u 换算。",
+          description: "调整键帽整体尺寸，以及向顶部收窄的程度。宽度和深度都按 18 mm = 1u 换算。",
         },
         top: {
           title: "键顶",
@@ -94,7 +94,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "调整打字机风格的薄键顶外形。宽度按 18 mm = 1u 换算；R 越大越圆，越小越接近方形。",
+          description: "调整打字机风格的薄键顶外形。宽度和深度都按 18 mm = 1u 换算；R 越大越圆，越小越接近方形。",
         },
         top: {
           title: "键顶",
@@ -118,7 +118,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "以常见 JIS / ISO 系纵向 Enter 轮廓为基准，调整整体尺寸和左下缺口。宽度按 18 mm = 1u 换算。",
+          description: "以常见 JIS / ISO 系纵向 Enter 轮廓为基准，调整整体尺寸和左下缺口。宽度和深度都按 18 mm = 1u 换算。",
         },
         top: {
           title: "键顶",
@@ -142,7 +142,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "以打字机风格的薄型 JIS Enter 轮廓为基准，调整整体尺寸、左下缺口和 R。宽度按 18 mm = 1u 换算。",
+          description: "以打字机风格的薄型 JIS Enter 轮廓为基准，调整整体尺寸、左下缺口和 R。宽度和深度都按 18 mm = 1u 换算。",
         },
         top: {
           title: "键顶",
@@ -163,8 +163,8 @@ const zh = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "调整键帽整体尺寸，以及向顶部收窄的程度。键尺寸会与宽度联动，按 18 mm = 1u 换算。",
-    shapeDescriptionTypewriter: "调整打字机风格的薄键顶外形。宽度按 18 mm = 1u 换算；R 越大越圆，越小越接近方形。",
+    shapeDescriptionShell: "调整键帽整体尺寸，以及向顶部收窄的程度。宽度和深度都按 18 mm = 1u 换算。",
+    shapeDescriptionTypewriter: "调整打字机风格的薄键顶外形。宽度和深度都按 18 mm = 1u 换算；R 越大越圆，越小越接近方形。",
     topDescription: "在固定上表面中心基准高度的同时，可用角度或边缘高度编辑前后和左右倾斜。边缘高度输入在内部会规范化为 pitch / roll。",
   },
   fields: {
@@ -184,7 +184,9 @@ const zh = Object.freeze({
     },
     keyDepth: {
       label: "深度",
-      hint: "键帽前后方向的尺寸",
+      hint: "深度与深度尺寸联动。18 mm = 1u。",
+      secondaryLabel: "深度尺寸",
+      miniLabel: "深度",
     },
     wallThickness: {
       label: "壁厚",
@@ -243,6 +245,8 @@ const zh = Object.freeze({
     topHatTopDepth: {
       label: "上面深度",
       hint: "追加键顶上表面的前后尺寸。当前最大值为 {maxDepth}。",
+      secondaryLabel: "上面深度尺寸",
+      miniLabel: "深度",
     },
     topHatInset: {
       label: "上面内缩量",

@@ -63,7 +63,7 @@
     {
       "id": "shape",
       "title": "キーキャップの形",
-      "description": "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、左下の欠き込み、R を調整します。横幅は 18 mm を 1u として換算します。",
+      "description": "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、左下の欠き込み、R を調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算します。",
       "fieldKeys": ["shapeProfile", "keyWidth", "keyDepth", "jisEnterNotchWidth", "jisEnterNotchDepth", "typewriterCornerRadius", "bodyColor"]
     },
     {

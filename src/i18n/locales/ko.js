@@ -70,7 +70,7 @@ const ko = Object.freeze({
       fieldGroups: {
         shape: {
           title: "키캡 형상",
-          description: "키캡 전체 크기와 위쪽으로 좁아지는 정도를 조정합니다. 키 크기는 폭과 연동되며 18 mm를 1u로 환산합니다.",
+          description: "키캡 전체 크기와 위쪽으로 좁아지는 정도를 조정합니다. 폭과 깊이는 각각 18 mm를 1u로 환산합니다.",
         },
         top: {
           title: "키톱",
@@ -94,7 +94,7 @@ const ko = Object.freeze({
       fieldGroups: {
         shape: {
           title: "키캡 형상",
-          description: "타자기풍의 얇은 키톱 외형을 조정합니다. 폭은 18 mm를 1u로 환산하며, R이 커질수록 둥글고 작아질수록 사각형에 가까워집니다.",
+          description: "타자기풍의 얇은 키톱 외형을 조정합니다. 폭과 깊이는 각각 18 mm를 1u로 환산하며, R이 커질수록 둥글고 작아질수록 사각형에 가까워집니다.",
         },
         top: {
           title: "키톱",
@@ -118,7 +118,7 @@ const ko = Object.freeze({
       fieldGroups: {
         shape: {
           title: "키캡 형상",
-          description: "일반적인 JIS / ISO 계열 세로형 Enter footprint를 기준으로 전체 치수와 왼쪽 아래 파임을 조정합니다. 폭은 18 mm를 1u로 환산합니다.",
+          description: "일반적인 JIS / ISO 계열 세로형 Enter footprint를 기준으로 전체 치수와 왼쪽 아래 파임을 조정합니다. 폭과 깊이는 각각 18 mm를 1u로 환산합니다.",
         },
         top: {
           title: "키톱",
@@ -142,7 +142,7 @@ const ko = Object.freeze({
       fieldGroups: {
         shape: {
           title: "키캡 형상",
-          description: "타자기풍의 얇은 JIS Enter footprint를 기준으로 전체 치수, 왼쪽 아래 파임, R을 조정합니다. 폭은 18 mm를 1u로 환산합니다.",
+          description: "타자기풍의 얇은 JIS Enter footprint를 기준으로 전체 치수, 왼쪽 아래 파임, R을 조정합니다. 폭과 깊이는 각각 18 mm를 1u로 환산합니다.",
         },
         top: {
           title: "키톱",
@@ -163,8 +163,8 @@ const ko = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "키캡 전체 크기와 위쪽으로 좁아지는 정도를 조정합니다. 키 크기는 폭과 연동되며 18 mm를 1u로 환산합니다.",
-    shapeDescriptionTypewriter: "타자기풍의 얇은 키톱 외형을 조정합니다. 폭은 18 mm를 1u로 환산하며, R이 커질수록 둥글고 작아질수록 사각형에 가까워집니다.",
+    shapeDescriptionShell: "키캡 전체 크기와 위쪽으로 좁아지는 정도를 조정합니다. 폭과 깊이는 각각 18 mm를 1u로 환산합니다.",
+    shapeDescriptionTypewriter: "타자기풍의 얇은 키톱 외형을 조정합니다. 폭과 깊이는 각각 18 mm를 1u로 환산하며, R이 커질수록 둥글고 작아질수록 사각형에 가까워집니다.",
     topDescription: "상면 중앙 기준 높이를 고정한 채 앞뒤와 좌우 기울기를 각도 또는 모서리 높이로 편집할 수 있습니다. 모서리 높이 입력은 내부에서 pitch / roll로 정규화됩니다.",
   },
   fields: {
@@ -184,7 +184,9 @@ const ko = Object.freeze({
     },
     keyDepth: {
       label: "깊이",
-      hint: "키캡의 앞뒤 크기입니다",
+      hint: "깊이와 깊이 크기는 연동됩니다. 18 mm = 1u입니다.",
+      secondaryLabel: "깊이 크기",
+      miniLabel: "깊이",
     },
     wallThickness: {
       label: "벽 두께",
@@ -243,6 +245,8 @@ const ko = Object.freeze({
     topHatTopDepth: {
       label: "상면 깊이",
       hint: "추가 키톱 상면의 앞뒤 치수입니다. 현재 최대값은 {maxDepth}입니다.",
+      secondaryLabel: "상면 깊이 크기",
+      miniLabel: "깊이",
     },
     topHatInset: {
       label: "상면 축소량",
