@@ -264,6 +264,7 @@ test("custom shell の top-hat パラメータだけを SCAD wrapper へ渡す",
         topHatTopRadius: 1.3,
         topHatHeight: 1.1,
         topHatShoulderAngle: 50,
+        topHatShoulderRadius: 0.7,
       },
     });
     const recessedFiles = await bundle.createKeycapFiles({
@@ -272,6 +273,7 @@ test("custom shell の top-hat パラメータだけを SCAD wrapper へ渡す",
         ...registry.createDefaultKeycapParams("custom-shell"),
         topHatEnabled: true,
         topHatHeight: -0.8,
+        topHatShoulderRadius: -0.4,
       },
     });
     const jisFiles = await bundle.createKeycapFiles({
@@ -295,7 +297,9 @@ test("custom shell の top-hat パラメータだけを SCAD wrapper へ渡す",
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_radius"), 1.3);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_height"), 1.1);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_shoulder_angle"), 50);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_shoulder_radius"), 0.7);
     assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_height"), -0.8);
+    assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_shoulder_radius"), -0.4);
     assert.match(jisJobScad, /^user_shape_geometry_type = "jis_enter";/m);
     assert.match(jisJobScad, /^user_top_hat_enabled = false;/m);
   } finally {

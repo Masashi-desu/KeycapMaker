@@ -237,6 +237,8 @@ const ja = Object.freeze({
     topHatTopWidth: {
       label: "上面の横幅",
       hint: "追加するキートップ上面の横幅です。現在の最大は {maxWidth} です",
+      secondaryLabel: "上面サイズ",
+      miniLabel: "横幅",
     },
     topHatTopDepth: {
       label: "上面の奥行き",
@@ -253,6 +255,10 @@ const ja = Object.freeze({
     topHatShoulderAngle: {
       label: "shoulder角度",
       hint: "追加上面から肩へ落ちる角度です。大きいほど肩が急になります",
+    },
+    topHatShoulderRadius: {
+      label: "shoulder R",
+      hint: "0 では角面、プラスで丸く膨らみ、マイナスで凹みます。現在の範囲は {minRadius} から {maxRadius} です",
     },
     rimEnabled: {
       label: "キーリムを付ける",

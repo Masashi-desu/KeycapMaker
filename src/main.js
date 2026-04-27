@@ -114,8 +114,13 @@ const TOP_HAT_MIN_SIZE = 0.2;
 const TOP_HAT_MIN_HEIGHT = 0.05;
 const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
 const TOP_HAT_MAX_SHOULDER_ANGLE = 85;
+const TOP_HAT_MIN_SHOULDER_RADIUS = 0;
 const TOP_HAT_EDGE_CLEARANCE = 0.2;
 const TOP_HAT_RECESS_CLEARANCE = 0.05;
+const LINKED_SIZE_UNIT_FIELDS = Object.freeze({
+  keySizeUnits: "keyWidth",
+  topHatTopWidthUnits: "topHatTopWidth",
+});
 const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
 const DEFAULT_KEYCAP_COLORS = Object.freeze({
@@ -621,14 +626,25 @@ function getTopHatSafeShoulderAngle(params = state.keycapParams) {
   return Math.min(Math.max(Number.isFinite(angle) ? angle : 45, TOP_HAT_MIN_SHOULDER_ANGLE), TOP_HAT_MAX_SHOULDER_ANGLE);
 }
 
-function getTopHatHeightMax(params = state.keycapParams) {
+function getTopHatShoulderOutset(params = state.keycapParams) {
   const limits = getTopHatUsableFootprintLimits(params);
   const topWidth = Math.min(Math.max(Number(params.topHatTopWidth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.width);
   const topDepth = Math.min(Math.max(Number(params.topHatTopDepth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.depth);
-  const availableOutset = Math.min(
+  return Math.min(
     Math.max((limits.width - topWidth) / 2, 0),
     Math.max((limits.depth - topDepth) / 2, 0),
   );
+}
+
+function getTopHatActualShoulderOutset(params = state.keycapParams) {
+  const rawHeight = Number(params.topHatHeight ?? TOP_HAT_MIN_HEIGHT);
+  const height = Math.abs(Number.isFinite(rawHeight) ? rawHeight : TOP_HAT_MIN_HEIGHT);
+  const shoulderAngle = getTopHatSafeShoulderAngle(params);
+  return Math.min(getTopHatShoulderOutset(params), height / Math.tan((shoulderAngle * Math.PI) / 180));
+}
+
+function getTopHatHeightMax(params = state.keycapParams) {
+  const availableOutset = getTopHatShoulderOutset(params);
   const maxHeight = availableOutset * Math.tan((getTopHatSafeShoulderAngle(params) * Math.PI) / 180);
 
   return Math.max(maxHeight, TOP_HAT_MIN_HEIGHT);
@@ -643,6 +659,16 @@ function getTopHatTopRadiusMax(params = state.keycapParams) {
   const width = Math.min(Math.max(Number(params.topHatTopWidth ?? 0), 0), getTopHatUsableFootprintLimits(params).width);
   const depth = Math.min(Math.max(Number(params.topHatTopDepth ?? 0), 0), getTopHatUsableFootprintLimits(params).depth);
   return Math.max(Math.min(width, depth) / 2, 0);
+}
+
+function getTopHatShoulderRadiusMax(params = state.keycapParams) {
+  const rawHeight = Number(params.topHatHeight ?? 0);
+  const height = Math.abs(Number.isFinite(rawHeight) ? rawHeight : 0);
+  return Math.max(Math.min(height, getTopHatActualShoulderOutset(params)), TOP_HAT_MIN_SHOULDER_RADIUS);
+}
+
+function getTopHatShoulderRadiusMin(params = state.keycapParams) {
+  return -getTopHatShoulderRadiusMax(params);
 }
 
 function getTopHatTopWidthHint(params) {
@@ -663,6 +689,13 @@ function getTopHatHeightHint(params) {
   return t("fields.topHatHeight.hint", {
     minHeight: formatMillimeter(getTopHatHeightMin(params), 2),
     maxHeight: formatMillimeter(getTopHatHeightMax(params), 2),
+  });
+}
+
+function getTopHatShoulderRadiusHint(params) {
+  return t("fields.topHatShoulderRadius.hint", {
+    minRadius: formatMillimeter(getTopHatShoulderRadiusMin(params)),
+    maxRadius: formatMillimeter(getTopHatShoulderRadiusMax(params)),
   });
 }
 
@@ -691,6 +724,7 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.1,
         min: 10,
+        primaryMiniLabel: () => t("fields.keyWidth.miniLabel"),
         secondaryLabel: () => t("fields.keyWidth.secondaryLabel"),
         secondaryField: "keySizeUnits",
         secondaryUnit: "u",
@@ -782,14 +816,29 @@ const fieldGroupTemplates = [
         label: () => t("fields.topHatEnabled.label"),
         hint: () => t("fields.topHatEnabled.hint"),
         type: "checkbox",
+        dependentFieldKeys: [
+          "topHatTopWidth",
+          "topHatTopDepth",
+          "topHatTopRadius",
+          "topHatHeight",
+          "topHatShoulderAngle",
+          "topHatShoulderRadius",
+        ],
       },
       {
         key: "topHatTopWidth",
         label: () => t("fields.topHatTopWidth.label"),
         hint: (params) => getTopHatTopWidthHint(params),
+        type: "linked-size",
         unit: "mm",
         step: 0.1,
         min: TOP_HAT_MIN_SIZE,
+        primaryMiniLabel: () => t("fields.topHatTopWidth.miniLabel"),
+        secondaryLabel: () => t("fields.topHatTopWidth.secondaryLabel"),
+        secondaryField: "topHatTopWidthUnits",
+        secondaryUnit: "u",
+        secondaryStep: 0.05,
+        secondaryMin: TOP_HAT_MIN_SIZE / KEY_UNIT_MM,
         visibleWhen: (params) => params.topHatEnabled,
       },
       {
@@ -827,6 +876,16 @@ const fieldGroupTemplates = [
         step: 0.5,
         min: TOP_HAT_MIN_SHOULDER_ANGLE,
         max: TOP_HAT_MAX_SHOULDER_ANGLE,
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatShoulderRadius",
+        label: () => t("fields.topHatShoulderRadius.label"),
+        hint: (params) => getTopHatShoulderRadiusHint(params),
+        unit: "mm",
+        step: 0.05,
+        min: (params) => getTopHatShoulderRadiusMin(params),
+        max: (params) => getTopHatShoulderRadiusMax(params),
         visibleWhen: (params) => params.topHatEnabled,
       },
       {
@@ -1829,7 +1888,7 @@ function getVisibleDependentFieldKeys(fields, fieldByKey) {
 }
 
 function canRenderDependentFields(field) {
-  return field.type == null || field.type === "select" || field.type === "font-search";
+  return field.type == null || field.type === "checkbox" || field.type === "select" || field.type === "font-search";
 }
 
 function renderFieldWithDependents(field, fieldByKey) {
@@ -2036,6 +2095,7 @@ function renderField(field, options = {}) {
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
   const fieldLabel = resolveDynamicCopy(field.label);
   const fieldHint = resolveDynamicCopy(field.hint);
+  const primaryMiniLabel = resolveDynamicCopy(field.primaryMiniLabel);
   const secondaryLabel = resolveDynamicCopy(field.secondaryLabel);
   const fieldPlaceholder = resolveDynamicCopy(field.placeholder);
   const fieldOptions = resolveFieldOptions(field);
@@ -2050,8 +2110,8 @@ function renderField(field, options = {}) {
   const dependentClassName = dependentFields.length > 0 ? " field--with-dependents" : "";
 
   if (field.type === "checkbox") {
-    return `
-      <label class="field field--checkbox${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+    const checkboxControl = `
+      <label class="field-checkbox-header">
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -2061,6 +2121,21 @@ function renderField(field, options = {}) {
           <span>${value ? t("actions.on") : t("actions.off")}</span>
         </span>
       </label>
+    `;
+
+    if (dependentFields.length > 0) {
+      return `
+        <div class="field field--checkbox${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+          ${checkboxControl}
+          ${renderDependentFieldList(dependentFields)}
+        </div>
+      `;
+    }
+
+    return `
+      <div class="field field--checkbox${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${checkboxControl}
+      </div>
     `;
   }
 
@@ -2211,7 +2286,7 @@ function renderField(field, options = {}) {
         </span>
         <span class="field-control-cluster">
           <span class="field-mini-control">
-            <span class="field-mini-control__label">${t("fields.keyWidth.miniLabel")}</span>
+            <span class="field-mini-control__label">${primaryMiniLabel}</span>
             <span class="field-control">
               <input
                 type="number"
@@ -2859,6 +2934,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topHatTopRadius",
   "topHatHeight",
   "topHatShoulderAngle",
+  "topHatShoulderRadius",
 ]);
 
 function syncFieldHint(fieldKey) {
@@ -2889,6 +2965,10 @@ function syncVisibleTopFieldState(activeField = null) {
 function getNumericFieldMinimum(fieldKey, fieldConfig) {
   if (fieldKey === "keySizeUnits") {
     return 0.5;
+  }
+
+  if (fieldKey === "topHatTopWidthUnits") {
+    return TOP_HAT_MIN_SIZE / KEY_UNIT_MM;
   }
 
   const minimum = Number(resolveFieldAttribute(fieldConfig?.min));
@@ -2959,14 +3039,14 @@ function handleFieldChange(event) {
     return;
   }
 
-  if (field === "keySizeUnits") {
+  if (field in LINKED_SIZE_UNIT_FIELDS) {
     const nextValue = parseNumericInputValue(input, field, fieldConfig);
     if (nextValue == null) {
       return;
     }
 
-    state.keycapParams.keyWidth = nextValue * KEY_UNIT_MM;
-    syncLinkedShapeInputs("keySizeUnits");
+    state.keycapParams[LINKED_SIZE_UNIT_FIELDS[field]] = nextValue * KEY_UNIT_MM;
+    syncLinkedSizeInputs(field);
   } else if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
   } else if (input.tagName === "SELECT") {
@@ -3003,8 +3083,8 @@ function handleFieldChange(event) {
       state.keycapParams[field] = nextValue;
     }
 
-    if (field === "keyWidth") {
-      syncLinkedShapeInputs("keyWidth");
+    if (Object.values(LINKED_SIZE_UNIT_FIELDS).includes(field)) {
+      syncLinkedSizeInputs(field);
     }
   }
 
@@ -3012,6 +3092,7 @@ function handleFieldChange(event) {
 
   if (
     TOP_LIVE_FIELD_KEYS.has(field)
+    || TOP_LIVE_FIELD_KEYS.has(LINKED_SIZE_UNIT_FIELDS[field])
     || field === "topScale"
     || field === "keyWidth"
     || field === "keyDepth"
@@ -3048,6 +3129,7 @@ function handleFieldChange(event) {
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatTopRadius");
+    syncFieldHint("topHatShoulderRadius");
   }
 
   if (field === "keyDepth") {
@@ -3056,6 +3138,7 @@ function handleFieldChange(event) {
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatTopRadius");
+    syncFieldHint("topHatShoulderRadius");
   }
 
   if (field === "jisEnterNotchWidth" || field === "jisEnterNotchDepth") {
@@ -3063,11 +3146,16 @@ function handleFieldChange(event) {
     syncFieldHint("rimWidth");
   }
 
-  if (field === "topScale" || field === "topHatTopWidth" || field === "topHatTopDepth" || field === "topHatShoulderAngle") {
+  if (field === "topScale" || field === "topHatTopWidth" || field === "topHatTopWidthUnits" || field === "topHatTopDepth" || field === "topHatShoulderAngle") {
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatTopRadius");
     syncFieldHint("topHatHeight");
+    syncFieldHint("topHatShoulderRadius");
+  }
+
+  if (field === "topHatHeight") {
+    syncFieldHint("topHatShoulderRadius");
   }
 
   if (!deferPreview && field !== "topSlopeInputMode") {
@@ -3096,16 +3184,19 @@ async function openColorPicker(fieldKey) {
   input.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
 }
 
-function syncLinkedShapeInputs(changedField) {
-  const widthInput = app.querySelector('[data-field="keyWidth"]');
-  const sizeInput = app.querySelector('[data-field="keySizeUnits"]');
+function syncLinkedSizeInputs(changedField) {
+  const changedPrimaryField = LINKED_SIZE_UNIT_FIELDS[changedField] ?? changedField;
+  const changedUnitField = Object.entries(LINKED_SIZE_UNIT_FIELDS)
+    .find(([, primaryField]) => primaryField === changedPrimaryField)?.[0];
+  const primaryInput = app.querySelector(`[data-field="${changedPrimaryField}"]`);
+  const unitInput = changedUnitField ? app.querySelector(`[data-field="${changedUnitField}"]`) : null;
 
-  if (changedField === "keySizeUnits" && widthInput) {
-    widthInput.value = `${state.keycapParams.keyWidth}`;
+  if (LINKED_SIZE_UNIT_FIELDS[changedField] && primaryInput) {
+    primaryInput.value = `${state.keycapParams[changedPrimaryField]}`;
   }
 
-  if (changedField === "keyWidth" && sizeInput) {
-    sizeInput.value = formatUnitInputValue(state.keycapParams.keyWidth);
+  if (changedField === changedPrimaryField && unitInput) {
+    unitInput.value = formatUnitInputValue(state.keycapParams[changedPrimaryField]);
   }
 }
 

@@ -128,6 +128,7 @@ top_hat_height = requested_top_hat_height < 0
     ? max(requested_top_hat_height, -top_hat_recess_limit)
     : requested_top_hat_height;
 top_hat_shoulder_angle = keycap_top_hat_safe_shoulder_angle(required_param(user_top_hat_shoulder_angle, "user_top_hat_shoulder_angle"));
+top_hat_shoulder_radius = keycap_top_hat_safe_shoulder_radius(required_param(user_top_hat_shoulder_radius, "user_top_hat_shoulder_radius"));
 top_hat_enabled = shape_geometry_type == "shell"
     && requested_top_hat_enabled
     && abs(top_hat_height) > 0.001;
@@ -413,6 +414,7 @@ module keycap_body_shell_positive(quality = "export") {
             top_hat_top_radius = top_hat_top_radius,
             top_hat_height = top_hat_height,
             top_hat_shoulder_angle = top_hat_shoulder_angle,
+            top_hat_shoulder_radius = top_hat_shoulder_radius,
             pitch_deg = top_pitch_deg,
             roll_deg = top_roll_deg,
             quality = quality

@@ -237,6 +237,8 @@ const ko = Object.freeze({
     topHatTopWidth: {
       label: "상면 가로폭",
       hint: "추가 키톱 상면의 가로폭입니다. 현재 최대값은 {maxWidth}입니다.",
+      secondaryLabel: "상면 크기",
+      miniLabel: "폭",
     },
     topHatTopDepth: {
       label: "상면 깊이",
@@ -253,6 +255,10 @@ const ko = Object.freeze({
     topHatShoulderAngle: {
       label: "shoulder 각도",
       hint: "추가 상면에서 어깨로 내려가는 각도입니다. 값이 클수록 급해집니다.",
+    },
+    topHatShoulderRadius: {
+      label: "shoulder R",
+      hint: "0이면 각진 면이고, 양수는 둥글게 부풀며 음수는 오목하게 들어갑니다. 현재 범위는 {minRadius}부터 {maxRadius}까지입니다.",
     },
     rimEnabled: {
       label: "키 림 추가",

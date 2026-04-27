@@ -34,6 +34,36 @@ function keycap_top_hat_safe_shoulder_angle(angle) =
 function keycap_top_hat_shoulder_outset(height, shoulder_angle) =
     abs(height) / tan(keycap_top_hat_safe_shoulder_angle(shoulder_angle));
 
+function keycap_top_hat_safe_shoulder_radius(radius) =
+    radius;
+
+function keycap_top_hat_shoulder_curve_steps(radius, quality = "export") =
+    radius <= 0.001
+        ? 1
+        : min(
+            max(
+                ceil(radius / (quality == "preview" ? 0.35 : 0.2)),
+                quality == "preview" ? 4 : 6
+            ),
+            quality == "preview" ? 8 : 14
+        );
+
+function keycap_top_hat_convex_arc_fraction(t) =
+    sqrt(max(0, 1 - pow(1 - t, 2)));
+
+function keycap_top_hat_concave_arc_fraction(t) =
+    1 - sqrt(max(0, 1 - pow(t, 2)));
+
+function keycap_top_hat_curve_fraction(t, amount) =
+    let(
+        safe_amount = min(max(amount, -1), 1),
+        curve_amount = abs(safe_amount),
+        arc_fraction = safe_amount >= 0
+            ? keycap_top_hat_convex_arc_fraction(t)
+            : keycap_top_hat_concave_arc_fraction(t)
+    )
+    (1 - curve_amount) * t + curve_amount * arc_fraction;
+
 function keycap_top_plane_slope(angle) = tan(angle);
 
 function keycap_top_plane_height(x, y, top_center_height, pitch_deg = 0, roll_deg = 0) =
@@ -617,6 +647,25 @@ module keycap_top_surface_region(
         );
 }
 
+module keycap_top_hat_section(
+    width,
+    depth,
+    radius,
+    z,
+    quality = "export"
+) {
+    translate([0, 0, z])
+        linear_extrude(height = 0.01, center = true)
+            rounded_rect_coords(
+                -width / 2,
+                width / 2,
+                -depth / 2,
+                depth / 2,
+                radius,
+                quality
+            );
+}
+
 module keycap_top_hat_cap(
     parent_top_width,
     parent_top_depth,
@@ -629,6 +678,7 @@ module keycap_top_hat_cap(
     pitch_deg = 0,
     roll_deg = 0,
     surface_z_shift = 0,
+    shoulder_radius = 0,
     quality = "export"
 ) {
     parent_width = max(parent_top_width, 0.2);
@@ -642,33 +692,52 @@ module keycap_top_hat_cap(
     actual_outset = min((base_width - safe_top_width) / 2, (base_depth - safe_top_depth) / 2);
     safe_top_radius = min(max(top_radius, 0), safe_top_width / 2, safe_top_depth / 2);
     base_radius = min(safe_top_radius + max(actual_outset, 0), base_width / 2, base_depth / 2);
+    safe_shoulder_radius = abs(keycap_top_hat_safe_shoulder_radius(shoulder_radius));
+    shoulder_radius_limit = max(min(safe_height, actual_outset), 0);
+    shoulder_curve_amount = shoulder_radius_limit <= 0.001
+        ? 0
+        : min(safe_shoulder_radius / shoulder_radius_limit, 1) * (shoulder_radius < 0 ? -1 : 1);
+    shoulder_steps = keycap_top_hat_shoulder_curve_steps(safe_shoulder_radius, quality);
     join_overlap = 0.05;
+    base_z = height < 0 ? join_overlap : -join_overlap;
+    top_z = height < 0 ? -safe_height : safe_height;
 
     if (safe_height > 0.001) {
         keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
             translate([0, 0, surface_z_shift])
-                hull() {
-                    translate([0, 0, height < 0 ? join_overlap : -join_overlap])
-                        linear_extrude(height = 0.01, center = true)
-                            rounded_rect_coords(
-                                -base_width / 2,
-                                base_width / 2,
-                                -base_depth / 2,
-                                base_depth / 2,
-                                base_radius,
-                                quality
-                            );
-
-                    translate([0, 0, height < 0 ? -safe_height : safe_height])
-                        linear_extrude(height = 0.01, center = true)
-                            rounded_rect_coords(
-                                -safe_top_width / 2,
-                                safe_top_width / 2,
-                                -safe_top_depth / 2,
-                                safe_top_depth / 2,
-                                safe_top_radius,
-                                quality
-                            );
+                if (abs(shoulder_curve_amount) <= 0.001) {
+                    hull() {
+                        keycap_top_hat_section(
+                            width = base_width,
+                            depth = base_depth,
+                            radius = base_radius,
+                            z = base_z,
+                            quality = quality
+                        );
+                        keycap_top_hat_section(
+                            width = safe_top_width,
+                            depth = safe_top_depth,
+                            radius = safe_top_radius,
+                            z = top_z,
+                            quality = quality
+                        );
+                    }
+                } else {
+                    for (step = [0 : shoulder_steps - 1]) {
+                        hull() {
+                            for (j = [step : step + 1]) {
+                                t = j / shoulder_steps;
+                                z_fraction = keycap_top_hat_curve_fraction(t, shoulder_curve_amount);
+                                keycap_top_hat_section(
+                                    width = base_width + (safe_top_width - base_width) * t,
+                                    depth = base_depth + (safe_top_depth - base_depth) * t,
+                                    radius = base_radius + (safe_top_radius - base_radius) * t,
+                                    z = base_z + (top_z - base_z) * z_fraction,
+                                    quality = quality
+                                );
+                            }
+                        }
+                    }
                 }
     }
 }
@@ -694,6 +763,7 @@ module keycap_shell(
     top_hat_top_radius = 1.8,
     top_hat_height = 1.4,
     top_hat_shoulder_angle = 45,
+    top_hat_shoulder_radius = 0,
     pitch_deg = 0,
     roll_deg = 0,
     quality = "export"
@@ -749,6 +819,7 @@ module keycap_shell(
                     top_radius = top_hat_top_radius,
                     height = top_hat_height,
                     shoulder_angle = top_hat_shoulder_angle,
+                    shoulder_radius = top_hat_shoulder_radius,
                     top_center_height = top_center_height,
                     pitch_deg = pitch_deg,
                     roll_deg = roll_deg,
@@ -793,6 +864,7 @@ module keycap_shell(
                 top_radius = top_hat_top_radius,
                 height = top_hat_height,
                 shoulder_angle = top_hat_shoulder_angle,
+                shoulder_radius = top_hat_shoulder_radius,
                 top_center_height = top_center_height,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,

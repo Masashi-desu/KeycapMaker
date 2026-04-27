@@ -237,6 +237,8 @@ const zh = Object.freeze({
     topHatTopWidth: {
       label: "上面宽度",
       hint: "追加键顶上表面的宽度。当前最大值为 {maxWidth}。",
+      secondaryLabel: "上面尺寸",
+      miniLabel: "宽度",
     },
     topHatTopDepth: {
       label: "上面深度",
@@ -253,6 +255,10 @@ const zh = Object.freeze({
     topHatShoulderAngle: {
       label: "shoulder 角度",
       hint: "从追加上表面向肩部下降的角度。数值越大肩部越陡。",
+    },
+    topHatShoulderRadius: {
+      label: "shoulder R",
+      hint: "0 为折面；正值使肩部圆滑外凸，负值使肩部内凹。当前范围为 {minRadius} 到 {maxRadius}。",
     },
     rimEnabled: {
       label: "添加键圈",

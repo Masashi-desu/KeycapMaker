@@ -46,6 +46,7 @@ const TOP_HAT_MIN_SIZE = 0.2;
 const TOP_HAT_MIN_HEIGHT = 0.05;
 const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
 const TOP_HAT_MAX_SHOULDER_ANGLE = 85;
+const TOP_HAT_MIN_SHOULDER_RADIUS = 0;
 const TOP_HAT_EDGE_CLEARANCE = 0.2;
 const TOP_HAT_RECESS_CLEARANCE = 0.05;
 const RESERVED_COMPAT_PAYLOAD_KEYS = new Set(["kind", "schemaVersion", "profileSchemaVersion", "savedAt", "selectors", "params"]);
@@ -270,14 +271,24 @@ function clampTopHatTopRadius(value, params = {}, fallback = 0) {
   return clampNumberRange(value, fallback, 0, getTopHatTopRadiusMax(params));
 }
 
-function getTopHatHeightMax(params = {}) {
+function getTopHatShoulderOutset(params = {}) {
   const limits = getTopHatUsableFootprintLimits(params);
   const topWidth = clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth);
   const topDepth = clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth);
-  const availableOutset = Math.min(
+  return Math.min(
     Math.max((limits.width - topWidth) / 2, 0),
     Math.max((limits.depth - topDepth) / 2, 0),
   );
+}
+
+function getTopHatActualShoulderOutset(params = {}) {
+  const height = Math.abs(clampTopHatHeight(params.topHatHeight, params, params.topHatHeight ?? TOP_HAT_MIN_HEIGHT));
+  const shoulderAngle = clampTopHatShoulderAngle(params.topHatShoulderAngle, params.topHatShoulderAngle ?? 45);
+  return Math.min(getTopHatShoulderOutset(params), height / degTan(shoulderAngle));
+}
+
+function getTopHatHeightMax(params = {}) {
+  const availableOutset = getTopHatShoulderOutset(params);
   const shoulderAngle = clampTopHatShoulderAngle(params.topHatShoulderAngle, params.topHatShoulderAngle ?? 45);
 
   return Math.max(availableOutset * degTan(shoulderAngle), TOP_HAT_MIN_HEIGHT);
@@ -290,6 +301,19 @@ function getTopHatHeightMin(params = {}) {
 
 function clampTopHatHeight(value, params = {}, fallback = TOP_HAT_MIN_HEIGHT) {
   return clampNumberRange(value, fallback, getTopHatHeightMin(params), getTopHatHeightMax(params));
+}
+
+function getTopHatShoulderRadiusMax(params = {}) {
+  const height = Math.abs(clampTopHatHeight(params.topHatHeight, params, params.topHatHeight ?? TOP_HAT_MIN_HEIGHT));
+  return Math.max(Math.min(height, getTopHatActualShoulderOutset(params)), TOP_HAT_MIN_SHOULDER_RADIUS);
+}
+
+function getTopHatShoulderRadiusMin(params = {}) {
+  return -getTopHatShoulderRadiusMax(params);
+}
+
+function clampTopHatShoulderRadius(value, params = {}, fallback = 0) {
+  return clampNumberRange(value, fallback, getTopHatShoulderRadiusMin(params), getTopHatShoulderRadiusMax(params));
 }
 
 function getTypewriterRimMaxWidth(params = {}) {
@@ -539,6 +563,7 @@ export function syncDerivedKeycapParams(params = {}) {
     params.topHatTopWidth = clampTopHatTopWidth(params.topHatTopWidth, params, defaults.topHatTopWidth ?? 10.5);
     params.topHatTopDepth = clampTopHatTopDepth(params.topHatTopDepth, params, defaults.topHatTopDepth ?? 9.5);
     params.topHatHeight = clampTopHatHeight(params.topHatHeight, params, defaults.topHatHeight ?? 1.4);
+    params.topHatShoulderRadius = clampTopHatShoulderRadius(params.topHatShoulderRadius, params, defaults.topHatShoulderRadius ?? 0);
     params.topHatTopRadius = clampTopHatTopRadius(params.topHatTopRadius, params, defaults.topHatTopRadius ?? 0);
   }
   params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
@@ -657,6 +682,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "topHatShoulderAngle") {
     return clampTopHatShoulderAngle(value, fallback);
+  }
+
+  if (fieldKey === "topHatShoulderRadius") {
+    return clampTopHatShoulderRadius(value, paramsContext, fallback);
   }
 
   if (fieldKey === "rimHeightUp" || fieldKey === "rimHeightDown" || fieldKey === "homingBarChamfer") {

@@ -237,6 +237,8 @@ const en = Object.freeze({
     topHatTopWidth: {
       label: "Top Width",
       hint: "Width of the added keytop's top surface. Current maximum: {maxWidth}.",
+      secondaryLabel: "Top Size",
+      miniLabel: "Width",
     },
     topHatTopDepth: {
       label: "Top Depth",
@@ -253,6 +255,10 @@ const en = Object.freeze({
     topHatShoulderAngle: {
       label: "Shoulder Angle",
       hint: "Angle of the shoulder falling away from the added top. Higher values make it steeper.",
+    },
+    topHatShoulderRadius: {
+      label: "Shoulder Radius",
+      hint: "0 keeps a faceted shoulder; positive values bulge into a round shoulder, negative values recess it. Current range: {minRadius} to {maxRadius}.",
     },
     rimEnabled: {
       label: "Add Key Rim",

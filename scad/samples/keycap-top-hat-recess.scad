@@ -7,5 +7,6 @@ user_top_hat_top_depth = 9.5;
 user_top_hat_top_radius = 1.8;
 user_top_hat_height = -0.8;
 user_top_hat_shoulder_angle = 45;
+user_top_hat_shoulder_radius = 0;
 
 include <../base/keycap.scad>

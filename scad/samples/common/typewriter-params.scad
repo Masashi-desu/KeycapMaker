@@ -22,6 +22,7 @@ user_top_hat_top_depth = 9.5;
 user_top_hat_top_radius = 1.8;
 user_top_hat_height = 1.4;
 user_top_hat_shoulder_angle = 45;
+user_top_hat_shoulder_radius = 0;
 user_top_pitch_deg = 0;
 user_top_roll_deg = 0;
 user_rim_enabled = false;

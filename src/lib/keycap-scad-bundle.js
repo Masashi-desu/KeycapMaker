@@ -578,6 +578,7 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_hat_top_radius: Math.max(numberOr(params.topHatTopRadius, 1.8), 0),
     user_top_hat_height: numberOr(params.topHatHeight, 1.4),
     user_top_hat_shoulder_angle: Math.min(Math.max(numberOr(params.topHatShoulderAngle, 45), 5), 85),
+    user_top_hat_shoulder_radius: numberOr(params.topHatShoulderRadius, 0),
     user_rim_enabled: Boolean(params.rimEnabled),
     user_rim_width: Math.max(Number(params.rimWidth ?? 0), 0),
     user_rim_height_up: Math.max(Number(params.rimHeightUp ?? 0), 0),

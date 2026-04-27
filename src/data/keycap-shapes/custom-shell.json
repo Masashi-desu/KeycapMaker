@@ -31,6 +31,7 @@
     "topHatTopRadius": 1.8,
     "topHatHeight": 1.4,
     "topHatShoulderAngle": 45,
+    "topHatShoulderRadius": 0,
     "bodyColor": "#f8f9fa",
     "legendEnabled": true,
     "legendText": "A",
@@ -67,7 +68,7 @@
       "id": "top",
       "title": "キートップ",
       "description": "上面中央の基準高さを固定したまま、フラット / シンドリカル / スフェリカルと top-hat の有無を切り替えられます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
-      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "topHatEnabled", "topHatTopWidth", "topHatTopDepth", "topHatTopRadius", "topHatHeight", "topHatShoulderAngle", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "topHatEnabled", "topHatTopWidth", "topHatTopDepth", "topHatTopRadius", "topHatHeight", "topHatShoulderAngle", "topHatShoulderRadius", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",
