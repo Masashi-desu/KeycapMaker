@@ -188,6 +188,10 @@ function isJisEnterShapeProfile(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   return geometryType === "jis_enter" || geometryType === "typewriter_jis_enter";
 }
 
+function isJisEnterTopHatShapeProfile(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  return resolveShapeGeometryType(profileKey) === "jis_enter";
+}
+
 function resolveLegendFontConfig(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
   return resolveKeycapLegendFont(fontKey);
 }
@@ -621,12 +625,35 @@ function getTopHatUsableFootprintLimits(params = state.keycapParams) {
   };
 }
 
+function getJisEnterTopHatInsetMax(params = state.keycapParams) {
+  const limits = getTopHatFootprintLimits(params);
+  const notchWidth = Math.min(Math.max(Number(params.jisEnterNotchWidth ?? 0), 0), Math.max(limits.width - TOP_HAT_MIN_SIZE, 0));
+  const notchDepth = Math.min(Math.max(Number(params.jisEnterNotchDepth ?? 0), 0), Math.max(limits.depth - TOP_HAT_MIN_SIZE, 0));
+  const lowerWidth = Math.max(limits.width - notchWidth, 0);
+  const upperDepth = Math.max(limits.depth - notchDepth, 0);
+  return Math.max(Math.min(
+    (limits.width - TOP_HAT_MIN_SIZE) / 2,
+    (limits.depth - TOP_HAT_MIN_SIZE) / 2,
+    (lowerWidth - TOP_HAT_MIN_SIZE) / 2,
+    (upperDepth - TOP_HAT_MIN_SIZE) / 2,
+  ), 0);
+}
+
 function getTopHatSafeShoulderAngle(params = state.keycapParams) {
   const angle = Number(params.topHatShoulderAngle ?? 45);
   return Math.min(Math.max(Number.isFinite(angle) ? angle : 45, TOP_HAT_MIN_SHOULDER_ANGLE), TOP_HAT_MAX_SHOULDER_ANGLE);
 }
 
+function getTopHatSafeInset(params = state.keycapParams) {
+  const inset = Number(params.topHatInset ?? 0);
+  return Math.min(Math.max(Number.isFinite(inset) ? inset : 0, 0), getJisEnterTopHatInsetMax(params));
+}
+
 function getTopHatShoulderOutset(params = state.keycapParams) {
+  if (isJisEnterTopHatShapeProfile(params.shapeProfile) && "topHatInset" in params) {
+    return getTopHatSafeInset(params);
+  }
+
   const limits = getTopHatUsableFootprintLimits(params);
   const topWidth = Math.min(Math.max(Number(params.topHatTopWidth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.width);
   const topDepth = Math.min(Math.max(Number(params.topHatTopDepth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.depth);
@@ -656,6 +683,18 @@ function getTopHatHeightMin(params = state.keycapParams) {
 }
 
 function getTopHatTopRadiusMax(params = state.keycapParams) {
+  if (isJisEnterTopHatShapeProfile(params.shapeProfile) && "topHatInset" in params) {
+    const limits = getTopHatFootprintLimits(params);
+    const inset = getTopHatSafeInset(params);
+    const width = Math.max(limits.width - inset * 2, TOP_HAT_MIN_SIZE);
+    const depth = Math.max(limits.depth - inset * 2, TOP_HAT_MIN_SIZE);
+    const notchWidth = Math.min(Math.max(Number(params.jisEnterNotchWidth ?? 0), 0), Math.max(width - TOP_HAT_MIN_SIZE, 0));
+    const notchDepth = Math.min(Math.max(Number(params.jisEnterNotchDepth ?? 0), 0), Math.max(depth - TOP_HAT_MIN_SIZE, 0));
+    const lowerWidth = Math.max(width - notchWidth, TOP_HAT_MIN_SIZE);
+    const upperDepth = Math.max(depth - notchDepth, TOP_HAT_MIN_SIZE);
+    return Math.max(Math.min(width, depth, lowerWidth, upperDepth, notchWidth || width, notchDepth || depth) / 2, 0);
+  }
+
   const width = Math.min(Math.max(Number(params.topHatTopWidth ?? 0), 0), getTopHatUsableFootprintLimits(params).width);
   const depth = Math.min(Math.max(Number(params.topHatTopDepth ?? 0), 0), getTopHatUsableFootprintLimits(params).depth);
   return Math.max(Math.min(width, depth) / 2, 0);
@@ -679,6 +718,10 @@ function getTopHatTopWidthHint(params) {
 function getTopHatTopDepthHint(params) {
   const limits = getTopHatUsableFootprintLimits(params);
   return t("fields.topHatTopDepth.hint", { maxDepth: formatMillimeter(limits.depth) });
+}
+
+function getTopHatInsetHint(params) {
+  return t("fields.topHatInset.hint", { maxInset: formatMillimeter(getJisEnterTopHatInsetMax(params)) });
 }
 
 function getTopHatTopRadiusHint(params) {
@@ -819,6 +862,7 @@ const fieldGroupTemplates = [
         dependentFieldKeys: [
           "topHatTopWidth",
           "topHatTopDepth",
+          "topHatInset",
           "topHatTopRadius",
           "topHatHeight",
           "topHatShoulderAngle",
@@ -848,6 +892,16 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.1,
         min: TOP_HAT_MIN_SIZE,
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatInset",
+        label: () => t("fields.topHatInset.label"),
+        hint: (params) => getTopHatInsetHint(params),
+        unit: "mm",
+        step: 0.1,
+        min: 0,
+        max: (params) => getJisEnterTopHatInsetMax(params),
         visibleWhen: (params) => params.topHatEnabled,
       },
       {
@@ -2931,6 +2985,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "typewriterMountHeight",
   "topHatTopWidth",
   "topHatTopDepth",
+  "topHatInset",
   "topHatTopRadius",
   "topHatHeight",
   "topHatShoulderAngle",
@@ -3124,6 +3179,8 @@ function handleFieldChange(event) {
     || field === "topScale"
     || field === "keyWidth"
     || field === "keyDepth"
+    || field === "jisEnterNotchWidth"
+    || field === "jisEnterNotchDepth"
   ) {
     syncVisibleTopFieldState(field);
   }
@@ -3156,6 +3213,7 @@ function handleFieldChange(event) {
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopWidth");
+    syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
     syncFieldHint("topHatShoulderRadius");
   }
@@ -3165,6 +3223,7 @@ function handleFieldChange(event) {
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopDepth");
+    syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
     syncFieldHint("topHatShoulderRadius");
   }
@@ -3172,11 +3231,16 @@ function handleFieldChange(event) {
   if (field === "jisEnterNotchWidth" || field === "jisEnterNotchDepth") {
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("rimWidth");
+    syncFieldHint("topHatInset");
+    syncFieldHint("topHatTopRadius");
+    syncFieldHint("topHatHeight");
+    syncFieldHint("topHatShoulderRadius");
   }
 
-  if (field === "topScale" || field === "topHatTopWidth" || field === "topHatTopWidthUnits" || field === "topHatTopDepth" || field === "topHatShoulderAngle") {
+  if (field === "topScale" || field === "topHatTopWidth" || field === "topHatTopWidthUnits" || field === "topHatTopDepth" || field === "topHatInset" || field === "topHatShoulderAngle") {
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatTopDepth");
+    syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
     syncFieldHint("topHatHeight");
     syncFieldHint("topHatShoulderRadius");

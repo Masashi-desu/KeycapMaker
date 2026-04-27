@@ -244,6 +244,10 @@ const ja = Object.freeze({
       label: "上面の奥行き",
       hint: "追加するキートップ上面の前後寸法です。現在の最大は {maxDepth} です",
     },
+    topHatInset: {
+      label: "上面の縮め量",
+      hint: "エンターキー上面の輪郭から内側へ縮める量です。現在の最大は {maxInset} です",
+    },
     topHatTopRadius: {
       label: "上面のR",
       hint: "追加するキートップ上面の角丸です。現在の最大は {maxRadius} です",

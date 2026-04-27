@@ -244,6 +244,10 @@ const zh = Object.freeze({
       label: "上面深度",
       hint: "追加键顶上表面的前后尺寸。当前最大值为 {maxDepth}。",
     },
+    topHatInset: {
+      label: "上面内缩量",
+      hint: "从 Enter 键顶轮廓向内缩小的距离。当前最大值为 {maxInset}。",
+    },
     topHatTopRadius: {
       label: "上面 R",
       hint: "追加键顶上表面的圆角。当前最大值为 {maxRadius}。",

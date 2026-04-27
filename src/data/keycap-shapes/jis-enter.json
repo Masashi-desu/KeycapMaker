@@ -27,6 +27,12 @@
     "topSurfaceShape": "flat",
     "dishRadius": 45,
     "dishDepth": 0,
+    "topHatEnabled": false,
+    "topHatInset": 2.0,
+    "topHatTopRadius": 1.8,
+    "topHatHeight": 1.4,
+    "topHatShoulderAngle": 45,
+    "topHatShoulderRadius": 0,
     "bodyColor": "#f8f9fa",
     "legendEnabled": true,
     "legendText": "Enter",
@@ -63,7 +69,7 @@
       "id": "top",
       "title": "キートップ",
       "description": "カスタムシェルと同じく、上面中央の基準高さ、フラット / シンドリカル / スフェリカル、前後左右の傾きを調整できます。",
-      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "topHatEnabled", "topHatInset", "topHatTopRadius", "topHatHeight", "topHatShoulderAngle", "topHatShoulderRadius", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",

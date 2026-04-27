@@ -121,6 +121,7 @@ top_roll_deg = required_param(user_top_roll_deg, "user_top_roll_deg");
 requested_top_hat_enabled = required_param(user_top_hat_enabled, "user_top_hat_enabled");
 top_hat_top_width = positive_dimension(required_param(user_top_hat_top_width, "user_top_hat_top_width"));
 top_hat_top_depth = positive_dimension(required_param(user_top_hat_top_depth, "user_top_hat_top_depth"));
+top_hat_inset = max(required_param(user_top_hat_inset, "user_top_hat_inset"), 0);
 top_hat_top_radius = max(required_param(user_top_hat_top_radius, "user_top_hat_top_radius"), 0);
 requested_top_hat_height = required_param(user_top_hat_height, "user_top_hat_height");
 top_hat_recess_limit = max(top_thickness - 0.05, 0);
@@ -129,7 +130,7 @@ top_hat_height = requested_top_hat_height < 0
     : requested_top_hat_height;
 top_hat_shoulder_angle = keycap_top_hat_safe_shoulder_angle(required_param(user_top_hat_shoulder_angle, "user_top_hat_shoulder_angle"));
 top_hat_shoulder_radius = keycap_top_hat_safe_shoulder_radius(required_param(user_top_hat_shoulder_radius, "user_top_hat_shoulder_radius"));
-top_hat_enabled = shape_geometry_type == "shell"
+top_hat_enabled = (shape_geometry_type == "shell" || shape_geometry_type == "jis_enter")
     && requested_top_hat_enabled
     && abs(top_hat_height) > 0.001;
 top_hat_surface_z_shift = top_hat_enabled
@@ -388,6 +389,12 @@ module keycap_body_shell_positive(quality = "export") {
             top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
+            top_hat_enabled = top_hat_enabled,
+            top_hat_inset = top_hat_inset,
+            top_hat_top_radius = top_hat_top_radius,
+            top_hat_height = top_hat_height,
+            top_hat_shoulder_angle = top_hat_shoulder_angle,
+            top_hat_shoulder_radius = top_hat_shoulder_radius,
             pitch_deg = top_pitch_deg,
             roll_deg = top_roll_deg,
             quality = quality

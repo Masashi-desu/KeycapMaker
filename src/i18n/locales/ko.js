@@ -244,6 +244,10 @@ const ko = Object.freeze({
       label: "상면 깊이",
       hint: "추가 키톱 상면의 앞뒤 치수입니다. 현재 최대값은 {maxDepth}입니다.",
     },
+    topHatInset: {
+      label: "상면 축소량",
+      hint: "엔터 키톱 윤곽에서 안쪽으로 줄이는 양입니다. 현재 최대값은 {maxInset}입니다.",
+    },
     topHatTopRadius: {
       label: "상면 R",
       hint: "추가 키톱 상면의 모서리 반경입니다. 현재 최대값은 {maxRadius}입니다.",

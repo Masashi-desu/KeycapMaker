@@ -24,6 +24,7 @@
 - `presets/stem-nominals.scad`: stem 形状の nominal 寸法
 - `samples/keycap-1u.scad`: 回帰確認用の最小キーキャップサンプル
 - `samples/keycap-jis-enter.scad`: JIS / ISO 系の縦長 Enter footprint 確認用サンプル
+- `samples/keycap-jis-enter-top-hat.scad`: JIS Enter footprint に沿った top-hat 確認用サンプル
 - `samples/keycap-typewriter-jis-enter.scad`: typewriter style の JIS Enter footprint 確認用サンプル
 - `samples/keycap-typewriter.scad`: タイプライター風キートップの確認用サンプル
 - `samples/keycap-typewriter-mount-height.scad`: typewriter shape の上面基準取り付け高さ確認用サンプル

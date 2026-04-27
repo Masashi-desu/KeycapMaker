@@ -76,6 +76,10 @@ function isTypewriterGeometryType(geometryType) {
   return geometryType === "typewriter" || geometryType === "typewriter_jis_enter";
 }
 
+function isTopHatGeometryType(geometryType) {
+  return geometryType === "shell" || geometryType === "jis_enter";
+}
+
 function getTypewriterMountHeightMinimum(params = {}) {
   const topCenterHeight = clampMinimum(params.topCenterHeight, 5.2, 0.1);
   return topCenterHeight + TYPEWRITER_MIN_STEM_HEIGHT - TYPEWRITER_STEM_MOUNT_OVERLAP;
@@ -572,9 +576,10 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_dish_depth: params.dishDepth,
     user_top_pitch_deg: params.topPitchDeg,
     user_top_roll_deg: params.topRollDeg,
-    user_top_hat_enabled: shapeGeometry.shapeGeometryType === "shell" && Boolean(params.topHatEnabled),
+    user_top_hat_enabled: isTopHatGeometryType(shapeGeometry.shapeGeometryType) && Boolean(params.topHatEnabled),
     user_top_hat_top_width: Math.max(numberOr(params.topHatTopWidth, 10.5), 0.2),
     user_top_hat_top_depth: Math.max(numberOr(params.topHatTopDepth, 9.5), 0.2),
+    user_top_hat_inset: Math.max(numberOr(params.topHatInset, 2.0), 0),
     user_top_hat_top_radius: Math.max(numberOr(params.topHatTopRadius, 1.8), 0),
     user_top_hat_height: numberOr(params.topHatHeight, 1.4),
     user_top_hat_shoulder_angle: Math.min(Math.max(numberOr(params.topHatShoulderAngle, 45), 5), 85),

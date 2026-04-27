@@ -244,6 +244,10 @@ const en = Object.freeze({
       label: "Top Depth",
       hint: "Front-to-back size of the added keytop's top surface. Current maximum: {maxDepth}.",
     },
+    topHatInset: {
+      label: "Top Inset",
+      hint: "Inset from the Enter keytop outline to the added top surface. Current maximum: {maxInset}.",
+    },
     topHatTopRadius: {
       label: "Top Radius",
       hint: "Corner radius of the added keytop's top surface. Current maximum: {maxRadius}.",
