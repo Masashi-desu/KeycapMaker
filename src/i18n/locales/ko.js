@@ -206,7 +206,7 @@ const ko = Object.freeze({
     },
     topScale: {
       label: "상면 좁아짐",
-      hint: "숫자가 작을수록 상면이 좁아 보입니다",
+      hint: "숫자가 작을수록 폭과 깊이 비율을 유지한 채 상면이 좁아집니다",
     },
     bodyColor: {
       label: "본체 색상",
@@ -217,6 +217,18 @@ const ko = Object.freeze({
       typewriterLabel: "키톱 두께",
       hint: "dish를 적용하기 전의 키톱 중앙입니다. 현재 중앙 표면은 {height}입니다.",
       typewriterHint: "얇은 키톱의 바닥에서 상면까지의 두께입니다",
+    },
+    topOffset: {
+      label: "키톱 중심 오프셋",
+      hint: "장착부 위치는 그대로 두고 키톱 중심만 좌우 / 앞뒤로 이동합니다",
+    },
+    topOffsetX: {
+      label: "좌우 오프셋",
+      hint: "장착부 위치는 그대로 두고 키톱 중심을 좌우로 이동합니다",
+    },
+    topOffsetY: {
+      label: "앞뒤 오프셋",
+      hint: "장착부 위치는 그대로 두고 키톱 중심을 앞뒤로 이동합니다",
     },
     typewriterMountHeight: {
       label: "상면 기준 높이",

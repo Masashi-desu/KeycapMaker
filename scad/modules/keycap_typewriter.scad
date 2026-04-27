@@ -13,8 +13,11 @@ function typewriter_plan_inset_corner_radius(width, depth, corner_radius, inset)
 function typewriter_plan_has_inner_profile(width, depth, inset) =
     typewriter_plan_inset_dimension(width, inset) > 0.001
     && typewriter_plan_inset_dimension(depth, inset) > 0.001;
-function typewriter_is_axis_aligned(pitch_deg, roll_deg) =
-    abs(pitch_deg) <= 0.001 && abs(roll_deg) <= 0.001;
+function typewriter_is_axis_aligned(pitch_deg, roll_deg, top_offset_x = 0, top_offset_y = 0) =
+    abs(pitch_deg) <= 0.001
+    && abs(roll_deg) <= 0.001
+    && abs(top_offset_x) <= 0.001
+    && abs(top_offset_y) <= 0.001;
 typewriter_rim_join_overlap = 0.02;
 
 module keycap_typewriter_plan_profile(
@@ -91,7 +94,9 @@ module keycap_typewriter_outer_shell(
     corner_radius,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_corner_radius = typewriter_plan_corner_radius(width, depth, corner_radius);
 
@@ -114,7 +119,9 @@ module keycap_typewriter_outer_shell(
             top_center_height,
             pitch_deg,
             roll_deg,
-            quality
+            quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     }
 }
@@ -129,7 +136,9 @@ module keycap_typewriter_cap(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_corner_radius = typewriter_plan_corner_radius(width, depth, corner_radius);
 
@@ -147,9 +156,11 @@ module keycap_typewriter_cap(
         dish_radius = dish_radius,
         pitch_deg = pitch_deg,
         roll_deg = roll_deg,
-        quality = quality
+        quality = quality,
+        top_offset_x = top_offset_x,
+        top_offset_y = top_offset_y
     )
-        if (typewriter_is_axis_aligned(pitch_deg, roll_deg)) {
+        if (typewriter_is_axis_aligned(pitch_deg, roll_deg, top_offset_x, top_offset_y)) {
             linear_extrude(height = top_center_height)
                 keycap_typewriter_plan_profile(
                     width = width,
@@ -165,7 +176,9 @@ module keycap_typewriter_cap(
                 corner_radius = corner_radius,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
 }
@@ -181,7 +194,9 @@ module keycap_typewriter_band_cap(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_band_width = max(band_width, 0);
     inner_width = typewriter_plan_inset_dimension(width, safe_band_width);
@@ -189,7 +204,7 @@ module keycap_typewriter_band_cap(
     inner_corner_radius = typewriter_plan_inset_corner_radius(width, depth, corner_radius, safe_band_width);
     ring_clip_height = top_center_height + max(abs(dish_depth), 0) + 2;
 
-    if (typewriter_is_axis_aligned(pitch_deg, roll_deg)) {
+    if (typewriter_is_axis_aligned(pitch_deg, roll_deg, top_offset_x, top_offset_y)) {
         intersection() {
             keycap_typewriter_cap(
                 width = width,
@@ -201,7 +216,9 @@ module keycap_typewriter_band_cap(
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             keycap_typewriter_ring_prism(
@@ -226,7 +243,9 @@ module keycap_typewriter_band_cap(
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             if (typewriter_plan_has_inner_profile(width, depth, safe_band_width)) {
@@ -240,7 +259,9 @@ module keycap_typewriter_band_cap(
                     dish_depth = dish_depth,
                     pitch_deg = pitch_deg,
                     roll_deg = roll_deg,
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
             }
         }
@@ -258,7 +279,9 @@ module keycap_typewriter_rim_side_shell(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_band_width = max(band_width, 0);
 
@@ -274,7 +297,9 @@ module keycap_typewriter_rim_side_shell(
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     }
 }
@@ -291,7 +316,9 @@ module keycap_typewriter_rim_top_extension(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_band_width = max(band_width, 0);
 
@@ -308,7 +335,9 @@ module keycap_typewriter_rim_top_extension(
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             // Cut below the nominal top so the extension overlaps the side shell.
@@ -323,7 +352,9 @@ module keycap_typewriter_rim_top_extension(
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -372,7 +403,9 @@ module keycap_typewriter_rim(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     union() {
         keycap_typewriter_rim_side_shell(
@@ -386,7 +419,9 @@ module keycap_typewriter_rim(
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
 
         keycap_typewriter_rim_top_extension(
@@ -401,7 +436,9 @@ module keycap_typewriter_rim(
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
 
         keycap_typewriter_rim_bottom_extension(
@@ -433,7 +470,9 @@ module keycap_typewriter_shell(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     keycap_typewriter_cap(
         width = width,
@@ -445,6 +484,8 @@ module keycap_typewriter_shell(
         dish_depth = dish_depth,
         pitch_deg = pitch_deg,
         roll_deg = roll_deg,
-        quality = quality
+        quality = quality,
+        top_offset_x = top_offset_x,
+        top_offset_y = top_offset_y
     );
 }

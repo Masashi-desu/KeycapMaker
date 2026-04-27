@@ -20,6 +20,8 @@
     "topSlopeInputMode": "angle",
     "topPitchDeg": 0,
     "topRollDeg": 0,
+    "topOffsetX": 0,
+    "topOffsetY": 0,
     "rimEnabled": true,
     "rimWidth": 1,
     "rimHeightUp": 0.5,
@@ -68,7 +70,7 @@
       "id": "top",
       "title": "キートップ",
       "description": "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
-      "fieldKeys": ["typewriterMountHeight", "topCenterHeight", "topSurfaceShape", "dishDepth", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "fieldKeys": ["typewriterMountHeight", "topCenterHeight", "topOffsetX", "topOffsetY", "topSurfaceShape", "dishDepth", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",

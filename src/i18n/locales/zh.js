@@ -206,7 +206,7 @@ const zh = Object.freeze({
     },
     topScale: {
       label: "顶部收窄",
-      hint: "数值越小，顶部看起来越窄",
+      hint: "数值越小，顶部会在保持宽度和深度比例的同时收窄",
     },
     bodyColor: {
       label: "本体颜色",
@@ -217,6 +217,18 @@ const zh = Object.freeze({
       typewriterLabel: "键顶厚度",
       hint: "添加 dish 前的键顶中心。当前中心表面为 {height}。",
       typewriterHint: "薄键顶从底部到上表面的厚度",
+    },
+    topOffset: {
+      label: "键顶中心偏移",
+      hint: "安装部位置不变，只将键顶中心左右 / 前后移动",
+    },
+    topOffsetX: {
+      label: "左右偏移",
+      hint: "安装部位置不变，只将键顶中心左右移动",
+    },
+    topOffsetY: {
+      label: "前后偏移",
+      hint: "安装部位置不变，只将键顶中心前后移动",
     },
     typewriterMountHeight: {
       label: "以上表面为基准的高度",

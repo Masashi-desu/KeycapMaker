@@ -558,7 +558,8 @@ pre {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.field--linked-size {
+.field--linked-size,
+.field--number-pair {
   align-items: start;
 }
 
@@ -663,6 +664,10 @@ pre {
   display: grid;
   gap: 8px;
   width: 100%;
+}
+
+.field-control-cluster--pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .font-picker {
@@ -1386,6 +1391,10 @@ pre {
   }
 
   .field-control-cluster--color {
+    grid-template-columns: 1fr;
+  }
+
+  .field-control-cluster--pair {
     grid-template-columns: 1fr;
   }
 

@@ -138,9 +138,11 @@ module keycap_jis_enter_top_face(
     top_center_height,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
-    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
         keycap_jis_enter_face(
             left = left,
             right = right,
@@ -166,9 +168,11 @@ module keycap_jis_enter_top_prism(
     roll_deg = 0,
     height = 1,
     base_z = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
-    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
         translate([0, 0, base_z])
             linear_extrude(height = max(height, 0.01))
                 keycap_jis_enter_plan_profile(
@@ -358,7 +362,9 @@ module keycap_jis_enter_top_hat_cap(
     roll_deg = 0,
     surface_z_shift = 0,
     shoulder_radius = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     inset_limit = jis_enter_plan_inset_limit(left, right, front, back, notch_width, notch_depth);
     safe_top_inset = jis_enter_plan_safe_inset(left, right, front, back, notch_width, notch_depth, top_inset);
@@ -380,7 +386,7 @@ module keycap_jis_enter_top_hat_cap(
     region_count = jis_enter_has_notch(left, right, front, back, notch_width, notch_depth) ? 2 : 1;
 
     if (safe_height > 0.001 && inset_limit > 0.001) {
-        keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+        keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
             translate([0, 0, surface_z_shift])
                 if (abs(shoulder_curve_amount) <= 0.001) {
                     for (region = [0 : region_count - 1]) {
@@ -455,7 +461,9 @@ module keycap_jis_enter_rect_outer_shell(
     top_corner_radius,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     if (right - left > 0.001 && back - front > 0.001) {
         top_left = left + top_center_height * tan(left_angle);
@@ -482,7 +490,9 @@ module keycap_jis_enter_rect_outer_shell(
                 top_center_height,
                 pitch_deg,
                 roll_deg,
-                quality
+                quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -502,7 +512,9 @@ module keycap_jis_enter_outer_shell(
     top_corner_radius,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_width = max(width, 0.2);
     safe_depth = max(depth, 0.2);
@@ -531,7 +543,9 @@ module keycap_jis_enter_outer_shell(
                 top_corner_radius = top_corner_radius,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             keycap_jis_enter_rect_outer_shell(
@@ -548,7 +562,9 @@ module keycap_jis_enter_outer_shell(
                 top_corner_radius = top_corner_radius,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     } else {
@@ -566,7 +582,9 @@ module keycap_jis_enter_outer_shell(
             top_corner_radius = top_corner_radius,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     }
 }
@@ -588,7 +606,9 @@ module keycap_jis_enter_dish_bump(
     pitch_deg = 0,
     roll_deg = 0,
     surface_z_shift = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     if (keycap_dish_is_active(dish_type, dish_depth) && dish_depth < 0) {
         bump_clip_height = max(abs(dish_depth) + max(dish_radius, 0.1) + 2, 2);
@@ -606,7 +626,9 @@ module keycap_jis_enter_dish_bump(
                 z_shift = surface_z_shift,
                 dish_plan_width = width,
                 dish_plan_depth = depth,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             keycap_jis_enter_top_prism(
@@ -621,7 +643,9 @@ module keycap_jis_enter_dish_bump(
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 height = bump_clip_height,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -644,7 +668,9 @@ module keycap_jis_enter_apply_top_surface(
     pitch_deg = 0,
     roll_deg = 0,
     surface_z_shift = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     if (!keycap_dish_is_active(dish_type, dish_depth)) {
         children();
@@ -663,7 +689,9 @@ module keycap_jis_enter_apply_top_surface(
                 surface_z_shift = surface_z_shift,
                 dish_plan_width = width,
                 dish_plan_depth = depth,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     } else {
@@ -686,7 +714,9 @@ module keycap_jis_enter_apply_top_surface(
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 surface_z_shift = surface_z_shift,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -706,7 +736,9 @@ module keycap_jis_enter_rect_inner_clearance_volume(
     top_corner_radius,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     if (right - left > 0.001 && back - front > 0.001) {
         top_left = left + inner_height * tan(left_angle);
@@ -734,7 +766,9 @@ module keycap_jis_enter_rect_inner_clearance_volume(
                 inner_height,
                 pitch_deg,
                 roll_deg,
-                quality
+                quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -757,7 +791,9 @@ module keycap_jis_enter_inner_clearance_volume(
     top_corner_radius,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_width = max(width, 0.2);
     safe_depth = max(depth, 0.2);
@@ -798,7 +834,9 @@ module keycap_jis_enter_inner_clearance_volume(
                     top_corner_radius = inner_top_radius,
                     pitch_deg = pitch_deg,
                     roll_deg = roll_deg,
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
 
                 keycap_jis_enter_rect_inner_clearance_volume(
@@ -815,7 +853,9 @@ module keycap_jis_enter_inner_clearance_volume(
                     top_corner_radius = inner_top_radius,
                     pitch_deg = pitch_deg,
                     roll_deg = roll_deg,
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
             }
         } else {
@@ -833,7 +873,9 @@ module keycap_jis_enter_inner_clearance_volume(
                 top_corner_radius = inner_top_radius,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -864,7 +906,9 @@ module keycap_jis_enter_shell(
     top_hat_shoulder_radius = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_width = max(width, 0.2);
     safe_depth = max(depth, 0.2);
@@ -897,7 +941,9 @@ module keycap_jis_enter_shell(
                 dish_radius = dish_radius,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             )
                 keycap_jis_enter_outer_shell(
                     width = safe_width,
@@ -913,7 +959,9 @@ module keycap_jis_enter_shell(
                     top_corner_radius = top_corner_radius,
                     pitch_deg = pitch_deg,
                     roll_deg = roll_deg,
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
 
             if (top_hat_enabled && top_hat_height > 0) {
@@ -941,7 +989,9 @@ module keycap_jis_enter_shell(
                         safe_width,
                         safe_depth
                     ),
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
             }
         }
@@ -963,7 +1013,9 @@ module keycap_jis_enter_shell(
             top_corner_radius = top_corner_radius,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
 
         if (top_hat_enabled && top_hat_height < 0) {
@@ -991,14 +1043,19 @@ module keycap_jis_enter_shell(
                     safe_width,
                     safe_depth
                 ),
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
 }
 
-function jis_enter_typewriter_is_axis_aligned(pitch_deg, roll_deg) =
-    abs(pitch_deg) <= 0.001 && abs(roll_deg) <= 0.001;
+function jis_enter_typewriter_is_axis_aligned(pitch_deg, roll_deg, top_offset_x = 0, top_offset_y = 0) =
+    abs(pitch_deg) <= 0.001
+    && abs(roll_deg) <= 0.001
+    && abs(top_offset_x) <= 0.001
+    && abs(top_offset_y) <= 0.001;
 function jis_enter_typewriter_plan_has_inner_profile(left, right, front, back, notch_width, notch_depth, inset) =
     let(
         safe_inset = max(inset, 0),
@@ -1093,7 +1150,9 @@ module keycap_jis_enter_typewriter_top_prism(
     roll_deg = 0,
     height = 1,
     base_z = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_width = max(width, 0.2);
     safe_depth = max(depth, 0.2);
@@ -1104,7 +1163,7 @@ module keycap_jis_enter_typewriter_top_prism(
     front = -safe_depth / 2;
     back = safe_depth / 2;
 
-    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
         translate([0, 0, base_z])
             linear_extrude(height = max(height, 0.01))
                 keycap_jis_enter_typewriter_plan_profile(
@@ -1132,7 +1191,9 @@ module keycap_jis_enter_typewriter_dish_bump(
     pitch_deg = 0,
     roll_deg = 0,
     surface_z_shift = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     if (keycap_dish_is_active(dish_type, dish_depth) && dish_depth < 0) {
         bump_clip_height = max(abs(dish_depth) + max(dish_radius, 0.1) + 2, 2);
@@ -1150,7 +1211,9 @@ module keycap_jis_enter_typewriter_dish_bump(
                 z_shift = surface_z_shift,
                 dish_plan_width = width,
                 dish_plan_depth = depth,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             keycap_jis_enter_typewriter_top_prism(
@@ -1163,7 +1226,9 @@ module keycap_jis_enter_typewriter_dish_bump(
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 height = bump_clip_height,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -1182,7 +1247,9 @@ module keycap_jis_enter_typewriter_apply_top_surface(
     pitch_deg = 0,
     roll_deg = 0,
     surface_z_shift = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     if (!keycap_dish_is_active(dish_type, dish_depth)) {
         children();
@@ -1201,7 +1268,9 @@ module keycap_jis_enter_typewriter_apply_top_surface(
                 surface_z_shift = surface_z_shift,
                 dish_plan_width = width,
                 dish_plan_depth = depth,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     } else {
@@ -1220,7 +1289,9 @@ module keycap_jis_enter_typewriter_apply_top_surface(
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 surface_z_shift = surface_z_shift,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -1330,7 +1401,9 @@ module keycap_jis_enter_typewriter_cap(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_width = max(width, 0.2);
     safe_depth = max(depth, 0.2);
@@ -1362,9 +1435,11 @@ module keycap_jis_enter_typewriter_cap(
         dish_radius = dish_radius,
         pitch_deg = pitch_deg,
         roll_deg = roll_deg,
-        quality = quality
+        quality = quality,
+        top_offset_x = top_offset_x,
+        top_offset_y = top_offset_y
     )
-        if (jis_enter_typewriter_is_axis_aligned(pitch_deg, roll_deg)) {
+        if (jis_enter_typewriter_is_axis_aligned(pitch_deg, roll_deg, top_offset_x, top_offset_y)) {
             linear_extrude(height = top_center_height)
                 keycap_jis_enter_typewriter_plan_profile(
                     left = left,
@@ -1391,7 +1466,9 @@ module keycap_jis_enter_typewriter_cap(
                 top_corner_radius = safe_corner_radius,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
 }
@@ -1409,7 +1486,9 @@ module keycap_jis_enter_typewriter_band_cap(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_width = max(width, 0.2);
     safe_depth = max(depth, 0.2);
@@ -1422,7 +1501,7 @@ module keycap_jis_enter_typewriter_band_cap(
     back = safe_depth / 2;
     ring_clip_height = top_center_height + max(abs(dish_depth), 0) + 2;
 
-    if (jis_enter_typewriter_is_axis_aligned(pitch_deg, roll_deg)) {
+    if (jis_enter_typewriter_is_axis_aligned(pitch_deg, roll_deg, top_offset_x, top_offset_y)) {
         intersection() {
             keycap_jis_enter_typewriter_cap(
                 width = safe_width,
@@ -1436,7 +1515,9 @@ module keycap_jis_enter_typewriter_band_cap(
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             keycap_jis_enter_typewriter_ring_prism(
@@ -1465,7 +1546,9 @@ module keycap_jis_enter_typewriter_band_cap(
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             if (jis_enter_typewriter_plan_has_inner_profile(left, right, front, back, safe_notch_width, safe_notch_depth, safe_band_width)) {
@@ -1481,7 +1564,9 @@ module keycap_jis_enter_typewriter_band_cap(
                     dish_depth = dish_depth,
                     pitch_deg = pitch_deg,
                     roll_deg = roll_deg,
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
             }
         }
@@ -1501,7 +1586,9 @@ module keycap_jis_enter_typewriter_rim_side_shell(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_band_width = max(band_width, 0);
 
@@ -1519,7 +1606,9 @@ module keycap_jis_enter_typewriter_rim_side_shell(
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     }
 }
@@ -1538,7 +1627,9 @@ module keycap_jis_enter_typewriter_rim_top_extension(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_band_width = max(band_width, 0);
 
@@ -1557,7 +1648,9 @@ module keycap_jis_enter_typewriter_rim_top_extension(
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             keycap_jis_enter_typewriter_band_cap(
@@ -1573,7 +1666,9 @@ module keycap_jis_enter_typewriter_rim_top_extension(
                 dish_depth = dish_depth,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -1621,7 +1716,9 @@ module keycap_jis_enter_typewriter_rim(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     union() {
         keycap_jis_enter_typewriter_rim_side_shell(
@@ -1637,7 +1734,9 @@ module keycap_jis_enter_typewriter_rim(
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
 
         keycap_jis_enter_typewriter_rim_top_extension(
@@ -1654,7 +1753,9 @@ module keycap_jis_enter_typewriter_rim(
             dish_depth = dish_depth,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
 
         keycap_jis_enter_typewriter_rim_bottom_extension(
@@ -1682,7 +1783,9 @@ module keycap_jis_enter_typewriter_shell(
     dish_depth = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     keycap_jis_enter_typewriter_cap(
         width = width,
@@ -1696,6 +1799,8 @@ module keycap_jis_enter_typewriter_shell(
         dish_depth = dish_depth,
         pitch_deg = pitch_deg,
         roll_deg = roll_deg,
-        quality = quality
+        quality = quality,
+        top_offset_x = top_offset_x,
+        top_offset_y = top_offset_y
     );
 }

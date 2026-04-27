@@ -72,6 +72,22 @@ function numberOr(value, fallback) {
   return Number.isFinite(nextValue) ? nextValue : fallback;
 }
 
+function atanDeg(value) {
+  return (Math.atan(value) * 180) / Math.PI;
+}
+
+function clampTopScale(value, fallback = 1) {
+  const nextValue = Number(value);
+  const fallbackValue = Number(fallback);
+  const resolvedFallback = Number.isFinite(fallbackValue) ? fallbackValue : 1;
+  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : resolvedFallback, 0.5), 1);
+}
+
+function resolveTopScaleAngle(size, topCenterHeight, topScale) {
+  const inset = Math.max(Number(size) * (1 - topScale) / 2, 0);
+  return atanDeg(inset / Math.max(topCenterHeight, 0.1));
+}
+
 function isTypewriterGeometryType(geometryType) {
   return geometryType === "typewriter" || geometryType === "typewriter_jis_enter";
 }
@@ -101,18 +117,19 @@ function resolveShapeGeometryParameters(params = {}) {
   const defaults = createDefaultKeycapParams(profileKey);
   const geometryDefaults = getShapeProfileGeometryDefaults(profileKey);
   const geometryType = resolveShapeGeometryType(profileKey);
-  const topScale = Number(params.topScale ?? defaults.topScale ?? 1);
-  const defaultTopScale = Number(defaults.topScale ?? 1);
-  const taperFactor = defaultTopScale >= 1
-    ? 1
-    : Math.max((1 - topScale) / Math.max(1 - defaultTopScale, 0.01), 0);
+  const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
+  const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
+  const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+  const topScale = clampTopScale(params.topScale, defaults.topScale ?? 1);
+  const horizontalAngle = resolveTopScaleAngle(keyWidth, topCenterHeight, topScale);
+  const verticalAngle = resolveTopScaleAngle(keyDepth, topCenterHeight, topScale);
 
   return {
     shapeGeometryType: geometryType,
-    profileFrontAngle: isTypewriterGeometryType(geometryType) ? 0 : Math.max(Number(geometryDefaults.profileFrontAngle ?? 0) * taperFactor, 0.1),
-    profileBackAngle: isTypewriterGeometryType(geometryType) ? 0 : Math.max(Number(geometryDefaults.profileBackAngle ?? 0) * taperFactor, 0.1),
-    profileLeftAngle: isTypewriterGeometryType(geometryType) ? 0 : Math.max(Number(geometryDefaults.profileLeftAngle ?? 0) * taperFactor, 0.1),
-    profileRightAngle: isTypewriterGeometryType(geometryType) ? 0 : Math.max(Number(geometryDefaults.profileRightAngle ?? 0) * taperFactor, 0.1),
+    profileFrontAngle: isTypewriterGeometryType(geometryType) ? 0 : verticalAngle,
+    profileBackAngle: isTypewriterGeometryType(geometryType) ? 0 : verticalAngle,
+    profileLeftAngle: isTypewriterGeometryType(geometryType) ? 0 : horizontalAngle,
+    profileRightAngle: isTypewriterGeometryType(geometryType) ? 0 : horizontalAngle,
     topThickness: Math.max(Number(geometryDefaults.topThickness ?? 0.05), 0.05),
     bottomCornerRadius: Math.max(Number(geometryDefaults.bottomCornerRadius ?? 0), 0),
     topCornerRadius: Math.max(Number(geometryDefaults.topCornerRadius ?? 0), 0),
@@ -576,6 +593,8 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_dish_depth: params.dishDepth,
     user_top_pitch_deg: params.topPitchDeg,
     user_top_roll_deg: params.topRollDeg,
+    user_top_offset_x: numberOr(params.topOffsetX, 0),
+    user_top_offset_y: numberOr(params.topOffsetY, 0),
     user_top_hat_enabled: isTopHatGeometryType(shapeGeometry.shapeGeometryType) && Boolean(params.topHatEnabled),
     user_top_hat_top_width: Math.max(numberOr(params.topHatTopWidth, 10.5), 0.2),
     user_top_hat_top_depth: Math.max(numberOr(params.topHatTopDepth, 9.5), 0.2),

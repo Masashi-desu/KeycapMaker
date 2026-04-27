@@ -112,6 +112,22 @@ function degTan(value) {
   return Math.tan((Number(value) * Math.PI) / 180);
 }
 
+function atanDeg(value) {
+  return (Math.atan(value) * 180) / Math.PI;
+}
+
+function clampTopScale(value, fallback = 1) {
+  const nextValue = Number(value);
+  const fallbackValue = Number(fallback);
+  const resolvedFallback = Number.isFinite(fallbackValue) ? fallbackValue : 1;
+  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : resolvedFallback, 0.5), 1);
+}
+
+function resolveTopScaleAngle(size, topCenterHeight, topScale) {
+  const inset = Math.max(Number(size) * (1 - topScale) / 2, 0);
+  return atanDeg(inset / Math.max(topCenterHeight, 0.1));
+}
+
 function resolveTopSlopeInputMode(value, fallback = "angle") {
   return TOP_SLOPE_INPUT_MODE_VALUES.has(value) ? value : fallback;
 }
@@ -483,17 +499,18 @@ function resolveProfileAngles(params = {}) {
     };
   }
 
-  const topScale = Number(params.topScale ?? defaults.topScale ?? 1);
-  const defaultTopScale = Number(defaults.topScale ?? 1);
-  const taperFactor = defaultTopScale >= 1
-    ? 1
-    : Math.max((1 - topScale) / Math.max(1 - defaultTopScale, 0.01), 0);
+  const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
+  const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
+  const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+  const topScale = clampTopScale(params.topScale, defaults.topScale ?? 1);
+  const horizontalAngle = resolveTopScaleAngle(keyWidth, topCenterHeight, topScale);
+  const verticalAngle = resolveTopScaleAngle(keyDepth, topCenterHeight, topScale);
 
   return {
-    front: Math.max(geometryDefaults.profileFrontAngle * taperFactor, 0.1),
-    back: Math.max(geometryDefaults.profileBackAngle * taperFactor, 0.1),
-    left: Math.max(geometryDefaults.profileLeftAngle * taperFactor, 0.1),
-    right: Math.max(geometryDefaults.profileRightAngle * taperFactor, 0.1),
+    front: verticalAngle,
+    back: verticalAngle,
+    left: horizontalAngle,
+    right: horizontalAngle,
     topThickness: geometryDefaults.topThickness,
   };
 }
@@ -560,8 +577,11 @@ export function syncDerivedKeycapParams(params = {}) {
   params.keyWidth = clampPositiveDimension(params.keyWidth, defaults.keyWidth ?? 18);
   params.keyDepth = clampPositiveDimension(params.keyDepth, defaults.keyDepth ?? 18);
   params.topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+  params.topScale = clampNumberRange(params.topScale, defaults.topScale ?? 1, 0.5, 1);
   params.topPitchDeg = Number.isFinite(Number(params.topPitchDeg)) ? Number(params.topPitchDeg) : Number(defaults.topPitchDeg ?? 0);
   params.topRollDeg = Number.isFinite(Number(params.topRollDeg)) ? Number(params.topRollDeg) : Number(defaults.topRollDeg ?? 0);
+  params.topOffsetX = Number.isFinite(Number(params.topOffsetX)) ? Number(params.topOffsetX) : Number(defaults.topOffsetX ?? 0);
+  params.topOffsetY = Number.isFinite(Number(params.topOffsetY)) ? Number(params.topOffsetY) : Number(defaults.topOffsetY ?? 0);
   params.topSlopeInputMode = resolveTopSlopeInputMode(params.topSlopeInputMode, resolveTopSlopeInputMode(defaults.topSlopeInputMode));
   params.topSurfaceShape = resolveProfileTopSurfaceShape(
     profileKey,
@@ -683,6 +703,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
       value,
       resolveProfileTopSurfaceShape(profileKey, fallback, "flat"),
     );
+  }
+
+  if (fieldKey === "topScale") {
+    return clampNumberRange(value, fallback, 0.5, 1);
   }
 
   if (fieldKey === "legendOutlineDelta") {

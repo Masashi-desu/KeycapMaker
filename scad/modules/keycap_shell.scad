@@ -197,10 +197,16 @@ module rounded_rect_coords(left, right, front, back, radius, quality = "export")
         }
 }
 
-module keycap_top_plane_transform(top_center_height, pitch_deg = 0, roll_deg = 0) {
+module keycap_top_plane_transform(
+    top_center_height,
+    pitch_deg = 0,
+    roll_deg = 0,
+    top_offset_x = 0,
+    top_offset_y = 0
+) {
     multmatrix([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
+        [1, 0, 0, top_offset_x],
+        [0, 1, 0, top_offset_y],
         [keycap_top_plane_slope(roll_deg), keycap_top_plane_slope(pitch_deg), 1, top_center_height],
         [0, 0, 0, 1]
     ])
@@ -221,9 +227,11 @@ module keycap_top_face(
     top_center_height,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
-    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
         linear_extrude(height = 0.01, center = true)
             rounded_rect_coords(left, right, front, back, radius, quality);
 }
@@ -239,9 +247,11 @@ module keycap_top_prism(
     roll_deg = 0,
     height = 1,
     base_z = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
-    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
         translate([0, 0, base_z])
             linear_extrude(height = max(height, 0.01))
                 rounded_rect_coords(left, right, front, back, radius, quality);
@@ -259,7 +269,9 @@ module keycap_outer_shell(
     top_corner_radius,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     base_left = -width / 2;
     base_right = width / 2;
@@ -290,7 +302,9 @@ module keycap_outer_shell(
             top_center_height,
             pitch_deg,
             roll_deg,
-            quality
+            quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     }
 }
@@ -310,7 +324,9 @@ module keycap_inner_clearance_volume(
     top_corner_radius,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
     ) {
     inner_height = keycap_inner_height(top_center_height, dish_depth, top_thickness);
 
@@ -344,7 +360,9 @@ module keycap_inner_clearance_volume(
             inner_height,
             pitch_deg,
             roll_deg,
-            quality
+            quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     }
 }
@@ -364,7 +382,9 @@ module keycap_inner_hollow(
     top_corner_radius,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     keycap_inner_clearance_volume(
         width = width,
@@ -381,7 +401,9 @@ module keycap_inner_hollow(
         top_corner_radius = top_corner_radius,
         pitch_deg = pitch_deg,
         roll_deg = roll_deg,
-        quality = quality
+        quality = quality,
+        top_offset_x = top_offset_x,
+        top_offset_y = top_offset_y
     );
 }
 
@@ -397,7 +419,9 @@ module keycap_dish_volume(
     quality = "export",
     z_shift = 0,
     dish_plan_width = undef,
-    dish_plan_depth = undef
+    dish_plan_depth = undef,
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     safe_radius = max(dish_radius, 0.1);
     resolved_dish_plan_width = is_undef(dish_plan_width) ? width : dish_plan_width;
@@ -427,7 +451,7 @@ module keycap_dish_volume(
     );
 
     // Keep dish curvature in the same local top-plane coordinates as the shell tilt.
-    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+    keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
         if (dish_type == "cylindrical") {
             scale([dish_width_scale, 1, 1])
                 translate([0, 0, dish_center_local_z])
@@ -452,7 +476,9 @@ module keycap_dish_cut(
     surface_z_shift = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     if (keycap_dish_is_active(dish_type, dish_depth) && dish_depth > 0) {
         keycap_dish_volume(
@@ -467,7 +493,9 @@ module keycap_dish_cut(
             z_shift = surface_z_shift,
             dish_plan_width = dish_plan_width,
             dish_plan_depth = dish_plan_depth,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     }
 }
@@ -489,7 +517,9 @@ module keycap_dish_bump(
     surface_z_shift = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     if (keycap_dish_is_active(dish_type, dish_depth) && dish_depth < 0) {
         bump_clip_height = max(abs(dish_depth) + max(dish_radius, 0.1) + 2, 2);
@@ -507,7 +537,9 @@ module keycap_dish_bump(
                 z_shift = surface_z_shift,
                 dish_plan_width = dish_plan_width,
                 dish_plan_depth = dish_plan_depth,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
 
             keycap_top_prism(
@@ -520,7 +552,9 @@ module keycap_dish_bump(
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 height = bump_clip_height,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -543,7 +577,9 @@ module keycap_apply_top_surface(
     surface_z_shift = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     if (!keycap_dish_is_active(dish_type, dish_depth)) {
         children();
@@ -562,7 +598,9 @@ module keycap_apply_top_surface(
                 surface_z_shift = surface_z_shift,
                 dish_plan_width = dish_plan_width,
                 dish_plan_depth = dish_plan_depth,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     } else {
@@ -585,7 +623,9 @@ module keycap_apply_top_surface(
                 surface_z_shift = surface_z_shift,
                 dish_plan_width = dish_plan_width,
                 dish_plan_depth = dish_plan_depth,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -607,7 +647,9 @@ module keycap_top_surface_region(
     top_extra_z = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     region_width = max(right - left, 0.1);
     region_depth = max(back - front, 0.1);
@@ -630,7 +672,9 @@ module keycap_top_surface_region(
         surface_z_shift = top_extra_z,
         dish_plan_width = dish_plan_width,
         dish_plan_depth = dish_plan_depth,
-        quality = quality
+        quality = quality,
+        top_offset_x = top_offset_x,
+        top_offset_y = top_offset_y
     )
         keycap_top_prism(
             left = left,
@@ -643,7 +687,9 @@ module keycap_top_surface_region(
             roll_deg = roll_deg,
             height = region_height,
             base_z = base_z,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
 }
 
@@ -679,7 +725,9 @@ module keycap_top_hat_cap(
     roll_deg = 0,
     surface_z_shift = 0,
     shoulder_radius = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     parent_width = max(parent_top_width, 0.2);
     parent_depth = max(parent_top_depth, 0.2);
@@ -703,7 +751,7 @@ module keycap_top_hat_cap(
     top_z = height < 0 ? -safe_height : safe_height;
 
     if (safe_height > 0.001) {
-        keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg)
+        keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
             translate([0, 0, surface_z_shift])
                 if (abs(shoulder_curve_amount) <= 0.001) {
                     hull() {
@@ -766,7 +814,9 @@ module keycap_shell(
     top_hat_shoulder_radius = 0,
     pitch_deg = 0,
     roll_deg = 0,
-    quality = "export"
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0
 ) {
     base_left = -width / 2;
     base_right = width / 2;
@@ -793,7 +843,9 @@ module keycap_shell(
                 dish_radius = dish_radius,
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             )
                 keycap_outer_shell(
                     width = width,
@@ -807,7 +859,9 @@ module keycap_shell(
                     top_corner_radius = top_corner_radius,
                     pitch_deg = pitch_deg,
                     roll_deg = roll_deg,
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
 
             if (top_hat_enabled && top_hat_height > 0) {
@@ -832,7 +886,9 @@ module keycap_shell(
                         width,
                         depth
                     ),
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
             }
         }
@@ -852,7 +908,9 @@ module keycap_shell(
             top_corner_radius = top_corner_radius,
             pitch_deg = pitch_deg,
             roll_deg = roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
 
         if (top_hat_enabled && top_hat_height < 0) {
@@ -877,7 +935,9 @@ module keycap_shell(
                     width,
                     depth
                 ),
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }

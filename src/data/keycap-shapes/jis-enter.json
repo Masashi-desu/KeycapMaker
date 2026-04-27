@@ -22,8 +22,10 @@
     "topSlopeInputMode": "angle",
     "topPitchDeg": 0,
     "topRollDeg": 0,
+    "topOffsetX": 0,
+    "topOffsetY": 0,
     "wallThickness": 1.2,
-    "topScale": 0.84,
+    "topScale": 0.75,
     "topSurfaceShape": "flat",
     "dishRadius": 45,
     "dishDepth": 0,
@@ -69,7 +71,7 @@
       "id": "top",
       "title": "キートップ",
       "description": "カスタムシェルと同じく、上面中央の基準高さ、フラット / シンドリカル / スフェリカル、前後左右の傾きを調整できます。",
-      "fieldKeys": ["topCenterHeight", "topSurfaceShape", "dishDepth", "topHatEnabled", "topHatInset", "topHatTopRadius", "topHatHeight", "topHatShoulderAngle", "topHatShoulderRadius", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "fieldKeys": ["topCenterHeight", "topOffsetX", "topOffsetY", "topSurfaceShape", "dishDepth", "topHatEnabled", "topHatInset", "topHatTopRadius", "topHatHeight", "topHatShoulderAngle", "topHatShoulderRadius", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",

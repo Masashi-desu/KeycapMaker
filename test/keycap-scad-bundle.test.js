@@ -151,6 +151,59 @@ test("印字作業領域はキーの footprint を上限にしない", async () 
   }
 });
 
+test("正方形キーの topScale は上面を正方形のまま縮める", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const keyWidth = 18;
+    const keyDepth = 18;
+    const topCenterHeight = 9.5;
+    const topScale = 0.5;
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        keyWidth,
+        keyDepth,
+        topCenterHeight,
+        topScale,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    const frontAngle = readScadDefinition(jobScad, "user_profile_front_angle");
+    const leftAngle = readScadDefinition(jobScad, "user_profile_left_angle");
+    const topWidth = keyWidth - topCenterHeight * Math.tan(leftAngle * Math.PI / 180) * 2;
+    const topDepth = keyDepth - topCenterHeight * Math.tan(frontAngle * Math.PI / 180) * 2;
+
+    assert.ok(Math.abs(frontAngle - leftAngle) < 1e-9);
+    assert.ok(Math.abs(topWidth - keyWidth * topScale) < 1e-9);
+    assert.ok(Math.abs(topDepth - keyDepth * topScale) < 1e-9);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("typewriter の上面基準高さを SCAD wrapper へ渡す", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,
@@ -178,12 +231,16 @@ test("typewriter の上面基準高さを SCAD wrapper へ渡す", async () => {
       params: {
         ...registry.createDefaultKeycapParams("typewriter"),
         typewriterMountHeight: 14.2,
+        topOffsetX: 1.5,
+        topOffsetY: -2.25,
       },
     });
     const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
 
     assert.ok(jobScad, "keycap job SCAD should be generated");
     assert.equal(readScadDefinition(jobScad, "user_typewriter_mount_height"), 14.2);
+    assert.equal(readScadDefinition(jobScad, "user_top_offset_x"), 1.5);
+    assert.equal(readScadDefinition(jobScad, "user_top_offset_y"), -2.25);
   } finally {
     await server.close();
     restoreBrowserMocks();

@@ -206,7 +206,7 @@ const ja = Object.freeze({
     },
     topScale: {
       label: "上面のすぼまり",
-      hint: "数字を小さくすると上面が細く見えます",
+      hint: "数字を小さくすると、横幅と奥行きを同じ比率で保ったまま上面が細くなります",
     },
     bodyColor: {
       label: "本体の色",
@@ -217,6 +217,18 @@ const ja = Object.freeze({
       typewriterLabel: "キートップの厚み",
       hint: "dish を付ける前のキートップ中央です。現在の中央表面は {height} です",
       typewriterHint: "薄いキートップの底から上面までの厚みです",
+    },
+    topOffset: {
+      label: "キートップ中心のオフセット",
+      hint: "ステム位置は変えずに、キートップ中心だけを左右 / 前後へ動かします",
+    },
+    topOffsetX: {
+      label: "左右のオフセット",
+      hint: "ステム位置は変えずに、キートップ中心を左右へ動かします",
+    },
+    topOffsetY: {
+      label: "前後のオフセット",
+      hint: "ステム位置は変えずに、キートップ中心を前後へ動かします",
     },
     typewriterMountHeight: {
       label: "上面基準の高さ",

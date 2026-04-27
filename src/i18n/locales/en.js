@@ -206,7 +206,7 @@ const en = Object.freeze({
     },
     topScale: {
       label: "Top Taper",
-      hint: "Lower numbers make the top face look narrower",
+      hint: "Lower numbers narrow the top face while keeping width and depth at the same ratio",
     },
     bodyColor: {
       label: "Body Color",
@@ -217,6 +217,18 @@ const en = Object.freeze({
       typewriterLabel: "Keytop Thickness",
       hint: "The keytop center before adding the dish. Current center surface: {height}.",
       typewriterHint: "The thickness from the bottom of the thin keytop to the top surface",
+    },
+    topOffset: {
+      label: "Keytop Center Offset",
+      hint: "Move only the keytop center left/right or front/back without moving the mount",
+    },
+    topOffsetX: {
+      label: "Left-Right Offset",
+      hint: "Move the keytop center left or right without moving the mount",
+    },
+    topOffsetY: {
+      label: "Front-Back Offset",
+      hint: "Move the keytop center forward or backward without moving the mount",
     },
     typewriterMountHeight: {
       label: "Top-Referenced Height",

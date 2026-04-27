@@ -470,6 +470,18 @@ function atanDeg(value) {
   return (Math.atan(value) * 180) / Math.PI;
 }
 
+function clampTopScale(value, fallback = 1) {
+  const nextValue = Number(value);
+  const fallbackValue = Number(fallback);
+  const resolvedFallback = Number.isFinite(fallbackValue) ? fallbackValue : 1;
+  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : resolvedFallback, 0.5), 1);
+}
+
+function resolveTopScaleAngle(size, topCenterHeight, topScale) {
+  const inset = Math.max(Number(size) * (1 - topScale) / 2, 0);
+  return atanDeg(inset / Math.max(topCenterHeight, 0.1));
+}
+
 function resolveShapeProfileGeometryDefaults(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   const geometryDefaults = getShapeProfileGeometryDefaults(profileKey);
   const geometryType = resolveShapeGeometryType(profileKey);
@@ -501,17 +513,18 @@ function resolveProfileAngles(params = {}) {
     };
   }
 
-  const topScale = Number(params.topScale ?? defaults.topScale ?? 1);
-  const defaultTopScale = Number(defaults.topScale ?? 1);
-  const taperFactor = defaultTopScale >= 1
-    ? 1
-    : Math.max((1 - topScale) / Math.max(1 - defaultTopScale, 0.01), 0);
+  const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
+  const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
+  const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+  const topScale = clampTopScale(params.topScale, defaults.topScale ?? 1);
+  const horizontalAngle = resolveTopScaleAngle(keyWidth, topCenterHeight, topScale);
+  const verticalAngle = resolveTopScaleAngle(keyDepth, topCenterHeight, topScale);
 
   return {
-    front: Math.max(geometryDefaults.profileFrontAngle * taperFactor, 0.1),
-    back: Math.max(geometryDefaults.profileBackAngle * taperFactor, 0.1),
-    left: Math.max(geometryDefaults.profileLeftAngle * taperFactor, 0.1),
-    right: Math.max(geometryDefaults.profileRightAngle * taperFactor, 0.1),
+    front: verticalAngle,
+    back: verticalAngle,
+    left: horizontalAngle,
+    right: horizontalAngle,
     topThickness: geometryDefaults.topThickness,
   };
 }
@@ -853,6 +866,26 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.1,
         min: 1,
+      },
+      {
+        key: "topOffsetX",
+        label: () => t("fields.topOffset.label"),
+        hint: () => t("fields.topOffset.hint"),
+        type: "number-pair",
+        unit: "mm",
+        step: 0.1,
+        primaryMiniLabel: () => t("fields.topOffsetX.label"),
+        secondaryLabel: () => t("fields.topOffsetY.label"),
+        secondaryField: "topOffsetY",
+        secondaryUnit: "mm",
+        secondaryStep: 0.1,
+      },
+      {
+        key: "topOffsetY",
+        label: () => t("fields.topOffsetY.label"),
+        hint: () => t("fields.topOffsetY.hint"),
+        unit: "mm",
+        step: 0.1,
       },
       {
         key: "topSurfaceShape",
@@ -1921,7 +1954,8 @@ function renderFieldGroup(group, groupIndex) {
   const groupBodyId = `field-group-body-${groupId}`;
   const groupFieldByKey = new Map(group.fields.map((field) => [field.key, field]));
   const dependentFieldKeys = getVisibleDependentFieldKeys(group.fields, groupFieldByKey);
-  const visibleFields = group.fields.filter((field) => isFieldVisible(field) && !dependentFieldKeys.has(field.key));
+  const pairedFieldKeys = getVisiblePairedFieldKeys(group.fields, groupFieldByKey);
+  const visibleFields = group.fields.filter((field) => isFieldVisible(field) && !dependentFieldKeys.has(field.key) && !pairedFieldKeys.has(field.key));
   const toggleLabel = isCollapsed
     ? t("fieldGroup.expand", { title: group.title })
     : t("fieldGroup.collapse", { title: group.title });
@@ -1961,6 +1995,15 @@ function getVisibleDependentFieldKeys(fields, fieldByKey) {
       .filter((field) => isFieldVisible(field) && canRenderDependentFields(field))
       .flatMap((field) => field.dependentFieldKeys ?? [])
       .filter((fieldKey) => fieldByKey.has(fieldKey)),
+  );
+}
+
+function getVisiblePairedFieldKeys(fields, fieldByKey) {
+  return new Set(
+    fields
+      .filter((field) => isFieldVisible(field) && field.type === "number-pair")
+      .map((field) => field.secondaryField)
+      .filter((fieldKey) => fieldKey && fieldByKey.has(fieldKey) && isFieldVisible(fieldByKey.get(fieldKey))),
   );
 }
 
@@ -2391,6 +2434,53 @@ function renderField(field, options = {}) {
           </span>
         </span>
       </label>
+    `;
+  }
+
+  if (field.type === "number-pair") {
+    const secondaryValue = state.keycapParams[field.secondaryField];
+    const secondaryFieldConfig = getFieldConfig(field.secondaryField);
+    const secondaryMinValue = resolveFieldAttribute(field.secondaryMin ?? secondaryFieldConfig?.min);
+    const secondaryMaxValue = resolveFieldAttribute(field.secondaryMax ?? secondaryFieldConfig?.max);
+    const secondaryStepValue = resolveFieldAttribute(field.secondaryStep ?? secondaryFieldConfig?.step);
+
+    return `
+      <div class="field field--number-pair${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        <span class="field-copy">
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
+        </span>
+        <span class="field-control-cluster field-control-cluster--pair">
+          <label class="field-mini-control">
+            <span class="field-mini-control__label">${primaryMiniLabel}</span>
+            <span class="field-control">
+              <input
+                type="number"
+                data-field="${field.key}"
+                value="${formatNumericFieldValue(field.key, value)}"
+                ${fieldMin != null ? `min="${fieldMin}"` : ""}
+                ${fieldMax != null ? `max="${fieldMax}"` : ""}
+                ${fieldStep != null ? `step="${fieldStep}"` : ""}
+              />
+              ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
+            </span>
+          </label>
+          <label class="field-mini-control">
+            <span class="field-mini-control__label">${secondaryLabel}</span>
+            <span class="field-control">
+              <input
+                type="number"
+                data-field="${field.secondaryField}"
+                value="${formatNumericFieldValue(field.secondaryField, secondaryValue)}"
+                ${secondaryMinValue != null ? `min="${secondaryMinValue}"` : ""}
+                ${secondaryMaxValue != null ? `max="${secondaryMaxValue}"` : ""}
+                ${secondaryStepValue != null ? `step="${secondaryStepValue}"` : ""}
+              />
+              ${field.secondaryUnit ? `<span class="field-unit">${field.secondaryUnit}</span>` : ""}
+            </span>
+          </label>
+        </span>
+      </div>
     `;
   }
 

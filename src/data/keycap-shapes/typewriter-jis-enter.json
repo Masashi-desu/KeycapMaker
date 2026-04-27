@@ -22,6 +22,8 @@
     "topSlopeInputMode": "angle",
     "topPitchDeg": 0,
     "topRollDeg": 0,
+    "topOffsetX": 0,
+    "topOffsetY": 0,
     "rimEnabled": true,
     "rimWidth": 1,
     "rimHeightUp": 0.5,
@@ -70,7 +72,7 @@
       "id": "top",
       "title": "キートップ",
       "description": "タイプライターと同じく、薄いキートップの厚み、リム、前後左右の傾きを調整できます。",
-      "fieldKeys": ["typewriterMountHeight", "topCenterHeight", "topSurfaceShape", "dishDepth", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
+      "fieldKeys": ["typewriterMountHeight", "topCenterHeight", "topOffsetX", "topOffsetY", "topSurfaceShape", "dishDepth", "rimEnabled", "rimWidth", "rimHeightUp", "rimHeightDown", "rimColor", "topSlopeInputMode", "topPitchDeg", "topRollDeg", "topFrontHeight", "topBackHeight", "topLeftHeight", "topRightHeight"]
     },
     {
       "id": "legend",

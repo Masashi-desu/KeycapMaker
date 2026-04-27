@@ -118,6 +118,8 @@ top_shape_type = assert(
 dish_depth = top_shape_type == "flat" ? 0 : requested_dish_depth;
 top_pitch_deg = required_param(user_top_pitch_deg, "user_top_pitch_deg");
 top_roll_deg = required_param(user_top_roll_deg, "user_top_roll_deg");
+top_offset_x = required_param(user_top_offset_x, "user_top_offset_x");
+top_offset_y = required_param(user_top_offset_y, "user_top_offset_y");
 requested_top_hat_enabled = required_param(user_top_hat_enabled, "user_top_hat_enabled");
 top_hat_top_width = positive_dimension(required_param(user_top_hat_top_width, "user_top_hat_top_width"));
 top_hat_top_depth = positive_dimension(required_param(user_top_hat_top_depth, "user_top_hat_top_depth"));
@@ -241,6 +243,8 @@ stem_safe_radius = stem_footprint_radius(
 );
 stem_auto_contact_height = keycap_inner_height(top_center_height, dish_depth, top_thickness)
     + stem_safe_radius * stem_plane_slope_magnitude(top_pitch_deg, top_roll_deg)
+    + abs(top_offset_x * tan(top_roll_deg))
+    + abs(top_offset_y * tan(top_pitch_deg))
     - stem_inset
     + stem_clip_overlap;
 typewriter_stem_height = typewriter_stem_height_from_mount_height(typewriter_mount_height, top_center_height);
@@ -283,7 +287,7 @@ homing_bar_surface_delta = homing_bar_anchor_surface_z - homing_bar_anchor_plane
 
 module keycap_legend_flat_block(height = legend_total_height, quality = "export") {
     if (legend_enabled && legend_has_text && legend_total_height > 0) {
-        keycap_top_plane_transform(active_top_center_height, top_pitch_deg, top_roll_deg)
+        keycap_top_plane_transform(active_top_center_height, top_pitch_deg, top_roll_deg, top_offset_x, top_offset_y)
             legend_block(
                 label = legend_text,
                 width = legend_width,
@@ -328,7 +332,9 @@ module keycap_legend_surface_volume(top_overlap = 0, quality = "export") {
                 top_extra_z = legend_surface_height + top_overlap,
                 dish_plan_width = key_width,
                 dish_plan_depth = key_depth,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -354,7 +360,9 @@ module keycap_body_shell_positive(quality = "export") {
             dish_depth = dish_depth,
             pitch_deg = top_pitch_deg,
             roll_deg = top_roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     } else if (shape_geometry_type == "typewriter_jis_enter") {
         keycap_jis_enter_typewriter_shell(
@@ -369,7 +377,9 @@ module keycap_body_shell_positive(quality = "export") {
             dish_depth = dish_depth,
             pitch_deg = top_pitch_deg,
             roll_deg = top_roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     } else if (shape_geometry_type == "jis_enter") {
         keycap_jis_enter_shell(
@@ -397,7 +407,9 @@ module keycap_body_shell_positive(quality = "export") {
             top_hat_shoulder_radius = top_hat_shoulder_radius,
             pitch_deg = top_pitch_deg,
             roll_deg = top_roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     } else {
         keycap_shell(
@@ -424,7 +436,9 @@ module keycap_body_shell_positive(quality = "export") {
             top_hat_shoulder_radius = top_hat_shoulder_radius,
             pitch_deg = top_pitch_deg,
             roll_deg = top_roll_deg,
-            quality = quality
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y
         );
     }
 }
@@ -459,7 +473,9 @@ module keycap_body_rim_clearance_volume(quality = "export") {
                 dish_depth = dish_depth,
                 pitch_deg = top_pitch_deg,
                 roll_deg = top_roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         } else {
             keycap_typewriter_rim(
@@ -475,7 +491,9 @@ module keycap_body_rim_clearance_volume(quality = "export") {
                 dish_depth = dish_depth,
                 pitch_deg = top_pitch_deg,
                 roll_deg = top_roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
@@ -568,7 +586,9 @@ module keycap_stem_clip_volume(quality = "export") {
                     top_corner_radius = top_corner_radius,
                     pitch_deg = top_pitch_deg,
                     roll_deg = top_roll_deg,
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
             } else {
                 keycap_inner_clearance_volume(
@@ -586,7 +606,9 @@ module keycap_stem_clip_volume(quality = "export") {
                     top_corner_radius = top_corner_radius,
                     pitch_deg = top_pitch_deg,
                     roll_deg = top_roll_deg,
-                    quality = quality
+                    quality = quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y
                 );
             }
     }
@@ -607,7 +629,7 @@ module keycap_stem(quality = "export") {
 
 module keycap_homing_bar(quality = "export") {
     if (homing_bar_enabled) {
-        keycap_top_plane_transform(active_top_center_height, top_pitch_deg, top_roll_deg)
+        keycap_top_plane_transform(active_top_center_height, top_pitch_deg, top_roll_deg, top_offset_x, top_offset_y)
             homing_bar_blank(
                 length = homing_bar_length,
                 width = homing_bar_width,
@@ -639,7 +661,9 @@ module keycap_rim_positive(quality = "export") {
                 dish_depth = dish_depth,
                 pitch_deg = top_pitch_deg,
                 roll_deg = top_roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         } else {
             keycap_typewriter_rim(
@@ -655,7 +679,9 @@ module keycap_rim_positive(quality = "export") {
                 dish_depth = dish_depth,
                 pitch_deg = top_pitch_deg,
                 roll_deg = top_roll_deg,
-                quality = quality
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
             );
         }
     }
