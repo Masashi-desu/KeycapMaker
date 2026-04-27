@@ -2947,14 +2947,42 @@ function syncFieldHint(fieldKey) {
   }
 }
 
+function syncFieldConstraintAttribute(input, attributeName, value) {
+  if (value == null) {
+    input.removeAttribute(attributeName);
+    return;
+  }
+
+  input.setAttribute(attributeName, `${value}`);
+}
+
+function syncNumericFieldConstraints(input, fieldConfig) {
+  syncFieldConstraintAttribute(input, "min", resolveFieldAttribute(fieldConfig?.min));
+  syncFieldConstraintAttribute(input, "max", resolveFieldAttribute(fieldConfig?.max));
+  syncFieldConstraintAttribute(input, "step", resolveFieldAttribute(fieldConfig?.step));
+}
+
+function isInputNumericallySynced(input, value) {
+  const inputValue = String(input.value ?? "").trim();
+  const inputNumber = Number(inputValue);
+  const stateNumber = Number(value);
+  return inputValue.length > 0
+    && Number.isFinite(inputNumber)
+    && Number.isFinite(stateNumber)
+    && Math.abs(inputNumber - stateNumber) < 1e-9;
+}
+
 function syncVisibleTopFieldState(activeField = null) {
   TOP_LIVE_FIELD_KEYS.forEach((fieldKey) => {
     const input = app.querySelector(`[data-field="${fieldKey}"]`);
+    const fieldConfig = getFieldConfig(fieldKey);
     if (!input) {
       return;
     }
 
-    if (fieldKey !== activeField) {
+    syncNumericFieldConstraints(input, fieldConfig);
+
+    if (fieldKey !== activeField || !isInputNumericallySynced(input, state.keycapParams[fieldKey])) {
       input.value = formatNumericFieldValue(fieldKey, state.keycapParams[fieldKey]);
     }
 
