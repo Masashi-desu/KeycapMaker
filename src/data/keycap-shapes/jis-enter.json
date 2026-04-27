@@ -64,7 +64,7 @@
     {
       "id": "shape",
       "title": "キーキャップの形",
-      "description": "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法と左下の欠き込みを調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算します。",
+      "description": "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法と左下の欠き込みを調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
       "fieldKeys": ["shapeProfile", "keyWidth", "keyDepth", "jisEnterNotchWidth", "jisEnterNotchDepth", "wallThickness", "topScale", "bodyColor"]
     },
     {

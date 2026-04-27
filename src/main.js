@@ -103,7 +103,10 @@ let pendingLegendFontPickerFocus = false;
 const textDecoder = new TextDecoder();
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
 const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
-const KEY_UNIT_MM = 18;
+const DEFAULT_KEY_UNIT_MM = 18;
+const KEY_UNIT_MIN_MM = 1;
+const KEY_UNIT_STORAGE_KEY = "keycap-maker:key-unit-mm";
+const KEY_UNIT_FIELD_KEY = "keyUnitMm";
 const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
@@ -158,6 +161,59 @@ const workspaceSections = [
 
 function t(key, values = {}, fallback = key) {
   return translate(state.locale, key, values, fallback);
+}
+
+function sanitizeKeyUnitMm(value, fallback = DEFAULT_KEY_UNIT_MM) {
+  const nextValue = Number(value);
+  const fallbackValue = Number(fallback);
+  const resolvedFallback = Number.isFinite(fallbackValue) && fallbackValue >= KEY_UNIT_MIN_MM
+    ? fallbackValue
+    : DEFAULT_KEY_UNIT_MM;
+
+  return Number.isFinite(nextValue) && nextValue >= KEY_UNIT_MIN_MM
+    ? nextValue
+    : resolvedFallback;
+}
+
+function readKeyUnitMmPreference() {
+  try {
+    return sanitizeKeyUnitMm(window.localStorage?.getItem(KEY_UNIT_STORAGE_KEY));
+  } catch {
+    return DEFAULT_KEY_UNIT_MM;
+  }
+}
+
+function saveKeyUnitMmPreference(value) {
+  try {
+    window.localStorage?.setItem(KEY_UNIT_STORAGE_KEY, `${sanitizeKeyUnitMm(value)}`);
+  } catch {}
+}
+
+function getKeyUnitMm() {
+  return sanitizeKeyUnitMm(state?.keyUnitMm);
+}
+
+function formatCompactNumber(value, digits = 2) {
+  const nextValue = Number(value);
+  if (!Number.isFinite(nextValue)) {
+    return "";
+  }
+
+  return nextValue.toFixed(digits).replace(/\.?0+$/, "");
+}
+
+function formatKeyUnitMmValue(value = getKeyUnitMm()) {
+  return formatCompactNumber(value, 2);
+}
+
+function formatKeyUnitMmInputValue(value = getKeyUnitMm()) {
+  return formatCompactNumber(value, 2);
+}
+
+function getKeyUnitCopyValues() {
+  return {
+    unitBase: formatKeyUnitMmValue(),
+  };
 }
 
 function getWorkspaceSectionLabel(section) {
@@ -763,8 +819,8 @@ const fieldGroupTemplates = [
     title: () => t("shapeProfiles.custom-shell.fieldGroups.shape.title"),
     description: (params) => (
       isTypewriterShapeProfile(params.shapeProfile)
-        ? t("fieldGroups.shapeDescriptionTypewriter")
-        : t("fieldGroups.shapeDescriptionShell")
+        ? t("fieldGroups.shapeDescriptionTypewriter", getKeyUnitCopyValues())
+        : t("fieldGroups.shapeDescriptionShell", getKeyUnitCopyValues())
     ),
     fields: [
       {
@@ -777,7 +833,7 @@ const fieldGroupTemplates = [
       {
         key: "keyWidth",
         label: () => t("fields.keyWidth.label"),
-        hint: () => t("fields.keyWidth.hint"),
+        hint: () => t("fields.keyWidth.hint", getKeyUnitCopyValues()),
         type: "linked-size",
         unit: "mm",
         step: 0.1,
@@ -792,7 +848,7 @@ const fieldGroupTemplates = [
       {
         key: "keyDepth",
         label: () => t("fields.keyDepth.label"),
-        hint: () => t("fields.keyDepth.hint"),
+        hint: () => t("fields.keyDepth.hint", getKeyUnitCopyValues()),
         type: "linked-size",
         unit: "mm",
         step: 0.1,
@@ -931,7 +987,7 @@ const fieldGroupTemplates = [
         secondaryField: "topHatTopWidthUnits",
         secondaryUnit: "u",
         secondaryStep: 0.05,
-        secondaryMin: TOP_HAT_MIN_SIZE / KEY_UNIT_MM,
+        secondaryMin: () => TOP_HAT_MIN_SIZE / getKeyUnitMm(),
         visibleWhen: (params) => params.topHatEnabled,
       },
       {
@@ -947,7 +1003,7 @@ const fieldGroupTemplates = [
         secondaryField: "topHatTopDepthUnits",
         secondaryUnit: "u",
         secondaryStep: 0.05,
-        secondaryMin: TOP_HAT_MIN_SIZE / KEY_UNIT_MM,
+        secondaryMin: () => TOP_HAT_MIN_SIZE / getKeyUnitMm(),
         visibleWhen: (params) => params.topHatEnabled,
       },
       {
@@ -1354,17 +1410,44 @@ function getFieldConfig(fieldKey, profileKey = state.keycapParams?.shapeProfile 
 }
 
 function getActiveFieldGroups(profileKey = state.keycapParams?.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY) {
+  const unitCopyValues = getKeyUnitCopyValues();
+
   return getShapeProfileFieldGroups(profileKey)
     .map((group) => ({
       ...group,
       title: t(`shapeProfiles.${profileKey}.fieldGroups.${group.id}.title`, {}, resolveDynamicCopy(group.title)),
-      fields: (group.fieldKeys ?? [])
-        .map((fieldKey) => getFieldConfig(fieldKey, profileKey))
-        .filter(Boolean),
+      fields: getGroupFieldConfigs(group, profileKey),
       description: group.descriptionKey != null
         ? (FIELD_GROUP_DESCRIPTION_RESOLVERS[group.descriptionKey] ?? group.description ?? "")
-        : t(`shapeProfiles.${profileKey}.fieldGroups.${group.id}.description`, {}, resolveDynamicCopy(group.description)),
+        : t(`shapeProfiles.${profileKey}.fieldGroups.${group.id}.description`, unitCopyValues, resolveDynamicCopy(group.description)),
     }));
+}
+
+function getGroupFieldConfigs(group, profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  const fields = (group.fieldKeys ?? [])
+    .map((fieldKey) => getFieldConfig(fieldKey, profileKey))
+    .filter(Boolean);
+
+  if (group.id !== "shape") {
+    return fields;
+  }
+
+  const keyWidthIndex = fields.findIndex((field) => field.key === "keyWidth");
+  const insertIndex = keyWidthIndex >= 0 ? keyWidthIndex : fields.length;
+  fields.splice(insertIndex, 0, getKeyUnitBasisFieldConfig());
+  return fields;
+}
+
+function getKeyUnitBasisFieldConfig() {
+  return {
+    key: KEY_UNIT_FIELD_KEY,
+    type: "key-unit-basis",
+    label: () => t("unitBasis.fieldLabel"),
+    hint: () => t("unitBasis.fieldHint"),
+    unit: "mm",
+    min: KEY_UNIT_MIN_MM,
+    step: 0.05,
+  };
 }
 
 function getShapeProfileVisibleFieldKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
@@ -1395,6 +1478,7 @@ const state = {
   legendFontPickerQuery: "",
   copiedFontAttributionKey: "",
   collapsedFieldGroups: createFieldGroupCollapseState(),
+  keyUnitMm: readKeyUnitMmPreference(),
   keycapParams: createInitialKeycapParams(),
 };
 
@@ -1464,7 +1548,7 @@ function formatNumericFieldValue(fieldKey, value) {
 }
 
 function formatUnitInputValue(value = state.keycapParams.keyWidth) {
-  return (Number(value) / KEY_UNIT_MM).toFixed(2);
+  return (Number(value) / getKeyUnitMm()).toFixed(2);
 }
 
 function resolvePublicAssetUrl(relativePath) {
@@ -1947,6 +2031,13 @@ function renderNameFieldCard() {
   `;
 }
 
+function renderKeyUnitBasisReadout() {
+  return t("unitBasis.readout", {
+    widthUnits: formatUnitInputValue(state.keycapParams.keyWidth),
+    depthUnits: formatUnitInputValue(state.keycapParams.keyDepth),
+  });
+}
+
 function renderFieldGroup(group, groupIndex) {
   const groupId = group.id ?? `group-${groupIndex}`;
   const isCollapsed = state.collapsedFieldGroups[groupId] === true;
@@ -1980,7 +2071,7 @@ function renderFieldGroup(group, groupIndex) {
         </div>
       </div>
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
-        <p class="field-group-description">${groupDescription}</p>
+        <p class="field-group-description" data-field-group-description="${escapeHtml(groupId)}">${groupDescription}</p>
         <div class="field-grid">
           ${visibleFields.map((field) => renderFieldWithDependents(field, groupFieldByKey)).join("")}
         </div>
@@ -2228,6 +2319,32 @@ function renderField(field, options = {}) {
   const fieldClassName = options.className ? ` ${options.className}` : "";
   const dependentFields = options.dependentFields ?? [];
   const dependentClassName = dependentFields.length > 0 ? " field--with-dependents" : "";
+
+  if (field.type === "key-unit-basis") {
+    const inputId = `field-control-${field.key}`;
+
+    return `
+      <div class="field field--key-unit-basis${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        <label class="field-copy" for="${inputId}">
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
+        </label>
+        <span class="field-control">
+          <input
+            id="${inputId}"
+            type="number"
+            data-key-unit-mm
+            value="${formatKeyUnitMmInputValue()}"
+            ${fieldMin != null ? `min="${fieldMin}"` : ""}
+            ${fieldStep != null ? `step="${fieldStep}"` : ""}
+            aria-label="${escapeHtml(fieldLabel)}"
+          />
+          ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
+        </span>
+        <span class="key-unit-basis-readout" aria-live="polite" data-key-unit-readout>${renderKeyUnitBasisReadout()}</span>
+      </div>
+    `;
+  }
 
   if (field.type === "checkbox") {
     const checkboxControl = `
@@ -2640,6 +2757,12 @@ function handleInspectorCardInput(event) {
     return;
   }
 
+  const keyUnitInput = getClosestFromEventTarget(event, "[data-key-unit-mm]");
+  if (keyUnitInput) {
+    handleKeyUnitBasisInput(keyUnitInput);
+    return;
+  }
+
   const input = getClosestFromEventTarget(event, "[data-field]");
   if (!input || input.type === "checkbox" || input.tagName === "SELECT") {
     return;
@@ -2652,6 +2775,12 @@ function handleInspectorCardInput(event) {
 }
 
 function handleInspectorCardChange(event) {
+  const keyUnitInput = getClosestFromEventTarget(event, "[data-key-unit-mm]");
+  if (keyUnitInput) {
+    handleKeyUnitBasisInput(keyUnitInput, { commit: true });
+    return;
+  }
+
   const input = getClosestFromEventTarget(event, "[data-field]");
   if (!input || (input.type !== "checkbox" && input.tagName !== "SELECT")) {
     return;
@@ -3164,7 +3293,7 @@ function getNumericFieldMinimum(fieldKey, fieldConfig) {
   }
 
   if (fieldKey === "topHatTopWidthUnits" || fieldKey === "topHatTopDepthUnits") {
-    return TOP_HAT_MIN_SIZE / KEY_UNIT_MM;
+    return TOP_HAT_MIN_SIZE / getKeyUnitMm();
   }
 
   const minimum = Number(resolveFieldAttribute(fieldConfig?.min));
@@ -3188,6 +3317,79 @@ function parseNumericInputValue(input, fieldKey, fieldConfig) {
   }
 
   return nextValue;
+}
+
+function setKeyUnitBasisInputValidity(input, isValid) {
+  input.setAttribute("aria-invalid", isValid ? "false" : "true");
+  input.closest(".field-control")?.classList.toggle("is-invalid", !isValid);
+}
+
+function parseKeyUnitBasisInput(input) {
+  const rawValue = String(input.value ?? "").trim();
+  if (rawValue.length === 0) {
+    return null;
+  }
+
+  const nextValue = Number(rawValue);
+  return Number.isFinite(nextValue) && nextValue >= KEY_UNIT_MIN_MM ? nextValue : null;
+}
+
+function syncKeyUnitBasisCopy() {
+  const description = app.querySelector("[data-key-unit-description]");
+  if (description) {
+    description.textContent = t("unitBasis.description", getKeyUnitCopyValues());
+  }
+
+  const readout = app.querySelector("[data-key-unit-readout]");
+  if (readout) {
+    readout.textContent = renderKeyUnitBasisReadout();
+  }
+}
+
+function syncUnitLinkedFieldHints() {
+  syncFieldHint("keyWidth");
+  syncFieldHint("keyDepth");
+}
+
+function syncVisibleFieldGroupDescriptions() {
+  const activeFieldGroups = getActiveFieldGroups();
+  app.querySelectorAll("[data-field-group-description]").forEach((element) => {
+    const group = activeFieldGroups.find((entry) => entry.id === element.dataset.fieldGroupDescription);
+    if (group) {
+      element.textContent = resolveDynamicCopy(group.description);
+    }
+  });
+}
+
+function syncAllLinkedSizeInputs() {
+  Object.values(LINKED_SIZE_UNIT_FIELDS).forEach((primaryField) => {
+    syncLinkedSizeInputs(primaryField);
+  });
+}
+
+function handleKeyUnitBasisInput(input, options = {}) {
+  const { commit = false } = options;
+  const nextValue = parseKeyUnitBasisInput(input);
+  if (nextValue == null) {
+    setKeyUnitBasisInputValidity(input, false);
+    if (commit) {
+      input.value = formatKeyUnitMmInputValue();
+      setKeyUnitBasisInputValidity(input, true);
+    }
+    return;
+  }
+
+  state.keyUnitMm = sanitizeKeyUnitMm(nextValue);
+  saveKeyUnitMmPreference(state.keyUnitMm);
+  setKeyUnitBasisInputValidity(input, true);
+  if (commit) {
+    input.value = formatKeyUnitMmInputValue();
+  }
+
+  syncKeyUnitBasisCopy();
+  syncVisibleFieldGroupDescriptions();
+  syncUnitLinkedFieldHints();
+  syncAllLinkedSizeInputs();
 }
 
 function isTopEdgeHeightField(field) {
@@ -3241,7 +3443,7 @@ function handleFieldChange(event) {
       return;
     }
 
-    state.keycapParams[LINKED_SIZE_UNIT_FIELDS[field]] = nextValue * KEY_UNIT_MM;
+    state.keycapParams[LINKED_SIZE_UNIT_FIELDS[field]] = nextValue * getKeyUnitMm();
     syncLinkedSizeInputs(field);
   } else if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
@@ -3397,6 +3599,7 @@ function syncLinkedSizeInputs(changedField) {
   const changedPrimaryField = LINKED_SIZE_UNIT_FIELDS[changedField] ?? changedField;
   const changedUnitField = Object.entries(LINKED_SIZE_UNIT_FIELDS)
     .find(([, primaryField]) => primaryField === changedPrimaryField)?.[0];
+  const primaryFieldConfig = getFieldConfig(changedPrimaryField);
   const primaryInput = app.querySelector(`[data-field="${changedPrimaryField}"]`);
   const unitInput = changedUnitField ? app.querySelector(`[data-field="${changedUnitField}"]`) : null;
 
@@ -3405,13 +3608,19 @@ function syncLinkedSizeInputs(changedField) {
   }
 
   if (!unitInput) {
+    syncKeyUnitBasisCopy();
     return;
   }
+
+  syncFieldConstraintAttribute(unitInput, "min", resolveFieldAttribute(primaryFieldConfig?.secondaryMin));
+  syncFieldConstraintAttribute(unitInput, "step", resolveFieldAttribute(primaryFieldConfig?.secondaryStep));
 
   const syncedUnitValue = formatUnitInputValue(state.keycapParams[changedPrimaryField]);
   if (changedField === changedPrimaryField || !isInputNumericallySynced(unitInput, syncedUnitValue)) {
     unitInput.value = syncedUnitValue;
   }
+
+  syncKeyUnitBasisCopy();
 }
 
 function schedulePreviewRefresh() {

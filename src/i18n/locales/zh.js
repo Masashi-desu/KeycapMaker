@@ -60,6 +60,13 @@ const zh = Object.freeze({
     title: "名称",
     description: "保存时使用的名称。3MF、STL 和编辑数据 JSON 都会使用它，之后读取时也会保留。",
   },
+  unitBasis: {
+    title: "1u 换算",
+    description: "当前按 {unitBase} mm 显示为 1u。",
+    fieldLabel: "1u 基准",
+    fieldHint: "用于窄间距换算。模型尺寸不会改变",
+    readout: "当前尺寸: 宽度 {widthUnits}u / 深度 {depthUnits}u",
+  },
   fieldGroup: {
     expand: "展开{title}",
     collapse: "折叠{title}",
@@ -70,7 +77,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "调整键帽整体尺寸，以及向顶部收窄的程度。宽度和深度都按 18 mm = 1u 换算。",
+          description: "调整键帽整体尺寸，以及向顶部收窄的程度。宽度和深度都按 {unitBase} mm = 1u 换算。",
         },
         top: {
           title: "键顶",
@@ -94,7 +101,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "调整打字机风格的薄键顶外形。宽度和深度都按 18 mm = 1u 换算；R 越大越圆，越小越接近方形。",
+          description: "调整打字机风格的薄键顶外形。宽度和深度都按 {unitBase} mm = 1u 换算；R 越大越圆，越小越接近方形。",
         },
         top: {
           title: "键顶",
@@ -118,7 +125,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "以常见 JIS / ISO 系纵向 Enter 轮廓为基准，调整整体尺寸和左下缺口。宽度和深度都按 18 mm = 1u 换算。",
+          description: "以常见 JIS / ISO 系纵向 Enter 轮廓为基准，调整整体尺寸和左下缺口。宽度和深度都按 {unitBase} mm = 1u 换算。",
         },
         top: {
           title: "键顶",
@@ -142,7 +149,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "以打字机风格的薄型 JIS Enter 轮廓为基准，调整整体尺寸、左下缺口和 R。宽度和深度都按 18 mm = 1u 换算。",
+          description: "以打字机风格的薄型 JIS Enter 轮廓为基准，调整整体尺寸、左下缺口和 R。宽度和深度都按 {unitBase} mm = 1u 换算。",
         },
         top: {
           title: "键顶",
@@ -163,8 +170,8 @@ const zh = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "调整键帽整体尺寸，以及向顶部收窄的程度。宽度和深度都按 18 mm = 1u 换算。",
-    shapeDescriptionTypewriter: "调整打字机风格的薄键顶外形。宽度和深度都按 18 mm = 1u 换算；R 越大越圆，越小越接近方形。",
+    shapeDescriptionShell: "调整键帽整体尺寸，以及向顶部收窄的程度。宽度和深度都按 {unitBase} mm = 1u 换算。",
+    shapeDescriptionTypewriter: "调整打字机风格的薄键顶外形。宽度和深度都按 {unitBase} mm = 1u 换算；R 越大越圆，越小越接近方形。",
     topDescription: "在固定上表面中心基准高度的同时，可用角度或边缘高度编辑前后和左右倾斜。边缘高度输入在内部会规范化为 pitch / roll。",
   },
   fields: {
@@ -178,13 +185,13 @@ const zh = Object.freeze({
     },
     keyWidth: {
       label: "宽度",
-      hint: "宽度与键尺寸联动。18 mm = 1u。",
+      hint: "宽度与键尺寸联动。{unitBase} mm = 1u。",
       secondaryLabel: "键尺寸",
       miniLabel: "宽度",
     },
     keyDepth: {
       label: "深度",
-      hint: "深度与深度尺寸联动。18 mm = 1u。",
+      hint: "深度与深度尺寸联动。{unitBase} mm = 1u。",
       secondaryLabel: "深度尺寸",
       miniLabel: "深度",
     },

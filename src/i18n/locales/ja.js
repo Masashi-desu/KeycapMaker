@@ -60,6 +60,13 @@ const ja = Object.freeze({
     title: "名称",
     description: "保存するときの名前です。3MF、STL、編集データ JSON に使われ、あとで読み込んでもこの名前が残ります。",
   },
+  unitBasis: {
+    title: "1u 換算",
+    description: "現在は {unitBase} mm を 1u として表示します。",
+    fieldLabel: "1u の基準",
+    fieldHint: "狭ピッチなどの換算用です。モデル寸法は変わりません",
+    readout: "現在の寸法: 横幅 {widthUnits}u / 奥行き {depthUnits}u",
+  },
   fieldGroup: {
     expand: "{title}を展開",
     collapse: "{title}を折りたたむ",
@@ -70,7 +77,7 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算します。",
+          description: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
         },
         top: {
           title: "キートップ",
@@ -94,7 +101,7 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "タイプライター風の薄いキートップ外形を調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
+          description: "タイプライター風の薄いキートップ外形を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
         },
         top: {
           title: "キートップ",
@@ -118,7 +125,7 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法と左下の欠き込みを調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算します。",
+          description: "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法と左下の欠き込みを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
         },
         top: {
           title: "キートップ",
@@ -142,7 +149,7 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、左下の欠き込み、R を調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算します。",
+          description: "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、左下の欠き込み、R を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
         },
         top: {
           title: "キートップ",
@@ -163,8 +170,8 @@ const ja = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算します。",
-    shapeDescriptionTypewriter: "タイプライター風の薄いキートップ外形を調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
+    shapeDescriptionShell: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
+    shapeDescriptionTypewriter: "タイプライター風の薄いキートップ外形を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
     topDescription: "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
   },
   fields: {
@@ -178,13 +185,13 @@ const ja = Object.freeze({
     },
     keyWidth: {
       label: "横幅",
-      hint: "横幅とキーサイズは連動します。18 mm = 1u です",
+      hint: "横幅とキーサイズは連動します。{unitBase} mm = 1u です",
       secondaryLabel: "キーサイズ",
       miniLabel: "横幅",
     },
     keyDepth: {
       label: "奥行き",
-      hint: "奥行きと奥行きサイズは連動します。18 mm = 1u です",
+      hint: "奥行きと奥行きサイズは連動します。{unitBase} mm = 1u です",
       secondaryLabel: "奥行きサイズ",
       miniLabel: "奥行き",
     },

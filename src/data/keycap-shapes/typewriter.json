@@ -63,7 +63,7 @@
     {
       "id": "shape",
       "title": "キーキャップの形",
-      "description": "タイプライター風の薄いキートップ外形を調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
+      "description": "タイプライター風の薄いキートップ外形を調整します。横幅と奥行きは 1u 換算カードの基準で換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
       "fieldKeys": ["shapeProfile", "keyWidth", "keyDepth", "typewriterCornerRadius", "bodyColor"]
     },
     {

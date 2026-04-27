@@ -63,7 +63,7 @@
     {
       "id": "shape",
       "title": "キーキャップの形",
-      "description": "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ 18 mm を 1u として換算します。",
+      "description": "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
       "fieldKeys": ["shapeProfile", "keyWidth", "keyDepth", "wallThickness", "topScale", "bodyColor"]
     },
     {

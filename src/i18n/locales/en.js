@@ -60,6 +60,13 @@ const en = Object.freeze({
     title: "Name",
     description: "This name is used for 3MF, STL, and editor-data JSON files, and it remains when the data is loaded again.",
   },
+  unitBasis: {
+    title: "1u Conversion",
+    description: "Displaying 1u as {unitBase} mm.",
+    fieldLabel: "1u Basis",
+    fieldHint: "For narrow-pitch conversion. Model dimensions do not change",
+    readout: "Current size: width {widthUnits}u / depth {depthUnits}u",
+  },
   fieldGroup: {
     expand: "Expand {title}",
     collapse: "Collapse {title}",
@@ -70,7 +77,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust the overall keycap size and the amount of taper toward the top. Width and depth are each converted using 18 mm as 1u.",
+          description: "Adjust the overall keycap size and the amount of taper toward the top. Width and depth are each converted using {unitBase} mm as 1u.",
         },
         top: {
           title: "Keytop",
@@ -94,7 +101,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust a thin typewriter-style keytop outline. Width and depth are each converted using 18 mm as 1u; a larger R makes it rounder, and a smaller R makes it more square.",
+          description: "Adjust a thin typewriter-style keytop outline. Width and depth are each converted using {unitBase} mm as 1u; a larger R makes it rounder, and a smaller R makes it more square.",
         },
         top: {
           title: "Keytop",
@@ -118,7 +125,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust the overall size and lower-left notch from a common JIS / ISO-style tall Enter footprint. Width and depth are each converted using 18 mm as 1u.",
+          description: "Adjust the overall size and lower-left notch from a common JIS / ISO-style tall Enter footprint. Width and depth are each converted using {unitBase} mm as 1u.",
         },
         top: {
           title: "Keytop",
@@ -142,7 +149,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust a thin typewriter-style JIS Enter footprint, including overall size, lower-left notch, and R. Width and depth are each converted using 18 mm as 1u.",
+          description: "Adjust a thin typewriter-style JIS Enter footprint, including overall size, lower-left notch, and R. Width and depth are each converted using {unitBase} mm as 1u.",
         },
         top: {
           title: "Keytop",
@@ -163,8 +170,8 @@ const en = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "Adjust the overall keycap size and the amount of taper toward the top. Width and depth are each converted using 18 mm as 1u.",
-    shapeDescriptionTypewriter: "Adjust a thin typewriter-style keytop outline. Width and depth are each converted using 18 mm as 1u; a larger R makes it rounder, and a smaller R makes it more square.",
+    shapeDescriptionShell: "Adjust the overall keycap size and the amount of taper toward the top. Width and depth are each converted using {unitBase} mm as 1u.",
+    shapeDescriptionTypewriter: "Adjust a thin typewriter-style keytop outline. Width and depth are each converted using {unitBase} mm as 1u; a larger R makes it rounder, and a smaller R makes it more square.",
     topDescription: "Edit front/back and left/right tilt by angle or edge height while keeping the center reference height fixed. Edge-height input is normalized internally to pitch / roll.",
   },
   fields: {
@@ -178,13 +185,13 @@ const en = Object.freeze({
     },
     keyWidth: {
       label: "Width",
-      hint: "Width and key size are linked. 18 mm = 1u.",
+      hint: "Width and key size are linked. {unitBase} mm = 1u.",
       secondaryLabel: "Key Size",
       miniLabel: "Width",
     },
     keyDepth: {
       label: "Depth",
-      hint: "Depth and depth size are linked. 18 mm = 1u.",
+      hint: "Depth and depth size are linked. {unitBase} mm = 1u.",
       secondaryLabel: "Depth Size",
       miniLabel: "Depth",
     },

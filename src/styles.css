@@ -523,6 +523,14 @@ pre {
   line-height: 1.45;
 }
 
+.key-unit-basis-readout {
+  padding-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .field-grid {
   display: grid;
   gap: 10px;
