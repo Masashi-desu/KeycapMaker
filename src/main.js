@@ -46,6 +46,36 @@ const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycapStlExportPath = "/outputs/keycap-single-material.stl";
+const SIDE_LEGEND_CONFIGS = Object.freeze([
+  {
+    side: "front",
+    paramPrefix: "sideLegendFront",
+    exportTarget: "side_legend_front",
+    outputPath: "/outputs/keycap-side-legend-front-preview.off",
+    colorFieldKey: "sideLegendFrontColor",
+  },
+  {
+    side: "back",
+    paramPrefix: "sideLegendBack",
+    exportTarget: "side_legend_back",
+    outputPath: "/outputs/keycap-side-legend-back-preview.off",
+    colorFieldKey: "sideLegendBackColor",
+  },
+  {
+    side: "left",
+    paramPrefix: "sideLegendLeft",
+    exportTarget: "side_legend_left",
+    outputPath: "/outputs/keycap-side-legend-left-preview.off",
+    colorFieldKey: "sideLegendLeftColor",
+  },
+  {
+    side: "right",
+    paramPrefix: "sideLegendRight",
+    exportTarget: "side_legend_right",
+    outputPath: "/outputs/keycap-side-legend-right-preview.off",
+    colorFieldKey: "sideLegendRightColor",
+  },
+]);
 const CHEVRON_ICON_URLS = Object.freeze({
   expanded: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-up.svg",
   collapsed: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-down.svg",
@@ -111,6 +141,52 @@ const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
 const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
+const LEGEND_FIELD_SUFFIXES = Object.freeze({
+  enabled: "Enabled",
+  color: "Color",
+  text: "Text",
+  fontKey: "FontKey",
+  fontStyleKey: "FontStyleKey",
+  underlineEnabled: "UnderlineEnabled",
+  size: "Size",
+  outlineDelta: "OutlineDelta",
+  height: "Height",
+  embed: "Embed",
+  offsetX: "OffsetX",
+  offsetY: "OffsetY",
+});
+function createLegendFieldKeys(paramPrefix, { side = null } = {}) {
+  const isSideLegend = side != null;
+  const keys = [
+    LEGEND_FIELD_SUFFIXES.enabled,
+    LEGEND_FIELD_SUFFIXES.color,
+    LEGEND_FIELD_SUFFIXES.text,
+    LEGEND_FIELD_SUFFIXES.fontKey,
+    LEGEND_FIELD_SUFFIXES.fontStyleKey,
+    LEGEND_FIELD_SUFFIXES.underlineEnabled,
+    LEGEND_FIELD_SUFFIXES.size,
+    LEGEND_FIELD_SUFFIXES.outlineDelta,
+    LEGEND_FIELD_SUFFIXES.height,
+    ...(!isSideLegend ? [LEGEND_FIELD_SUFFIXES.embed] : []),
+    LEGEND_FIELD_SUFFIXES.offsetX,
+    LEGEND_FIELD_SUFFIXES.offsetY,
+  ];
+
+  return Object.freeze(keys.map((suffix) => legendParamKey(paramPrefix, suffix)));
+}
+
+const LEGEND_CARD_DEFINITIONS = Object.freeze([
+  {
+    id: "legend-card-keytop",
+    title: () => t("legendCards.keytop"),
+    fieldKeys: createLegendFieldKeys("legend"),
+  },
+  ...SIDE_LEGEND_CONFIGS.map((config) => ({
+    id: `legend-card-${config.side}`,
+    title: () => t("legendCards.sidewall", { side: getSideLegendLabel(config.side) }),
+    fieldKeys: createLegendFieldKeys(config.paramPrefix, { side: config.side }),
+  })),
+]);
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const TOP_HAT_MIN_SIZE = 0.2;
@@ -132,6 +208,10 @@ const DEFAULT_KEYCAP_COLORS = Object.freeze({
   bodyColor: "#f8f9fa",
   rimColor: "#d8ccb8",
   legendColor: "#212529",
+  sideLegendFrontColor: "#212529",
+  sideLegendBackColor: "#212529",
+  sideLegendLeftColor: "#212529",
+  sideLegendRightColor: "#212529",
   homingBarColor: "#ff7f00",
 });
 const COLORIS_SWATCHES = Object.freeze([
@@ -161,6 +241,10 @@ const workspaceSections = [
 
 function t(key, values = {}, fallback = key) {
   return translate(state.locale, key, values, fallback);
+}
+
+function legendParamKey(prefix, suffix) {
+  return `${prefix}${suffix}`;
 }
 
 function sanitizeKeyUnitMm(value, fallback = DEFAULT_KEY_UNIT_MM) {
@@ -271,15 +355,15 @@ function getLegendFontPickerResults(query = state.legendFontPickerQuery) {
   });
 }
 
-function getLegendFontFieldHint(params) {
-  const selectedFont = resolveLegendFontConfig(params.legendFontKey);
+function getLegendFontFieldHint(params, fontFieldKey = "legendFontKey") {
+  const selectedFont = resolveLegendFontConfig(params[fontFieldKey]);
   return selectedFont.fontKind === "variable"
     ? t("fields.legendFontKey.variableHint")
     : t("fields.legendFontKey.staticHint");
 }
 
-function getLegendFontStyleFieldOptions(params = state.keycapParams) {
-  const nativeStyleOptions = getKeycapLegendFontStyleOptions(params.legendFontKey);
+function getLegendFontStyleFieldOptions(params = state.keycapParams, fontFieldKey = "legendFontKey") {
+  const nativeStyleOptions = getKeycapLegendFontStyleOptions(params[fontFieldKey]);
   if (nativeStyleOptions.length === 0) {
     return [{ value: LEGEND_FONT_STYLE_FALLBACK_KEY, label: t("font.defaultStyleLabel") }];
   }
@@ -290,12 +374,12 @@ function getLegendFontStyleFieldOptions(params = state.keycapParams) {
   }));
 }
 
-function isLegendFontStyleSelectable(params = state.keycapParams) {
-  return getKeycapLegendFontStyleOptions(params.legendFontKey).length > 0;
+function isLegendFontStyleSelectable(params = state.keycapParams, fontFieldKey = "legendFontKey") {
+  return getKeycapLegendFontStyleOptions(params[fontFieldKey]).length > 0;
 }
 
-function getLegendFontStyleHint(params) {
-  return isLegendFontStyleSelectable(params)
+function getLegendFontStyleHint(params, fontFieldKey = "legendFontKey") {
+  return isLegendFontStyleSelectable(params, fontFieldKey)
     ? t("fields.legendFontStyleKey.selectableHint")
     : t("fields.legendFontStyleKey.defaultHint");
 }
@@ -813,6 +897,149 @@ function getTopHatShoulderRadiusHint(params) {
   });
 }
 
+function getSideLegendLabel(side) {
+  return t(`sideLabels.${side}`, {}, side);
+}
+
+function createLegendControlFields({ paramPrefix, side = null, collapseControlled = false }) {
+  const isSideLegend = side != null;
+  const sideLabel = () => getSideLegendLabel(side);
+  const enabledKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.enabled);
+  const colorKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.color);
+  const textKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.text);
+  const fontKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey);
+  const fontStyleKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.fontStyleKey);
+  const underlineEnabledKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.underlineEnabled);
+  const sizeKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.size);
+  const outlineDeltaKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.outlineDelta);
+  const heightKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.height);
+  const embedKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.embed);
+  const offsetXKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.offsetX);
+  const offsetYKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.offsetY);
+  const visibilityConfig = collapseControlled ? {} : { visibleWhen: (params) => params[enabledKey] };
+  const sideValues = () => ({ side: sideLabel() });
+  const fieldKey = (genericKey, topKey) => (isSideLegend ? `fields.sideLegend.${genericKey}` : `fields.${topKey}`);
+  const enabledDependentFieldKeys = collapseControlled ? [] : [
+    colorKey,
+    textKey,
+    fontKey,
+    sizeKey,
+    outlineDeltaKey,
+    heightKey,
+    ...(isSideLegend ? [] : [embedKey]),
+    offsetXKey,
+    offsetYKey,
+  ];
+
+  return [
+    {
+      key: enabledKey,
+      label: () => (isSideLegend ? t("fields.sideLegend.enabled.label", sideValues()) : t("fields.legendEnabled.label")),
+      hint: () => (isSideLegend ? t("fields.sideLegend.enabled.hint", sideValues()) : t("fields.legendEnabled.hint")),
+      note: collapseControlled ? null : () => t("fields.legendPrintNotice"),
+      type: "checkbox",
+      dependentFieldKeys: enabledDependentFieldKeys,
+    },
+    {
+      key: colorKey,
+      label: () => t(fieldKey("color.label", "legendColor.label"), sideValues()),
+      hint: () => t(fieldKey("color.hint", "legendColor.hint"), sideValues()),
+      type: "color",
+      placeholder: DEFAULT_KEYCAP_COLORS[colorKey] ?? DEFAULT_KEYCAP_COLORS.legendColor,
+      ...visibilityConfig,
+    },
+    {
+      key: textKey,
+      label: () => t(fieldKey("text.label", "legendText.label"), sideValues()),
+      hint: () => t(fieldKey("text.hint", "legendText.hint"), sideValues()),
+      type: "text",
+      maxLength: 24,
+      placeholder: () => t("fields.legendText.placeholder"),
+      ...visibilityConfig,
+    },
+    {
+      key: fontKey,
+      label: () => t(fieldKey("fontKey.label", "legendFontKey.label"), sideValues()),
+      hint: (params) => getLegendFontFieldHint(params, fontKey),
+      type: "font-search",
+      dependentFieldKeys: [fontStyleKey, underlineEnabledKey],
+      ...visibilityConfig,
+    },
+    {
+      key: fontStyleKey,
+      label: () => t(fieldKey("fontStyleKey.label", "legendFontStyleKey.label"), sideValues()),
+      hint: (params) => getLegendFontStyleHint(params, fontKey),
+      type: "select",
+      options: (params) => getLegendFontStyleFieldOptions(params, fontKey),
+      disabledWhen: (params) => !isLegendFontStyleSelectable(params, fontKey),
+      ...visibilityConfig,
+    },
+    {
+      key: underlineEnabledKey,
+      label: () => t(fieldKey("underlineEnabled.label", "legendUnderlineEnabled.label"), sideValues()),
+      hint: () => t(fieldKey("underlineEnabled.hint", "legendUnderlineEnabled.hint"), sideValues()),
+      type: "checkbox",
+      ...visibilityConfig,
+    },
+    {
+      key: sizeKey,
+      label: () => t(fieldKey("size.label", "legendSize.label"), sideValues()),
+      hint: () => t(fieldKey("size.hint", "legendSize.hint"), sideValues()),
+      unit: "mm",
+      step: 0.1,
+      min: LEGEND_MIN_SIZE,
+      dependentFieldKeys: [outlineDeltaKey],
+      ...visibilityConfig,
+    },
+    {
+      key: outlineDeltaKey,
+      label: () => t(fieldKey("outlineDelta.label", "legendOutlineDelta.label"), sideValues()),
+      hint: () => getLegendOutlineHint(),
+      unit: "mm",
+      step: 0.02,
+      min: LEGEND_OUTLINE_MIN,
+      max: LEGEND_OUTLINE_MAX,
+      ...visibilityConfig,
+    },
+    {
+      key: heightKey,
+      label: () => t(fieldKey("height.label", "legendHeight.label"), sideValues()),
+      hint: () => t(fieldKey("height.hint", "legendHeight.hint"), sideValues()),
+      unit: "mm",
+      step: 0.05,
+      min: 0,
+      dependentFieldKeys: isSideLegend ? [] : [embedKey],
+      ...visibilityConfig,
+    },
+    ...(!isSideLegend ? [{
+      key: embedKey,
+      label: () => t(fieldKey("embed.label", "legendEmbed.label"), sideValues()),
+      hint: () => t(fieldKey("embed.hint", "legendEmbed.hint"), sideValues()),
+      unit: "mm",
+      step: 0.05,
+      min: 0,
+      ...visibilityConfig,
+    }] : []),
+    {
+      key: offsetXKey,
+      label: () => t(fieldKey("offsetX.label", "legendOffsetX.label"), sideValues()),
+      hint: () => t(fieldKey("offsetX.hint", "legendOffsetX.hint"), sideValues()),
+      unit: "mm",
+      step: 0.1,
+      dependentFieldKeys: [offsetYKey],
+      ...visibilityConfig,
+    },
+    {
+      key: offsetYKey,
+      label: () => t(fieldKey("offsetY.label", "legendOffsetY.label"), sideValues()),
+      hint: () => t(fieldKey("offsetY.hint", "legendOffsetY.hint"), sideValues()),
+      unit: "mm",
+      step: 0.1,
+      ...visibilityConfig,
+    },
+  ];
+}
+
 const fieldGroupTemplates = [
   {
     id: "shape",
@@ -1165,104 +1392,12 @@ const fieldGroupTemplates = [
     title: () => t("shapeProfiles.custom-shell.fieldGroups.legend.title"),
     description: () => t("shapeProfiles.custom-shell.fieldGroups.legend.description"),
     fields: [
-      { key: "legendEnabled", label: () => t("fields.legendEnabled.label"), hint: () => t("fields.legendEnabled.hint"), type: "checkbox" },
-      {
-        key: "legendColor",
-        label: () => t("fields.legendColor.label"),
-        hint: () => t("fields.legendColor.hint"),
-        type: "color",
-        placeholder: DEFAULT_KEYCAP_COLORS.legendColor,
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendText",
-        label: () => t("fields.legendText.label"),
-        hint: () => t("fields.legendText.hint"),
-        type: "text",
-        maxLength: 24,
-        placeholder: () => t("fields.legendText.placeholder"),
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendFontKey",
-        label: () => t("fields.legendFontKey.label"),
-        hint: (params) => getLegendFontFieldHint(params),
-        type: "font-search",
-        dependentFieldKeys: ["legendFontStyleKey", "legendUnderlineEnabled"],
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendFontStyleKey",
-        label: () => t("fields.legendFontStyleKey.label"),
-        hint: (params) => getLegendFontStyleHint(params),
-        type: "select",
-        options: (params) => getLegendFontStyleFieldOptions(params),
-        disabledWhen: (params) => !isLegendFontStyleSelectable(params),
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendUnderlineEnabled",
-        label: () => t("fields.legendUnderlineEnabled.label"),
-        hint: () => t("fields.legendUnderlineEnabled.hint"),
-        type: "checkbox",
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendSize",
-        label: () => t("fields.legendSize.label"),
-        hint: () => t("fields.legendSize.hint"),
-        unit: "mm",
-        step: 0.1,
-        min: LEGEND_MIN_SIZE,
-        dependentFieldKeys: ["legendOutlineDelta"],
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendOutlineDelta",
-        label: () => t("fields.legendOutlineDelta.label"),
-        hint: () => getLegendOutlineHint(),
-        unit: "mm",
-        step: 0.02,
-        min: LEGEND_OUTLINE_MIN,
-        max: LEGEND_OUTLINE_MAX,
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendHeight",
-        label: () => t("fields.legendHeight.label"),
-        hint: () => t("fields.legendHeight.hint"),
-        unit: "mm",
-        step: 0.05,
-        min: 0,
-        dependentFieldKeys: ["legendEmbed"],
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendEmbed",
-        label: () => t("fields.legendEmbed.label"),
-        hint: () => t("fields.legendEmbed.hint"),
-        unit: "mm",
-        step: 0.05,
-        min: 0,
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendOffsetX",
-        label: () => t("fields.legendOffsetX.label"),
-        hint: () => t("fields.legendOffsetX.hint"),
-        unit: "mm",
-        step: 0.1,
-        dependentFieldKeys: ["legendOffsetY"],
-        visibleWhen: (params) => params.legendEnabled,
-      },
-      {
-        key: "legendOffsetY",
-        label: () => t("fields.legendOffsetY.label"),
-        hint: () => t("fields.legendOffsetY.hint"),
-        unit: "mm",
-        step: 0.1,
-        visibleWhen: (params) => params.legendEnabled,
-      },
+      ...createLegendControlFields({ paramPrefix: "legend", collapseControlled: true }),
+      ...SIDE_LEGEND_CONFIGS.flatMap((config) => createLegendControlFields({
+        paramPrefix: config.paramPrefix,
+        side: config.side,
+        collapseControlled: true,
+      })),
     ],
   },
   {
@@ -1382,7 +1517,10 @@ const fieldConfigByKey = new Map([
 ]);
 function createFieldGroupCollapseState() {
   const groupIds = keycapEditorProfiles.profiles.flatMap((profile) => (profile.fieldGroups ?? []).map((group) => group.id));
-  return Object.fromEntries(Array.from(new Set(groupIds)).map((groupId) => [groupId, true]));
+  return {
+    ...Object.fromEntries(Array.from(new Set(groupIds)).map((groupId) => [groupId, true])),
+    ...Object.fromEntries(LEGEND_CARD_DEFINITIONS.map((card) => [card.id, true])),
+  };
 }
 
 const FIELD_GROUP_DESCRIPTION_RESOLVERS = Object.freeze({
@@ -1474,7 +1612,7 @@ const state = {
   previewLayers: [],
   sidebarTab: "params",
   isImportDragActive: false,
-  legendFontPickerOpen: false,
+  legendFontPickerFieldKey: "",
   legendFontPickerQuery: "",
   copiedFontAttributionKey: "",
   collapsedFieldGroups: createFieldGroupCollapseState(),
@@ -1565,6 +1703,11 @@ function getColorFieldNumber(fieldKey) {
 }
 
 function getPartLabel(partName) {
+  const sideLegendConfig = SIDE_LEGEND_CONFIGS.find((config) => partName === `legend-${config.side}`);
+  if (sideLegendConfig) {
+    return t("partLabels.sideLegend", { side: getSideLegendLabel(sideLegendConfig.side) });
+  }
+
   switch (partName) {
     case "rim":
       return t("partLabels.rim");
@@ -1674,6 +1817,12 @@ function isLegendTextSet(value = state.keycapParams.legendText) {
 
 function isLegendRenderable() {
   return state.keycapParams.legendEnabled && isLegendTextSet();
+}
+
+function isSideLegendRenderable(config) {
+  const enabledKey = legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled);
+  const textKey = legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.text);
+  return state.keycapParams[enabledKey] && isLegendTextSet(state.keycapParams[textKey]);
 }
 
 function isTypewriterRimRenderable(params = state.keycapParams) {
@@ -2038,15 +2187,24 @@ function renderKeyUnitBasisReadout() {
   });
 }
 
+function renderFieldGridContents(fields, fieldByKey) {
+  const dependentFieldKeys = getVisibleDependentFieldKeys(fields, fieldByKey);
+  const pairedFieldKeys = getVisiblePairedFieldKeys(fields, fieldByKey);
+  const visibleFields = fields.filter((field) => isFieldVisible(field) && !dependentFieldKeys.has(field.key) && !pairedFieldKeys.has(field.key));
+
+  return visibleFields.map((field) => renderFieldWithDependents(field, fieldByKey)).join("");
+}
+
 function renderFieldGroup(group, groupIndex) {
+  if (group.id === "legend") {
+    return renderLegendFieldGroup(group, groupIndex);
+  }
+
   const groupId = group.id ?? `group-${groupIndex}`;
   const isCollapsed = state.collapsedFieldGroups[groupId] === true;
   const groupViewTransitionName = createViewTransitionName("field-group", groupId);
   const groupBodyId = `field-group-body-${groupId}`;
   const groupFieldByKey = new Map(group.fields.map((field) => [field.key, field]));
-  const dependentFieldKeys = getVisibleDependentFieldKeys(group.fields, groupFieldByKey);
-  const pairedFieldKeys = getVisiblePairedFieldKeys(group.fields, groupFieldByKey);
-  const visibleFields = group.fields.filter((field) => isFieldVisible(field) && !dependentFieldKeys.has(field.key) && !pairedFieldKeys.has(field.key));
   const toggleLabel = isCollapsed
     ? t("fieldGroup.expand", { title: group.title })
     : t("fieldGroup.collapse", { title: group.title });
@@ -2073,7 +2231,87 @@ function renderFieldGroup(group, groupIndex) {
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
         <p class="field-group-description" data-field-group-description="${escapeHtml(groupId)}">${groupDescription}</p>
         <div class="field-grid">
-          ${visibleFields.map((field) => renderFieldWithDependents(field, groupFieldByKey)).join("")}
+          ${renderFieldGridContents(group.fields, groupFieldByKey)}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderLegendFieldGroup(group, groupIndex) {
+  const groupId = group.id ?? `group-${groupIndex}`;
+  const isCollapsed = state.collapsedFieldGroups[groupId] === true;
+  const groupViewTransitionName = createViewTransitionName("field-group", groupId);
+  const groupBodyId = `field-group-body-${groupId}`;
+  const groupFieldByKey = new Map(group.fields.map((field) => [field.key, field]));
+  const toggleLabel = isCollapsed
+    ? t("fieldGroup.expand", { title: group.title })
+    : t("fieldGroup.collapse", { title: group.title });
+  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
+  const groupDescription = resolveDynamicCopy(group.description);
+
+  return `
+    <section class="field-group-card" style="view-transition-name: ${groupViewTransitionName};">
+      <div class="field-group-header">
+        <div class="field-group-header__row">
+          <h3>${group.title}</h3>
+          <button
+            class="field-group-toggle"
+            type="button"
+            data-field-group-toggle="${groupId}"
+            aria-expanded="${isCollapsed ? "false" : "true"}"
+            aria-controls="${groupBodyId}"
+            aria-label="${toggleLabel}"
+          >
+            <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
+        <p class="field-group-description" data-field-group-description="${escapeHtml(groupId)}">${groupDescription}</p>
+        <div class="legend-subcard-list">
+          ${LEGEND_CARD_DEFINITIONS.map((card) => renderLegendSubcard(card, groupFieldByKey)).join("")}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderLegendSubcard(card, groupFieldByKey) {
+  const cardFields = card.fieldKeys.map((fieldKey) => groupFieldByKey.get(fieldKey)).filter(Boolean);
+  if (cardFields.length === 0) {
+    return "";
+  }
+
+  const cardFieldByKey = new Map(cardFields.map((field) => [field.key, field]));
+  const cardTitle = resolveDynamicCopy(card.title);
+  const cardBodyId = `legend-subcard-body-${card.id}`;
+  const isCollapsed = state.collapsedFieldGroups[card.id] === true;
+  const toggleLabel = isCollapsed
+    ? t("fieldGroup.expand", { title: cardTitle })
+    : t("fieldGroup.collapse", { title: cardTitle });
+  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
+  const cardViewTransitionName = createViewTransitionName("legend-subcard", card.id);
+
+  return `
+    <section class="legend-subcard" style="view-transition-name: ${cardViewTransitionName};">
+      <div class="legend-subcard__header">
+        <h4>${escapeHtml(cardTitle)}</h4>
+        <button
+          class="field-group-toggle"
+          type="button"
+          data-field-group-toggle="${card.id}"
+          aria-expanded="${isCollapsed ? "false" : "true"}"
+          aria-controls="${cardBodyId}"
+          aria-label="${escapeHtml(toggleLabel)}"
+        >
+          <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+        </button>
+      </div>
+      <div class="legend-subcard__body" id="${cardBodyId}" ${isCollapsed ? "hidden" : ""}>
+        <p class="field-note">${escapeHtml(t("fields.legendPrintNotice"))}</p>
+        <div class="field-grid">
+          ${renderFieldGridContents(cardFields, cardFieldByKey)}
         </div>
       </div>
     </section>
@@ -2114,25 +2352,35 @@ function renderFieldWithDependents(field, fieldByKey) {
     .filter((dependentField) => isFieldVisible(dependentField));
 
   if (field.type === "select") {
-    return renderFieldWithDependentFields(field, dependentFields);
+    return renderFieldWithDependentFields(field, dependentFields, fieldByKey);
   }
 
-  return renderField(field, { dependentFields });
+  return renderField(field, { dependentFields, fieldByKey });
 }
 
-function renderDependentFieldList(dependentFields) {
+function renderDependentFieldList(dependentFields, fieldByKey = null) {
   if (dependentFields.length === 0) {
     return "";
   }
 
   return `
     <div class="field-dependent-list">
-      ${dependentFields.map((dependentField) => renderField(dependentField, { className: "field--dependent" })).join("")}
+      ${dependentFields.map((dependentField) => {
+        const nestedDependentFields = (dependentField.dependentFieldKeys ?? [])
+          .map((fieldKey) => fieldByKey?.get(fieldKey))
+          .filter(Boolean)
+          .filter((nestedField) => isFieldVisible(nestedField));
+
+        return renderField(dependentField, {
+          className: "field--dependent",
+          dependentFields: nestedDependentFields,
+        });
+      }).join("")}
     </div>
   `;
 }
 
-function renderFieldWithDependentFields(field, dependentFields) {
+function renderFieldWithDependentFields(field, dependentFields, fieldByKey = null) {
   const value = state.keycapParams[field.key];
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
   const fieldLabel = resolveDynamicCopy(field.label);
@@ -2158,7 +2406,7 @@ function renderFieldWithDependentFields(field, dependentFields) {
             .join("")}
         </select>
       </span>
-      ${renderDependentFieldList(dependentFields)}
+      ${renderDependentFieldList(dependentFields, fieldByKey)}
     </div>
   `;
 }
@@ -2273,7 +2521,7 @@ function renderLegendFontAttributionCard(font) {
   `;
 }
 
-function renderLegendFontPickerOptions() {
+function renderLegendFontPickerOptions(fieldKey = state.legendFontPickerFieldKey || "legendFontKey") {
   const matchingFonts = getLegendFontPickerResults();
   if (matchingFonts.length === 0) {
     return `<div class="font-picker-empty">${t("font.noResults")}</div>`;
@@ -2281,7 +2529,7 @@ function renderLegendFontPickerOptions() {
 
   return matchingFonts
     .map((font) => {
-      const isSelected = font.key === state.keycapParams.legendFontKey;
+      const isSelected = font.key === state.keycapParams[fieldKey];
       const previewStyle = buildLegendFontPreviewStyle(font);
       const metaLabel = getLegendFontMetaLabel(font);
 
@@ -2290,6 +2538,7 @@ function renderLegendFontPickerOptions() {
           class="font-picker-option ${isSelected ? "is-selected" : ""}"
           type="button"
           data-font-picker-option="${font.key}"
+          data-font-picker-field="${fieldKey}"
         >
           <span class="font-picker-option__preview" style="${escapeHtml(previewStyle)}">${escapeHtml(font.label)}</span>
           <span class="font-picker-meta-row">
@@ -2306,6 +2555,7 @@ function renderField(field, options = {}) {
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
   const fieldLabel = resolveDynamicCopy(field.label);
   const fieldHint = resolveDynamicCopy(field.hint);
+  const fieldNote = resolveDynamicCopy(field.note);
   const primaryMiniLabel = resolveDynamicCopy(field.primaryMiniLabel);
   const secondaryLabel = resolveDynamicCopy(field.secondaryLabel);
   const fieldPlaceholder = resolveDynamicCopy(field.placeholder);
@@ -2318,6 +2568,7 @@ function renderField(field, options = {}) {
   const secondaryStep = resolveFieldAttribute(field.secondaryStep);
   const fieldClassName = options.className ? ` ${options.className}` : "";
   const dependentFields = options.dependentFields ?? [];
+  const dependentFieldByKey = options.fieldByKey ?? null;
   const dependentClassName = dependentFields.length > 0 ? " field--with-dependents" : "";
 
   if (field.type === "key-unit-basis") {
@@ -2364,7 +2615,8 @@ function renderField(field, options = {}) {
       return `
         <div class="field field--checkbox${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
           ${checkboxControl}
-          ${renderDependentFieldList(dependentFields)}
+          ${fieldNote ? `<p class="field-note">${escapeHtml(fieldNote)}</p>` : ""}
+          ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
         </div>
       `;
     }
@@ -2383,7 +2635,7 @@ function renderField(field, options = {}) {
     const selectedFontMetaLabel = getLegendFontMetaLabel(selectedFont);
     const selectedFontAttributionCard = renderLegendFontAttributionCard(selectedFont);
     const pickerId = `font-picker-${field.key}`;
-    const isPickerOpen = state.legendFontPickerOpen;
+    const isPickerOpen = state.legendFontPickerFieldKey === field.key;
 
     return `
       <div class="field field--font-search${dependentClassName} ${isPickerOpen ? "is-open" : ""}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
@@ -2417,7 +2669,7 @@ function renderField(field, options = {}) {
                   <span class="font-picker-search-input__icon">${SEARCH_ICON_MARKUP}</span>
                   <input
                     type="text"
-                    data-font-picker-query
+                    data-font-picker-query="${field.key}"
                     value="${escapeHtml(state.legendFontPickerQuery)}"
                     placeholder="${escapeHtml(t("font.searchPlaceholder"))}"
                     spellcheck="false"
@@ -2425,14 +2677,14 @@ function renderField(field, options = {}) {
                   />
                 </label>
                 <span class="font-picker-options" data-font-picker-options>
-                  ${renderLegendFontPickerOptions()}
+                  ${renderLegendFontPickerOptions(field.key)}
                 </span>
               </span>
             ` : ""}
           </span>
           ${selectedFontAttributionCard}
         </span>
-        ${renderDependentFieldList(dependentFields)}
+        ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
       </div>
     `;
   }
@@ -2622,7 +2874,7 @@ function renderField(field, options = {}) {
           />
           ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
         </span>
-        ${renderDependentFieldList(dependentFields)}
+        ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
       </div>
     `;
   }
@@ -2712,16 +2964,22 @@ function handleInspectorCardClick(event) {
 
   const fontPickerOptionButton = getClosestFromEventTarget(event, "[data-font-picker-option]");
   if (fontPickerOptionButton) {
-    applyLegendFontSelection(resolveLegendFontConfig(fontPickerOptionButton.dataset.fontPickerOption), { closePicker: true });
+    applyLegendFontSelection(
+      resolveLegendFontConfig(fontPickerOptionButton.dataset.fontPickerOption),
+      {
+        fieldKey: fontPickerOptionButton.dataset.fontPickerField,
+        closePicker: true,
+      },
+    );
     return;
   }
 
   const fontPickerOpenButton = getClosestFromEventTarget(event, "[data-font-picker-open]");
   if (fontPickerOpenButton) {
-    if (state.legendFontPickerOpen) {
+    if (state.legendFontPickerFieldKey === fontPickerOpenButton.dataset.fontPickerOpen) {
       closeLegendFontPicker();
     } else {
-      openLegendFontPicker();
+      openLegendFontPicker(fontPickerOpenButton.dataset.fontPickerOpen);
     }
     return;
   }
@@ -2819,7 +3077,7 @@ function handleInspectorCardKeydown(event) {
     return;
   }
 
-  applyLegendFontSelection(firstMatchingFont, { closePicker: true });
+  applyLegendFontSelection(firstMatchingFont, { fieldKey: state.legendFontPickerFieldKey, closePicker: true });
   event.preventDefault();
 }
 
@@ -2912,21 +3170,25 @@ async function handleCopyLegendFontAttribution(fontKey) {
 }
 
 function applyLegendFontSelection(font, options = {}) {
-  const { deferPreview = false, closePicker = false } = options;
+  const {
+    deferPreview = false,
+    closePicker = false,
+    fieldKey = state.legendFontPickerFieldKey || "legendFontKey",
+  } = options;
 
   if (closePicker) {
-    state.legendFontPickerOpen = false;
+    state.legendFontPickerFieldKey = "";
     state.legendFontPickerQuery = "";
   }
 
-  if (!font || font.key === state.keycapParams.legendFontKey) {
+  if (!font || font.key === state.keycapParams[fieldKey]) {
     if (closePicker) {
       render();
     }
     return false;
   }
 
-  state.keycapParams.legendFontKey = font.key;
+  state.keycapParams[fieldKey] = font.key;
   syncDerivedKeycapParams(state.keycapParams);
   state.editorStatus = "dirty";
   state.editorSummary = t("status.dirty");
@@ -2939,8 +3201,8 @@ function applyLegendFontSelection(font, options = {}) {
   return true;
 }
 
-function openLegendFontPicker() {
-  state.legendFontPickerOpen = true;
+function openLegendFontPicker(fieldKey = "legendFontKey") {
+  state.legendFontPickerFieldKey = fieldKey;
   state.legendFontPickerQuery = "";
   pendingLegendFontPickerFocus = true;
   render();
@@ -2948,20 +3210,21 @@ function openLegendFontPicker() {
 }
 
 function closeLegendFontPicker() {
-  if (!state.legendFontPickerOpen) {
+  if (!state.legendFontPickerFieldKey) {
     return;
   }
 
-  state.legendFontPickerOpen = false;
+  state.legendFontPickerFieldKey = "";
   state.legendFontPickerQuery = "";
   render();
 }
 
 function handleLegendFontPickerQueryInput(input) {
   state.legendFontPickerQuery = input.value;
-  const options = app.querySelector("[data-font-picker-options]");
+  const fieldKey = input.dataset.fontPickerQuery || state.legendFontPickerFieldKey || "legendFontKey";
+  const options = input.closest("[data-font-picker]")?.querySelector("[data-font-picker-options]");
   if (options) {
-    options.innerHTML = renderLegendFontPickerOptions();
+    options.innerHTML = renderLegendFontPickerOptions(fieldKey);
   }
 }
 
@@ -2978,11 +3241,11 @@ function handleWindowPointerDown(event) {
   }
 
   if (
-    state.legendFontPickerOpen
+    state.legendFontPickerFieldKey
     && event.target instanceof Element
     && !event.target.closest("[data-font-picker]")
   ) {
-    state.legendFontPickerOpen = false;
+    state.legendFontPickerFieldKey = "";
     state.legendFontPickerQuery = "";
     shouldRender = true;
   }
@@ -3004,8 +3267,8 @@ function handleWindowKeydown(event) {
     shouldRender = true;
   }
 
-  if (state.legendFontPickerOpen) {
-    state.legendFontPickerOpen = false;
+  if (state.legendFontPickerFieldKey) {
+    state.legendFontPickerFieldKey = "";
     state.legendFontPickerQuery = "";
     shouldRender = true;
   }
@@ -3513,6 +3776,7 @@ function handleFieldChange(event) {
 
   if (
     field === "legendEnabled"
+    || SIDE_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
     || field === "homingBarEnabled"
     || field === "rimEnabled"
     || field === "topHatEnabled"
@@ -3711,6 +3975,14 @@ function createKeycapOffJobs(purpose) {
             }),
           ]
         : []),
+      ...SIDE_LEGEND_CONFIGS
+        .filter((config) => isSideLegendRenderable(config))
+        .map((config) => createColorLayerJob({
+          name: `legend-${config.side}`,
+          exportTarget: config.exportTarget,
+          outputPath: config.outputPath,
+          colorFieldKey: config.colorFieldKey,
+        })),
     ];
   }
 

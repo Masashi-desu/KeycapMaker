@@ -35,11 +35,35 @@ const TOP_SURFACE_SHAPE_PRESETS = Object.freeze({
     dishDepth: 1.0,
   }),
 });
-const COLOR_FIELD_KEYS = new Set(["bodyColor", "rimColor", "legendColor", "homingBarColor"]);
+const COLOR_FIELD_KEYS = new Set([
+  "bodyColor",
+  "rimColor",
+  "legendColor",
+  "sideLegendFrontColor",
+  "sideLegendBackColor",
+  "sideLegendLeftColor",
+  "sideLegendRightColor",
+  "homingBarColor",
+]);
 const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
 const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
+const LEGEND_FIELD_SUFFIXES = Object.freeze({
+  enabled: "Enabled",
+  color: "Color",
+  text: "Text",
+  fontKey: "FontKey",
+  fontStyleKey: "FontStyleKey",
+  underlineEnabled: "UnderlineEnabled",
+  size: "Size",
+  outlineDelta: "OutlineDelta",
+  height: "Height",
+  embed: "Embed",
+  offsetX: "OffsetX",
+  offsetY: "OffsetY",
+});
+const LEGEND_PARAM_PREFIXES = Object.freeze(["legend", "sideLegendFront", "sideLegendBack", "sideLegendLeft", "sideLegendRight"]);
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const TOP_HAT_MIN_SIZE = 0.2;
@@ -77,6 +101,14 @@ function isJisEnterTopHatGeometry(params = {}) {
 
 function resolveLegendFontConfig(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
   return resolveKeycapLegendFont(fontKey);
+}
+
+function legendParamKey(prefix, suffix) {
+  return `${prefix}${suffix}`;
+}
+
+function findLegendParamPrefix(fieldKey, suffix) {
+  return LEGEND_PARAM_PREFIXES.find((prefix) => fieldKey === legendParamKey(prefix, suffix));
 }
 
 function getLegendFontStyleFieldOptions(legendFontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
@@ -554,25 +586,25 @@ function resolveTopEdgeHeights(params = {}) {
   };
 }
 
-function syncLegendFontParams(params = {}) {
-  params.legendFontKey = resolveLegendFontConfig(params.legendFontKey).key;
-  const styleOptions = getLegendFontStyleFieldOptions(params.legendFontKey);
+function syncLegendFontParams(params = {}, prefix = "legend") {
+  const fontKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.fontKey);
+  const fontStyleKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.fontStyleKey);
+  const outlineDeltaKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.outlineDelta);
+
+  params[fontKey] = resolveLegendFontConfig(params[fontKey]).key;
+  const styleOptions = getLegendFontStyleFieldOptions(params[fontKey]);
   const fallbackStyleKey = styleOptions[0]?.value ?? LEGEND_FONT_STYLE_FALLBACK_KEY;
   const allowedStyleKeys = new Set(styleOptions.map((option) => option.value));
-  params.legendFontStyleKey = allowedStyleKeys.has(params.legendFontStyleKey)
-    ? params.legendFontStyleKey
+  params[fontStyleKey] = allowedStyleKeys.has(params[fontStyleKey])
+    ? params[fontStyleKey]
     : fallbackStyleKey;
-  params.legendOutlineDelta = clampLegendOutlineDelta(params.legendOutlineDelta, 0);
+  params[outlineDeltaKey] = clampLegendOutlineDelta(params[outlineDeltaKey], 0);
   return params;
 }
 
 export function syncDerivedKeycapParams(params = {}) {
   const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
   const defaults = createDefaultKeycapParams(profileKey);
-  const defaultLegendSize = clampLegendSize(
-    defaults.legendSize,
-    LEGEND_MIN_SIZE,
-  );
 
   params.keyWidth = clampPositiveDimension(params.keyWidth, defaults.keyWidth ?? 18);
   params.keyDepth = clampPositiveDimension(params.keyDepth, defaults.keyDepth ?? 18);
@@ -634,8 +666,12 @@ export function syncDerivedKeycapParams(params = {}) {
   params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
   params.rimHeightUp = clampNonNegativeNumber(params.rimHeightUp, defaults.rimHeightUp ?? 0);
   params.rimHeightDown = clampNonNegativeNumber(params.rimHeightDown, defaults.rimHeightDown ?? 0);
-  syncLegendFontParams(params);
-  params.legendSize = clampLegendSize(params.legendSize, defaultLegendSize);
+  LEGEND_PARAM_PREFIXES.forEach((prefix) => {
+    const sizeKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.size);
+    const defaultLegendSize = clampLegendSize(defaults[sizeKey], LEGEND_MIN_SIZE);
+    syncLegendFontParams(params, prefix);
+    params[sizeKey] = clampLegendSize(params[sizeKey], defaultLegendSize);
+  });
   Object.assign(params, resolveTopEdgeHeights(params));
   params.stemType = resolveStemType(params);
   params.stemEnabled = params.stemType !== "none";
@@ -676,12 +712,13 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
     return isRecognizedShapeProfileKey(value) ? value : fallback;
   }
 
-  if (fieldKey === "legendFontKey") {
+  if (findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.fontKey)) {
     return resolveLegendFontConfig(value).key;
   }
 
-  if (fieldKey === "legendFontStyleKey") {
-    const legendFontKey = resolveLegendFontConfig(paramsContext?.legendFontKey).key;
+  const legendFontStylePrefix = findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.fontStyleKey);
+  if (legendFontStylePrefix) {
+    const legendFontKey = resolveLegendFontConfig(paramsContext?.[legendParamKey(legendFontStylePrefix, LEGEND_FIELD_SUFFIXES.fontKey)]).key;
     const styleOptions = getLegendFontStyleFieldOptions(legendFontKey);
     const allowedValues = new Set(styleOptions.map((option) => option.value));
     const fallbackValue = allowedValues.has(fallback) ? fallback : (styleOptions[0]?.value ?? LEGEND_FONT_STYLE_FALLBACK_KEY);
@@ -709,7 +746,7 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
     return clampNumberRange(value, fallback, 0.5, 1);
   }
 
-  if (fieldKey === "legendOutlineDelta") {
+  if (findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.outlineDelta)) {
     return clampLegendOutlineDelta(value, fallback);
   }
 

@@ -211,6 +211,36 @@ test("印字サイズの初期値は 5mm にする", () => {
   assert.equal(createDefaultKeycapParams("typewriter-jis-enter").legendSize, 5.0);
 });
 
+test("サイドウォール印字サイズは4mm、高さ初期値は面一にする", () => {
+  const shapeKeys = ["custom-shell", "jis-enter", "typewriter", "typewriter-jis-enter"];
+  const sideSizeKeys = ["sideLegendFrontSize", "sideLegendBackSize", "sideLegendLeftSize", "sideLegendRightSize"];
+  const sideHeightKeys = ["sideLegendFrontHeight", "sideLegendBackHeight", "sideLegendLeftHeight", "sideLegendRightHeight"];
+  const sideTextDefaults = {
+    sideLegendFrontText: "F",
+    sideLegendBackText: "B",
+    sideLegendLeftText: "R",
+    sideLegendRightText: "F",
+  };
+  const sideEmbedKeys = ["sideLegendFrontEmbed", "sideLegendBackEmbed", "sideLegendLeftEmbed", "sideLegendRightEmbed"];
+
+  for (const shapeKey of shapeKeys) {
+    const defaults = createDefaultKeycapParams(shapeKey);
+
+    for (const sideSizeKey of sideSizeKeys) {
+      assert.equal(defaults[sideSizeKey], 4.0);
+    }
+    for (const [sideTextKey, expectedText] of Object.entries(sideTextDefaults)) {
+      assert.equal(defaults[sideTextKey], expectedText);
+    }
+    for (const sideHeightKey of sideHeightKeys) {
+      assert.equal(defaults[sideHeightKey], 0);
+    }
+    for (const sideEmbedKey of sideEmbedKeys) {
+      assert.equal(sideEmbedKey in defaults, false);
+    }
+  }
+});
+
 test("シェル系の上面すぼまり初期値は一般的なキーキャップ比率にする", () => {
   assert.equal(createDefaultKeycapParams("custom-shell").topScale, 0.75);
   assert.equal(createDefaultKeycapParams("jis-enter").topScale, 0.75);

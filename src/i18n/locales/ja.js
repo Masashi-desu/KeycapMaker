@@ -71,6 +71,10 @@ const ja = Object.freeze({
     expand: "{title}を展開",
     collapse: "{title}を折りたたむ",
   },
+  legendCards: {
+    keytop: "キートップ",
+    sidewall: "{side}サイドウォール",
+  },
   shapeProfiles: {
     "custom-shell": {
       label: "カスタムシェル",
@@ -85,7 +89,7 @@ const ja = Object.freeze({
         },
         legend: {
           title: "印字",
-          description: "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+          description: "キートップとサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
         },
         homing: {
           title: "指の目印",
@@ -109,7 +113,7 @@ const ja = Object.freeze({
         },
         legend: {
           title: "印字",
-          description: "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+          description: "キートップとサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
         },
         homing: {
           title: "指の目印",
@@ -133,7 +137,7 @@ const ja = Object.freeze({
         },
         legend: {
           title: "印字",
-          description: "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+          description: "キートップとサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
         },
         homing: {
           title: "指の目印",
@@ -157,7 +161,7 @@ const ja = Object.freeze({
         },
         legend: {
           title: "印字",
-          description: "入れる文字、書体、見た目、位置、盛り上がり、埋め込み量をまとめて調整します。複数文字もそのまま入力できます。",
+          description: "キートップとサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
         },
         homing: {
           title: "指の目印",
@@ -336,9 +340,10 @@ const ja = Object.freeze({
       hint: "上面基準面の右高さです。中央高さは固定され、現在の左右傾斜は {roll} です",
     },
     legendEnabled: {
-      label: "印字を入れる",
+      label: "キートップに印字を入れる",
       hint: "オフにすると文字を作りません",
     },
+    legendPrintNotice: "プリンタやスライサーの精度によって、文字の大きさや太さ補正の調整が必要になることがあります。",
     legendText: {
       label: "入れる文字",
       hint: "複数文字をそのまま入力できます",
@@ -385,6 +390,49 @@ const ja = Object.freeze({
     legendOffsetY: {
       label: "前後の位置",
       hint: "文字を前後に動かします",
+    },
+    sideLegend: {
+      enabled: {
+        label: "{side}サイドウォールに印字を入れる",
+        hint: "オフにすると{side}の文字を作りません",
+      },
+      color: {
+        label: "{side}の印字色",
+        hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+      },
+      text: {
+        label: "{side}に入れる文字",
+        hint: "複数文字をそのまま入力できます",
+      },
+      fontKey: {
+        label: "{side}の書体",
+      },
+      fontStyleKey: {
+        label: "{side}のフォント内スタイル",
+      },
+      underlineEnabled: {
+        label: "{side}に下線を付ける",
+        hint: "下線位置と太さは font ファイルの情報を使います。任意の見た目へ置き換えません",
+      },
+      size: {
+        label: "{side}の文字の大きさ",
+        hint: "サイドウォールに印字する文字の大きさを変更します",
+      },
+      outlineDelta: {
+        label: "{side}の太さ補正",
+      },
+      height: {
+        label: "{side}の文字の高さ",
+        hint: "0 にするとサイドウォールと面一の埋め込み印字になり、数字を上げると外側へ盛り上がります",
+      },
+      offsetX: {
+        label: "{side}の横位置",
+        hint: "サイドウォール上で文字を左右に動かします",
+      },
+      offsetY: {
+        label: "{side}の上下位置",
+        hint: "サイドウォール上で文字を上下に動かします",
+      },
     },
     homingBarEnabled: {
       label: "目印を付ける",
@@ -460,6 +508,12 @@ const ja = Object.freeze({
     alps: "Alps / Matias 系の差し込み形状です。対応する Alps 系の軸に合います。",
     choc_v2: "Kailh Choc v2 用の十字形状です。Choc v2 軸に合う取り付け部分を作ります。",
   },
+  sideLabels: {
+    front: "前面",
+    back: "背面",
+    left: "左側",
+    right: "右側",
+  },
   font: {
     defaultStyleLabel: "フォント名どおり",
     searchAriaLabel: "フォントを検索",
@@ -475,6 +529,7 @@ const ja = Object.freeze({
     body: "本体",
     rim: "キーリム",
     legend: "印字",
+    sideLegend: "{side}サイド印字",
     homing: "目印",
   },
   preview: {

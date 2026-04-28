@@ -523,6 +523,49 @@ pre {
   line-height: 1.45;
 }
 
+.legend-subcard-list {
+  display: grid;
+  gap: 10px;
+}
+
+.legend-subcard {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--glass-border-surface);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--glass-surface) 76%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.legend-subcard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.legend-subcard__header h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.legend-subcard__body {
+  display: grid;
+  gap: 10px;
+}
+
+.legend-subcard__body[hidden] {
+  display: none;
+}
+
+.legend-subcard__body > .field-note {
+  padding: 0 2px;
+}
+
 .key-unit-basis-readout {
   padding-top: 2px;
   color: var(--muted);
@@ -560,6 +603,13 @@ pre {
 
 .field-checkbox-header > .checkbox-pill {
   justify-self: start;
+}
+
+.field-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .field--color {

@@ -8,8 +8,8 @@
 
 - body と legend は separate volume として扱っており、その点では疎結合
 - 文字形状の生成は `scad/modules/legend_block.scad` に分離されている
-- ただし legend の露出面は `scad/base/keycap.scad` で `keycap_dish_band()` と直接 `intersection()` しており、top dish 前提で密結合
-- UI と bridge は `user_legend_*` の単一セット前提
+- キートップ legend の露出面は `scad/base/keycap.scad` で top dish 前提の surface fitting を使う
+- UI と bridge はキートップ `user_legend_*` と固定 4 面の `user_side_legend_*` を持つ
 - 3MF 生成器は可変個 mesh を扱えるため、ボトルネックは主に UI / bridge / SCAD 配置面の層にある
 
 ## 結論
@@ -19,7 +19,7 @@
 - 複数 top legend:
   データモデルとジョブ生成の拡張が必要
 - side legend:
-  配置面の抽象化を先に入れないと詰まりやすい
+  front / back / left / right の固定 4 面は対応済み。各側面の中央基準面の傾きには追従し、壁の内側面まで自動で埋め込む。任意面、複数 side legend、角丸や欠き込みへの厳密追従は未対応
 
 ## 主な詰まりどころ
 
@@ -28,10 +28,10 @@
 - `keycap_legend()` が top dish の露出帯を直接使っている
 - front / back / left / right への拡張点がない
 
-### 2. データモデルが単一 legend 前提
+### 2. データモデルは固定 legend 前提
 
-- `src/main.js` の UI は単一 legend 項目しか持たない
-- `src/lib/keycap-scad-bundle.js` も `user_legend_*` を 1 セットだけ注入する
+- `src/main.js` の UI はキートップ 1 件と sidewall 4 面の固定項目を持つ
+- 任意個の `legendItems[]` にはまだ移行していない
 
 ### 3. レイヤー管理が固定名
 

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 
@@ -63,6 +64,12 @@ function readScadDefinition(scadText, name) {
   return Number(match[1]);
 }
 
+function readRawScadDefinition(scadText, name) {
+  const match = scadText.match(new RegExp(`^${name} = ([^;]+);`, "m"));
+  assert.ok(match, `${name} definition should exist`);
+  return match[1];
+}
+
 test("印字の作業領域は実測した複数文字の外形を含む", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 240,
@@ -105,6 +112,67 @@ test("印字の作業領域は実測した複数文字の外形を含む", async
     await server.close();
     restoreBrowserMocks();
   }
+});
+
+test("サイドウォール印字パラメータを SCAD wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 160,
+    actualBoundingBoxLeft: 80,
+    actualBoundingBoxRight: 80,
+    actualBoundingBoxAscent: 65,
+    actualBoundingBoxDescent: 35,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "side_legend_front",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        sideLegendFrontEnabled: true,
+        sideLegendFrontText: "FRONT",
+        sideLegendFrontFontKey: "orbitron-regular",
+        sideLegendFrontSize: 3.2,
+        sideLegendFrontHeight: 0.15,
+        sideLegendFrontOffsetX: 1.25,
+        sideLegendFrontOffsetY: -0.5,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.ok(files.some((file) => file.path === "/scad/modules/sidewall_legend.scad"));
+    assert.equal(readRawScadDefinition(jobScad, "export_target"), "\"side_legend_front\"");
+    assert.equal(readRawScadDefinition(jobScad, "user_side_legend_front_enabled"), "true");
+    assert.equal(readRawScadDefinition(jobScad, "user_side_legend_front_text"), "\"FRONT\"");
+    assert.equal(readScadDefinition(jobScad, "user_side_legend_front_text_size"), 3.2);
+    assert.equal(readScadDefinition(jobScad, "user_side_legend_front_height"), 0.15);
+    assert.doesNotMatch(jobScad, /^user_side_legend_front_embed = /m);
+    assert.equal(readScadDefinition(jobScad, "user_side_legend_front_offset_x"), 1.25);
+    assert.equal(readScadDefinition(jobScad, "user_side_legend_front_offset_y"), -0.5);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
+test("サイドウォール印字本体は内側面で止める", async () => {
+  const baseScad = await readFile(new URL("../scad/base/keycap.scad", import.meta.url), "utf8");
+
+  assert.match(baseScad, /function keycap_sidewall_wall_depth\(side, axis_z\)/);
+  assert.match(baseScad, /below_surface = keycap_sidewall_wall_depth\(side, axis_z\) \+ max\(inner_overlap, 0\);/);
+  assert.doesNotMatch(baseScad, /side_legend_through_wall_embed\s*=\s*wall_thickness\s*\+/);
 });
 
 test("印字作業領域はキーの footprint を上限にしない", async () => {

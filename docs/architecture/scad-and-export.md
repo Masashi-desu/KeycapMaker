@@ -121,6 +121,8 @@ flowchart TD
   複数文字でも自動縮小せず、明示サイズを保つか確認する回帰用
 - `scad/samples/keycap-rounded-legend.scad`
   丸みのある書体で legend 輪郭の品質を確認する回帰用
+- `scad/samples/keycap-sidewall-legend.scad`
+  front / back / left / right の sidewall legend 配置確認用
 - `scad/samples/keycap-homing-bar.scad`
   homing bar の単体確認用
 - `scad/samples/keycap-stem-clip.scad`
@@ -146,14 +148,15 @@ flowchart TD
 
 - 出力元は OFF メッシュ
 - 3MF 内では part ごとに object resource を分ける
-- `build` には part 直列ではなく、body / rim / homing / legend を `components` として束ねた親 object を 1 件だけ置く
+- `build` には part 直列ではなく、body / rim / homing / legend 系 part を `components` として束ねた親 object を 1 件だけ置く
 - 親 object の `name` には UI の `名称` を使う
-- 現在の part 候補は `body`、`rim`、`homing`、`legend`
-- legend が無効なら legend object は含まれない
+- 現在の part 候補は `body`、`rim`、`homing`、`legend`、`legend-front`、`legend-back`、`legend-left`、`legend-right`
+- キートップ legend が無効なら `legend` object は含まれない
+- sidewall legend が無効なら対応する `legend-*` object は含まれない
 - typewriter key rim が無効なら rim object は含まれない
 - homing bar が無効なら homing object は含まれない
 - 親 object には material / color を付けず、子 part object の material / color を維持する
-- Bambu Studio / OrcaSlicer 向けに `Metadata/model_settings.config`、PrusaSlicer / Slic3r PE 向けに `Metadata/Slic3r_PE_model.config` を追加し、part 表示名を `body` / `rim` / `homing` / `legend` として保持する
+- Bambu Studio / OrcaSlicer 向けに `Metadata/model_settings.config`、PrusaSlicer / Slic3r PE 向けに `Metadata/Slic3r_PE_model.config` を追加し、part 表示名を `body` / `rim` / `homing` / `legend` / `legend-*` として保持する
 - Cura など標準3MF中心の importer 向けには、子 object の `name` と `partnumber` を保持する
 
 ### STL
@@ -193,9 +196,9 @@ flowchart TD
 
 ## 現在の既知制約
 
-- legend は単一モデル
-- legend の露出面は top dish 前提
-- side legend は未対応
+- legend はキートップ 1 件と sidewall front / back / left / right の固定 4 面モデル
+- キートップ legend の露出面は top dish 前提
+- sidewall legend は各側面の中央基準面の傾きに合わせて配置し、壁の内側面まで自動で埋め込む。角丸や JIS Enter の欠き込み面へは自動追従しない
 - font asset は variable / static の混在を許容するが、native style の有無は font ごとに異なる
 - `high_preview` のような追加品質段階は未採用。必要になったら [../backlog/high-preview-quality-mode.md](../backlog/high-preview-quality-mode.md) を起点に再検討する
 

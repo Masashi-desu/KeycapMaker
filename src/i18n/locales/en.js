@@ -71,6 +71,10 @@ const en = Object.freeze({
     expand: "Expand {title}",
     collapse: "Collapse {title}",
   },
+  legendCards: {
+    keytop: "Keytop",
+    sidewall: "{side} Sidewall",
+  },
   shapeProfiles: {
     "custom-shell": {
       label: "Custom Shell",
@@ -85,7 +89,7 @@ const en = Object.freeze({
         },
         legend: {
           title: "Legend",
-          description: "Adjust the text, typeface, appearance, position, height, and embedding depth. Multi-character legends can be entered as-is.",
+          description: "Adjust keytop and sidewall legend text, typeface, appearance, position, and height. Multi-character legends can be entered as-is.",
         },
         homing: {
           title: "Homing Mark",
@@ -109,7 +113,7 @@ const en = Object.freeze({
         },
         legend: {
           title: "Legend",
-          description: "Adjust the text, typeface, appearance, position, height, and embedding depth. Multi-character legends can be entered as-is.",
+          description: "Adjust keytop and sidewall legend text, typeface, appearance, position, and height. Multi-character legends can be entered as-is.",
         },
         homing: {
           title: "Homing Mark",
@@ -133,7 +137,7 @@ const en = Object.freeze({
         },
         legend: {
           title: "Legend",
-          description: "Adjust the text, typeface, appearance, position, height, and embedding depth. Multi-character legends can be entered as-is.",
+          description: "Adjust keytop and sidewall legend text, typeface, appearance, position, and height. Multi-character legends can be entered as-is.",
         },
         homing: {
           title: "Homing Mark",
@@ -157,7 +161,7 @@ const en = Object.freeze({
         },
         legend: {
           title: "Legend",
-          description: "Adjust the text, typeface, appearance, position, height, and embedding depth. Multi-character legends can be entered as-is.",
+          description: "Adjust keytop and sidewall legend text, typeface, appearance, position, and height. Multi-character legends can be entered as-is.",
         },
         homing: {
           title: "Homing Mark",
@@ -336,9 +340,10 @@ const en = Object.freeze({
       hint: "Right height of the top reference plane. Center height is fixed; current roll is {roll}.",
     },
     legendEnabled: {
-      label: "Add Legend",
+      label: "Add Keytop Legend",
       hint: "Turn this off to omit text geometry",
     },
+    legendPrintNotice: "Depending on printer and slicer accuracy, you may need to adjust text size or weight.",
     legendText: {
       label: "Legend Text",
       hint: "Multiple characters can be entered as-is",
@@ -385,6 +390,49 @@ const en = Object.freeze({
     legendOffsetY: {
       label: "Front-to-Back Position",
       hint: "Move the text forward or backward",
+    },
+    sideLegend: {
+      enabled: {
+        label: "Add {side} Sidewall Legend",
+        hint: "Turn this off to omit text geometry on the {side} side",
+      },
+      color: {
+        label: "{side} Legend Color",
+        hint: "Enter a color code directly or use the color picker",
+      },
+      text: {
+        label: "{side} Legend Text",
+        hint: "Multiple characters can be entered as-is",
+      },
+      fontKey: {
+        label: "{side} Typeface",
+      },
+      fontStyleKey: {
+        label: "{side} Font Style",
+      },
+      underlineEnabled: {
+        label: "Add {side} Underline",
+        hint: "Underline position and thickness come from the font file. They are not replaced with an arbitrary look.",
+      },
+      size: {
+        label: "{side} Text Size",
+        hint: "Change the size of the sidewall legend text.",
+      },
+      outlineDelta: {
+        label: "{side} Weight Adjustment",
+      },
+      height: {
+        label: "{side} Text Height",
+        hint: "0 creates a flush embedded sidewall legend; higher values raise it outward.",
+      },
+      offsetX: {
+        label: "{side} Horizontal Position",
+        hint: "Move the text left or right on the sidewall",
+      },
+      offsetY: {
+        label: "{side} Vertical Position",
+        hint: "Move the text up or down on the sidewall",
+      },
     },
     homingBarEnabled: {
       label: "Add Homing Mark",
@@ -460,6 +508,12 @@ const en = Object.freeze({
     alps: "An insert shape for Alps / Matias switches. Fits compatible Alps-family switches.",
     choc_v2: "A cross shape for Kailh Choc v2. Generates a mount that fits Choc v2 switches.",
   },
+  sideLabels: {
+    front: "Front",
+    back: "Back",
+    left: "Left",
+    right: "Right",
+  },
   font: {
     defaultStyleLabel: "Use Font Default",
     searchAriaLabel: "Search fonts",
@@ -483,6 +537,7 @@ const en = Object.freeze({
     body: "Body",
     rim: "Key Rim",
     legend: "Legend",
+    sideLegend: "{side} Side Legend",
     homing: "Homing Mark",
   },
   preview: {

@@ -10,6 +10,7 @@ import jisEnterModuleScad from "../../scad/modules/keycap_jis_enter.scad?raw";
 import typewriterModuleScad from "../../scad/modules/keycap_typewriter.scad?raw";
 import homingBarScad from "../../scad/modules/homing_bar.scad?raw";
 import legendBlockScad from "../../scad/modules/legend_block.scad?raw";
+import sidewallLegendScad from "../../scad/modules/sidewall_legend.scad?raw";
 import stemMxScad from "../../scad/modules/stem_mx.scad?raw";
 import stemChocV1Scad from "../../scad/modules/stem_choc_v1.scad?raw";
 import stemChocV2Scad from "../../scad/modules/stem_choc_v2.scad?raw";
@@ -31,6 +32,25 @@ const LEGEND_PLAN_MIN_PADDING = 0.2;
 const LEGEND_OVERFLOW_GUARD_WIDTH_RATIO = 2.5;
 const LEGEND_OVERFLOW_GUARD_DEPTH_RATIO = 3.0;
 const LEGEND_TEXT_MEASURE_SCALE = 100;
+const LEGEND_FIELD_SUFFIXES = Object.freeze({
+  enabled: "Enabled",
+  text: "Text",
+  fontKey: "FontKey",
+  fontStyleKey: "FontStyleKey",
+  underlineEnabled: "UnderlineEnabled",
+  size: "Size",
+  outlineDelta: "OutlineDelta",
+  height: "Height",
+  embed: "Embed",
+  offsetX: "OffsetX",
+  offsetY: "OffsetY",
+});
+const SIDE_LEGEND_CONFIGS = Object.freeze([
+  { side: "front", paramPrefix: "sideLegendFront", userPrefix: "side_legend_front", minimumWidthField: "keyWidth" },
+  { side: "back", paramPrefix: "sideLegendBack", userPrefix: "side_legend_back", minimumWidthField: "keyWidth" },
+  { side: "left", paramPrefix: "sideLegendLeft", userPrefix: "side_legend_left", minimumWidthField: "keyDepth" },
+  { side: "right", paramPrefix: "sideLegendRight", userPrefix: "side_legend_right", minimumWidthField: "keyDepth" },
+]);
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
@@ -44,6 +64,7 @@ const SCAD_FILES = [
   { path: "/scad/modules/keycap_typewriter.scad", content: typewriterModuleScad },
   { path: "/scad/modules/homing_bar.scad", content: homingBarScad },
   { path: "/scad/modules/legend_block.scad", content: legendBlockScad },
+  { path: "/scad/modules/sidewall_legend.scad", content: sidewallLegendScad },
   { path: "/scad/modules/stem_mx.scad", content: stemMxScad },
   { path: "/scad/modules/stem_choc_v1.scad", content: stemChocV1Scad },
   { path: "/scad/modules/stem_choc_v2.scad", content: stemChocV2Scad },
@@ -70,6 +91,10 @@ function clampMinimum(value, fallback, minimum) {
 function numberOr(value, fallback) {
   const nextValue = Number(value);
   return Number.isFinite(nextValue) ? nextValue : fallback;
+}
+
+function legendParamKey(prefix, suffix) {
+  return `${prefix}${suffix}`;
 }
 
 function atanDeg(value) {
@@ -513,6 +538,78 @@ function resolveLegendPlanSize({ size, outlineDelta, textBounds, underlineGeomet
   };
 }
 
+async function resolveLegendBridgeDefinitions({
+  params,
+  paramPrefix,
+  userPrefix,
+  minimumWidth,
+  minimumDepth,
+  includeEmbed = true,
+}) {
+  const enabledKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.enabled);
+  const textKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.text);
+  const fontKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey);
+  const fontStyleKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.fontStyleKey);
+  const underlineEnabledKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.underlineEnabled);
+  const sizeKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.size);
+  const outlineDeltaKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.outlineDelta);
+  const heightKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.height);
+  const embedKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.embed);
+  const offsetXKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.offsetX);
+  const offsetYKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.offsetY);
+  const selectedFont = resolveKeycapLegendFont(params[fontKey]);
+  const selectedFontStyle = resolveKeycapLegendFontStyle(selectedFont, params[fontStyleKey]);
+  const legendSize = clampLegendSize(params[sizeKey]);
+  const resolvedTextSize = legendTextSize(legendSize);
+  const label = params[textKey] ?? "";
+  const outlineDelta = params[outlineDeltaKey] ?? 0;
+  const textBounds = await measureLegendTextBounds({
+    label,
+    size: resolvedTextSize,
+    selectedFont,
+    selectedFontStyle,
+  });
+  const underlineGeometry = await resolveLegendUnderlineGeometry({
+    enabled: params[underlineEnabledKey],
+    label,
+    size: resolvedTextSize,
+    selectedFont,
+    selectedFontStyle,
+  });
+  const overflowGuard = resolveLegendOverflowGuardSize({
+    label,
+    size: resolvedTextSize,
+    outlineDelta,
+    underlineGeometry,
+  });
+  const planSize = resolveLegendPlanSize({
+    size: resolvedTextSize,
+    outlineDelta,
+    textBounds,
+    underlineGeometry,
+    minimumWidth: Math.max(positiveTextMetric(minimumWidth), overflowGuard.width),
+    minimumDepth: Math.max(positiveTextMetric(minimumDepth), overflowGuard.depth),
+  });
+
+  return {
+    [`user_${userPrefix}_enabled`]: Boolean(params[enabledKey]),
+    [`user_${userPrefix}_text`]: label,
+    [`user_${userPrefix}_font_name`]: selectedFontStyle?.fontQuery ?? selectedFont.fontQuery ?? selectedFont.fontName,
+    [`user_${userPrefix}_underline_enabled`]: underlineGeometry.enabled,
+    [`user_${userPrefix}_underline_width`]: underlineGeometry.span,
+    [`user_${userPrefix}_underline_thickness`]: underlineGeometry.thickness,
+    [`user_${userPrefix}_underline_offset_y`]: underlineGeometry.centerOffset,
+    [`user_${userPrefix}_width`]: planSize.width,
+    [`user_${userPrefix}_depth`]: planSize.depth,
+    [`user_${userPrefix}_text_size`]: resolvedTextSize,
+    [`user_${userPrefix}_height`]: params[heightKey],
+    ...(includeEmbed ? { [`user_${userPrefix}_embed`]: params[embedKey] } : {}),
+    [`user_${userPrefix}_outline_delta`]: outlineDelta,
+    [`user_${userPrefix}_offset_x`]: params[offsetXKey],
+    [`user_${userPrefix}_offset_y`]: params[offsetYKey],
+  };
+}
+
 function formatDefinitionValue(value) {
   if (typeof value === "boolean") {
     return value ? "true" : "false";
@@ -526,41 +623,28 @@ function formatDefinitionValue(value) {
 }
 
 async function createKeycapDefinitions({ params, exportTarget }) {
-  const selectedFont = resolveKeycapLegendFont(params.legendFontKey);
   const shapeGeometry = resolveShapeGeometryParameters(params);
-  const legendSize = clampLegendSize(params.legendSize);
-  const selectedFontStyle = resolveKeycapLegendFontStyle(selectedFont, params.legendFontStyleKey);
   const topSurfaceShape = params.topSurfaceShape ?? (Math.abs(Number(params.dishDepth ?? 0)) > 0.001 ? "spherical" : "flat");
-  const resolvedLegendTextSize = legendTextSize(legendSize);
-  const textBounds = await measureLegendTextBounds({
-    label: params.legendText,
-    size: resolvedLegendTextSize,
-    selectedFont,
-    selectedFontStyle,
-  });
-  const underlineGeometry = await resolveLegendUnderlineGeometry({
-    enabled: params.legendUnderlineEnabled,
-    label: params.legendText,
-    size: resolvedLegendTextSize,
-    selectedFont,
-    selectedFontStyle,
-  });
-  const legendOverflowGuard = resolveLegendOverflowGuardSize({
-    label: params.legendText,
-    size: resolvedLegendTextSize,
-    outlineDelta: params.legendOutlineDelta,
-    underlineGeometry,
-  });
-  const legendPlanSize = resolveLegendPlanSize({
-    size: resolvedLegendTextSize,
-    outlineDelta: params.legendOutlineDelta,
-    textBounds,
-    underlineGeometry,
+  const topLegendDefinitions = await resolveLegendBridgeDefinitions({
+    params,
+    paramPrefix: "legend",
+    userPrefix: "legend",
     // Keep this as an overlarge surface-fitting region, not a key footprint cap.
     // Oversized legends are allowed to overhang instead of being clipped.
-    minimumWidth: Math.max(positiveTextMetric(params.keyWidth), legendOverflowGuard.width),
-    minimumDepth: Math.max(positiveTextMetric(params.keyDepth), legendOverflowGuard.depth),
+    minimumWidth: positiveTextMetric(params.keyWidth),
+    minimumDepth: positiveTextMetric(params.keyDepth),
   });
+  const sideLegendDefinitionList = await Promise.all(SIDE_LEGEND_CONFIGS.map((config) => (
+    resolveLegendBridgeDefinitions({
+      params,
+      paramPrefix: config.paramPrefix,
+      userPrefix: config.userPrefix,
+      minimumWidth: positiveTextMetric(params[config.minimumWidthField]),
+      minimumDepth: positiveTextMetric(params.topCenterHeight),
+      includeEmbed: false,
+    })
+  )));
+  const sideLegendDefinitions = Object.assign({}, ...sideLegendDefinitionList);
 
   return {
     export_target: exportTarget,
@@ -607,21 +691,8 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_rim_width: Math.max(Number(params.rimWidth ?? 0), 0),
     user_rim_height_up: Math.max(Number(params.rimHeightUp ?? 0), 0),
     user_rim_height_down: Math.max(Number(params.rimHeightDown ?? 0), 0),
-    user_legend_enabled: params.legendEnabled,
-    user_legend_text: params.legendText,
-    user_legend_font_name: selectedFontStyle?.fontQuery ?? selectedFont.fontQuery ?? selectedFont.fontName,
-    user_legend_underline_enabled: underlineGeometry.enabled,
-    user_legend_underline_width: underlineGeometry.span,
-    user_legend_underline_thickness: underlineGeometry.thickness,
-    user_legend_underline_offset_y: underlineGeometry.centerOffset,
-    user_legend_width: legendPlanSize.width,
-    user_legend_depth: legendPlanSize.depth,
-    user_legend_text_size: resolvedLegendTextSize,
-    user_legend_height: params.legendHeight,
-    user_legend_embed: params.legendEmbed,
-    user_legend_outline_delta: params.legendOutlineDelta,
-    user_legend_offset_x: params.legendOffsetX,
-    user_legend_offset_y: params.legendOffsetY,
+    ...topLegendDefinitions,
+    ...sideLegendDefinitions,
     user_homing_bar_enabled: params.homingBarEnabled,
     user_homing_bar_length: params.homingBarLength,
     user_homing_bar_width: params.homingBarWidth,
@@ -658,7 +729,7 @@ async function loadBinaryAsset(relativePath) {
   return new Uint8Array(await response.arrayBuffer());
 }
 
-async function getRuntimeAssets(fontKey) {
+async function getRuntimeAssetsForFont(fontKey) {
   const selectedFont = resolveKeycapLegendFont(fontKey);
   const cachedPromise = runtimeAssetPromises.get(selectedFont.key);
 
@@ -682,9 +753,22 @@ async function getRuntimeAssets(fontKey) {
   return assetPromise;
 }
 
+function getLegendFontKeys(params = {}) {
+  return [
+    params.legendFontKey,
+    ...SIDE_LEGEND_CONFIGS.map((config) => params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey)]),
+  ].filter(Boolean);
+}
+
+async function getRuntimeAssets(params = {}) {
+  const fontKeys = Array.from(new Set(getLegendFontKeys(params)));
+  const assetLists = await Promise.all(fontKeys.map((fontKey) => getRuntimeAssetsForFont(fontKey)));
+  return assetLists.flat();
+}
+
 export async function createKeycapFiles({ params, exportTarget }) {
   const definitions = await createKeycapDefinitions({ params, exportTarget });
-  const runtimeAssets = await getRuntimeAssets(params.legendFontKey);
+  const runtimeAssets = await getRuntimeAssets(params);
 
   return [
     ...SCAD_FILES.map((file) => ({ ...file })),

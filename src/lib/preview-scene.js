@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-const OVERLAY_LAYER_NAMES = new Set(["legend", "homing"]);
+const OVERLAY_LAYER_NAMES = new Set(["legend", "legend-front", "legend-back", "legend-left", "legend-right", "homing"]);
 const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 6;
 const MIN_NORMAL_LENGTH_SQ = 1e-12;
 

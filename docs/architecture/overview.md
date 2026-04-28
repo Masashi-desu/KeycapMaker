@@ -5,7 +5,7 @@
 KeycapMaker は、GitHub Pages で配信するクライアントサイド完結のキーキャップ編集アプリです。現在の主要機能は次のとおりです。
 
 - キーキャップ形状の編集
-- legend の文字列、書体、font 内 style、明示的な太さ補正、位置、高さ、埋め込み量の編集
+- legend の文字列、書体、font 内 style、明示的な太さ補正、位置、高さの編集。キートップ legend は埋め込み量も編集できる
 - homing bar と stem 方式の切り替え
 - typewriter shape 専用の key rim 追加
 - Three.js によるプレビュー
@@ -105,8 +105,9 @@ flowchart LR
 
 ## 現時点の実装制約
 
-- legend は単一項目モデルで、複数 legend や side legend は未対応
-- legend の露出面は top dish 前提
+- legend はキートップ 1 件と sidewall front / back / left / right の固定 4 面モデル
+- キートップ legend の露出面は top dish 前提
+- sidewall legend は各側面の中央基準面の傾きに合わせて配置し、壁の内側面まで自動で埋め込む。角丸や JIS Enter の欠き込み面へは自動追従しない
 - variable font の native style は使えるが、italic / slanted は font 側に実データがない限り出せない
 - 3MF の色情報は付与しているが、スライサー互換性は別途手動確認が必要
 - OpenSCAD runtime とフォント同梱のライセンス確認は人間の最終確認が必要
