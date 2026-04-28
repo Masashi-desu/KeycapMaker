@@ -60,6 +60,11 @@ const en = Object.freeze({
     title: "Name",
     description: "This name is used for 3MF, STL, and editor-data JSON files, and it remains when the data is loaded again.",
   },
+  parameterGroupCaptions: {
+    name: "Export file name",
+    top: "Surface and tilt",
+    legend: "Text and position",
+  },
   unitBasis: {
     title: "1u Conversion",
     description: "Displaying 1u as {unitBase} mm.",

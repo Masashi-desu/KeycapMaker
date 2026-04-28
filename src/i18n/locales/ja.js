@@ -60,6 +60,11 @@ const ja = Object.freeze({
     title: "名称",
     description: "保存するときの名前です。3MF、STL、編集データ JSON に使われ、あとで読み込んでもこの名前が残ります。",
   },
+  parameterGroupCaptions: {
+    name: "保存ファイル名",
+    top: "上面の形と傾き",
+    legend: "文字と位置",
+  },
   unitBasis: {
     title: "1u 換算",
     description: "現在は {unitBase} mm を 1u として表示します。",

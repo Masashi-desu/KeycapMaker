@@ -118,6 +118,19 @@ const EXPORT_ICON_MARKUP = Object.freeze({
     </svg>
   `,
 });
+const PARAMETER_GROUP_ICON_PATHS = Object.freeze({
+  name: "icons/parameters/name.svg",
+  shape: "icons/parameters/shape.svg",
+  top: "icons/parameters/top.svg",
+  legend: "icons/parameters/legend.svg",
+  homing: "icons/parameters/homing.svg",
+  stem: "icons/parameters/stem.svg",
+});
+const PARAMETER_GROUP_CAPTION_KEYS = Object.freeze({
+  name: "parameterGroupCaptions.name",
+  top: "parameterGroupCaptions.top",
+  legend: "parameterGroupCaptions.legend",
+});
 let disposePreviewScene = null;
 let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
@@ -1694,6 +1707,31 @@ function resolvePublicAssetUrl(relativePath) {
   return new URL(relativePath, baseUrl).toString();
 }
 
+function getParameterGroupIconPath(groupId) {
+  return PARAMETER_GROUP_ICON_PATHS[groupId] ?? PARAMETER_GROUP_ICON_PATHS.shape;
+}
+
+function getParameterGroupCaption(groupId) {
+  const captionKey = PARAMETER_GROUP_CAPTION_KEYS[groupId];
+  return captionKey ? t(captionKey, {}, "") : "";
+}
+
+function renderParameterGroupIcon(groupId) {
+  const iconUrl = resolvePublicAssetUrl(getParameterGroupIconPath(groupId));
+  const iconSymbolClass = groupId === "stem"
+    ? "field-group-card__icon-symbol field-group-card__icon-symbol--stem"
+    : "field-group-card__icon-symbol";
+
+  return `
+    <span class="field-group-card__icon" aria-hidden="true">
+      <span
+        class="${iconSymbolClass}"
+        style="--field-group-icon: url('${escapeHtml(iconUrl)}');"
+      ></span>
+    </span>
+  `;
+}
+
 function getColorFieldValue(fieldKey) {
   return normalizeHexColor(state.keycapParams[fieldKey]) ?? DEFAULT_KEYCAP_COLORS[fieldKey];
 }
@@ -2146,22 +2184,72 @@ function renderExportOptionsCard() {
   `;
 }
 
+function renderFieldGroupToggleButton({
+  groupId,
+  isCollapsed,
+  groupBodyId,
+  toggleLabel,
+  toggleIconUrl,
+}) {
+  return `
+    <button
+      class="field-group-toggle"
+      type="button"
+      data-field-group-toggle="${escapeHtml(groupId)}"
+      aria-expanded="${isCollapsed ? "false" : "true"}"
+      aria-controls="${escapeHtml(groupBodyId)}"
+      aria-label="${escapeHtml(toggleLabel)}"
+    >
+      <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+    </button>
+  `;
+}
+
+function renderParameterCardHeader({
+  groupId,
+  title,
+  titleId,
+  caption = "",
+  toggleButton = "",
+}) {
+  const captionMarkup = caption
+    ? `<p class="field-group-card__caption">${escapeHtml(caption)}</p>`
+    : "";
+  const titleStackClass = captionMarkup
+    ? "field-group-card__title-stack"
+    : "field-group-card__title-stack field-group-card__title-stack--solo";
+
+  return `
+    <div class="field-group-header">
+      <div class="field-group-card__header">
+        ${renderParameterGroupIcon(groupId)}
+        <span class="${titleStackClass}">
+          <h3 id="${escapeHtml(titleId)}">${escapeHtml(title)}</h3>
+          ${captionMarkup}
+        </span>
+        ${toggleButton}
+      </div>
+    </div>
+  `;
+}
+
 function renderNameFieldCard() {
   const groupViewTransitionName = createViewTransitionName("field-group", SETTINGS_NAME_FIELD.key);
   const fieldViewTransitionName = createViewTransitionName("field", SETTINGS_NAME_FIELD.key);
   const value = state.keycapParams[SETTINGS_NAME_FIELD.key];
   const fieldLabel = resolveDynamicCopy(SETTINGS_NAME_FIELD.label);
   const fieldPlaceholder = resolveDynamicCopy(SETTINGS_NAME_FIELD.placeholder);
+  const titleId = "settings-name-card-title";
 
   return `
-    <section class="field-group-card" style="view-transition-name: ${groupViewTransitionName};">
-      <div class="field-group-header">
-        <div class="field-group-header__row">
-          <h3>${t("nameGroup.title")}</h3>
-        </div>
-      </div>
+    <section class="field-group-card" aria-labelledby="${titleId}" style="view-transition-name: ${groupViewTransitionName};">
+      ${renderParameterCardHeader({
+        groupId: "name",
+        title: t("nameGroup.title"),
+        titleId,
+        caption: getParameterGroupCaption("name"),
+      })}
       <div class="field-group-body">
-        <p class="field-group-description">${t("nameGroup.description")}</p>
         <span class="field-control name-field-control" style="view-transition-name: ${fieldViewTransitionName};">
           <input
             id="settings-name-input"
@@ -2209,27 +2297,25 @@ function renderFieldGroup(group, groupIndex) {
     ? t("fieldGroup.expand", { title: group.title })
     : t("fieldGroup.collapse", { title: group.title });
   const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
-  const groupDescription = resolveDynamicCopy(group.description);
+  const titleId = `field-group-title-${toKebabCase(groupId)}`;
+  const toggleButton = renderFieldGroupToggleButton({
+    groupId,
+    isCollapsed,
+    groupBodyId,
+    toggleLabel,
+    toggleIconUrl,
+  });
 
   return `
-    <section class="field-group-card" style="view-transition-name: ${groupViewTransitionName};">
-      <div class="field-group-header">
-        <div class="field-group-header__row">
-          <h3>${group.title}</h3>
-          <button
-            class="field-group-toggle"
-            type="button"
-            data-field-group-toggle="${groupId}"
-            aria-expanded="${isCollapsed ? "false" : "true"}"
-            aria-controls="${groupBodyId}"
-            aria-label="${toggleLabel}"
-          >
-            <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
+    <section class="field-group-card" aria-labelledby="${titleId}" style="view-transition-name: ${groupViewTransitionName};">
+      ${renderParameterCardHeader({
+        groupId,
+        title: group.title,
+        titleId,
+        caption: getParameterGroupCaption(groupId),
+        toggleButton,
+      })}
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
-        <p class="field-group-description" data-field-group-description="${escapeHtml(groupId)}">${groupDescription}</p>
         <div class="field-grid">
           ${renderFieldGridContents(group.fields, groupFieldByKey)}
         </div>
@@ -2248,27 +2334,25 @@ function renderLegendFieldGroup(group, groupIndex) {
     ? t("fieldGroup.expand", { title: group.title })
     : t("fieldGroup.collapse", { title: group.title });
   const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
-  const groupDescription = resolveDynamicCopy(group.description);
+  const titleId = `field-group-title-${toKebabCase(groupId)}`;
+  const toggleButton = renderFieldGroupToggleButton({
+    groupId,
+    isCollapsed,
+    groupBodyId,
+    toggleLabel,
+    toggleIconUrl,
+  });
 
   return `
-    <section class="field-group-card" style="view-transition-name: ${groupViewTransitionName};">
-      <div class="field-group-header">
-        <div class="field-group-header__row">
-          <h3>${group.title}</h3>
-          <button
-            class="field-group-toggle"
-            type="button"
-            data-field-group-toggle="${groupId}"
-            aria-expanded="${isCollapsed ? "false" : "true"}"
-            aria-controls="${groupBodyId}"
-            aria-label="${toggleLabel}"
-          >
-            <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
+    <section class="field-group-card" aria-labelledby="${titleId}" style="view-transition-name: ${groupViewTransitionName};">
+      ${renderParameterCardHeader({
+        groupId,
+        title: group.title,
+        titleId,
+        caption: getParameterGroupCaption(groupId),
+        toggleButton,
+      })}
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
-        <p class="field-group-description" data-field-group-description="${escapeHtml(groupId)}">${groupDescription}</p>
         <div class="legend-subcard-list">
           ${LEGEND_CARD_DEFINITIONS.map((card) => renderLegendSubcard(card, groupFieldByKey)).join("")}
         </div>
@@ -3614,16 +3698,6 @@ function syncUnitLinkedFieldHints() {
   syncFieldHint("keyDepth");
 }
 
-function syncVisibleFieldGroupDescriptions() {
-  const activeFieldGroups = getActiveFieldGroups();
-  app.querySelectorAll("[data-field-group-description]").forEach((element) => {
-    const group = activeFieldGroups.find((entry) => entry.id === element.dataset.fieldGroupDescription);
-    if (group) {
-      element.textContent = resolveDynamicCopy(group.description);
-    }
-  });
-}
-
 function syncAllLinkedSizeInputs() {
   Object.values(LINKED_SIZE_UNIT_FIELDS).forEach((primaryField) => {
     syncLinkedSizeInputs(primaryField);
@@ -3650,7 +3724,6 @@ function handleKeyUnitBasisInput(input, options = {}) {
   }
 
   syncKeyUnitBasisCopy();
-  syncVisibleFieldGroupDescriptions();
   syncUnitLinkedFieldHints();
   syncAllLinkedSizeInputs();
 }

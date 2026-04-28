@@ -60,6 +60,11 @@ const ko = Object.freeze({
     title: "이름",
     description: "저장할 때 사용하는 이름입니다. 3MF, STL, 편집 데이터 JSON에 사용되며, 나중에 불러와도 이 이름이 유지됩니다.",
   },
+  parameterGroupCaptions: {
+    name: "내보내기 파일명",
+    top: "상면과 기울기",
+    legend: "문자와 위치",
+  },
   unitBasis: {
     title: "1u 환산",
     description: "현재 {unitBase} mm를 1u로 표시합니다.",

@@ -60,6 +60,11 @@ const zh = Object.freeze({
     title: "名称",
     description: "保存时使用的名称。3MF、STL 和编辑数据 JSON 都会使用它，之后读取时也会保留。",
   },
+  parameterGroupCaptions: {
+    name: "导出文件名",
+    top: "上表面与倾斜",
+    legend: "字符与位置",
+  },
   unitBasis: {
     title: "1u 换算",
     description: "当前按 {unitBase} mm 显示为 1u。",
