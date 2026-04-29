@@ -126,6 +126,10 @@ const PARAMETER_GROUP_ICON_PATHS = Object.freeze({
   homing: "icons/parameters/homing.svg",
   stem: "icons/parameters/stem.svg",
 });
+const KEY_UNIT_BASIS_ICON_PATH = "icons/parameters/key-unit-basis.svg?v=rough-a";
+const KEY_DEPTH_BASIS_ICON_PATH = "icons/parameters/key-depth-basis.svg?v=rough-b";
+const KEY_WALL_THICKNESS_ICON_PATH = "icons/parameters/key-wall-thickness.svg?v=rough-a";
+const KEY_TOP_TAPER_ICON_PATH = "icons/parameters/key-top-taper.svg?v=rough-a";
 const PARAMETER_GROUP_CAPTION_KEYS = Object.freeze({
   name: "parameterGroupCaptions.name",
   top: "parameterGroupCaptions.top",
@@ -1732,6 +1736,35 @@ function renderParameterGroupIcon(groupId) {
   `;
 }
 
+function renderFieldLeadingIcon(iconPath) {
+  const iconUrl = resolvePublicAssetUrl(iconPath);
+
+  return `
+    <span class="field-leading-icon" aria-hidden="true">
+      <span
+        class="field-leading-icon__symbol"
+        style="--field-leading-icon: url('${escapeHtml(iconUrl)}');"
+      ></span>
+    </span>
+  `;
+}
+
+function renderKeyUnitBasisIcon() {
+  return renderFieldLeadingIcon(KEY_UNIT_BASIS_ICON_PATH);
+}
+
+function renderKeyDepthBasisIcon() {
+  return renderFieldLeadingIcon(KEY_DEPTH_BASIS_ICON_PATH);
+}
+
+function renderKeyWallThicknessIcon() {
+  return renderFieldLeadingIcon(KEY_WALL_THICKNESS_ICON_PATH);
+}
+
+function renderKeyTopTaperIcon() {
+  return renderFieldLeadingIcon(KEY_TOP_TAPER_ICON_PATH);
+}
+
 function getColorFieldValue(fieldKey) {
   return normalizeHexColor(state.keycapParams[fieldKey]) ?? DEFAULT_KEYCAP_COLORS[fieldKey];
 }
@@ -2659,7 +2692,8 @@ function renderField(field, options = {}) {
     const inputId = `field-control-${field.key}`;
 
     return `
-      <div class="field field--key-unit-basis${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      <div class="field field--key-unit-basis field--with-leading-icon${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${renderKeyUnitBasisIcon()}
         <label class="field-copy" for="${inputId}">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -2851,13 +2885,21 @@ function renderField(field, options = {}) {
   }
 
   if (field.type === "linked-size") {
+    const leadingIcon = field.key === "keyWidth"
+      ? renderKeyUnitBasisIcon()
+      : field.key === "keyDepth"
+        ? renderKeyDepthBasisIcon()
+        : "";
+    const linkedSizeIconClassName = leadingIcon ? " field--with-leading-icon" : "";
+
     return `
-      <label class="field field--linked-size${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      <label class="field field--linked-size${linkedSizeIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${leadingIcon}
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
         </span>
-        <span class="field-control-cluster">
+        <span class="field-control-cluster field-control-cluster--linked-size">
           <span class="field-mini-control">
             <span class="field-mini-control__label">${primaryMiniLabel}</span>
             <span class="field-control">
@@ -2963,8 +3005,16 @@ function renderField(field, options = {}) {
     `;
   }
 
+  const leadingIcon = field.key === "wallThickness"
+    ? renderKeyWallThicknessIcon()
+    : field.key === "topScale"
+      ? renderKeyTopTaperIcon()
+      : "";
+  const numberIconClassName = leadingIcon ? " field--with-leading-icon field--single-number" : "";
+
   return `
-    <label class="field${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+    <label class="field${numberIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      ${leadingIcon}
       <span class="field-copy">
         <span class="field-label">${fieldLabel}</span>
         <span class="field-hint">${fieldHint}</span>
