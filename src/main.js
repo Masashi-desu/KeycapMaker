@@ -130,6 +130,11 @@ const KEY_UNIT_BASIS_ICON_PATH = "icons/parameters/key-unit-basis.svg?v=rough-a"
 const KEY_DEPTH_BASIS_ICON_PATH = "icons/parameters/key-depth-basis.svg?v=rough-b";
 const KEY_WALL_THICKNESS_ICON_PATH = "icons/parameters/key-wall-thickness.svg?v=rough-a";
 const KEY_TOP_TAPER_ICON_PATH = "icons/parameters/key-top-taper.svg?v=rough-a";
+const KEY_TOP_CENTER_HEIGHT_ICON_PATH = "icons/parameters/key-top-center-height.svg?v=rough-a";
+const KEY_TOP_OFFSET_ICON_PATH = "icons/parameters/key-top-offset.svg?v=rough-e";
+const KEY_TOP_SURFACE_SHAPE_ICON_PATH = "icons/parameters/key-top-surface-shape.svg?v=rough-c";
+const KEY_TOP_HAT_ICON_PATH = "icons/parameters/key-top-hat.svg?v=rough-c";
+const KEY_TOP_SLOPE_INPUT_MODE_ICON_PATH = "icons/parameters/key-top-slope-input-mode.svg?v=vtracer-target-a";
 const PARAMETER_GROUP_CAPTION_KEYS = Object.freeze({
   name: "parameterGroupCaptions.name",
   top: "parameterGroupCaptions.top",
@@ -1765,6 +1770,26 @@ function renderKeyTopTaperIcon() {
   return renderFieldLeadingIcon(KEY_TOP_TAPER_ICON_PATH);
 }
 
+function renderKeyTopCenterHeightIcon() {
+  return renderFieldLeadingIcon(KEY_TOP_CENTER_HEIGHT_ICON_PATH);
+}
+
+function renderKeyTopOffsetIcon() {
+  return renderFieldLeadingIcon(KEY_TOP_OFFSET_ICON_PATH);
+}
+
+function renderKeyTopSurfaceShapeIcon() {
+  return renderFieldLeadingIcon(KEY_TOP_SURFACE_SHAPE_ICON_PATH);
+}
+
+function renderKeyTopHatIcon() {
+  return renderFieldLeadingIcon(KEY_TOP_HAT_ICON_PATH);
+}
+
+function renderKeyTopSlopeInputModeIcon() {
+  return renderFieldLeadingIcon(KEY_TOP_SLOPE_INPUT_MODE_ICON_PATH);
+}
+
 function getColorFieldValue(fieldKey) {
   return normalizeHexColor(state.keycapParams[fieldKey]) ?? DEFAULT_KEYCAP_COLORS[fieldKey];
 }
@@ -2505,9 +2530,16 @@ function renderFieldWithDependentFields(field, dependentFields, fieldByKey = nul
   const fieldOptions = resolveFieldOptions(field);
   const isDisabled = isFieldDisabled(field);
   const inputId = `field-control-${field.key}`;
+  const leadingIcon = field.key === "topSurfaceShape"
+    ? renderKeyTopSurfaceShapeIcon()
+    : field.key === "topSlopeInputMode"
+      ? renderKeyTopSlopeInputModeIcon()
+      : "";
+  const leadingIconClassName = leadingIcon ? " field--with-leading-icon" : "";
 
   return `
-    <div class="field field--with-dependents" style="view-transition-name: ${fieldViewTransitionName};">
+    <div class="field field--with-dependents${leadingIconClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      ${leadingIcon}
       <label class="field-copy" for="${inputId}">
         <span class="field-label">${fieldLabel}</span>
         <span class="field-hint">${fieldHint}</span>
@@ -2716,6 +2748,8 @@ function renderField(field, options = {}) {
   }
 
   if (field.type === "checkbox") {
+    const leadingIcon = field.key === "topHatEnabled" ? renderKeyTopHatIcon() : "";
+    const checkboxIconClassName = leadingIcon ? " field--with-leading-icon" : "";
     const checkboxControl = `
       <label class="field-checkbox-header">
         <span class="field-copy">
@@ -2731,7 +2765,8 @@ function renderField(field, options = {}) {
 
     if (dependentFields.length > 0) {
       return `
-        <div class="field field--checkbox${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        <div class="field field--checkbox${checkboxIconClassName}${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+          ${leadingIcon}
           ${checkboxControl}
           ${fieldNote ? `<p class="field-note">${escapeHtml(fieldNote)}</p>` : ""}
           ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
@@ -2740,7 +2775,8 @@ function renderField(field, options = {}) {
     }
 
     return `
-      <div class="field field--checkbox${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      <div class="field field--checkbox${checkboxIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${leadingIcon}
         ${checkboxControl}
       </div>
     `;
@@ -2938,9 +2974,12 @@ function renderField(field, options = {}) {
     const secondaryMinValue = resolveFieldAttribute(field.secondaryMin ?? secondaryFieldConfig?.min);
     const secondaryMaxValue = resolveFieldAttribute(field.secondaryMax ?? secondaryFieldConfig?.max);
     const secondaryStepValue = resolveFieldAttribute(field.secondaryStep ?? secondaryFieldConfig?.step);
+    const leadingIcon = field.key === "topOffsetX" ? renderKeyTopOffsetIcon() : "";
+    const numberPairIconClassName = leadingIcon ? " field--with-leading-icon" : "";
 
     return `
-      <div class="field field--number-pair${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      <div class="field field--number-pair${numberPairIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${leadingIcon}
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -3005,11 +3044,13 @@ function renderField(field, options = {}) {
     `;
   }
 
-  const leadingIcon = field.key === "wallThickness"
-    ? renderKeyWallThicknessIcon()
-    : field.key === "topScale"
-      ? renderKeyTopTaperIcon()
-      : "";
+  const leadingIcon = field.key === "topCenterHeight"
+    ? renderKeyTopCenterHeightIcon()
+    : field.key === "wallThickness"
+      ? renderKeyWallThicknessIcon()
+      : field.key === "topScale"
+        ? renderKeyTopTaperIcon()
+        : "";
   const numberIconClassName = leadingIcon ? " field--with-leading-icon field--single-number" : "";
 
   return `

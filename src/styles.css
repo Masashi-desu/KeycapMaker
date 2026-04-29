@@ -688,6 +688,18 @@ pre {
   grid-row: 1;
 }
 
+.field--with-leading-icon > .field-dependent-list {
+  grid-column: 1 / -1;
+}
+
+.field--checkbox.field--with-leading-icon > .field-checkbox-header {
+  grid-column: 2;
+}
+
+.field--checkbox.field--with-leading-icon > .field-leading-icon {
+  grid-row: 1;
+}
+
 .field--single-number.field--with-leading-icon > .field-control {
   grid-column: 1 / -1;
 }
@@ -723,6 +735,11 @@ pre {
 
 .field--checkbox {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.field--checkbox.field--with-leading-icon {
+  grid-template-columns: 48px minmax(0, 1fr);
+  column-gap: 12px;
 }
 
 .field-checkbox-header {
