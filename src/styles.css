@@ -40,13 +40,20 @@
 }
 
 html,
-body {
+body,
+#app {
   min-height: 100%;
+}
+
+html {
+  background: var(--page-end);
 }
 
 body {
   margin: 0;
   overflow-x: hidden;
+  min-height: 100dvh;
+  background: linear-gradient(135deg, var(--page-start) 0%, var(--page-end) 100%);
 }
 
 button,
@@ -81,17 +88,24 @@ pre {
 }
 
 .app-shell {
+  --shell-padding-block: 24px;
+  --shell-padding-inline: 24px;
+  --shell-padding-top: max(var(--shell-padding-block), env(safe-area-inset-top, 0px));
+  --shell-padding-right: max(var(--shell-padding-inline), env(safe-area-inset-right, 0px));
+  --shell-padding-bottom: max(var(--shell-padding-block), env(safe-area-inset-bottom, 0px));
+  --shell-padding-left: max(var(--shell-padding-inline), env(safe-area-inset-left, 0px));
   position: relative;
   min-height: 100vh;
-  padding: 24px;
+  min-height: 100dvh;
+  padding: var(--shell-padding-top) var(--shell-padding-right) var(--shell-padding-bottom) var(--shell-padding-left);
   overflow-x: clip;
   background: linear-gradient(135deg, var(--page-start) 0%, var(--page-end) 100%);
 }
 
 .language-control {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  top: var(--shell-padding-top, 24px);
+  right: var(--shell-padding-right, 24px);
   z-index: 80;
 }
 
@@ -1530,8 +1544,9 @@ pre {
 
 @media (max-width: 760px) {
   .editor-screen {
-    --mobile-shell-padding: 24px;
-    --mobile-viewport-height: calc(100svh - (var(--mobile-shell-padding) * 2));
+    --mobile-shell-padding-top: var(--shell-padding-top);
+    --mobile-shell-padding-bottom: var(--shell-padding-bottom);
+    --mobile-viewport-height: calc(100svh - var(--mobile-shell-padding-top) - var(--mobile-shell-padding-bottom));
     grid-template-columns: 1fr;
     grid-template-rows: minmax(var(--mobile-viewport-height), auto);
     justify-content: stretch;
@@ -1556,7 +1571,7 @@ pre {
 
   .right-column {
     position: sticky;
-    top: var(--mobile-shell-padding);
+    top: var(--mobile-shell-padding-top);
     width: 100%;
     height: var(--mobile-viewport-height);
     z-index: 1;
@@ -1581,17 +1596,9 @@ pre {
 }
 
 @media (max-width: 720px) {
-  .editor-screen {
-    --mobile-shell-padding: 16px;
-  }
-
   .app-shell {
-    padding: 16px;
-  }
-
-  .language-control {
-    top: 16px;
-    right: 16px;
+    --shell-padding-block: 16px;
+    --shell-padding-inline: 16px;
   }
 
   .language-combobox__button {
