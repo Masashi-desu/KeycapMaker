@@ -201,11 +201,13 @@ const LEGEND_CARD_DEFINITIONS = Object.freeze([
   {
     id: "legend-card-keytop",
     title: () => t("legendCards.keytop"),
+    enabledFieldKey: legendParamKey("legend", LEGEND_FIELD_SUFFIXES.enabled),
     fieldKeys: createLegendFieldKeys("legend"),
   },
   ...SIDE_LEGEND_CONFIGS.map((config) => ({
     id: `legend-card-${config.side}`,
     title: () => t("legendCards.sidewall", { side: getSideLegendLabel(config.side) }),
+    enabledFieldKey: legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled),
     fieldKeys: createLegendFieldKeys(config.paramPrefix, { side: config.side }),
   })),
 ]);
@@ -950,7 +952,7 @@ function createLegendControlFields({ paramPrefix, side = null, collapseControlle
   const embedKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.embed);
   const offsetXKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.offsetX);
   const offsetYKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.offsetY);
-  const visibilityConfig = collapseControlled ? {} : { visibleWhen: (params) => params[enabledKey] };
+  const visibilityConfig = { visibleWhen: (params) => params[enabledKey] };
   const sideValues = () => ({ side: sideLabel() });
   const fieldKey = (genericKey, topKey) => (isSideLegend ? `fields.sideLegend.${genericKey}` : `fields.${topKey}`);
   const enabledDependentFieldKeys = collapseControlled ? [] : [
@@ -2561,11 +2563,16 @@ function renderLegendSubcard(card, groupFieldByKey) {
   const cardTitle = resolveDynamicCopy(card.title);
   const cardBodyId = `legend-subcard-body-${card.id}`;
   const isCollapsed = state.collapsedFieldGroups[card.id] === true;
+  const enabledFieldKey = card.enabledFieldKey;
+  const isLegendEnabled = enabledFieldKey ? Boolean(state.keycapParams[enabledFieldKey]) : true;
   const toggleLabel = isCollapsed
     ? t("fieldGroup.expand", { title: cardTitle })
     : t("fieldGroup.collapse", { title: cardTitle });
   const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const cardViewTransitionName = createViewTransitionName("legend-subcard", card.id);
+  const printNotice = isLegendEnabled
+    ? `<p class="field-note">${escapeHtml(t("fields.legendPrintNotice"))}</p>`
+    : "";
 
   return `
     <section class="legend-subcard" style="view-transition-name: ${cardViewTransitionName};">
@@ -2583,7 +2590,7 @@ function renderLegendSubcard(card, groupFieldByKey) {
         </button>
       </div>
       <div class="legend-subcard__body" id="${cardBodyId}" ${isCollapsed ? "hidden" : ""}>
-        <p class="field-note">${escapeHtml(t("fields.legendPrintNotice"))}</p>
+        ${printNotice}
         <div class="field-grid">
           ${renderFieldGridContents(cardFields, cardFieldByKey)}
         </div>
