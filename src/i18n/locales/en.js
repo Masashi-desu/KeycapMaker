@@ -80,6 +80,9 @@ const en = Object.freeze({
     keytop: "Keytop",
     sidewall: "{side} Sidewall",
   },
+  stemCards: {
+    clearance: "Clearance",
+  },
   shapeProfiles: {
     "custom-shell": {
       label: "Custom Shell",
@@ -482,9 +485,14 @@ const en = Object.freeze({
       alpsHint: "0 is standard. Positive values make the insert thinner and looser; negative values make it thicker and tighter.",
       disabledHint: "Unused when no mount is generated",
     },
+    stemCrossChamfer: {
+      label: "Entry Chamfer",
+      hint: "0 is standard. Increase the value to widen only the cross-hole entry.",
+      disabledHint: "Unused for non-cross mounts",
+    },
     stemInsetDelta: {
       label: "Mount Start Offset",
-      hint: "0 is standard. Positive values raise the start position from the bottom to avoid internal interference.",
+      hint: "0 is standard. Positive values raise the start position from the bottom; negative values extend it downward.",
       disabledHint: "Unused when no mount is generated",
     },
   },

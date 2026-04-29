@@ -80,6 +80,22 @@ test("homing bar の面取り量は負数を 0 に丸める", () => {
   assert.equal(parsed.homingBarChamfer, 0);
 });
 
+test("ステム入口の面取り量は保持し、負数を 0 に丸める", () => {
+  const defaults = createDefaultKeycapParams("custom-shell");
+  const parsed = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    stemCrossChamfer: 0.2,
+  });
+  const rounded = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    stemCrossChamfer: -0.4,
+  });
+
+  assert.equal(defaults.stemCrossChamfer, 0);
+  assert.equal(parsed.stemCrossChamfer, 0.2);
+  assert.equal(rounded.stemCrossChamfer, 0);
+});
+
 test("旧 dish 指定だけの入力は spherical として解釈する", () => {
   const parsed = parseEditorDataPayload({
     shapeProfile: "custom-shell",

@@ -209,6 +209,12 @@ const LEGEND_CARD_DEFINITIONS = Object.freeze([
     fieldKeys: createLegendFieldKeys(config.paramPrefix, { side: config.side }),
   })),
 ]);
+const STEM_CLEARANCE_CARD_DEFINITION = Object.freeze({
+  id: "stem-card-clearance",
+  title: () => t("stemCards.clearance"),
+  fieldKeys: ["stemOuterDelta", "stemCrossMargin", "stemCrossChamfer"],
+});
+const STEM_CARD_DEFINITIONS = Object.freeze([STEM_CLEARANCE_CARD_DEFINITION]);
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const TOP_HAT_MIN_SIZE = 0.2;
@@ -606,6 +612,12 @@ function getStemFitHint(params) {
     default:
       return t("fields.stemCrossMargin.disabledHint");
   }
+}
+
+function getStemChamferHint(params) {
+  return isCrossCompatibleStemType(resolveStemType(params))
+    ? t("fields.stemCrossChamfer.hint")
+    : t("fields.stemCrossChamfer.disabledHint");
 }
 
 function getStemInsetHint(params) {
@@ -1522,6 +1534,15 @@ const fieldGroupTemplates = [
         visibleWhen: (params) => params.stemEnabled,
       },
       {
+        key: "stemCrossChamfer",
+        label: () => t("fields.stemCrossChamfer.label"),
+        hint: (params) => getStemChamferHint(params),
+        unit: "mm",
+        step: 0.05,
+        min: 0,
+        visibleWhen: (params) => params.stemEnabled && isCrossCompatibleStemType(resolveStemType(params)),
+      },
+      {
         key: "stemInsetDelta",
         label: () => t("fields.stemInsetDelta.label"),
         hint: (params) => getStemInsetHint(params),
@@ -1542,6 +1563,7 @@ function createFieldGroupCollapseState() {
   return {
     ...Object.fromEntries(Array.from(new Set(groupIds)).map((groupId) => [groupId, true])),
     ...Object.fromEntries(LEGEND_CARD_DEFINITIONS.map((card) => [card.id, true])),
+    ...Object.fromEntries(STEM_CARD_DEFINITIONS.map((card) => [card.id, true])),
   };
 }
 
@@ -2368,6 +2390,10 @@ function renderFieldGroup(group, groupIndex) {
     return renderLegendFieldGroup(group, groupIndex);
   }
 
+  if (group.id === "stem") {
+    return renderStemFieldGroup(group, groupIndex);
+  }
+
   const groupId = group.id ?? `group-${groupIndex}`;
   const isCollapsed = state.collapsedFieldGroups[groupId] === true;
   const groupViewTransitionName = createViewTransitionName("field-group", groupId);
@@ -2398,6 +2424,49 @@ function renderFieldGroup(group, groupIndex) {
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
         <div class="field-grid">
           ${renderFieldGridContents(group.fields, groupFieldByKey)}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderStemFieldGroup(group, groupIndex) {
+  const groupId = group.id ?? `group-${groupIndex}`;
+  const isCollapsed = state.collapsedFieldGroups[groupId] === true;
+  const groupViewTransitionName = createViewTransitionName("field-group", groupId);
+  const groupBodyId = `field-group-body-${groupId}`;
+  const groupFieldByKey = new Map(group.fields.map((field) => [field.key, field]));
+  const clearanceFieldKeys = new Set(STEM_CLEARANCE_CARD_DEFINITION.fieldKeys);
+  const mainFields = group.fields.filter((field) => !clearanceFieldKeys.has(field.key));
+  const mainFieldByKey = new Map(mainFields.map((field) => [field.key, field]));
+  const toggleLabel = isCollapsed
+    ? t("fieldGroup.expand", { title: group.title })
+    : t("fieldGroup.collapse", { title: group.title });
+  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
+  const titleId = `field-group-title-${toKebabCase(groupId)}`;
+  const toggleButton = renderFieldGroupToggleButton({
+    groupId,
+    isCollapsed,
+    groupBodyId,
+    toggleLabel,
+    toggleIconUrl,
+  });
+
+  return `
+    <section class="field-group-card" aria-labelledby="${titleId}" style="view-transition-name: ${groupViewTransitionName};">
+      ${renderParameterCardHeader({
+        groupId,
+        title: group.title,
+        titleId,
+        caption: getParameterGroupCaption(groupId),
+        toggleButton,
+      })}
+      <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
+        <div class="field-grid">
+          ${renderFieldGridContents(mainFields, mainFieldByKey)}
+        </div>
+        <div class="parameter-subcard-list">
+          ${renderStemSubcard(STEM_CLEARANCE_CARD_DEFINITION, groupFieldByKey)}
         </div>
       </div>
     </section>
@@ -2435,6 +2504,47 @@ function renderLegendFieldGroup(group, groupIndex) {
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
         <div class="legend-subcard-list">
           ${LEGEND_CARD_DEFINITIONS.map((card) => renderLegendSubcard(card, groupFieldByKey)).join("")}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderStemSubcard(card, groupFieldByKey) {
+  const cardFields = card.fieldKeys.map((fieldKey) => groupFieldByKey.get(fieldKey)).filter(Boolean);
+  const visibleCardFields = cardFields.filter((field) => isFieldVisible(field));
+  if (visibleCardFields.length === 0) {
+    return "";
+  }
+
+  const cardFieldByKey = new Map(cardFields.map((field) => [field.key, field]));
+  const cardTitle = resolveDynamicCopy(card.title);
+  const cardBodyId = `stem-subcard-body-${card.id}`;
+  const isCollapsed = state.collapsedFieldGroups[card.id] === true;
+  const toggleLabel = isCollapsed
+    ? t("fieldGroup.expand", { title: cardTitle })
+    : t("fieldGroup.collapse", { title: cardTitle });
+  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
+  const cardViewTransitionName = createViewTransitionName("stem-subcard", card.id);
+
+  return `
+    <section class="parameter-subcard" style="view-transition-name: ${cardViewTransitionName};">
+      <div class="parameter-subcard__header">
+        <h4>${escapeHtml(cardTitle)}</h4>
+        <button
+          class="field-group-toggle"
+          type="button"
+          data-field-group-toggle="${card.id}"
+          aria-expanded="${isCollapsed ? "false" : "true"}"
+          aria-controls="${cardBodyId}"
+          aria-label="${escapeHtml(toggleLabel)}"
+        >
+          <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+        </button>
+      </div>
+      <div class="parameter-subcard__body" id="${cardBodyId}" ${isCollapsed ? "hidden" : ""}>
+        <div class="field-grid">
+          ${renderFieldGridContents(cardFields, cardFieldByKey)}
         </div>
       </div>
     </section>

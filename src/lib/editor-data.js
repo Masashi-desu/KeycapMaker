@@ -798,7 +798,12 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
     return clampTopHatShoulderRadius(value, paramsContext, fallback);
   }
 
-  if (fieldKey === "rimHeightUp" || fieldKey === "rimHeightDown" || fieldKey === "homingBarChamfer") {
+  if (
+    fieldKey === "rimHeightUp"
+    || fieldKey === "rimHeightDown"
+    || fieldKey === "homingBarChamfer"
+    || fieldKey === "stemCrossChamfer"
+  ) {
     return clampNonNegativeNumber(value, fallback);
   }
 

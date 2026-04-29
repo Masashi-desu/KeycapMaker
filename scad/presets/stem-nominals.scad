@@ -7,7 +7,7 @@ stem_nominal_cross_width_horizontal = 1.25;
 stem_nominal_cross_length_horizontal = 4.3;
 stem_nominal_cross_width_vertical = 1.35;
 stem_nominal_cross_length_vertical = 4.3;
-stem_nominal_cross_chamfer = 0.4;
+stem_nominal_cross_chamfer = 0;
 
 stem_mx_nominal_outer_diameter = 5.5;
 stem_mx_nominal_height = 4.5;

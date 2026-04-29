@@ -612,12 +612,14 @@ pre {
   line-height: 1.45;
 }
 
-.legend-subcard-list {
+.legend-subcard-list,
+.parameter-subcard-list {
   display: grid;
   gap: 10px;
 }
 
-.legend-subcard {
+.legend-subcard,
+.parameter-subcard {
   display: grid;
   gap: 12px;
   padding: 12px;
@@ -627,14 +629,16 @@ pre {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.legend-subcard__header {
+.legend-subcard__header,
+.parameter-subcard__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.legend-subcard__header h4 {
+.legend-subcard__header h4,
+.parameter-subcard__header h4 {
   margin: 0;
   color: var(--text);
   font-size: 14px;
@@ -642,12 +646,14 @@ pre {
   line-height: 1.3;
 }
 
-.legend-subcard__body {
+.legend-subcard__body,
+.parameter-subcard__body {
   display: grid;
   gap: 10px;
 }
 
-.legend-subcard__body[hidden] {
+.legend-subcard__body[hidden],
+.parameter-subcard__body[hidden] {
   display: none;
 }
 

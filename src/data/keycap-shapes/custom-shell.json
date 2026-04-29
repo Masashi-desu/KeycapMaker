@@ -101,6 +101,7 @@
     "stemType": "choc_v2",
     "stemOuterDelta": 0,
     "stemCrossMargin": 0,
+    "stemCrossChamfer": 0,
     "stemInsetDelta": 0
   },
   "fieldGroups": [
@@ -228,7 +229,8 @@
         "stemType",
         "stemOuterDelta",
         "stemCrossMargin",
-        "stemInsetDelta"
+        "stemInsetDelta",
+        "stemCrossChamfer"
       ]
     }
   ]

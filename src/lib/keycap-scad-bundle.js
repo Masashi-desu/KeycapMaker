@@ -703,6 +703,7 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_stem_enabled: params.stemEnabled,
     user_stem_outer_delta: params.stemOuterDelta,
     user_stem_cross_margin: params.stemCrossMargin,
+    user_stem_cross_chamfer: Math.max(Number(params.stemCrossChamfer ?? 0), 0),
     user_stem_inset_delta: params.stemInsetDelta,
   };
 }

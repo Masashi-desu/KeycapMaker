@@ -76,6 +76,9 @@ const zh = Object.freeze({
     expand: "展开{title}",
     collapse: "折叠{title}",
   },
+  stemCards: {
+    clearance: "间隙",
+  },
   shapeProfiles: {
     "custom-shell": {
       label: "自定义外壳",
@@ -434,9 +437,14 @@ const zh = Object.freeze({
       alpsHint: "0 为标准值。正值会让插入部更细更松，负值会让其更粗更紧。",
       disabledHint: "不生成安装部时不使用",
     },
+    stemCrossChamfer: {
+      label: "入口倒角",
+      hint: "0 为标准值。增大该值只会扩大十字孔入口。",
+      disabledHint: "非十字安装部不使用",
+    },
     stemInsetDelta: {
       label: "轴部起始位置补正",
-      hint: "0 为标准值。正值会从底面抬高起始位置，以避免内部干涉。",
+      hint: "0 为标准值。正值会从底面抬高起始位置，负值会向下延伸。",
       disabledHint: "不生成安装部时不使用",
     },
   },

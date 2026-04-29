@@ -304,8 +304,8 @@ stem_outer_diameter = !is_undef(user_stem_outer_diameter)
         ? positive_dimension(min(legacy_stem_width, legacy_stem_depth))
         : positive_dimension(stem_nominal_outer_diameter_for_type(stem_type) + stem_outer_delta);
 stem_inset = is_undef(user_stem_inset)
-    ? max(stem_nominal_inset_for_type(stem_type) + stem_inset_delta, 0)
-    : max(user_stem_inset, 0);
+    ? stem_nominal_inset_for_type(stem_type) + stem_inset_delta
+    : user_stem_inset;
 stem_cross_width_horizontal = is_undef(user_stem_cross_width_horizontal)
     ? stem_cross_dimension(stem_nominal_cross_width_horizontal_for_type(stem_type), stem_cross_margin)
     : user_stem_cross_width_horizontal;
@@ -330,6 +330,7 @@ stem_alps_length = positive_dimension(stem_alps_nominal_length - stem_post_fit_d
 stem_alps_width = positive_dimension(stem_alps_nominal_width - stem_post_fit_delta);
 stem_alps_lead_in = stem_alps_nominal_lead_in;
 stem_clip_overlap = 0.05;
+stem_clip_bottom_extension = max(1, stem_clip_overlap - stem_inset + 0.02);
 stem_safe_radius = stem_footprint_radius(
     stem_type,
     stem_outer_diameter,
@@ -925,7 +926,8 @@ module keycap_stem_clip_volume(quality = "export") {
                     roll_deg = top_roll_deg,
                     quality = quality,
                     top_offset_x = top_offset_x,
-                    top_offset_y = top_offset_y
+                    top_offset_y = top_offset_y,
+                    bottom_extension = stem_clip_bottom_extension
                 );
             } else {
                 keycap_inner_clearance_volume(
@@ -945,7 +947,8 @@ module keycap_stem_clip_volume(quality = "export") {
                     roll_deg = top_roll_deg,
                     quality = quality,
                     top_offset_x = top_offset_x,
-                    top_offset_y = top_offset_y
+                    top_offset_y = top_offset_y,
+                    bottom_extension = stem_clip_bottom_extension
                 );
             }
     }

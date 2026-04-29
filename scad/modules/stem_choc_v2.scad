@@ -8,7 +8,7 @@ module stem_choc_v2(
     cross_length_horizontal = 4.3,
     cross_width_vertical = 1.35,
     cross_length_vertical = 4.3,
-    cross_chamfer = 0.4,
+    cross_chamfer = 0,
     chamfer_height = 0.6,
     quality = "export"
 ) {

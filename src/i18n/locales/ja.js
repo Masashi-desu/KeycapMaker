@@ -80,6 +80,9 @@ const ja = Object.freeze({
     keytop: "キートップ",
     sidewall: "{side}サイドウォール",
   },
+  stemCards: {
+    clearance: "クリアランス",
+  },
   shapeProfiles: {
     "custom-shell": {
       label: "カスタムシェル",
@@ -482,9 +485,14 @@ const ja = Object.freeze({
       alpsHint: "0 が標準です。プラスで差し込み部を細くして緩く、マイナスで太くしてきつくします",
       disabledHint: "取り付け部分を作らないときは使いません",
     },
+    stemCrossChamfer: {
+      label: "入口の面取り",
+      hint: "0 が標準です。値を大きくすると十字穴入口だけを広げます",
+      disabledHint: "十字ステム以外では使いません",
+    },
     stemInsetDelta: {
       label: "軸の開始位置補正",
-      hint: "0 が標準です。プラスで底面からの開始位置を上げ、内部干渉を避けます",
+      hint: "0 が標準です。プラスで底面からの開始位置を上げ、マイナスで下へ伸ばします",
       disabledHint: "取り付け部分を作らないときは使いません",
     },
   },

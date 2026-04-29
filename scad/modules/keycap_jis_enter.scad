@@ -738,16 +738,18 @@ module keycap_jis_enter_rect_inner_clearance_volume(
     roll_deg = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    bottom_extension = 1
 ) {
     if (right - left > 0.001 && back - front > 0.001) {
+        safe_bottom_extension = max(bottom_extension, 0.01);
         top_left = left + inner_height * tan(left_angle);
         top_right = right - inner_height * tan(right_angle);
         top_front = front + inner_height * tan(front_angle);
         top_back = back - inner_height * tan(back_angle);
 
         hull() {
-            translate([0, 0, -1])
+            translate([0, 0, -safe_bottom_extension])
                 keycap_base_face(
                     left,
                     right,
@@ -793,7 +795,8 @@ module keycap_jis_enter_inner_clearance_volume(
     roll_deg = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    bottom_extension = 1
 ) {
     safe_width = max(width, 0.2);
     safe_depth = max(depth, 0.2);
@@ -836,7 +839,8 @@ module keycap_jis_enter_inner_clearance_volume(
                     roll_deg = roll_deg,
                     quality = quality,
                     top_offset_x = top_offset_x,
-                    top_offset_y = top_offset_y
+                    top_offset_y = top_offset_y,
+                    bottom_extension = bottom_extension
                 );
 
                 keycap_jis_enter_rect_inner_clearance_volume(
@@ -855,7 +859,8 @@ module keycap_jis_enter_inner_clearance_volume(
                     roll_deg = roll_deg,
                     quality = quality,
                     top_offset_x = top_offset_x,
-                    top_offset_y = top_offset_y
+                    top_offset_y = top_offset_y,
+                    bottom_extension = bottom_extension
                 );
             }
         } else {
@@ -875,7 +880,8 @@ module keycap_jis_enter_inner_clearance_volume(
                 roll_deg = roll_deg,
                 quality = quality,
                 top_offset_x = top_offset_x,
-                top_offset_y = top_offset_y
+                top_offset_y = top_offset_y,
+                bottom_extension = bottom_extension
             );
         }
     }

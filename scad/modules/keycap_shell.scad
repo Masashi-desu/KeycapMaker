@@ -326,9 +326,11 @@ module keycap_inner_clearance_volume(
     roll_deg = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    bottom_extension = 1
     ) {
     inner_height = keycap_inner_height(top_center_height, dish_depth, top_thickness);
+    safe_bottom_extension = max(bottom_extension, 0.01);
 
     base_left = -width / 2 + wall;
     base_right = width / 2 - wall;
@@ -341,7 +343,7 @@ module keycap_inner_clearance_volume(
     top_back = base_back - inner_height * tan(back_angle);
 
     hull() {
-        translate([0, 0, -1])
+        translate([0, 0, -safe_bottom_extension])
             keycap_base_face(
                 base_left,
                 base_right,

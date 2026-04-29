@@ -76,6 +76,9 @@ const ko = Object.freeze({
     expand: "{title} 펼치기",
     collapse: "{title} 접기",
   },
+  stemCards: {
+    clearance: "클리어런스",
+  },
   shapeProfiles: {
     "custom-shell": {
       label: "커스텀 셸",
@@ -434,9 +437,14 @@ const ko = Object.freeze({
       alpsHint: "0이 표준입니다. 양수이면 삽입부를 가늘게 해 느슨하게, 음수이면 두껍게 해 빡빡하게 합니다.",
       disabledHint: "장착부를 만들지 않을 때는 사용하지 않습니다",
     },
+    stemCrossChamfer: {
+      label: "입구 모따기",
+      hint: "0이 표준입니다. 값을 키우면 십자 구멍 입구만 넓힙니다.",
+      disabledHint: "십자형 마운트가 아닐 때는 사용하지 않습니다",
+    },
     stemInsetDelta: {
       label: "축 시작 위치 보정",
-      hint: "0이 표준입니다. 양수이면 바닥면에서 시작 위치를 올려 내부 간섭을 피합니다.",
+      hint: "0이 표준입니다. 양수이면 바닥면에서 시작 위치를 올리고, 음수이면 아래로 늘립니다.",
       disabledHint: "장착부를 만들지 않을 때는 사용하지 않습니다",
     },
   },

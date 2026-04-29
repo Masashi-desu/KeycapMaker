@@ -108,6 +108,92 @@ test("印字の作業領域は実測した複数文字の外形を含む", async
     assert.equal(textSize, 5);
     assert.ok(readScadDefinition(jobScad, "user_legend_width") > textSize);
     assert.ok(readScadDefinition(jobScad, "user_legend_depth") > textSize);
+    assert.equal(readScadDefinition(jobScad, "user_stem_cross_chamfer"), 0);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
+test("ステム入口の面取り量を SCAD wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 50,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        stemCrossChamfer: 0.25,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.equal(readScadDefinition(jobScad, "user_stem_cross_chamfer"), 0.25);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
+test("ステム開始位置補正の負値を SCAD wrapper と base で保持する", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 50,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        stemInsetDelta: -0.6,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const baseScad = files.find((file) => file.path === bundle.KEYCAP_ENTRY_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.ok(baseScad, "keycap base SCAD should be included");
+    assert.equal(readScadDefinition(jobScad, "user_stem_inset_delta"), -0.6);
+    assert.match(baseScad, /stem_nominal_inset_for_type\(stem_type\) \+ stem_inset_delta/);
+    assert.match(baseScad, /stem_clip_bottom_extension = max\(1, stem_clip_overlap - stem_inset \+ 0\.02\);/);
+    assert.match(baseScad, /bottom_extension = stem_clip_bottom_extension/);
+    assert.doesNotMatch(baseScad, /max\(stem_nominal_inset_for_type\(stem_type\) \+ stem_inset_delta,\s*0\)/);
+    assert.doesNotMatch(baseScad, /max\(user_stem_inset,\s*0\)/);
   } finally {
     await server.close();
     restoreBrowserMocks();

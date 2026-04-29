@@ -103,6 +103,7 @@
     "typewriterMountHeight": 11.68,
     "stemOuterDelta": 0,
     "stemCrossMargin": 0,
+    "stemCrossChamfer": 0,
     "stemInsetDelta": 0
   },
   "fieldGroups": [
@@ -229,7 +230,8 @@
       "fieldKeys": [
         "stemType",
         "stemOuterDelta",
-        "stemCrossMargin"
+        "stemCrossMargin",
+        "stemCrossChamfer"
       ]
     }
   ],
