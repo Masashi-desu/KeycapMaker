@@ -1754,6 +1754,10 @@ function renderFieldLeadingIcon(iconPath) {
   `;
 }
 
+function getLeadingIconFieldClassName(leadingIcon) {
+  return leadingIcon ? " field--with-leading-icon" : "";
+}
+
 function renderKeyUnitBasisIcon() {
   return renderFieldLeadingIcon(KEY_UNIT_BASIS_ICON_PATH);
 }
@@ -2535,7 +2539,7 @@ function renderFieldWithDependentFields(field, dependentFields, fieldByKey = nul
     : field.key === "topSlopeInputMode"
       ? renderKeyTopSlopeInputModeIcon()
       : "";
-  const leadingIconClassName = leadingIcon ? " field--with-leading-icon" : "";
+  const leadingIconClassName = getLeadingIconFieldClassName(leadingIcon);
 
   return `
     <div class="field field--with-dependents${leadingIconClassName}" style="view-transition-name: ${fieldViewTransitionName};">
@@ -2722,10 +2726,12 @@ function renderField(field, options = {}) {
 
   if (field.type === "key-unit-basis") {
     const inputId = `field-control-${field.key}`;
+    const leadingIcon = renderKeyUnitBasisIcon();
+    const leadingIconClassName = getLeadingIconFieldClassName(leadingIcon);
 
     return `
-      <div class="field field--key-unit-basis field--with-leading-icon${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        ${renderKeyUnitBasisIcon()}
+      <div class="field field--key-unit-basis${leadingIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${leadingIcon}
         <label class="field-copy" for="${inputId}">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
@@ -2749,17 +2755,17 @@ function renderField(field, options = {}) {
 
   if (field.type === "checkbox") {
     const leadingIcon = field.key === "topHatEnabled" ? renderKeyTopHatIcon() : "";
-    const checkboxIconClassName = leadingIcon ? " field--with-leading-icon" : "";
+    const checkboxIconClassName = getLeadingIconFieldClassName(leadingIcon);
+    const checkboxCopy = `
+      <span class="field-copy">
+        <span class="field-label">${fieldLabel}</span>
+        <span class="field-hint">${fieldHint}</span>
+      </span>
+    `;
     const checkboxControl = `
-      <label class="field-checkbox-header">
-        <span class="field-copy">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </span>
-        <span class="checkbox-pill">
-          <input type="checkbox" data-field="${field.key}" ${value ? "checked" : ""} />
-          <span>${value ? t("actions.on") : t("actions.off")}</span>
-        </span>
+      <label class="checkbox-pill">
+        <input type="checkbox" data-field="${field.key}" ${value ? "checked" : ""} />
+        <span>${value ? t("actions.on") : t("actions.off")}</span>
       </label>
     `;
 
@@ -2767,6 +2773,7 @@ function renderField(field, options = {}) {
       return `
         <div class="field field--checkbox${checkboxIconClassName}${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
           ${leadingIcon}
+          ${checkboxCopy}
           ${checkboxControl}
           ${fieldNote ? `<p class="field-note">${escapeHtml(fieldNote)}</p>` : ""}
           ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
@@ -2777,6 +2784,7 @@ function renderField(field, options = {}) {
     return `
       <div class="field field--checkbox${checkboxIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         ${leadingIcon}
+        ${checkboxCopy}
         ${checkboxControl}
       </div>
     `;
@@ -2926,7 +2934,7 @@ function renderField(field, options = {}) {
       : field.key === "keyDepth"
         ? renderKeyDepthBasisIcon()
         : "";
-    const linkedSizeIconClassName = leadingIcon ? " field--with-leading-icon" : "";
+    const linkedSizeIconClassName = getLeadingIconFieldClassName(leadingIcon);
 
     return `
       <label class="field field--linked-size${linkedSizeIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
@@ -2975,7 +2983,7 @@ function renderField(field, options = {}) {
     const secondaryMaxValue = resolveFieldAttribute(field.secondaryMax ?? secondaryFieldConfig?.max);
     const secondaryStepValue = resolveFieldAttribute(field.secondaryStep ?? secondaryFieldConfig?.step);
     const leadingIcon = field.key === "topOffsetX" ? renderKeyTopOffsetIcon() : "";
-    const numberPairIconClassName = leadingIcon ? " field--with-leading-icon" : "";
+    const numberPairIconClassName = getLeadingIconFieldClassName(leadingIcon);
 
     return `
       <div class="field field--number-pair${numberPairIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
@@ -3051,7 +3059,7 @@ function renderField(field, options = {}) {
       : field.key === "topScale"
         ? renderKeyTopTaperIcon()
         : "";
-  const numberIconClassName = leadingIcon ? " field--with-leading-icon field--single-number" : "";
+  const numberIconClassName = leadingIcon ? `${getLeadingIconFieldClassName(leadingIcon)} field--single-number` : "";
 
   return `
     <label class="field${numberIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
