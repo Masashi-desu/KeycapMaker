@@ -4,6 +4,8 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 const OVERLAY_LAYER_NAMES = new Set(["legend", "legend-front", "legend-back", "legend-left", "legend-right", "homing"]);
 const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 6;
 const MIN_NORMAL_LENGTH_SQ = 1e-12;
+const DEFAULT_CAMERA_OFFSET = new THREE.Vector3(1.42, 1.18, 1.32);
+const COMPACT_CAMERA_DISTANCE_SCALE = 4.2;
 
 function createFaceNormalData(mesh, face) {
   const a = mesh.vertices[face[0]];
@@ -159,8 +161,22 @@ function updatePointerVector(pointer, domElement, clientX, clientY) {
   return true;
 }
 
+function isCompactPreviewViewport() {
+  return window.innerWidth <= 760;
+}
+
+function getMinimumCameraDistanceScale() {
+  return isCompactPreviewViewport() ? COMPACT_CAMERA_DISTANCE_SCALE : 0.001;
+}
+
 function getDefaultCameraOffset(sceneScale) {
-  return new THREE.Vector3(1.42, 1.18, 1.32).multiplyScalar(sceneScale);
+  const offset = DEFAULT_CAMERA_OFFSET.clone();
+
+  if (isCompactPreviewViewport()) {
+    offset.setLength(Math.max(offset.length(), COMPACT_CAMERA_DISTANCE_SCALE));
+  }
+
+  return offset.multiplyScalar(sceneScale);
 }
 
 function isFiniteNumber(value) {
@@ -224,13 +240,17 @@ function restoreViewState({ camera, controls, sceneScale, viewState }) {
 
   direction.normalize();
   const target = new THREE.Vector3(0, 0, 0);
-  const distance = Math.max(viewState.distanceScale * sceneScale, 0.001);
+  const distance = Math.max(viewState.distanceScale * sceneScale, getMinimumCameraDistanceScale() * sceneScale);
   controls.target.copy(target);
   camera.position.copy(target).addScaledVector(direction, distance);
   controls.update();
 }
 
 function getViewOffsetRatio(viewState) {
+  if (isCompactPreviewViewport()) {
+    return new THREE.Vector2();
+  }
+
   if (viewState && isValidVector2Array(viewState.viewOffsetRatio)) {
     return new THREE.Vector2().fromArray(viewState.viewOffsetRatio);
   }
@@ -250,6 +270,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
+  controls.enablePan = true;
   controls.cursorStyle = "grab";
   controls.enabled = false;
 
@@ -402,6 +423,24 @@ export function mountPreviewScene(container, layers, options = {}) {
     syncControlsState(false);
   };
 
+  const enforceCompactCameraFraming = () => {
+    if (!isCompactPreviewViewport()) {
+      return;
+    }
+
+    const offset = camera.position.clone().sub(controls.target);
+    const distance = offset.length();
+    const direction = distance > 0
+      ? offset.divideScalar(distance)
+      : getDefaultCameraOffset(1).normalize();
+    const minDistance = getMinimumCameraDistanceScale() * sceneScale;
+
+    controls.target.copy(orbitTarget);
+    camera.position.copy(orbitTarget).addScaledVector(direction, Math.max(distance, minDistance));
+    viewOffsetRatio.set(0, 0);
+    controls.update();
+  };
+
   canvas.addEventListener("pointermove", handlePointerMove);
   canvas.addEventListener("pointerleave", handlePointerLeave);
   canvas.addEventListener("pointerdown", handlePointerDownCapture, { capture: true });
@@ -413,14 +452,6 @@ export function mountPreviewScene(container, layers, options = {}) {
   controls.addEventListener("change", syncOrbitTargetToObjectCenter);
 
   const syncViewportCanvasBounds = () => {
-    if (window.innerWidth <= 760) {
-      container.style.left = "0";
-      container.style.top = "0";
-      container.style.width = "100%";
-      container.style.height = "100%";
-      return;
-    }
-
     const rect = anchorElement.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -439,6 +470,8 @@ export function mountPreviewScene(container, layers, options = {}) {
 
   const handleResize = () => {
     syncViewportCanvasBounds();
+    controls.enablePan = true;
+    enforceCompactCameraFraming();
     const width = Math.max(container.clientWidth, 1);
     const height = Math.max(container.clientHeight, 1);
     camera.aspect = width / height;
@@ -452,6 +485,8 @@ export function mountPreviewScene(container, layers, options = {}) {
   resizeObserver.observe(anchorElement);
   window.addEventListener("resize", handleResize);
   window.addEventListener("scroll", handleResize, { passive: true });
+  window.visualViewport?.addEventListener("resize", handleResize);
+  window.visualViewport?.addEventListener("scroll", handleResize, { passive: true });
 
   let frameId = 0;
   const renderFrame = () => {
@@ -467,6 +502,8 @@ export function mountPreviewScene(container, layers, options = {}) {
     resizeObserver.disconnect();
     window.removeEventListener("resize", handleResize);
     window.removeEventListener("scroll", handleResize);
+    window.visualViewport?.removeEventListener("resize", handleResize);
+    window.visualViewport?.removeEventListener("scroll", handleResize);
     canvas.removeEventListener("pointermove", handlePointerMove);
     canvas.removeEventListener("pointerleave", handlePointerLeave);
     canvas.removeEventListener("pointerdown", handlePointerDownCapture, { capture: true });

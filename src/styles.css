@@ -33,6 +33,9 @@
   --muted: #7c6a58;
   --muted-soft: #cdbfae;
   --divider-gap: 14px;
+  --visual-viewport-height: 100svh;
+  --visual-viewport-offset-top: 0px;
+  --browser-ui-inset-bottom: 0px;
 }
 
 * {
@@ -92,7 +95,11 @@ pre {
   --shell-padding-inline: 24px;
   --shell-padding-top: max(var(--shell-padding-block), env(safe-area-inset-top, 0px));
   --shell-padding-right: max(var(--shell-padding-inline), env(safe-area-inset-right, 0px));
-  --shell-padding-bottom: max(var(--shell-padding-block), env(safe-area-inset-bottom, 0px));
+  --shell-padding-bottom: max(
+    var(--shell-padding-block),
+    env(safe-area-inset-bottom, 0px),
+    var(--browser-ui-inset-bottom)
+  );
   --shell-padding-left: max(var(--shell-padding-inline), env(safe-area-inset-left, 0px));
   position: relative;
   min-height: 100vh;
@@ -1545,8 +1552,16 @@ pre {
 @media (max-width: 760px) {
   .editor-screen {
     --mobile-shell-padding-top: var(--shell-padding-top);
-    --mobile-shell-padding-bottom: var(--shell-padding-bottom);
-    --mobile-viewport-height: calc(100svh - var(--mobile-shell-padding-top) - var(--mobile-shell-padding-bottom));
+    --mobile-shell-padding-bottom: max(var(--shell-padding-block), env(safe-area-inset-bottom, 0px));
+    --mobile-preview-padding-bottom: max(clamp(12px, 4svh, 24px), env(safe-area-inset-bottom, 0px));
+    --mobile-viewport-height: calc(
+      var(--visual-viewport-height) - var(--mobile-shell-padding-top) - var(--mobile-shell-padding-bottom)
+    );
+    --mobile-preview-stage-size: min(
+      100%,
+      calc(var(--mobile-viewport-height) - var(--mobile-preview-padding-bottom) - 24px),
+      360px
+    );
     grid-template-columns: 1fr;
     grid-template-rows: minmax(var(--mobile-viewport-height), auto);
     justify-content: stretch;
@@ -1571,7 +1586,7 @@ pre {
 
   .right-column {
     position: sticky;
-    top: var(--mobile-shell-padding-top);
+    top: calc(var(--visual-viewport-offset-top) + var(--mobile-shell-padding-top));
     width: 100%;
     height: var(--mobile-viewport-height);
     z-index: 1;
@@ -1581,13 +1596,13 @@ pre {
     height: 100%;
     min-height: 0;
     justify-content: center;
-    align-items: flex-end;
-    padding: 0 0 clamp(12px, 4svh, 24px);
-    overflow: hidden;
+    align-items: center;
+    padding: 0 0 var(--mobile-preview-padding-bottom);
+    overflow: visible;
   }
 
   .preview-stage {
-    width: min(100%, calc(var(--mobile-viewport-height) - 24px), 360px);
+    width: var(--mobile-preview-stage-size);
     min-height: 0;
     max-height: none;
     margin-inline: auto;

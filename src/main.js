@@ -1648,6 +1648,24 @@ if (!app) {
   throw new Error(t("errors.appRootMissing"));
 }
 
+function formatCssPixelValue(value) {
+  return `${Math.max(value, 0).toFixed(2)}px`;
+}
+
+function syncVisualViewportMetrics() {
+  const viewport = window.visualViewport;
+  const viewportHeight = viewport?.height ?? window.innerHeight;
+  const viewportOffsetTop = viewport?.offsetTop ?? 0;
+  const browserUiInsetBottom = viewport
+    ? Math.max(window.innerHeight - viewportHeight - viewportOffsetTop, 0)
+    : 0;
+  const rootStyle = document.documentElement.style;
+
+  rootStyle.setProperty("--visual-viewport-height", formatCssPixelValue(viewportHeight));
+  rootStyle.setProperty("--visual-viewport-offset-top", formatCssPixelValue(viewportOffsetTop));
+  rootStyle.setProperty("--browser-ui-inset-bottom", formatCssPixelValue(browserUiInsetBottom));
+}
+
 function getViewportLayoutMode() {
   if (window.innerWidth <= 760) {
     return "stack";
@@ -3289,6 +3307,8 @@ function toggleExportOptions() {
 }
 
 function handleViewportResize() {
+  syncVisualViewportMetrics();
+
   const nextMode = getViewportLayoutMode();
   if (nextMode !== viewportLayoutMode) {
     viewportLayoutMode = nextMode;
@@ -4338,9 +4358,12 @@ async function executeExport(format) {
   render();
 }
 
+syncVisualViewportMetrics();
 render();
 
 window.addEventListener("resize", handleViewportResize);
+window.visualViewport?.addEventListener("resize", handleViewportResize);
+window.visualViewport?.addEventListener("scroll", handleViewportResize, { passive: true });
 window.addEventListener("pointerdown", handleWindowPointerDown, true);
 window.addEventListener("keydown", handleWindowKeydown);
 
