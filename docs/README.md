@@ -15,9 +15,10 @@
 
 1. [architecture/overview.md](architecture/overview.md)
 2. [architecture/scad-and-export.md](architecture/scad-and-export.md)
-3. [guide/development.md](guide/development.md)
-4. [guide/manual-verification.md](guide/manual-verification.md)
-5. [decisions/decision-log.md](decisions/decision-log.md)
+3. [architecture/project-data.md](architecture/project-data.md)
+4. [guide/development.md](guide/development.md)
+5. [guide/manual-verification.md](guide/manual-verification.md)
+6. [decisions/decision-log.md](decisions/decision-log.md)
 6. 必要に応じて `backlog/` と `design/`
 
 ## 運用ルール

@@ -2,6 +2,17 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-04-30 - プロジェクトはディレクトリ manifest で複数キーキャップを束ねる
+
+- 結論:
+  複数キーキャップの保存単位をプロジェクトと呼び、`KeycapMaker.json` manifest と `keycaps/` 配下の編集データ JSON / preview 画像で構成する。単体 JSON の drag & drop は読み込んだ内容をプロジェクトのキーキャップ一覧へ追加し、そのキーキャップを active にする。読み込み済みプロジェクトの既存一覧と保存先情報は保持する
+- 補足:
+  一覧用 preview は撮影時のカメラ状態 `previewViewState` を manifest に保持し、active keycap のパラメータ変更時は同じ角度で一覧画像を再撮影する
+- 理由:
+  既存の編集データ JSON を破壊せずに、キーキャップ集合と一覧用 preview を静的配信アプリ内で扱えるようにするため
+- 関連:
+  [../architecture/project-data.md](../architecture/project-data.md)
+
 ## 2026-04-25 - GitHub Pages デプロイは main と Web 資源変更に限定する
 
 - 結論:

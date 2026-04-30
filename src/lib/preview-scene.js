@@ -272,7 +272,7 @@ function getViewOffsetRatio(viewState) {
 export function mountPreviewScene(container, layers, options = {}) {
   const { initialViewState = null } = options;
   const anchorElement = container.parentElement ?? container;
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
   container.replaceChildren(renderer.domElement);
@@ -377,6 +377,20 @@ export function mountPreviewScene(container, layers, options = {}) {
     viewOffsetRatio.x -= screenDelta.x / width;
     viewOffsetRatio.y -= screenDelta.y / height;
     applyViewOffset();
+  };
+
+  const renderScene = () => {
+    controls.update();
+    syncOrbitTargetToObjectCenter();
+    renderer.render(scene, camera);
+  };
+
+  const applyViewState = (viewState) => {
+    restoreViewState({ camera, controls, sceneScale, viewState });
+    viewOffsetRatio.copy(getViewOffsetRatio(viewState));
+    enforceCompactCameraFraming();
+    applyViewOffset();
+    renderScene();
   };
 
   const updateHoverState = (clientX, clientY) => {
@@ -509,9 +523,7 @@ export function mountPreviewScene(container, layers, options = {}) {
 
   let frameId = 0;
   const renderFrame = () => {
-    controls.update();
-    syncOrbitTargetToObjectCenter();
-    renderer.render(scene, camera);
+    renderScene();
     frameId = requestAnimationFrame(renderFrame);
   };
   renderFrame();
@@ -540,6 +552,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   };
 
   return {
+    applyViewState,
     captureViewState: () => captureViewState({ camera, controls, sceneScale, viewOffsetRatio }),
     dispose,
   };

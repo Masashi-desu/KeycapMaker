@@ -50,6 +50,7 @@ body,
 
 html {
   background: var(--page-end);
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -57,6 +58,12 @@ body {
   overflow-x: hidden;
   min-height: 100dvh;
   background: linear-gradient(135deg, var(--page-start) 0%, var(--page-end) 100%);
+}
+
+html.is-keycap-export-overlay-open,
+body.is-keycap-export-overlay-open {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 button,
@@ -540,6 +547,10 @@ pre {
   grid-template-columns: 58px minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
+}
+
+.field-group-card__header--plain {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .field-group-card__icon {
@@ -1469,12 +1480,12 @@ pre {
 
 .import-binding-notice__row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(64px, max-content);
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(54px, max-content) 28px;
+  gap: 8px;
   align-items: center;
   min-height: 30px;
   border-radius: 12px;
-  padding: 6px 8px;
+  padding: 5px 6px 5px 8px;
   background: rgba(255, 255, 255, 0.42);
   box-shadow: inset 0 0 0 1px rgba(45, 36, 28, 0.08);
 }
@@ -1498,6 +1509,48 @@ pre {
   color: color-mix(in srgb, var(--text) 72%, var(--muted) 28%);
   text-align: right;
   word-break: break-word;
+}
+
+.import-binding-notice__delete {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(45, 36, 28, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.54);
+  color: color-mix(in srgb, var(--text) 76%, var(--muted) 24%);
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.import-binding-notice__delete:hover {
+  border-color: color-mix(in srgb, #8f352d 36%, var(--border) 64%);
+  background: color-mix(in srgb, #8f352d 12%, white 88%);
+  color: #8f352d;
+}
+
+.import-binding-notice__delete:focus-visible {
+  outline: 2px solid rgba(123, 155, 191, 0.58);
+  outline-offset: 2px;
+}
+
+.import-binding-notice__delete:active {
+  transform: translateY(1px);
+}
+
+.import-binding-notice__delete svg {
+  display: block;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
 }
 
 .import-binding-notice__more {
@@ -1668,6 +1721,423 @@ pre {
 .export-save-button span {
   min-width: 0;
   white-space: nowrap;
+}
+
+.project-panel-grid,
+.project-keycap-body {
+  display: grid;
+  gap: 12px;
+}
+
+.project-keycap-list {
+  display: grid;
+  gap: 8px;
+}
+
+.project-keycap-item {
+  display: grid;
+  gap: 10px;
+  align-items: stretch;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--glass-border-control);
+  border-radius: 16px;
+  background: var(--glass-panel-softer);
+  color: var(--text);
+  text-align: left;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    opacity 140ms ease,
+    transform 180ms ease;
+  will-change: transform;
+}
+
+.project-keycap-item:hover,
+.project-keycap-item:focus-within {
+  border-color: color-mix(in srgb, var(--border) 72%, var(--text) 28%);
+  background: color-mix(in srgb, var(--panel-warm) 70%, white 30%);
+  box-shadow: 0 8px 18px rgba(45, 36, 28, 0.08);
+}
+
+.project-keycap-item[data-project-keycap] {
+  cursor: pointer;
+}
+
+.project-keycap-item.is-dragging {
+  opacity: 0.42;
+  transform: scale(0.97);
+  box-shadow: inset 0 0 0 1px rgba(45, 36, 28, 0.12);
+}
+
+.project-keycap-item__select-button:focus-visible,
+.project-keycap-drag-handle:focus-visible,
+.project-keycap-action-button:focus-visible {
+  outline: 2px solid rgba(123, 155, 191, 0.58);
+  outline-offset: 2px;
+}
+
+.project-keycap-item__content {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.project-keycap-drag-handle {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 86px;
+  padding: 6px 3px;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 78%, white 22%);
+  border-radius: 12px;
+  background: rgba(45, 36, 28, 0.06);
+  color: color-mix(in srgb, var(--text) 72%, var(--muted) 28%);
+  cursor: grab;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.project-keycap-drag-handle:hover {
+  border-color: color-mix(in srgb, var(--border) 72%, var(--text) 28%);
+  background: rgba(45, 36, 28, 0.1);
+  color: var(--text);
+}
+
+.project-keycap-drag-handle:active {
+  cursor: grabbing;
+  transform: translateY(1px);
+}
+
+.project-keycap-drag-handle__order {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.project-keycap-drag-handle svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.project-keycap-action-button:active {
+  transform: translateY(1px);
+}
+
+.project-keycap-item.is-active {
+  border-color: color-mix(in srgb, var(--panel-dark) 48%, var(--border) 52%);
+  background: color-mix(in srgb, var(--panel-warm) 84%, white 16%);
+  box-shadow: inset 0 0 0 1px rgba(45, 36, 28, 0.08);
+}
+
+.project-keycap-item__summary {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.project-keycap-item__select-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 12px;
+}
+
+.project-keycap-item__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.project-keycap-item__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.project-keycap-item__preview {
+  display: block;
+  width: 86px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--border-soft) 68%, white 32%);
+}
+
+.project-keycap-preview-button {
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.project-keycap-preview-button:hover {
+  border-color: color-mix(in srgb, var(--border) 70%, var(--text) 30%);
+  box-shadow: 0 8px 18px rgba(45, 36, 28, 0.1);
+}
+
+.project-keycap-preview-button:focus-visible {
+  outline: 2px solid rgba(123, 155, 191, 0.58);
+  outline-offset: 2px;
+}
+
+.project-keycap-preview-button:active {
+  transform: translateY(1px);
+}
+
+.project-keycap-item__preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.project-keycap-item__copy strong,
+.project-keycap-item__copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-keycap-item__copy strong {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.project-keycap-item__copy span,
+.project-empty,
+.project-status {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.project-keycap-item__copy .project-keycap-item__status {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel-dark) 88%, var(--panel-warm) 12%);
+  color: var(--panel);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.project-keycap-item__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.project-keycap-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 78%, white 22%);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.project-keycap-export-button {
+  background: rgba(45, 36, 28, 0.08);
+  color: var(--text);
+}
+
+.project-keycap-export-button:hover,
+.project-keycap-settings-button:hover {
+  border-color: color-mix(in srgb, var(--border) 70%, var(--text) 30%);
+  background: rgba(45, 36, 28, 0.12);
+}
+
+.project-keycap-settings-button {
+  background: rgba(45, 36, 28, 0.08);
+  color: var(--text);
+}
+
+.project-keycap-action-button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-keycap-action-button svg {
+  display: block;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.project-empty {
+  padding: 10px 2px;
+}
+
+.project-secondary-button {
+  min-height: 46px;
+  border: 1px solid color-mix(in srgb, var(--panel-dark) 82%, white 18%);
+  background: var(--panel-dark);
+  color: #fff9f0;
+  font-weight: 800;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 18px rgba(45, 36, 28, 0.14);
+}
+
+.project-secondary-button:hover {
+  background: #3a2d22;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 12px 22px rgba(45, 36, 28, 0.18);
+}
+
+.project-secondary-button:disabled {
+  border-color: color-mix(in srgb, var(--panel-dark) 58%, white 42%);
+  background: color-mix(in srgb, var(--panel-dark) 78%, white 22%);
+  color: rgba(255, 249, 240, 0.82);
+}
+
+.project-save-button {
+  min-height: 46px;
+}
+
+.project-status:empty {
+  display: none;
+}
+
+.keycap-export-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgba(45, 36, 28, 0.22);
+  backdrop-filter: blur(14px) saturate(112%);
+  -webkit-backdrop-filter: blur(14px) saturate(112%);
+}
+
+.keycap-export-dialog {
+  display: grid;
+  gap: 16px;
+  width: min(520px, calc(100vw - 48px));
+  overflow: visible;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--border) 58%, white 42%);
+  box-shadow:
+    0 24px 60px rgba(45, 36, 28, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44);
+}
+
+.keycap-export-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.keycap-export-dialog__title-stack {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.keycap-export-dialog__title-stack h2 {
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.18;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keycap-export-dialog__close {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.keycap-export-dialog__body {
+  display: grid;
+  gap: 12px;
+}
+
+.keycap-export-option {
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--glass-panel-warm);
+  border: 1px solid var(--glass-border-surface);
+}
+
+.keycap-export-dialog__status {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.keycap-export-dialog__status:empty {
+  display: none;
+}
+
+.project-keycap-settings-dialog {
+  width: min(460px, calc(100vw - 48px));
+}
+
+.project-keycap-danger-option {
+  border-color: color-mix(in srgb, #b65a4a 36%, var(--glass-border-surface) 64%);
+}
+
+.project-danger-button {
+  background: #8f352d;
+}
+
+.project-danger-button:hover {
+  background: #762c26;
 }
 
 .note-card--neutral:last-child {
@@ -1948,6 +2418,10 @@ pre {
     gap: 10px;
   }
 
+  .field-group-card__header--plain {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .field-group-card__icon {
     width: 50px;
     height: 50px;
@@ -1980,6 +2454,38 @@ pre {
   .segment-link {
     padding: 9px 8px;
     font-size: 12px;
+  }
+
+  .project-keycap-item {
+    padding: 8px;
+  }
+
+  .project-keycap-item__content {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .project-keycap-drag-handle {
+    min-height: 68px;
+    border-radius: 10px;
+  }
+
+  .project-keycap-drag-handle__order {
+    font-size: 10px;
+  }
+
+  .project-keycap-item__summary {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .project-keycap-item__preview {
+    width: 68px;
+  }
+
+  .project-keycap-action-button {
+    min-height: 34px;
+    padding: 7px 8px;
   }
 
   .field,

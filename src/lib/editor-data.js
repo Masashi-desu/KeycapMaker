@@ -107,6 +107,14 @@ function getPlainObject(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
 
+function cloneJsonValue(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return JSON.parse(JSON.stringify(value));
+}
+
 function isRecognizedShapeProfileKey(profileKey) {
   return SHAPE_PROFILE_MAP.has(profileKey);
 }
@@ -929,6 +937,63 @@ export function createEditorDataPayload(params) {
   return createEditorDataPayloadFromParams(params);
 }
 
+export function mergeEditorDataPayloadParams(payload, params) {
+  const nextPayload = createEditorDataPayload(params);
+  const existingPayload = getPlainObject(payload) ? cloneJsonValue(payload) : null;
+  if (!existingPayload) {
+    return nextPayload;
+  }
+
+  const existingParams = getPlainObject(existingPayload.params) ?? {};
+  return {
+    ...existingPayload,
+    ...nextPayload,
+    params: {
+      ...existingParams,
+      ...nextPayload.params,
+    },
+  };
+}
+
+export function deleteEditorDataPayloadPath(payload, path) {
+  const nextPayload = getPlainObject(payload) ? cloneJsonValue(payload) : {};
+  const pathParts = String(path ?? "")
+    .split(".")
+    .filter(Boolean);
+
+  if (pathParts.length === 0) {
+    return {
+      payload: nextPayload,
+      deleted: false,
+    };
+  }
+
+  const fieldName = pathParts.pop();
+  let parent = nextPayload;
+  for (const pathPart of pathParts) {
+    parent = getPlainObject(parent?.[pathPart]);
+    if (!parent) {
+      return {
+        payload: nextPayload,
+        deleted: false,
+      };
+    }
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(parent, fieldName)) {
+    return {
+      payload: nextPayload,
+      deleted: false,
+    };
+  }
+
+  delete parent[fieldName];
+  return {
+    payload: nextPayload,
+    deleted: true,
+  };
+}
+
 export function createShapeProfileDefaultPayload(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   return createEditorDataPayloadFromParams(createDefaultKeycapParams(profileKey), null);
 }
@@ -1051,12 +1116,8 @@ function collectEditorDataBindingReport(payload, profileKey = DEFAULT_SHAPE_PROF
     }
   };
 
-  if (isCurrentOrLegacyEditorDataKind(payload.kind)) {
-    addParams(getPlainObject(payload.params) ?? {}, "params");
-  } else {
-    addParams(getPlainObject(payload.params) ?? {}, "params");
-    addParams(getCompatibleTopLevelParamCandidates(payload), "top-level");
-  }
+  addParams(getPlainObject(payload.params) ?? {}, "params");
+  addParams(getCompatibleTopLevelParamCandidates(payload), "top-level");
 
   return {
     profileKey,

@@ -5,9 +5,11 @@ import { readFile } from "node:fs/promises";
 import { createDefaultKeycapParams } from "../src/data/keycap-shape-registry.js";
 import {
   createEditorDataPayload,
+  deleteEditorDataPayloadPath,
   EDITOR_DATA_KIND,
   EDITOR_DATA_SCHEMA_VERSION,
   getTopSurfaceShapePreset,
+  mergeEditorDataPayloadParams,
   parseEditorDataPayload,
   parseEditorDataPayloadWithReport,
   sanitizeExportBaseName,
@@ -100,6 +102,69 @@ test("JSON 読み込み時に bind できないパラメータを報告する", 
       topCornerRadius: 2,
     },
   );
+});
+
+test("現行形式 JSON の top-level に残った未対応パラメータも報告する", () => {
+  const payload = createEditorDataPayload({
+    ...createDefaultKeycapParams("typewriter"),
+    name: "current with legacy field",
+  });
+  const { bindingReport } = parseEditorDataPayloadWithReport({
+    ...payload,
+    legacyTopLevelField: 7,
+  });
+
+  assert.deepEqual(bindingReport.unboundParams.map((entry) => entry.path), ["legacyTopLevelField"]);
+  assert.equal(bindingReport.unboundParams[0].value, 7);
+});
+
+test("プロジェクト内 JSON の未対応パラメータを保持したまま既知パラメータを更新する", () => {
+  const existingPayload = {
+    shapeProfile: "typewriter",
+    name: "legacy source",
+    legacyTopLevelField: 7,
+    params: {
+      keyDepth: 18.5,
+      legacyNestedField: 4,
+    },
+  };
+  const nextPayload = mergeEditorDataPayloadParams(existingPayload, {
+    ...createDefaultKeycapParams("typewriter"),
+    name: "updated source",
+    keyDepth: 19.25,
+  });
+  const { params, bindingReport } = parseEditorDataPayloadWithReport(nextPayload);
+
+  assert.equal(params.name, "updated source");
+  assert.equal(params.keyDepth, 19.25);
+  assert.equal(nextPayload.legacyTopLevelField, 7);
+  assert.equal(nextPayload.params.legacyNestedField, 4);
+  assert.deepEqual(
+    bindingReport.unboundParams.map((entry) => entry.path).sort(),
+    ["legacyTopLevelField", "params.legacyNestedField"].sort(),
+  );
+});
+
+test("読み込みレポートの path で JSON から該当パラメータだけ削除する", () => {
+  const payload = {
+    shapeProfile: "typewriter",
+    legacyTopLevelField: 7,
+    params: {
+      keyDepth: 18.5,
+      legacyNestedField: 4,
+    },
+  };
+  const nestedResult = deleteEditorDataPayloadPath(payload, "params.legacyNestedField");
+  const topLevelResult = deleteEditorDataPayloadPath(nestedResult.payload, "legacyTopLevelField");
+  const { bindingReport } = parseEditorDataPayloadWithReport(topLevelResult.payload);
+
+  assert.equal(nestedResult.deleted, true);
+  assert.equal(topLevelResult.deleted, true);
+  assert.equal(payload.params.legacyNestedField, 4);
+  assert.equal(payload.legacyTopLevelField, 7);
+  assert.equal(topLevelResult.payload.params.legacyNestedField, undefined);
+  assert.equal(topLevelResult.payload.legacyTopLevelField, undefined);
+  assert.deepEqual(bindingReport.unboundParams, []);
 });
 
 test("homing bar の面取り量は負数を 0 に丸める", () => {

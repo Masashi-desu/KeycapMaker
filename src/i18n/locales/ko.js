@@ -12,6 +12,7 @@ const ko = Object.freeze({
   },
   navigation: {
     label: "작업 섹션",
+    project: "프로젝트",
     settings: "설정",
     export: "내보내기",
   },
@@ -25,8 +26,8 @@ const ko = Object.freeze({
     saving: "저장 중...",
   },
   dropOverlay: {
-    title: "편집 데이터 / 호환 입력 JSON 드롭",
-    body: "저장된 편집 데이터 또는 누락값을 기본값으로 보완하는 호환 입력 JSON을 불러옵니다.",
+    title: "프로젝트 / 편집 데이터 JSON 드롭",
+    body: "프로젝트 디렉터리, 프로젝트 ZIP, 저장된 편집 데이터 또는 호환 입력 JSON을 불러옵니다.",
   },
   importReport: {
     title: "JSON 불러오기 리포트",
@@ -35,8 +36,13 @@ const ko = Object.freeze({
     expand: "JSON 불러오기 리포트 펼치기",
     collapse: "JSON 불러오기 리포트 접기",
     more: "{count}개 더",
+    deleteParam: "JSON에서 {path} 삭제",
   },
   panels: {
+    project: {
+      title: "프로젝트",
+      body: "여러 키캡을 함께 보관하고 목록에서 현재 편집 대상을 전환합니다.",
+    },
     settings: {
       title: "설정",
       body: "선택한 키캡 형상과 각인을 입력에 맞춰 조정하고, 오른쪽 미리보기에 자동 반영할 수 있습니다.",
@@ -67,6 +73,48 @@ const ko = Object.freeze({
     stlTitle: "STL 저장",
     stlBody: "단일 소재, 단일 메시 STL로 저장합니다. 색상과 각인은 무시되고 형상만 출력됩니다. 색상 구분이나 각인이 필요하면 3MF로 저장하세요.",
     saveStl: "STL 저장",
+  },
+  project: {
+    nameTitle: "프로젝트 이름",
+    nameLabel: "프로젝트 이름",
+    nameHint: "저장 디렉터리와 프로젝트 manifest 이름에 사용합니다",
+    keycapsTitle: "키캡 목록",
+    keycapsCount: "{count}개",
+    empty: "아직 키캡이 없습니다.",
+    addCurrent: "편집 중인 키캡 사본 추가",
+    recapturePreview: "{name} 미리보기 다시 촬영",
+    previewRecaptured: "미리보기를 다시 촬영했습니다",
+    reorderKeycap: "{name} 표시 순서 변경",
+    selectKeycap: "{name} 편집",
+    activeKeycap: "편집 중",
+    exportAction: "내보내기",
+    exportKeycap: "{name} 내보내기",
+    exportChip: "키캡 내보내기",
+    exportTitle: "{name} 내보내기",
+    settingsAction: "설정",
+    settingsKeycap: "{name} 설정",
+    settingsChip: "키캡 설정",
+    settingsTitle: "{name} 설정",
+    deleteChip: "삭제",
+    deleteTitle: "키캡 삭제",
+    deleteBody: "이 키캡을 프로젝트 목록에서 삭제합니다.",
+    deleteAction: "삭제",
+    save: "프로젝트 저장",
+    edited: "프로젝트 편집 중",
+    added: "{name}을 프로젝트에 추가했습니다",
+    deleted: "{name}을 프로젝트에서 삭제했습니다",
+    reordered: "키캡 목록 표시 순서를 변경했습니다",
+    loadedKeycap: "{name}으로 전환했습니다",
+    loaded: "프로젝트 {name}을 불러왔습니다({count}개)",
+    saving: "프로젝트 저장 중",
+    savedDirectory: "프로젝트 {name}을 디렉터리에 저장했습니다",
+    savedZip: "디렉터리 저장을 지원하지 않아 프로젝트 {name}을 ZIP으로 저장했습니다",
+    saveFailed: "프로젝트 저장 실패: {message}",
+    directoryNotWritable: "이 디렉터리에 쓸 수 없습니다.",
+    permissionDenied: "디렉터리 쓰기 권한이 허용되지 않았습니다.",
+    previewDecodeFailed: "미리보기 이미지를 저장 데이터로 변환할 수 없습니다.",
+    invalidPath: "프로젝트 내부 경로가 잘못되었습니다: {path}",
+    missingProjectFile: "프로젝트 내부 파일을 찾을 수 없습니다: {path}",
   },
   nameGroup: {
     title: "이름",
@@ -114,7 +162,7 @@ const ko = Object.freeze({
         },
         legend: {
           title: "각인",
-          description: "입력할 문자, 서체, 모양, 위치, 돌출 높이, 매립량을 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
+          description: "키톱의 여러 위치와 측면의 문자, 서체, 모양, 위치, 돌출 높이를 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
         },
         homing: {
           title: "손가락 위치 표시",
@@ -138,7 +186,7 @@ const ko = Object.freeze({
         },
         legend: {
           title: "각인",
-          description: "입력할 문자, 서체, 모양, 위치, 돌출 높이, 매립량을 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
+          description: "키톱의 여러 위치와 측면의 문자, 서체, 모양, 위치, 돌출 높이를 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
         },
         homing: {
           title: "손가락 위치 표시",
@@ -162,7 +210,7 @@ const ko = Object.freeze({
         },
         legend: {
           title: "각인",
-          description: "입력할 문자, 서체, 모양, 위치, 돌출 높이, 매립량을 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
+          description: "키톱의 여러 위치와 측면의 문자, 서체, 모양, 위치, 돌출 높이를 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
         },
         homing: {
           title: "손가락 위치 표시",
@@ -186,7 +234,7 @@ const ko = Object.freeze({
         },
         legend: {
           title: "각인",
-          description: "입력할 문자, 서체, 모양, 위치, 돌출 높이, 매립량을 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
+          description: "키톱의 여러 위치와 측면의 문자, 서체, 모양, 위치, 돌출 높이를 한곳에서 조정합니다. 여러 글자도 그대로 입력할 수 있습니다.",
         },
         homing: {
           title: "손가락 위치 표시",
@@ -401,9 +449,10 @@ const ko = Object.freeze({
       hint: "상면 기준면의 오른쪽 높이입니다. 중앙 높이는 고정되며 현재 좌우 기울기는 {roll}입니다.",
     },
     legendEnabled: {
-      label: "각인 추가",
+      label: "키톱 각인 추가",
       hint: "끄면 문자 형상을 만들지 않습니다",
     },
+    legendPrintNotice: "프린터나 슬라이서의 정밀도에 따라 문자 크기나 굵기 보정을 조정해야 할 수 있습니다.",
     legendText: {
       label: "입력 문자",
       hint: "여러 글자를 그대로 입력할 수 있습니다",
@@ -450,6 +499,49 @@ const ko = Object.freeze({
     legendOffsetY: {
       label: "앞뒤 위치",
       hint: "문자를 앞뒤로 움직입니다",
+    },
+    sideLegend: {
+      enabled: {
+        label: "{side} 측벽 각인 추가",
+        hint: "끄면 {side} 쪽 문자 형상을 만들지 않습니다",
+      },
+      color: {
+        label: "{side} 각인 색상",
+        hint: "색상 코드를 직접 입력하거나 색상 선택기로 고를 수 있습니다",
+      },
+      text: {
+        label: "{side} 입력 문자",
+        hint: "여러 글자를 그대로 입력할 수 있습니다",
+      },
+      fontKey: {
+        label: "{side} 서체",
+      },
+      fontStyleKey: {
+        label: "{side} 폰트 내 스타일",
+      },
+      underlineEnabled: {
+        label: "{side} 밑줄 추가",
+        hint: "밑줄 위치와 두께는 font 파일의 정보를 사용합니다. 임의의 모양으로 대체하지 않습니다.",
+      },
+      size: {
+        label: "{side} 문자 크기",
+        hint: "측벽에 각인할 문자의 크기를 변경합니다.",
+      },
+      outlineDelta: {
+        label: "{side} 굵기 보정",
+      },
+      height: {
+        label: "{side} 문자 높이",
+        hint: "0이면 측벽과 같은 높이의 매립 각인이 되고, 값을 올리면 바깥쪽으로 돌출됩니다.",
+      },
+      offsetX: {
+        label: "{side} 가로 위치",
+        hint: "측벽 위에서 문자를 좌우로 움직입니다",
+      },
+      offsetY: {
+        label: "{side} 세로 위치",
+        hint: "측벽 위에서 문자를 위아래로 움직입니다",
+      },
     },
     homingBarEnabled: {
       label: "위치 표시 추가",
@@ -529,6 +621,12 @@ const ko = Object.freeze({
     choc_v1: "Kailh Choc v1용 두 갈래 형상입니다. 슬림 키보드용 Choc v1 스위치에 맞습니다.",
     alps: "Alps / Matias 계열 삽입 형상입니다. 대응하는 Alps 계열 스위치에 맞습니다.",
     choc_v2: "Kailh Choc v2용 십자 형상입니다. Choc v2 스위치에 맞는 장착부를 만듭니다.",
+  },
+  sideLabels: {
+    front: "앞면",
+    back: "뒷면",
+    left: "왼쪽",
+    right: "오른쪽",
   },
   font: {
     defaultStyleLabel: "폰트 기본값 사용",

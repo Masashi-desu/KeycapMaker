@@ -1,4 +1,5 @@
 import "./styles.css";
+import { strToU8, unzipSync, zipSync } from "fflate";
 import {
   LOCALE_OPTIONS,
   getInitialLocale,
@@ -20,9 +21,11 @@ import { hexColorToNumber, normalizeHexColor } from "./lib/color-utils.js";
 import {
   DEFAULT_EXPORT_BASE_NAME,
   createEditorDataPayload,
+  deleteEditorDataPayloadPath,
   createInitialKeycapParams,
   getTopSurfaceShapePreset,
   listEditableParamKeys,
+  mergeEditorDataPayloadParams,
   parseEditorDataPayloadWithReport,
   resolveStemType,
   sanitizeEditorParamValue,
@@ -31,6 +34,27 @@ import {
 } from "./lib/editor-data.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
 import { parseOff } from "./lib/off-parser.js";
+import {
+  DEFAULT_PROJECT_NAME,
+  PROJECT_KEYCAPS_DIRNAME,
+  PROJECT_MANIFEST_FILENAME,
+  assignProjectKeycapDisplayOrder,
+  createEmptyProjectState,
+  createProjectKeycapEntry,
+  createProjectManifest,
+  createProjectPreviewPlaceholderDataUrl,
+  findProjectManifestPath,
+  getProjectAssetMimeType,
+  getProjectPreviewImageExtension,
+  isProjectArchiveFileName,
+  normalizeProjectName,
+  parseProjectManifest,
+} from "./lib/project-data.js";
+import {
+  createSquareThumbnailDrawPlan,
+  expandPixelBounds,
+  findOpaquePixelBounds,
+} from "./lib/preview-thumbnail.js";
 import {
   DEFAULT_KEYCAP_LEGEND_FONT_KEY,
   KEYCAP_LEGEND_FONTS,
@@ -150,6 +174,18 @@ const EXPORT_ICON_MARKUP = Object.freeze({
       <path d="M14 2v4a2 2 0 0 0 2 2h4" />
     </svg>
   `,
+  plus: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  `,
+  x: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  `,
   package: `
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
@@ -162,6 +198,38 @@ const EXPORT_ICON_MARKUP = Object.freeze({
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <path d="M7 10l5 5 5-5" />
       <path d="M12 15V3" />
+    </svg>
+  `,
+  settings: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 21v-7" />
+      <path d="M4 10V3" />
+      <path d="M12 21v-9" />
+      <path d="M12 8V3" />
+      <path d="M20 21v-5" />
+      <path d="M20 12V3" />
+      <path d="M2 14h4" />
+      <path d="M10 8h4" />
+      <path d="M18 16h4" />
+    </svg>
+  `,
+  grip: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="9" cy="5" r="1" />
+      <circle cx="15" cy="5" r="1" />
+      <circle cx="9" cy="12" r="1" />
+      <circle cx="15" cy="12" r="1" />
+      <circle cx="9" cy="19" r="1" />
+      <circle cx="15" cy="19" r="1" />
+    </svg>
+  `,
+  trash: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
     </svg>
   `,
 });
@@ -196,17 +264,25 @@ let previewViewState = null;
 let viewportLayoutMode = getViewportLayoutMode();
 let hasAttachedEditorDataDropListeners = false;
 let editorDataDragDepth = 0;
+let projectKeycapDragSourceId = "";
+let projectKeycapDragTargetId = "";
+let projectKeycapDragPlacement = "before";
+let projectKeycapDragDidMove = false;
+let projectKeycapDragOrderLabels = new Map();
 let fontAttributionCopyResetTimer = 0;
 const legendFontPreviewPromises = new Map();
 let pendingLegendFontPickerFocus = false;
 const textDecoder = new TextDecoder();
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
 const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+const PROJECT_KEYCAP_REORDER_ANIMATION_ID = "project-keycap-reorder";
+const PROJECT_KEYCAP_REORDER_ANIMATION_DURATION_MS = 180;
+const PROJECT_KEYCAP_REORDER_ANIMATION_EASING = "cubic-bezier(0.2, 0, 0, 1)";
+const PROJECT_KEYCAP_REORDER_ANIMATION_MIN_DELTA_PX = 0.5;
 const DEFAULT_KEY_UNIT_MM = 18;
 const KEY_UNIT_MIN_MM = 1;
 const KEY_UNIT_STORAGE_KEY = "keycap-maker:key-unit-mm";
 const KEY_UNIT_FIELD_KEY = "keyUnitMm";
-const IMPORT_BINDING_NOTICE_MAX_ITEMS = 6;
 const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
@@ -312,12 +388,12 @@ const COLORIS_SWATCHES = Object.freeze([
 
 const workspaceSections = [
   {
-    id: "params",
-    labelKey: "navigation.settings",
+    id: "project",
+    labelKey: "navigation.project",
   },
   {
-    id: "export",
-    labelKey: "navigation.export",
+    id: "params",
+    labelKey: "navigation.settings",
   },
 ];
 
@@ -1878,7 +1954,11 @@ const state = {
   exportsStatus: "idle",
   exportsSummary: translate(initialLocale, "status.notGenerated"),
   exportHistory: [],
-  isExportOptionsOpen: false,
+  projectStatus: "idle",
+  projectSummary: "",
+  project: createEmptyProjectState(),
+  keycapExportOverlayKeycapId: "",
+  keycapSettingsOverlayKeycapId: "",
   editorStatus: "idle",
   editorSummary: translate(initialLocale, "status.notGenerated"),
   editorLogs: [],
@@ -2067,12 +2147,12 @@ function renderKeyTopSlopeInputModeIcon() {
   return renderFieldLeadingIcon(KEY_TOP_SLOPE_INPUT_MODE_ICON_PATH);
 }
 
-function getColorFieldValue(fieldKey) {
-  return normalizeHexColor(state.keycapParams[fieldKey]) ?? DEFAULT_KEYCAP_COLORS[fieldKey];
+function getColorFieldValue(fieldKey, params = state.keycapParams) {
+  return normalizeHexColor(params[fieldKey]) ?? DEFAULT_KEYCAP_COLORS[fieldKey];
 }
 
-function getColorFieldNumber(fieldKey) {
-  return hexColorToNumber(getColorFieldValue(fieldKey));
+function getColorFieldNumber(fieldKey, params = state.keycapParams) {
+  return hexColorToNumber(getColorFieldValue(fieldKey, params));
 }
 
 function getPartLabel(partName) {
@@ -2193,16 +2273,16 @@ function isLegendTextSet(value = state.keycapParams.legendText) {
   return String(value ?? "").trim().length > 0;
 }
 
-function isTopLegendRenderable(config) {
+function isTopLegendRenderable(config, params = state.keycapParams) {
   const enabledKey = legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled);
   const textKey = legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.text);
-  return state.keycapParams[enabledKey] && isLegendTextSet(state.keycapParams[textKey]);
+  return params[enabledKey] && isLegendTextSet(params[textKey]);
 }
 
-function isSideLegendRenderable(config) {
+function isSideLegendRenderable(config, params = state.keycapParams) {
   const enabledKey = legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled);
   const textKey = legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.text);
-  return state.keycapParams[enabledKey] && isLegendTextSet(state.keycapParams[textKey]);
+  return params[enabledKey] && isLegendTextSet(params[textKey]);
 }
 
 function isTypewriterRimRenderable(params = state.keycapParams) {
@@ -2225,9 +2305,10 @@ function renderShell() {
             <strong data-i18n="dropOverlay.title"></strong>
             <span data-i18n="dropOverlay.body"></span>
           </span>
-          <span class="drop-overlay__chip" aria-hidden="true">JSON</span>
+          <span class="drop-overlay__chip" aria-hidden="true">ZIP / JSON</span>
         </div>
       </div>
+      <div data-keycap-export-overlay-root></div>
       <div class="language-control" data-language-control></div>
       <section class="editor-screen">
         <aside class="left-column">
@@ -2278,6 +2359,7 @@ function renderShell() {
     </main>
   `;
 
+  app.querySelector("[data-keycap-export-overlay-root]")?.addEventListener("click", handleKeycapExportOverlayClick);
   app.querySelector("[data-segment-control]")?.addEventListener("click", handleSegmentControlClick);
   app.querySelector("[data-language-control]")?.addEventListener("click", handleLanguageControlClick);
   app.querySelector("[data-mobile-inspector-toggle]")?.addEventListener("click", handleMobileInspectorToggleClick);
@@ -2286,6 +2368,10 @@ function renderShell() {
   app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
   app.querySelector(".inspector-card")?.addEventListener("compositionend", handleInspectorCardCompositionEnd);
   app.querySelector(".inspector-card")?.addEventListener("keydown", handleInspectorCardKeydown);
+  app.querySelector(".inspector-card")?.addEventListener("dragstart", handleInspectorCardDragStart);
+  app.querySelector(".inspector-card")?.addEventListener("dragover", handleInspectorCardDragOver);
+  app.querySelector(".inspector-card")?.addEventListener("drop", handleInspectorCardDrop);
+  app.querySelector(".inspector-card")?.addEventListener("dragend", handleInspectorCardDragEnd);
   attachEditorDataDropListeners();
   renderPersistentShellCopy();
   renderLanguageControl();
@@ -2409,6 +2495,7 @@ function render(options = {}) {
     renderLanguageControl();
     renderSegmentControl();
     renderInspectorPanel();
+    renderKeycapExportOverlay();
     configureColoris();
     syncImportDropOverlay();
     focusLegendFontPickerQuery();
@@ -2426,8 +2513,8 @@ function render(options = {}) {
 }
 
 function renderInspectorContent() {
-  if (state.sidebarTab === "export") {
-    return renderExportTab();
+  if (state.sidebarTab === "project") {
+    return renderProjectTab();
   }
 
   return renderParametersTab();
@@ -2464,11 +2551,6 @@ function renderImportBindingNotice() {
     : t("importReport.collapse");
   const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const viewTransitionName = createViewTransitionName("import-binding-notice", "report");
-  const visibleParams = unboundParams.slice(0, IMPORT_BINDING_NOTICE_MAX_ITEMS);
-  const remainingCount = unboundParams.length - visibleParams.length;
-  const remainingMarkup = remainingCount > 0
-    ? `<span class="import-binding-notice__more">${escapeHtml(t("importReport.more", { count: remainingCount }))}</span>`
-    : "";
 
   return `
     <section class="import-binding-notice" role="status" aria-live="polite" style="view-transition-name: ${viewTransitionName};">
@@ -2493,13 +2575,21 @@ function renderImportBindingNotice() {
         </button>
       </div>
       <div class="import-binding-notice__list" id="${listId}" aria-label="${escapeHtml(t("importReport.unboundListLabel"))}" ${isCollapsed ? "hidden" : ""}>
-        ${visibleParams.map((entry) => `
+        ${unboundParams.map((entry) => `
           <span class="import-binding-notice__row">
             <code class="import-binding-notice__name">${escapeHtml(entry.path)}</code>
             <code class="import-binding-notice__value">${escapeHtml(formatImportBindingValue(entry.value))}</code>
+            <button
+              class="import-binding-notice__delete"
+              type="button"
+              data-import-binding-delete="${escapeHtml(entry.path)}"
+              aria-label="${escapeHtml(t("importReport.deleteParam", { path: entry.path }))}"
+              title="${escapeHtml(t("importReport.deleteParam", { path: entry.path }))}"
+            >
+              ${EXPORT_ICON_MARKUP.x}
+            </button>
           </span>
         `).join("")}
-        ${remainingMarkup}
       </div>
     </section>
   `;
@@ -2507,6 +2597,44 @@ function renderImportBindingNotice() {
 
 function toggleImportBindingNotice() {
   state.isImportBindingNoticeCollapsed = !state.isImportBindingNoticeCollapsed;
+  render({ animateInspector: true });
+}
+
+function deleteImportBindingParam(path) {
+  const entryIndex = state.project.keycaps.findIndex((entry) => entry.id === state.project.activeKeycapId);
+  if (entryIndex < 0 || !path) {
+    return;
+  }
+
+  const currentEntry = state.project.keycaps[entryIndex];
+  const {
+    payload: nextEditorDataPayload,
+    deleted,
+  } = deleteEditorDataPayloadPath(getProjectEntryEditorDataPayload(currentEntry), path);
+  if (!deleted) {
+    return;
+  }
+
+  const {
+    params,
+    bindingReport,
+  } = parseEditorDataPayloadWithReport(nextEditorDataPayload);
+  state.keycapParams = syncDerivedKeycapParams(cloneJsonValue(params));
+  state.project.keycaps[entryIndex] = createProjectKeycapEntry(state.keycapParams, {
+    id: currentEntry.id,
+    name: state.keycapParams.name,
+    jsonPath: currentEntry.jsonPath,
+    previewPath: currentEntry.previewPath,
+    displayOrder: currentEntry.displayOrder,
+    editorDataPayload: nextEditorDataPayload,
+    previewImageDataUrl: currentEntry.previewImageDataUrl,
+    previewViewState: currentEntry.previewViewState,
+  });
+  state.project.isDirty = true;
+  state.editorStatus = "dirty";
+  state.editorSummary = t("status.loadedDirty");
+  setImportBindingReport(bindingReport, getProjectEntryReportFileName(state.project.keycaps[entryIndex]));
+  setProjectStatus("idle", t("project.edited"));
   render({ animateInspector: true });
 }
 
@@ -2530,6 +2658,341 @@ function formatImportBindingValue(value) {
   }
 }
 
+function renderProjectKeycapList() {
+  const keycaps = state.project.keycaps;
+  if (keycaps.length === 0) {
+    return `<p class="project-empty">${escapeHtml(t("project.empty"))}</p>`;
+  }
+
+  return keycaps.map((entry, index) => {
+    const isActive = entry.id === state.project.activeKeycapId;
+    const imageDataUrl = entry.previewImageDataUrl || createProjectPreviewPlaceholderDataUrl(entry.params);
+    const previewContent = `<img src="${escapeHtml(imageDataUrl)}" alt="" loading="lazy" />`;
+    const orderLabel = projectKeycapDragOrderLabels.get(entry.id) ?? index + 1;
+    const cardAttributes = isActive
+      ? ""
+      : `
+          data-project-keycap="${escapeHtml(entry.id)}"
+        `;
+    const previewMarkup = isActive
+      ? `
+          <button
+            class="project-keycap-item__preview project-keycap-preview-button"
+            type="button"
+            data-project-keycap-recapture="${escapeHtml(entry.id)}"
+            aria-label="${escapeHtml(t("project.recapturePreview", { name: entry.name }))}"
+            title="${escapeHtml(t("project.recapturePreview", { name: entry.name }))}"
+          >
+            ${previewContent}
+          </button>
+        `
+      : `
+          <span class="project-keycap-item__preview">
+            ${previewContent}
+          </span>
+        `;
+    const summaryContent = `
+      ${previewMarkup}
+      <span class="project-keycap-item__copy">
+        <span class="project-keycap-item__title-row">
+          <strong>${escapeHtml(entry.name)}</strong>
+          ${isActive ? `<span class="project-keycap-item__status">${escapeHtml(t("project.activeKeycap"))}</span>` : ""}
+        </span>
+        <span>${escapeHtml(entry.jsonPath)}</span>
+      </span>
+    `;
+    const summaryMarkup = isActive
+      ? `<div class="project-keycap-item__summary">${summaryContent}</div>`
+      : `
+          <button
+            class="project-keycap-item__summary project-keycap-item__select-button"
+            type="button"
+            data-project-keycap-select="${escapeHtml(entry.id)}"
+            aria-label="${escapeHtml(t("project.selectKeycap", { name: entry.name }))}"
+          >
+            ${summaryContent}
+          </button>
+        `;
+    return `
+      <div
+        class="project-keycap-item ${isActive ? "is-active" : ""} ${entry.id === projectKeycapDragSourceId ? "is-dragging" : ""}"
+        data-project-keycap-card
+        data-project-keycap-id="${escapeHtml(entry.id)}"
+        data-project-keycap-display-order="${index}"
+        ${cardAttributes}
+      >
+        <div class="project-keycap-item__content">
+          <button
+            class="project-keycap-drag-handle"
+            type="button"
+            draggable="true"
+            data-project-keycap-drag="${escapeHtml(entry.id)}"
+            aria-label="${escapeHtml(t("project.reorderKeycap", { name: entry.name }))}"
+            title="${escapeHtml(t("project.reorderKeycap", { name: entry.name }))}"
+          >
+            <span class="project-keycap-drag-handle__order">${escapeHtml(orderLabel)}</span>
+            ${EXPORT_ICON_MARKUP.grip}
+          </button>
+          ${summaryMarkup}
+        </div>
+        <div class="project-keycap-item__actions">
+          <button
+            class="project-keycap-action-button project-keycap-export-button"
+            type="button"
+            data-project-keycap-export="${escapeHtml(entry.id)}"
+            aria-label="${escapeHtml(t("project.exportKeycap", { name: entry.name }))}"
+            title="${escapeHtml(t("project.exportKeycap", { name: entry.name }))}"
+          >
+            ${EXPORT_ICON_MARKUP.download}
+            <span>${escapeHtml(t("project.exportAction"))}</span>
+          </button>
+          <button
+            class="project-keycap-action-button project-keycap-settings-button"
+            type="button"
+            data-project-keycap-settings="${escapeHtml(entry.id)}"
+            aria-label="${escapeHtml(t("project.settingsKeycap", { name: entry.name }))}"
+            title="${escapeHtml(t("project.settingsKeycap", { name: entry.name }))}"
+          >
+            ${EXPORT_ICON_MARKUP.settings}
+            <span>${escapeHtml(t("project.settingsAction"))}</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function getKeycapExportOverlayEntry() {
+  return state.project.keycaps.find((entry) => entry.id === state.keycapExportOverlayKeycapId) ?? null;
+}
+
+function getKeycapSettingsOverlayEntry() {
+  return state.project.keycaps.find((entry) => entry.id === state.keycapSettingsOverlayKeycapId) ?? null;
+}
+
+function syncKeycapExportOverlayScrollLock(isLocked) {
+  document.documentElement.classList.toggle("is-keycap-export-overlay-open", isLocked);
+  document.body.classList.toggle("is-keycap-export-overlay-open", isLocked);
+}
+
+function renderKeycapExportOverlayOption({ format, chip, title, body, action }) {
+  return `
+    <section class="export-option-action keycap-export-option" aria-labelledby="keycap-export-${format}-title">
+      <div class="export-action-card__header">
+        <span class="export-action-card__icon" aria-hidden="true">${format === "editor-data" ? EXPORT_ICON_MARKUP.file : EXPORT_ICON_MARKUP.package}</span>
+        <span class="export-action-card__title-stack">
+          <span class="chip-label">${escapeHtml(chip)}</span>
+          <strong id="keycap-export-${format}-title">${escapeHtml(title)}</strong>
+        </span>
+      </div>
+      <p class="export-action-card__text">${escapeHtml(body)}</p>
+      <button
+        class="export-save-button"
+        type="button"
+        data-keycap-export-format="${escapeHtml(format)}"
+        ${state.exportsStatus === "running" ? "disabled" : ""}
+      >
+        ${EXPORT_ICON_MARKUP.download}
+        <span>${state.exportsStatus === "running" ? t("actions.saving") : escapeHtml(action)}</span>
+      </button>
+    </section>
+  `;
+}
+
+function renderKeycapExportOverlay() {
+  const overlayRoot = app.querySelector("[data-keycap-export-overlay-root]");
+  if (!overlayRoot) {
+    syncKeycapExportOverlayScrollLock(false);
+    return;
+  }
+
+  const entry = getKeycapExportOverlayEntry();
+  const settingsEntry = getKeycapSettingsOverlayEntry();
+  syncKeycapExportOverlayScrollLock(Boolean(entry || settingsEntry));
+
+  if (!entry) {
+    if (settingsEntry) {
+      renderKeycapSettingsOverlay(overlayRoot, settingsEntry);
+      return;
+    }
+
+    overlayRoot.replaceChildren();
+    return;
+  }
+
+  overlayRoot.innerHTML = `
+    <div class="keycap-export-overlay" data-keycap-export-overlay role="presentation">
+      <section
+        class="keycap-export-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="keycap-export-title"
+      >
+        <div class="keycap-export-dialog__header">
+          <span class="keycap-export-dialog__title-stack">
+            <span class="chip-label">${escapeHtml(t("project.exportChip"))}</span>
+            <h2 id="keycap-export-title">${escapeHtml(t("project.exportTitle", { name: entry.name }))}</h2>
+          </span>
+          <button
+            class="field-group-toggle keycap-export-dialog__close"
+            type="button"
+            data-keycap-export-close
+            aria-label="${escapeHtml(t("actions.close"))}"
+            title="${escapeHtml(t("actions.close"))}"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="keycap-export-dialog__body">
+          ${renderKeycapExportOverlayOption({
+            format: "editor-data",
+            chip: t("exportPanel.jsonChip"),
+            title: t("exportPanel.jsonTitle"),
+            body: t("exportPanel.jsonBody"),
+            action: t("exportPanel.saveJson"),
+          })}
+          ${renderKeycapExportOverlayOption({
+            format: "3mf",
+            chip: t("exportPanel.threeMfChip"),
+            title: t("exportPanel.threeMfTitle"),
+            body: t("exportPanel.threeMfBody"),
+            action: t("exportPanel.saveThreeMf"),
+          })}
+          ${renderKeycapExportOverlayOption({
+            format: "stl",
+            chip: t("exportPanel.stlChip"),
+            title: t("exportPanel.stlTitle"),
+            body: t("exportPanel.stlBody"),
+            action: t("exportPanel.saveStl"),
+          })}
+        </div>
+        <p class="keycap-export-dialog__status" aria-live="polite">${escapeHtml(state.exportsSummary)}</p>
+      </section>
+    </div>
+  `;
+}
+
+function renderKeycapSettingsOverlay(overlayRoot, entry) {
+  overlayRoot.innerHTML = `
+    <div class="keycap-export-overlay" data-keycap-settings-overlay role="presentation">
+      <section
+        class="keycap-export-dialog project-keycap-settings-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="keycap-settings-title"
+      >
+        <div class="keycap-export-dialog__header">
+          <span class="keycap-export-dialog__title-stack">
+            <span class="chip-label">${escapeHtml(t("project.settingsChip"))}</span>
+            <h2 id="keycap-settings-title">${escapeHtml(t("project.settingsTitle", { name: entry.name }))}</h2>
+          </span>
+          <button
+            class="field-group-toggle keycap-export-dialog__close"
+            type="button"
+            data-keycap-settings-close
+            aria-label="${escapeHtml(t("actions.close"))}"
+            title="${escapeHtml(t("actions.close"))}"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="keycap-export-dialog__body">
+          <section class="export-option-action keycap-export-option project-keycap-danger-option" aria-labelledby="keycap-settings-delete-title">
+            <div class="export-action-card__header">
+              <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.trash}</span>
+              <span class="export-action-card__title-stack">
+                <span class="chip-label">${escapeHtml(t("project.deleteChip"))}</span>
+                <strong id="keycap-settings-delete-title">${escapeHtml(t("project.deleteTitle"))}</strong>
+              </span>
+            </div>
+            <p class="export-action-card__text">${escapeHtml(t("project.deleteBody"))}</p>
+            <button
+              class="export-save-button project-danger-button"
+              type="button"
+              data-keycap-delete="${escapeHtml(entry.id)}"
+            >
+              ${EXPORT_ICON_MARKUP.trash}
+              <span>${escapeHtml(t("project.deleteAction"))}</span>
+            </button>
+          </section>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderProjectTab() {
+  const projectName = state.project.name || DEFAULT_PROJECT_NAME;
+  const isProjectBusy = state.projectStatus === "running";
+
+  return `
+    <div class="inspector-panel inspector-panel--project">
+      <div class="panel-intro">
+        <h1 class="panel-title">${t("panels.project.title")}</h1>
+        <p class="panel-text">${t("panels.project.body")}</p>
+      </div>
+
+      ${renderImportBindingNotice()}
+
+      <div class="project-panel-grid">
+        <section class="field-group-card project-card" aria-labelledby="project-name-title">
+          <div class="field-group-header">
+            <div class="field-group-card__header field-group-card__header--plain">
+              <span class="field-group-card__title-stack field-group-card__title-stack--solo">
+                <h3 id="project-name-title">${t("project.nameTitle")}</h3>
+              </span>
+            </div>
+          </div>
+          <div class="field-group-body">
+            <label class="field">
+              <span class="field-copy">
+                <span class="field-label">${t("project.nameLabel")}</span>
+                <span class="field-hint">${t("project.nameHint")}</span>
+              </span>
+              <span class="field-control">
+                <input
+                  type="text"
+                  data-project-name
+                  value="${escapeHtml(projectName)}"
+                  maxlength="80"
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section class="field-group-card project-card" aria-labelledby="project-keycaps-title">
+          <div class="field-group-header">
+            <div class="field-group-card__header field-group-card__header--plain">
+              <span class="field-group-card__title-stack">
+                <h3 id="project-keycaps-title">${t("project.keycapsTitle")}</h3>
+                <p>${t("project.keycapsCount", { count: state.project.keycaps.length })}</p>
+              </span>
+            </div>
+          </div>
+          <div class="field-group-body project-keycap-body">
+            <div class="project-keycap-list">
+              ${renderProjectKeycapList()}
+            </div>
+            <button class="export-save-button project-secondary-button" type="button" data-project-add-current ${isProjectBusy ? "disabled" : ""}>
+              ${EXPORT_ICON_MARKUP.plus}
+              <span>${t("project.addCurrent")}</span>
+            </button>
+          </div>
+        </section>
+
+        <button class="export-save-button project-save-button" type="button" data-project-save ${isProjectBusy ? "disabled" : ""}>
+          ${EXPORT_ICON_MARKUP.download}
+          <span>${isProjectBusy ? t("actions.saving") : t("project.save")}</span>
+        </button>
+        <p class="project-status" aria-live="polite">${escapeHtml(state.projectSummary)}</p>
+      </div>
+    </div>
+  `;
+}
+
 function renderParametersTab() {
   const activeFieldGroups = getActiveFieldGroups();
 
@@ -2547,98 +3010,6 @@ function renderParametersTab() {
         ${activeFieldGroups.map((group, index) => renderFieldGroup(group, index)).join("")}
       </div>
     </div>
-  `;
-}
-
-function renderExportTab() {
-  return `
-    <div class="inspector-panel inspector-panel--export">
-      <div class="panel-intro">
-        <h1 class="panel-title">${t("panels.export.title")}</h1>
-        <p class="panel-text">${t("panels.export.body")}</p>
-      </div>
-
-      ${renderImportBindingNotice()}
-
-      <div class="export-button-list">
-        <section class="export-action-card" aria-labelledby="export-json-title">
-          <div class="export-action-card__header">
-            <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.file}</span>
-            <span class="export-action-card__title-stack">
-              <span class="chip-label">${t("exportPanel.jsonChip")}</span>
-              <strong id="export-json-title">${t("exportPanel.jsonTitle")}</strong>
-            </span>
-          </div>
-          <p class="export-action-card__text">${t("exportPanel.jsonBody")}</p>
-          <button class="export-save-button" type="button" data-export="editor-data" ${state.exportsStatus === "running" ? "disabled" : ""}>
-            ${EXPORT_ICON_MARKUP.download}
-            <span>${state.exportsStatus === "running" ? t("actions.saving") : t("exportPanel.saveJson")}</span>
-          </button>
-        </section>
-        <section class="export-action-card" aria-labelledby="export-3mf-title">
-          <div class="export-action-card__header">
-            <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.package}</span>
-            <span class="export-action-card__title-stack">
-              <span class="chip-label">${t("exportPanel.threeMfChip")}</span>
-              <strong id="export-3mf-title">${t("exportPanel.threeMfTitle")}</strong>
-            </span>
-          </div>
-          <p class="export-action-card__text">${t("exportPanel.threeMfBody")}</p>
-          <button class="export-save-button" type="button" data-export="3mf" ${state.exportsStatus === "running" ? "disabled" : ""}>
-            ${EXPORT_ICON_MARKUP.download}
-            <span>${state.exportsStatus === "running" ? t("actions.saving") : t("exportPanel.saveThreeMf")}</span>
-          </button>
-        </section>
-        ${renderExportOptionsCard()}
-      </div>
-      <p class="visually-hidden" aria-live="polite" data-export-status>${state.exportsSummary}</p>
-    </div>
-  `;
-}
-
-function renderExportOptionsCard() {
-  const isOpen = state.isExportOptionsOpen;
-  const optionsBodyId = "export-options-body";
-  const toggleIconUrl = isOpen ? CHEVRON_ICON_URLS.expanded : CHEVRON_ICON_URLS.collapsed;
-  const toggleLabel = isOpen ? t("exportPanel.optionsCollapse") : t("exportPanel.optionsExpand");
-
-  return `
-    <section class="export-options-card" aria-labelledby="export-options-title">
-      <div class="field-group-header">
-        <div class="field-group-header__row">
-          <div class="export-options-card__title-stack">
-            <h3 id="export-options-title">${t("exportPanel.optionsTitle")}</h3>
-            <p>${t("exportPanel.optionsBody")}</p>
-          </div>
-          <button
-            class="field-group-toggle"
-            type="button"
-            data-export-options-toggle
-            aria-expanded="${isOpen ? "true" : "false"}"
-            aria-controls="${optionsBodyId}"
-            aria-label="${toggleLabel}"
-          >
-            <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-      <div class="export-options-card__body" id="${optionsBodyId}" ${isOpen ? "" : "hidden"}>
-        <section class="export-option-action" aria-labelledby="export-stl-title">
-          <div class="export-action-card__header">
-            <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.package}</span>
-            <span class="export-action-card__title-stack">
-              <span class="chip-label">${t("exportPanel.stlChip")}</span>
-              <strong id="export-stl-title">${t("exportPanel.stlTitle")}</strong>
-            </span>
-          </div>
-          <p class="export-action-card__text">${t("exportPanel.stlBody")}</p>
-          <button class="export-save-button" type="button" data-export="stl" ${state.exportsStatus === "running" ? "disabled" : ""}>
-            ${EXPORT_ICON_MARKUP.download}
-            <span>${state.exportsStatus === "running" ? t("actions.saving") : t("exportPanel.saveStl")}</span>
-          </button>
-        </section>
-      </div>
-    </section>
   `;
 }
 
@@ -3714,7 +4085,304 @@ function handleMobileInspectorToggleClick() {
   renderLayout();
 }
 
+function getProjectKeycapCardById(entryId) {
+  if (!entryId) {
+    return null;
+  }
+
+  return app.querySelector(`[data-project-keycap-card][data-project-keycap-id="${escapeCssIdentifier(entryId)}"]`);
+}
+
+function isProjectKeycapReorderAnimationEnabled() {
+  return !reduceMotionQuery?.matches && typeof Element !== "undefined" && typeof Element.prototype.animate === "function";
+}
+
+function captureProjectKeycapCardRects() {
+  if (!isProjectKeycapReorderAnimationEnabled()) {
+    return null;
+  }
+
+  const rects = new Map();
+  app.querySelectorAll("[data-project-keycap-card]").forEach((card) => {
+    const entryId = card.dataset.projectKeycapId;
+    if (!entryId) {
+      return;
+    }
+
+    rects.set(entryId, card.getBoundingClientRect());
+  });
+
+  return rects.size > 0 ? rects : null;
+}
+
+function animateProjectKeycapCardReorder(previousRects, options = {}) {
+  if (!previousRects || !isProjectKeycapReorderAnimationEnabled()) {
+    return;
+  }
+
+  const { excludeId = "" } = options;
+  window.requestAnimationFrame(() => {
+    app.querySelectorAll("[data-project-keycap-card]").forEach((card) => {
+      const entryId = card.dataset.projectKeycapId;
+      if (!entryId || entryId === excludeId) {
+        return;
+      }
+
+      const previousRect = previousRects.get(entryId);
+      if (!previousRect) {
+        return;
+      }
+
+      const currentRect = card.getBoundingClientRect();
+      const deltaX = previousRect.left - currentRect.left;
+      const deltaY = previousRect.top - currentRect.top;
+      if (
+        Math.abs(deltaX) < PROJECT_KEYCAP_REORDER_ANIMATION_MIN_DELTA_PX
+        && Math.abs(deltaY) < PROJECT_KEYCAP_REORDER_ANIMATION_MIN_DELTA_PX
+      ) {
+        return;
+      }
+
+      card.getAnimations()
+        .filter((animation) => animation.id === PROJECT_KEYCAP_REORDER_ANIMATION_ID)
+        .forEach((animation) => animation.cancel());
+
+      const animation = card.animate([
+        { transform: `translate(${deltaX}px, ${deltaY}px)` },
+        { transform: "translate(0, 0)" },
+      ], {
+        duration: PROJECT_KEYCAP_REORDER_ANIMATION_DURATION_MS,
+        easing: PROJECT_KEYCAP_REORDER_ANIMATION_EASING,
+      });
+      animation.id = PROJECT_KEYCAP_REORDER_ANIMATION_ID;
+    });
+  });
+}
+
+function clearProjectKeycapDragVisualState() {
+  app.querySelectorAll("[data-project-keycap-card]").forEach((card) => {
+    card.classList.remove("is-dragging");
+  });
+}
+
+function setProjectKeycapDragVisualState() {
+  clearProjectKeycapDragVisualState();
+  getProjectKeycapCardById(projectKeycapDragSourceId)?.classList.add("is-dragging");
+}
+
+function captureProjectKeycapDragOrderLabels() {
+  projectKeycapDragOrderLabels = new Map(
+    state.project.keycaps.map((entry, index) => [entry.id, index + 1]),
+  );
+}
+
+function getProjectKeycapDropPlacement(card, event) {
+  const rect = card.getBoundingClientRect();
+  return event.clientY > rect.top + rect.height / 2 ? "after" : "before";
+}
+
+function reorderProjectKeycaps(sourceId, targetId, placement = "before", options = {}) {
+  const { animateInspector = false, animateMove = true } = options;
+  if (!sourceId || !targetId || sourceId === targetId) {
+    return false;
+  }
+
+  const keycaps = [...state.project.keycaps];
+  const previousOrder = keycaps.map((entry) => entry.id).join("\n");
+  const sourceIndex = keycaps.findIndex((entry) => entry.id === sourceId);
+  if (sourceIndex < 0) {
+    return false;
+  }
+
+  const [movingEntry] = keycaps.splice(sourceIndex, 1);
+  const targetIndex = keycaps.findIndex((entry) => entry.id === targetId);
+  if (targetIndex < 0) {
+    return false;
+  }
+
+  const insertIndex = placement === "after" ? targetIndex + 1 : targetIndex;
+  keycaps.splice(insertIndex, 0, movingEntry);
+  const nextOrder = keycaps.map((entry) => entry.id).join("\n");
+  if (nextOrder === previousOrder) {
+    return false;
+  }
+
+  const previousRects = animateMove ? captureProjectKeycapCardRects() : null;
+  state.project.keycaps = assignProjectKeycapDisplayOrder(keycaps);
+  state.project.isDirty = true;
+  setProjectStatus("idle", t("project.reordered"));
+  render({ animateInspector });
+  animateProjectKeycapCardReorder(previousRects, { excludeId: projectKeycapDragSourceId });
+  return true;
+}
+
+function moveProjectKeycapByOffset(entryId, offset) {
+  const keycaps = [...state.project.keycaps];
+  const sourceIndex = keycaps.findIndex((entry) => entry.id === entryId);
+  const targetIndex = Math.max(0, Math.min(keycaps.length - 1, sourceIndex + offset));
+  if (sourceIndex < 0 || targetIndex === sourceIndex) {
+    return false;
+  }
+
+  const [movingEntry] = keycaps.splice(sourceIndex, 1);
+  keycaps.splice(targetIndex, 0, movingEntry);
+  const previousRects = captureProjectKeycapCardRects();
+  state.project.keycaps = assignProjectKeycapDisplayOrder(keycaps);
+  state.project.isDirty = true;
+  setProjectStatus("idle", t("project.reordered"));
+  render({ animateInspector: false });
+  animateProjectKeycapCardReorder(previousRects);
+  window.requestAnimationFrame(() => {
+    app.querySelector(`[data-project-keycap-drag="${escapeCssIdentifier(entryId)}"]`)?.focus();
+  });
+  return true;
+}
+
+function resetProjectKeycapDragState() {
+  const hadOrderLabels = projectKeycapDragOrderLabels.size > 0;
+  projectKeycapDragSourceId = "";
+  projectKeycapDragTargetId = "";
+  projectKeycapDragPlacement = "before";
+  projectKeycapDragDidMove = false;
+  projectKeycapDragOrderLabels = new Map();
+  clearProjectKeycapDragVisualState();
+  return hadOrderLabels;
+}
+
+function handleInspectorCardDragStart(event) {
+  const dragHandle = getClosestFromEventTarget(event, "[data-project-keycap-drag]");
+  if (!dragHandle) {
+    return;
+  }
+
+  const entryId = dragHandle.dataset.projectKeycapDrag;
+  if (!entryId || !state.project.keycaps.some((entry) => entry.id === entryId)) {
+    event.preventDefault();
+    return;
+  }
+
+  projectKeycapDragSourceId = entryId;
+  projectKeycapDragTargetId = "";
+  projectKeycapDragPlacement = "before";
+  projectKeycapDragDidMove = false;
+  captureProjectKeycapDragOrderLabels();
+  if (event.dataTransfer) {
+    const sourceCard = getProjectKeycapCardById(entryId);
+    if (sourceCard) {
+      const cardRect = sourceCard.getBoundingClientRect();
+      event.dataTransfer.setDragImage(
+        sourceCard,
+        Math.max(0, event.clientX - cardRect.left),
+        Math.max(0, event.clientY - cardRect.top),
+      );
+    }
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("application/x-keycap-maker-keycap", entryId);
+    event.dataTransfer.setData("text/plain", entryId);
+  }
+  setProjectKeycapDragVisualState();
+}
+
+function handleInspectorCardDragOver(event) {
+  if (!projectKeycapDragSourceId) {
+    return;
+  }
+
+  const targetCard = getClosestFromEventTarget(event, "[data-project-keycap-card]");
+  if (!targetCard) {
+    return;
+  }
+
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "move";
+  }
+
+  const targetId = targetCard.dataset.projectKeycapId;
+  const placement = getProjectKeycapDropPlacement(targetCard, event);
+  if (targetId === projectKeycapDragTargetId && placement === projectKeycapDragPlacement) {
+    return;
+  }
+
+  projectKeycapDragTargetId = targetId ?? "";
+  projectKeycapDragPlacement = placement;
+  if (targetId && reorderProjectKeycaps(projectKeycapDragSourceId, targetId, placement, { animateInspector: false })) {
+    projectKeycapDragDidMove = true;
+  } else {
+    setProjectKeycapDragVisualState();
+  }
+}
+
+function handleInspectorCardDrop(event) {
+  if (!projectKeycapDragSourceId) {
+    return;
+  }
+
+  const targetCard = getClosestFromEventTarget(event, "[data-project-keycap-card]");
+  event.preventDefault();
+  const targetId = targetCard?.dataset.projectKeycapId ?? projectKeycapDragTargetId;
+  const placement = targetCard ? getProjectKeycapDropPlacement(targetCard, event) : projectKeycapDragPlacement;
+  const sourceId = projectKeycapDragSourceId;
+  const didMoveBeforeDrop = projectKeycapDragDidMove;
+  const shouldRefreshOrderLabels = resetProjectKeycapDragState();
+  if (!didMoveBeforeDrop) {
+    const didReorder = reorderProjectKeycaps(sourceId, targetId, placement);
+    if (!didReorder && shouldRefreshOrderLabels) {
+      render({ animateInspector: false });
+    }
+  } else if (shouldRefreshOrderLabels) {
+    render({ animateInspector: false });
+  }
+}
+
+function handleInspectorCardDragEnd() {
+  if (resetProjectKeycapDragState()) {
+    render({ animateInspector: false });
+  }
+}
+
 function handleInspectorCardClick(event) {
+  const projectKeycapDragHandle = getClosestFromEventTarget(event, "[data-project-keycap-drag]");
+  if (projectKeycapDragHandle) {
+    return;
+  }
+
+  const projectKeycapRecaptureButton = getClosestFromEventTarget(event, "[data-project-keycap-recapture]");
+  if (projectKeycapRecaptureButton) {
+    recaptureActiveProjectKeycapPreview(projectKeycapRecaptureButton.dataset.projectKeycapRecapture);
+    return;
+  }
+
+  const projectKeycapSettingsButton = getClosestFromEventTarget(event, "[data-project-keycap-settings]");
+  if (projectKeycapSettingsButton) {
+    openKeycapSettingsOverlay(projectKeycapSettingsButton.dataset.projectKeycapSettings);
+    return;
+  }
+
+  const projectKeycapExportButton = getClosestFromEventTarget(event, "[data-project-keycap-export]");
+  if (projectKeycapExportButton) {
+    openKeycapExportOverlay(projectKeycapExportButton.dataset.projectKeycapExport);
+    return;
+  }
+
+  const projectKeycapButton = getClosestFromEventTarget(event, "[data-project-keycap]");
+  if (projectKeycapButton) {
+    void applyProjectKeycapSelection(projectKeycapButton.dataset.projectKeycap);
+    return;
+  }
+
+  const projectAddCurrentButton = getClosestFromEventTarget(event, "[data-project-add-current]");
+  if (projectAddCurrentButton) {
+    void addCurrentKeycapToProject();
+    return;
+  }
+
+  const projectSaveButton = getClosestFromEventTarget(event, "[data-project-save]");
+  if (projectSaveButton) {
+    void saveProject();
+    return;
+  }
+
   const copyFontAttributionButton = getClosestFromEventTarget(event, "[data-copy-font-attribution]");
   if (copyFontAttributionButton) {
     void handleCopyLegendFontAttribution(copyFontAttributionButton.dataset.copyFontAttribution);
@@ -3749,6 +4417,12 @@ function handleInspectorCardClick(event) {
     return;
   }
 
+  const importBindingDeleteButton = getClosestFromEventTarget(event, "[data-import-binding-delete]");
+  if (importBindingDeleteButton) {
+    deleteImportBindingParam(importBindingDeleteButton.dataset.importBindingDelete);
+    return;
+  }
+
   const groupToggleButton = getClosestFromEventTarget(event, "[data-field-group-toggle]");
   if (groupToggleButton) {
     toggleFieldGroup(groupToggleButton.dataset.fieldGroupToggle);
@@ -3760,20 +4434,15 @@ function handleInspectorCardClick(event) {
     openColorPicker(colorPickerButton.dataset.colorPickerOpen);
     return;
   }
-
-  const exportButton = getClosestFromEventTarget(event, "[data-export]");
-  if (exportButton) {
-    executeExport(exportButton.dataset.export);
-    return;
-  }
-
-  const exportOptionsToggleButton = getClosestFromEventTarget(event, "[data-export-options-toggle]");
-  if (exportOptionsToggleButton) {
-    toggleExportOptions();
-  }
 }
 
 function handleInspectorCardInput(event) {
+  const projectNameInput = getClosestFromEventTarget(event, "[data-project-name]");
+  if (projectNameInput) {
+    handleProjectNameInput(projectNameInput);
+    return;
+  }
+
   const fontPickerQueryInput = getClosestFromEventTarget(event, "[data-font-picker-query]");
   if (fontPickerQueryInput) {
     handleLegendFontPickerQueryInput(fontPickerQueryInput);
@@ -3822,6 +4491,34 @@ function handleInspectorCardCompositionEnd(event) {
 }
 
 function handleInspectorCardKeydown(event) {
+  const projectKeycapDragHandle = getClosestFromEventTarget(event, "[data-project-keycap-drag]");
+  if (projectKeycapDragHandle && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+    event.preventDefault();
+    moveProjectKeycapByOffset(
+      projectKeycapDragHandle.dataset.projectKeycapDrag,
+      event.key === "ArrowUp" ? -1 : 1,
+    );
+    return;
+  }
+
+  const projectKeycapSelectButton = getClosestFromEventTarget(event, "[data-project-keycap-select]");
+  if (projectKeycapSelectButton && (event.key === "Enter" || event.key === " ")) {
+    event.preventDefault();
+    void applyProjectKeycapSelection(projectKeycapSelectButton.dataset.projectKeycapSelect);
+    return;
+  }
+
+  const projectKeycapCard = getClosestFromEventTarget(event, "[data-project-keycap]");
+  const interactiveControl = getClosestFromEventTarget(
+    event,
+    "button, a, input, select, textarea, [contenteditable='true']",
+  );
+  if (projectKeycapCard && !interactiveControl && (event.key === "Enter" || event.key === " ")) {
+    event.preventDefault();
+    void applyProjectKeycapSelection(projectKeycapCard.dataset.projectKeycap);
+    return;
+  }
+
   const fontPickerQueryInput = getClosestFromEventTarget(event, "[data-font-picker-query]");
   if (!fontPickerQueryInput) {
     return;
@@ -3846,6 +4543,90 @@ function handleInspectorCardKeydown(event) {
   event.preventDefault();
 }
 
+function openKeycapExportOverlay(entryId) {
+  const entry = state.project.keycaps.find((item) => item.id === entryId);
+  if (!entry) {
+    return;
+  }
+
+  if (entry.id === state.project.activeKeycapId) {
+    syncActiveProjectKeycapFromCurrent();
+  }
+
+  state.keycapExportOverlayKeycapId = entry.id;
+  state.keycapSettingsOverlayKeycapId = "";
+  state.exportsSummary = "";
+  render();
+}
+
+function closeKeycapExportOverlay() {
+  if (!state.keycapExportOverlayKeycapId || state.exportsStatus === "running") {
+    return;
+  }
+
+  state.keycapExportOverlayKeycapId = "";
+  render();
+}
+
+function openKeycapSettingsOverlay(entryId) {
+  const entry = state.project.keycaps.find((item) => item.id === entryId);
+  if (!entry || state.exportsStatus === "running") {
+    return;
+  }
+
+  state.keycapExportOverlayKeycapId = "";
+  state.keycapSettingsOverlayKeycapId = entry.id;
+  render();
+}
+
+function closeKeycapSettingsOverlay() {
+  if (!state.keycapSettingsOverlayKeycapId) {
+    return;
+  }
+
+  state.keycapSettingsOverlayKeycapId = "";
+  render();
+}
+
+async function executeKeycapOverlayExport(format) {
+  const entry = getKeycapExportOverlayEntry();
+  if (!entry) {
+    closeKeycapExportOverlay();
+    return;
+  }
+
+  await executeExport(format, {
+    params: entry.params,
+    editorDataPayload: entry.editorDataPayload,
+    closeOverlayOnSuccess: true,
+  });
+}
+
+function handleKeycapExportOverlayClick(event) {
+  const deleteKeycapButton = getClosestFromEventTarget(event, "[data-keycap-delete]");
+  if (deleteKeycapButton) {
+    void deleteProjectKeycap(deleteKeycapButton.dataset.keycapDelete);
+    return;
+  }
+
+  const exportFormatButton = getClosestFromEventTarget(event, "[data-keycap-export-format]");
+  if (exportFormatButton) {
+    void executeKeycapOverlayExport(exportFormatButton.dataset.keycapExportFormat);
+    return;
+  }
+
+  const closeButton = getClosestFromEventTarget(event, "[data-keycap-export-close]");
+  if (closeButton || (event.target instanceof Element && event.target.matches("[data-keycap-export-overlay]"))) {
+    closeKeycapExportOverlay();
+    return;
+  }
+
+  const settingsCloseButton = getClosestFromEventTarget(event, "[data-keycap-settings-close]");
+  if (settingsCloseButton || (event.target instanceof Element && event.target.matches("[data-keycap-settings-overlay]"))) {
+    closeKeycapSettingsOverlay();
+  }
+}
+
 function handleSidebarTabChange(event) {
   const nextTab = event.currentTarget.dataset.sidebarTab;
   if (!nextTab || nextTab === state.sidebarTab) {
@@ -3862,11 +4643,6 @@ function toggleFieldGroup(groupId) {
   }
 
   state.collapsedFieldGroups[groupId] = !state.collapsedFieldGroups[groupId];
-  render({ animateInspector: true });
-}
-
-function toggleExportOptions() {
-  state.isExportOptionsOpen = !state.isExportOptionsOpen;
   render({ animateInspector: true });
 }
 
@@ -3893,6 +4669,15 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll("\"", "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function escapeCssIdentifier(value) {
+  const identifier = String(value ?? "");
+  if (typeof globalThis.CSS?.escape === "function") {
+    return globalThis.CSS.escape(identifier);
+  }
+
+  return identifier.replaceAll("\\", "\\\\").replaceAll("\"", "\\\"");
 }
 
 async function copyTextToClipboard(text) {
@@ -3957,6 +4742,7 @@ function applyLegendFontSelection(font, options = {}) {
 
   state.keycapParams[fieldKey] = font.key;
   syncDerivedKeycapParams(state.keycapParams);
+  syncActiveProjectKeycapFromCurrent();
   state.editorStatus = "dirty";
   state.editorSummary = t("status.dirty");
   render({ animateInspector: true });
@@ -4040,6 +4826,16 @@ function handleWindowKeydown(event) {
     shouldRender = true;
   }
 
+  if (state.keycapExportOverlayKeycapId && state.exportsStatus !== "running") {
+    state.keycapExportOverlayKeycapId = "";
+    shouldRender = true;
+  }
+
+  if (state.keycapSettingsOverlayKeycapId) {
+    state.keycapSettingsOverlayKeycapId = "";
+    shouldRender = true;
+  }
+
   if (shouldRender) {
     render();
   }
@@ -4068,6 +4864,498 @@ function setExportStatus(status, summary, historyEntry) {
   if (historyEntry) {
     recordExportHistory(historyEntry);
   }
+}
+
+function setProjectStatus(status, summary) {
+  state.projectStatus = status;
+  state.projectSummary = summary;
+}
+
+function cloneJsonValue(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function clonePreviewViewState(viewState) {
+  if (!viewState) {
+    return null;
+  }
+
+  try {
+    return cloneJsonValue(viewState);
+  } catch {
+    return null;
+  }
+}
+
+function getProjectEntryEditorDataPayload(entry) {
+  return entry?.editorDataPayload ?? createEditorDataPayload(entry?.params ?? state.keycapParams);
+}
+
+function getProjectEntryReportFileName(entry) {
+  return entry?.jsonPath || entry?.name || DEFAULT_EXPORT_BASE_NAME;
+}
+
+function setImportBindingReport(bindingReport, fileName, options = {}) {
+  const previousCollapsedState = state.isImportBindingNoticeCollapsed;
+  const unboundParams = bindingReport?.unboundParams ?? [];
+  state.lastImportBindingReport = unboundParams.length > 0
+    ? {
+        ...bindingReport,
+        fileName,
+      }
+    : null;
+  state.isImportBindingNoticeCollapsed = options.preserveCollapsed
+    ? previousCollapsedState
+    : false;
+}
+
+function parseProjectKeycapEntryEditorData(entry) {
+  return parseEditorDataPayloadWithReport(getProjectEntryEditorDataPayload(entry));
+}
+
+function activateProjectKeycapEntry(entry) {
+  const {
+    params,
+    bindingReport,
+  } = parseProjectKeycapEntryEditorData(entry);
+
+  state.keycapParams = syncDerivedKeycapParams(cloneJsonValue(params));
+  state.project.activeKeycapId = entry.id;
+  state.editorStatus = "dirty";
+  state.editorSummary = t("status.loadedDirty");
+  setImportBindingReport(bindingReport, getProjectEntryReportFileName(entry));
+  previewViewState = clonePreviewViewState(entry.previewViewState) ?? previewViewState;
+  return params;
+}
+
+function getPathExtension(path) {
+  return String(path ?? "")
+    .split(".")
+    .pop()
+    ?.toLowerCase() ?? "";
+}
+
+function isPreviewPathCompatibleWithDataUrl(path, previewImageDataUrl) {
+  const pathExtension = getPathExtension(path);
+  return pathExtension && pathExtension === getProjectPreviewImageExtension(previewImageDataUrl);
+}
+
+function handleProjectNameInput(input) {
+  state.project.name = input.value;
+  state.project.isDirty = true;
+  setProjectStatus("idle", t("project.edited"));
+}
+
+function createProjectEntryFromCurrentKeycap(options = {}) {
+  return createProjectKeycapEntry(state.keycapParams, options);
+}
+
+function captureCurrentPreviewViewState() {
+  return clonePreviewViewState(disposePreviewScene?.captureViewState?.() ?? previewViewState);
+}
+
+function capturePreviewImageDataUrlForViewState(viewState) {
+  const previewScene = disposePreviewScene;
+  const normalizedViewState = clonePreviewViewState(viewState);
+  if (!previewScene || !normalizedViewState || typeof previewScene.applyViewState !== "function") {
+    return createCurrentPreviewImageDataUrl();
+  }
+
+  const currentViewState = captureCurrentPreviewViewState();
+  previewScene.applyViewState(normalizedViewState);
+  const imageDataUrl = createCurrentPreviewImageDataUrl();
+
+  if (currentViewState) {
+    previewScene.applyViewState(currentViewState);
+    previewViewState = currentViewState;
+  }
+
+  return imageDataUrl;
+}
+
+function captureCurrentProjectPreview(options = {}) {
+  const previewViewState = clonePreviewViewState(options.previewViewState) ?? captureCurrentPreviewViewState();
+  return {
+    previewImageDataUrl: capturePreviewImageDataUrlForViewState(previewViewState),
+    previewViewState,
+  };
+}
+
+function syncActiveProjectKeycapFromCurrent(options = {}) {
+  if (!state.project.activeKeycapId) {
+    return;
+  }
+
+  const entryIndex = state.project.keycaps.findIndex((entry) => entry.id === state.project.activeKeycapId);
+  if (entryIndex < 0) {
+    state.project.activeKeycapId = "";
+    return;
+  }
+
+  const currentEntry = state.project.keycaps[entryIndex];
+  const nextPreviewImageDataUrl = options.previewImageDataUrl ?? currentEntry.previewImageDataUrl;
+  const nextPreviewViewState = options.previewViewState === undefined
+    ? currentEntry.previewViewState
+    : clonePreviewViewState(options.previewViewState);
+  const nextPreviewPath = options.previewPath ?? (
+    options.previewImageDataUrl && !isPreviewPathCompatibleWithDataUrl(currentEntry.previewPath, nextPreviewImageDataUrl)
+      ? undefined
+      : currentEntry.previewPath
+  );
+  const nextEditorDataPayload = options.editorDataPayload
+    ?? mergeEditorDataPayloadParams(currentEntry.editorDataPayload, state.keycapParams);
+  state.project.keycaps[entryIndex] = createProjectEntryFromCurrentKeycap({
+    id: currentEntry.id,
+    name: state.keycapParams.name,
+    jsonPath: currentEntry.jsonPath,
+    previewPath: nextPreviewPath,
+    displayOrder: currentEntry.displayOrder,
+    editorDataPayload: nextEditorDataPayload,
+    previewImageDataUrl: nextPreviewImageDataUrl,
+    previewViewState: nextPreviewViewState,
+  });
+  const { bindingReport } = parseProjectKeycapEntryEditorData(state.project.keycaps[entryIndex]);
+  setImportBindingReport(bindingReport, getProjectEntryReportFileName(state.project.keycaps[entryIndex]), {
+    preserveCollapsed: true,
+  });
+  state.project.isDirty = true;
+}
+
+function refreshActiveProjectKeycapPreviewFromCurrent() {
+  if (!state.project.activeKeycapId) {
+    return;
+  }
+
+  const activeEntry = state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId);
+  if (!activeEntry) {
+    return;
+  }
+
+  const previewViewState = clonePreviewViewState(activeEntry.previewViewState) ?? captureCurrentPreviewViewState();
+  syncActiveProjectKeycapFromCurrent(captureCurrentProjectPreview({ previewViewState }));
+}
+
+function drawFallbackPreviewThumbnail(context, canvas, thumbnailSize) {
+  const scale = Math.min(thumbnailSize / canvas.width, thumbnailSize / canvas.height);
+  const width = Math.max(canvas.width * scale, 1);
+  const height = Math.max(canvas.height * scale, 1);
+  const left = (thumbnailSize - width) / 2;
+  const top = (thumbnailSize - height) / 2;
+  context.drawImage(canvas, left, top, width, height);
+}
+
+function captureCurrentPreviewImageDataUrl() {
+  const canvas = app.querySelector("[data-preview-stage] canvas");
+  if (!(canvas instanceof HTMLCanvasElement) || canvas.width <= 0 || canvas.height <= 0) {
+    return "";
+  }
+
+  try {
+    const thumbnailCanvas = document.createElement("canvas");
+    const thumbnailSize = 384;
+    thumbnailCanvas.width = thumbnailSize;
+    thumbnailCanvas.height = thumbnailSize;
+    const context = thumbnailCanvas.getContext("2d");
+    if (!context) {
+      return "";
+    }
+
+    context.fillStyle = "#fcfaf6";
+    context.fillRect(0, 0, thumbnailSize, thumbnailSize);
+
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = canvas.width;
+    sourceCanvas.height = canvas.height;
+    const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
+    if (!sourceContext) {
+      drawFallbackPreviewThumbnail(context, canvas, thumbnailSize);
+      return thumbnailCanvas.toDataURL("image/png");
+    }
+
+    sourceContext.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+    sourceContext.drawImage(canvas, 0, 0);
+    const imageData = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+    const objectBounds = findOpaquePixelBounds(imageData, sourceCanvas.width, sourceCanvas.height);
+
+    if (!objectBounds) {
+      drawFallbackPreviewThumbnail(context, canvas, thumbnailSize);
+      return thumbnailCanvas.toDataURL("image/png");
+    }
+
+    const sourcePadding = Math.ceil(Math.max(objectBounds.width, objectBounds.height) * 0.04);
+    const paddedBounds = expandPixelBounds(objectBounds, sourceCanvas.width, sourceCanvas.height, sourcePadding);
+    const drawPlan = createSquareThumbnailDrawPlan(paddedBounds, thumbnailSize);
+    if (!drawPlan) {
+      drawFallbackPreviewThumbnail(context, canvas, thumbnailSize);
+      return thumbnailCanvas.toDataURL("image/png");
+    }
+
+    context.drawImage(
+      sourceCanvas,
+      drawPlan.sourceX,
+      drawPlan.sourceY,
+      drawPlan.sourceWidth,
+      drawPlan.sourceHeight,
+      drawPlan.destinationX,
+      drawPlan.destinationY,
+      drawPlan.destinationWidth,
+      drawPlan.destinationHeight,
+    );
+    return thumbnailCanvas.toDataURL("image/png");
+  } catch {
+    return "";
+  }
+}
+
+function createCurrentPreviewImageDataUrl() {
+  return captureCurrentPreviewImageDataUrl() || createProjectPreviewPlaceholderDataUrl(state.keycapParams);
+}
+
+function recaptureActiveProjectKeycapPreview(entryId) {
+  if (!entryId || entryId !== state.project.activeKeycapId) {
+    return;
+  }
+
+  syncActiveProjectKeycapFromCurrent(captureCurrentProjectPreview());
+  setProjectStatus("success", t("project.previewRecaptured"));
+  render({ animateInspector: true });
+}
+
+async function addCurrentKeycapToProject() {
+  const entry = createProjectEntryFromCurrentKeycap({
+    ...captureCurrentProjectPreview(),
+    displayOrder: state.project.keycaps.length,
+  });
+  state.project.keycaps = [...state.project.keycaps, entry];
+  state.project.activeKeycapId = entry.id;
+  state.project.isDirty = true;
+  setProjectStatus("success", t("project.added", { name: entry.name }));
+  render({ animateInspector: true });
+}
+
+async function applyProjectKeycapSelection(entryId) {
+  const entry = state.project.keycaps.find((item) => item.id === entryId);
+  if (!entry) {
+    return;
+  }
+
+  activateProjectKeycapEntry(entry);
+  setProjectStatus("success", t("project.loadedKeycap", { name: entry.name }));
+
+  render({ animateInspector: true });
+  await executeKeycapPreview({ silent: true });
+}
+
+async function deleteProjectKeycap(entryId) {
+  const entryIndex = state.project.keycaps.findIndex((item) => item.id === entryId);
+  if (entryIndex === -1) {
+    closeKeycapSettingsOverlay();
+    return;
+  }
+
+  const removedEntry = state.project.keycaps[entryIndex];
+  const nextKeycaps = assignProjectKeycapDisplayOrder(state.project.keycaps.filter((item) => item.id !== entryId));
+  const wasActive = removedEntry.id === state.project.activeKeycapId;
+  const nextActiveEntry = wasActive
+    ? nextKeycaps[entryIndex] ?? nextKeycaps[entryIndex - 1] ?? null
+    : nextKeycaps.find((item) => item.id === state.project.activeKeycapId) ?? null;
+
+  state.project.keycaps = nextKeycaps;
+  state.project.activeKeycapId = nextActiveEntry?.id ?? "";
+  state.project.isDirty = true;
+  state.keycapSettingsOverlayKeycapId = "";
+  state.keycapExportOverlayKeycapId = "";
+  setProjectStatus("success", t("project.deleted", { name: removedEntry.name }));
+
+  if (wasActive && nextActiveEntry) {
+    activateProjectKeycapEntry(nextActiveEntry);
+  } else if (wasActive) {
+    state.lastImportBindingReport = null;
+    state.isImportBindingNoticeCollapsed = false;
+  }
+
+  render({ animateInspector: true });
+
+  if (wasActive && nextActiveEntry) {
+    await executeKeycapPreview({ silent: true });
+  }
+}
+
+function getProjectPathParts(relativePath) {
+  return String(relativePath ?? "")
+    .replaceAll("\\", "/")
+    .split("/")
+    .filter(Boolean);
+}
+
+async function getProjectFileHandle(directoryHandle, relativePath, options = {}) {
+  const pathParts = getProjectPathParts(relativePath);
+  const fileName = pathParts.pop();
+  if (!fileName) {
+    throw new Error(t("project.invalidPath", { path: relativePath }));
+  }
+
+  let currentDirectory = directoryHandle;
+  for (const directoryName of pathParts) {
+    currentDirectory = await currentDirectory.getDirectoryHandle(directoryName, options);
+  }
+
+  return currentDirectory.getFileHandle(fileName, options);
+}
+
+async function readProjectFile(directoryHandle, relativePath) {
+  const fileHandle = await getProjectFileHandle(directoryHandle, relativePath);
+  return fileHandle.getFile();
+}
+
+async function writeProjectFile(directoryHandle, relativePath, content) {
+  const fileHandle = await getProjectFileHandle(directoryHandle, relativePath, { create: true });
+  if (typeof fileHandle.createWritable !== "function") {
+    throw new Error(t("project.directoryNotWritable"));
+  }
+
+  const writable = await fileHandle.createWritable();
+  await writable.write(content);
+  await writable.close();
+}
+
+async function ensureDirectoryWritePermission(directoryHandle) {
+  if (!directoryHandle || typeof directoryHandle.getFileHandle !== "function") {
+    return false;
+  }
+
+  if (typeof directoryHandle.queryPermission !== "function" || typeof directoryHandle.requestPermission !== "function") {
+    return true;
+  }
+
+  const permissionOptions = { mode: "readwrite" };
+  if (await directoryHandle.queryPermission(permissionOptions) === "granted") {
+    return true;
+  }
+
+  return await directoryHandle.requestPermission(permissionOptions) === "granted";
+}
+
+async function selectProjectDirectoryForSave() {
+  if (await ensureDirectoryWritePermission(state.project.directoryHandle)) {
+    return state.project.directoryHandle;
+  }
+
+  if (typeof window.showDirectoryPicker !== "function") {
+    return null;
+  }
+
+  const directoryHandle = await window.showDirectoryPicker({
+    id: "keycap-maker-project",
+    mode: "readwrite",
+  });
+  if (!(await ensureDirectoryWritePermission(directoryHandle))) {
+    throw new Error(t("project.permissionDenied"));
+  }
+
+  state.project.directoryHandle = directoryHandle;
+  if (!String(state.project.name ?? "").trim() || state.project.name === DEFAULT_PROJECT_NAME) {
+    state.project.name = directoryHandle.name;
+  }
+  return directoryHandle;
+}
+
+async function dataUrlToBlob(dataUrl) {
+  const response = await fetch(dataUrl);
+  if (!response.ok) {
+    throw new Error(t("project.previewDecodeFailed"));
+  }
+
+  return response.blob();
+}
+
+async function dataUrlToUint8Array(dataUrl) {
+  const blob = await dataUrlToBlob(dataUrl);
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
+function prepareProjectForSave() {
+  if (state.project.activeKeycapId) {
+    refreshActiveProjectKeycapPreviewFromCurrent();
+  }
+
+  state.project.name = normalizeProjectName(state.project.name, DEFAULT_PROJECT_NAME);
+  state.project.keycaps = state.project.keycaps.map((entry) => createProjectKeycapEntry(entry.params, {
+    id: entry.id,
+    name: entry.name,
+    jsonPath: entry.jsonPath,
+    previewPath: entry.previewPath,
+    displayOrder: index,
+    editorDataPayload: entry.editorDataPayload,
+    previewImageDataUrl: entry.previewImageDataUrl,
+    previewViewState: entry.previewViewState,
+  }));
+  return state.project;
+}
+
+async function writeProjectToDirectory(directoryHandle, project) {
+  const manifest = createProjectManifest(project);
+  await directoryHandle.getDirectoryHandle(PROJECT_KEYCAPS_DIRNAME, { create: true });
+  await writeProjectFile(
+    directoryHandle,
+    PROJECT_MANIFEST_FILENAME,
+    JSON.stringify(manifest, null, 2),
+  );
+
+  for (const entry of project.keycaps) {
+    await writeProjectFile(
+      directoryHandle,
+      entry.jsonPath,
+      JSON.stringify(entry.editorDataPayload, null, 2),
+    );
+    await writeProjectFile(
+      directoryHandle,
+      entry.previewPath,
+      await dataUrlToBlob(entry.previewImageDataUrl || createProjectPreviewPlaceholderDataUrl(entry.params)),
+    );
+  }
+}
+
+async function downloadProjectZip(project) {
+  const projectDirectoryName = normalizeProjectName(project.name, DEFAULT_PROJECT_NAME);
+  const manifest = createProjectManifest(project);
+  const files = {
+    [`${projectDirectoryName}/${PROJECT_MANIFEST_FILENAME}`]: strToU8(JSON.stringify(manifest, null, 2)),
+  };
+
+  for (const entry of project.keycaps) {
+    files[`${projectDirectoryName}/${entry.jsonPath}`] = strToU8(JSON.stringify(entry.editorDataPayload, null, 2));
+    files[`${projectDirectoryName}/${entry.previewPath}`] = await dataUrlToUint8Array(
+      entry.previewImageDataUrl || createProjectPreviewPlaceholderDataUrl(entry.params),
+    );
+  }
+
+  const zipBytes = zipSync(files, { level: 6 });
+  downloadBlob(new Blob([zipBytes], { type: "application/zip" }), `${projectDirectoryName}.zip`);
+}
+
+async function saveProject() {
+  setProjectStatus("running", t("project.saving"));
+  render();
+
+  try {
+    const project = prepareProjectForSave();
+    const directoryHandle = await selectProjectDirectoryForSave();
+    if (directoryHandle) {
+      await writeProjectToDirectory(directoryHandle, project);
+      state.project.directoryHandle = directoryHandle;
+      state.project.isDirty = false;
+      setProjectStatus("success", t("project.savedDirectory", { name: project.name }));
+    } else {
+      await downloadProjectZip(project);
+      state.project.isDirty = false;
+      setProjectStatus("success", t("project.savedZip", { name: project.name }));
+    }
+  } catch (error) {
+    setProjectStatus("error", t("project.saveFailed", { message: `${error}` }));
+  }
+
+  render({ animateInspector: true });
 }
 
 function applyShapeProfileParams(profileKey) {
@@ -4165,11 +5453,8 @@ async function importEditorDataFile(file) {
   state.keycapParams = nextParams;
   state.editorStatus = "dirty";
   state.editorSummary = t("status.loadedDirty");
-  state.isImportBindingNoticeCollapsed = false;
-  state.lastImportBindingReport = {
-    ...bindingReport,
-    fileName: file.name,
-  };
+  setImportBindingReport(bindingReport, file.name);
+  state.sidebarTab = "project";
   setExportStatus(
     "success",
     t("importExport.loaded", { fileName: file.name }),
@@ -4184,8 +5469,393 @@ async function importEditorDataFile(file) {
     },
   );
 
-  render({ animateInspector: true });
   await executeKeycapPreview({ silent: true });
+  const entry = createProjectEntryFromCurrentKeycap({
+    ...captureCurrentProjectPreview(),
+    displayOrder: state.project.keycaps.length,
+    editorDataPayload: payload,
+  });
+  state.project.keycaps = [...state.project.keycaps, entry];
+  state.project.activeKeycapId = entry.id;
+  state.project.isDirty = true;
+  setProjectStatus("success", t("project.added", { name: entry.name }));
+  render({ animateInspector: true });
+}
+
+function getWebkitFile(fileEntry) {
+  return new Promise((resolve, reject) => {
+    fileEntry.file(resolve, reject);
+  });
+}
+
+function getWebkitDirectoryChild(directoryEntry, name, kind) {
+  return new Promise((resolve, reject) => {
+    const handleEntry = (entry) => {
+      if ((kind === "file" && entry?.isFile) || (kind === "directory" && entry?.isDirectory)) {
+        resolve(entry);
+      } else {
+        reject(new Error(t("project.invalidPath", { path: name })));
+      }
+    };
+
+    if (kind === "file") {
+      directoryEntry.getFile(name, {}, handleEntry, reject);
+    } else {
+      directoryEntry.getDirectory(name, {}, handleEntry, reject);
+    }
+  });
+}
+
+function createWebkitDirectoryHandle(directoryEntry) {
+  return {
+    kind: "directory",
+    name: directoryEntry.name,
+    async getFileHandle(name, options = {}) {
+      if (options.create) {
+        throw new Error(t("project.directoryNotWritable"));
+      }
+
+      const fileEntry = await getWebkitDirectoryChild(directoryEntry, name, "file");
+      return {
+        kind: "file",
+        name: fileEntry.name,
+        getFile: () => getWebkitFile(fileEntry),
+      };
+    },
+    async getDirectoryHandle(name, options = {}) {
+      if (options.create) {
+        throw new Error(t("project.directoryNotWritable"));
+      }
+
+      const childDirectoryEntry = await getWebkitDirectoryChild(directoryEntry, name, "directory");
+      return createWebkitDirectoryHandle(childDirectoryEntry);
+    },
+  };
+}
+
+async function getDroppedDirectoryHandle(dataTransfer) {
+  for (const item of Array.from(dataTransfer?.items ?? [])) {
+    if (item.kind !== "file") {
+      continue;
+    }
+
+    if (typeof item.getAsFileSystemHandle === "function") {
+      try {
+        const handle = await item.getAsFileSystemHandle();
+        if (handle?.kind === "directory") {
+          return handle;
+        }
+      } catch {}
+    }
+
+    const entry = typeof item.webkitGetAsEntry === "function" ? item.webkitGetAsEntry() : null;
+    if (entry?.isDirectory) {
+      return createWebkitDirectoryHandle(entry);
+    }
+  }
+
+  return null;
+}
+
+async function getDroppedFiles(dataTransfer) {
+  const files = Array.from(dataTransfer?.files ?? []);
+  if (files.length > 0) {
+    return files;
+  }
+
+  const handleFiles = [];
+  for (const item of Array.from(dataTransfer?.items ?? [])) {
+    if (item.kind !== "file" || typeof item.getAsFileSystemHandle !== "function") {
+      continue;
+    }
+
+    try {
+      const handle = await item.getAsFileSystemHandle();
+      if (handle?.kind === "file") {
+        handleFiles.push(await handle.getFile());
+      }
+    } catch {}
+  }
+
+  return handleFiles;
+}
+
+function readBlobAsDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result ?? "")), { once: true });
+    reader.addEventListener("error", () => reject(reader.error), { once: true });
+    reader.readAsDataURL(blob);
+  });
+}
+
+function readBytesAsText(bytes) {
+  return textDecoder.decode(bytes);
+}
+
+async function readBytesAsDataUrl(bytes, path) {
+  return readBlobAsDataUrl(new Blob([bytes], { type: getProjectAssetMimeType(path) }));
+}
+
+function normalizeArchiveEntryPath(path) {
+  return String(path ?? "")
+    .replaceAll("\\", "/")
+    .replace(/^\/+/, "");
+}
+
+function createNormalizedArchiveEntries(rawEntries) {
+  const entries = new Map();
+
+  for (const [path, bytes] of Object.entries(rawEntries ?? {})) {
+    const normalizedPath = normalizeArchiveEntryPath(path);
+    if (!normalizedPath || normalizedPath.endsWith("/") || normalizedPath.startsWith("__MACOSX/")) {
+      continue;
+    }
+
+    entries.set(normalizedPath, bytes);
+  }
+
+  return entries;
+}
+
+function getProjectRootPrefixFromPath(path) {
+  const normalizedPath = normalizeArchiveEntryPath(path);
+  if (!normalizedPath.endsWith(PROJECT_MANIFEST_FILENAME)) {
+    return "";
+  }
+
+  return normalizedPath.slice(0, -PROJECT_MANIFEST_FILENAME.length);
+}
+
+function findProjectArchiveEntryPath(entries, rootPrefix, projectPath) {
+  const normalizedProjectPath = normalizeArchiveEntryPath(projectPath);
+  const expectedPath = `${rootPrefix}${normalizedProjectPath}`;
+  if (entries.has(expectedPath)) {
+    return expectedPath;
+  }
+
+  return Array.from(entries.keys()).find((path) => path.endsWith(`/${normalizedProjectPath}`)) ?? "";
+}
+
+async function readProjectPreviewImageDataUrl(directoryHandle, previewPath, params) {
+  if (!previewPath) {
+    return createProjectPreviewPlaceholderDataUrl(params);
+  }
+
+  try {
+    const previewFile = await readProjectFile(directoryHandle, previewPath);
+    return await readBlobAsDataUrl(previewFile);
+  } catch {
+    return createProjectPreviewPlaceholderDataUrl(params);
+  }
+}
+
+async function importProjectDirectory(directoryHandle) {
+  const manifestFile = await readProjectFile(directoryHandle, PROJECT_MANIFEST_FILENAME);
+  const manifestPayload = JSON.parse(await manifestFile.text());
+  const manifest = parseProjectManifest(manifestPayload, directoryHandle.name);
+  const keycaps = [];
+
+  for (const manifestEntry of manifest.keycaps) {
+    const editorDataFile = await readProjectFile(directoryHandle, manifestEntry.jsonPath);
+    const editorDataPayload = JSON.parse(await editorDataFile.text());
+    const entryWithoutPreview = createProjectKeycapEntry({}, {
+      manifestEntry,
+      editorDataPayload,
+    });
+    const previewImageDataUrl = await readProjectPreviewImageDataUrl(
+      directoryHandle,
+      manifestEntry.previewPath,
+      entryWithoutPreview.params,
+    );
+
+    keycaps.push(createProjectKeycapEntry(entryWithoutPreview.params, {
+      manifestEntry,
+      editorDataPayload,
+      previewImageDataUrl,
+    }));
+  }
+
+  state.project = createEmptyProjectState({
+    name: manifest.name,
+    keycaps,
+    activeKeycapId: manifest.activeKeycapId,
+    directoryHandle,
+    isDirty: false,
+  });
+  const activeEntry = keycaps.find((entry) => entry.id === state.project.activeKeycapId) ?? keycaps[0] ?? null;
+  if (activeEntry) {
+    activateProjectKeycapEntry(activeEntry);
+  } else {
+    state.lastImportBindingReport = null;
+    state.isImportBindingNoticeCollapsed = false;
+  }
+
+  state.sidebarTab = "project";
+  state.editorStatus = activeEntry ? "dirty" : state.editorStatus;
+  state.editorSummary = activeEntry ? t("status.loadedDirty") : state.editorSummary;
+  setProjectStatus("success", t("project.loaded", { name: state.project.name, count: keycaps.length }));
+  render({ animateInspector: true });
+
+  if (activeEntry) {
+    await executeKeycapPreview({ silent: true });
+  }
+}
+
+function getDroppedFilePath(file) {
+  return String(file.webkitRelativePath || file.name || "")
+    .replaceAll("\\", "/")
+    .replace(/^\/+/, "");
+}
+
+function findDroppedProjectManifestFile(files) {
+  return files.find((file) => {
+    const filePath = getDroppedFilePath(file);
+    return file.name === PROJECT_MANIFEST_FILENAME || filePath.endsWith(`/${PROJECT_MANIFEST_FILENAME}`);
+  }) ?? null;
+}
+
+function getDroppedProjectRootPrefix(manifestFile) {
+  return getProjectRootPrefixFromPath(getDroppedFilePath(manifestFile));
+}
+
+function getDroppedProjectFallbackName(rootPrefix) {
+  return rootPrefix
+    .replace(/\/+$/g, "")
+    .split("/")
+    .filter(Boolean)
+    .pop() || DEFAULT_PROJECT_NAME;
+}
+
+function findDroppedProjectFile(files, rootPrefix, projectPath) {
+  const normalizedProjectPath = String(projectPath ?? "").replaceAll("\\", "/").replace(/^\/+/, "");
+  const expectedPath = `${rootPrefix}${normalizedProjectPath}`;
+  return files.find((file) => {
+    const filePath = getDroppedFilePath(file);
+    return filePath === expectedPath || filePath.endsWith(`/${normalizedProjectPath}`);
+  }) ?? null;
+}
+
+async function importProjectFiles(files, manifestFile) {
+  const rootPrefix = getDroppedProjectRootPrefix(manifestFile);
+  const manifestPayload = JSON.parse(await manifestFile.text());
+  const manifest = parseProjectManifest(manifestPayload, getDroppedProjectFallbackName(rootPrefix));
+  const keycaps = [];
+
+  for (const manifestEntry of manifest.keycaps) {
+    const editorDataFile = findDroppedProjectFile(files, rootPrefix, manifestEntry.jsonPath);
+    if (!editorDataFile) {
+      throw new Error(t("project.missingProjectFile", { path: manifestEntry.jsonPath }));
+    }
+
+    const editorDataPayload = JSON.parse(await editorDataFile.text());
+    const entryWithoutPreview = createProjectKeycapEntry({}, {
+      manifestEntry,
+      editorDataPayload,
+    });
+    const previewFile = manifestEntry.previewPath
+      ? findDroppedProjectFile(files, rootPrefix, manifestEntry.previewPath)
+      : null;
+    const previewImageDataUrl = previewFile
+      ? await readBlobAsDataUrl(previewFile)
+      : createProjectPreviewPlaceholderDataUrl(entryWithoutPreview.params);
+
+    keycaps.push(createProjectKeycapEntry(entryWithoutPreview.params, {
+      manifestEntry,
+      editorDataPayload,
+      previewImageDataUrl,
+    }));
+  }
+
+  state.project = createEmptyProjectState({
+    name: manifest.name,
+    keycaps,
+    activeKeycapId: manifest.activeKeycapId,
+    directoryHandle: null,
+    isDirty: false,
+  });
+  const activeEntry = keycaps.find((entry) => entry.id === state.project.activeKeycapId) ?? keycaps[0] ?? null;
+  if (activeEntry) {
+    activateProjectKeycapEntry(activeEntry);
+  } else {
+    state.lastImportBindingReport = null;
+    state.isImportBindingNoticeCollapsed = false;
+  }
+
+  state.sidebarTab = "project";
+  state.editorStatus = activeEntry ? "dirty" : state.editorStatus;
+  state.editorSummary = activeEntry ? t("status.loadedDirty") : state.editorSummary;
+  setProjectStatus("success", t("project.loaded", { name: state.project.name, count: keycaps.length }));
+  render({ animateInspector: true });
+
+  if (activeEntry) {
+    await executeKeycapPreview({ silent: true });
+  }
+}
+
+async function importProjectArchiveFile(file) {
+  const archiveBytes = new Uint8Array(await file.arrayBuffer());
+  const archiveEntries = createNormalizedArchiveEntries(unzipSync(archiveBytes));
+  const manifestPath = findProjectManifestPath(archiveEntries.keys());
+  if (!manifestPath) {
+    throw new Error(t("project.missingProjectFile", { path: PROJECT_MANIFEST_FILENAME }));
+  }
+
+  const rootPrefix = getProjectRootPrefixFromPath(manifestPath);
+  const manifestBytes = archiveEntries.get(manifestPath);
+  const manifestPayload = JSON.parse(readBytesAsText(manifestBytes));
+  const manifest = parseProjectManifest(manifestPayload, getDroppedProjectFallbackName(rootPrefix));
+  const keycaps = [];
+
+  for (const manifestEntry of manifest.keycaps) {
+    const editorDataPath = findProjectArchiveEntryPath(archiveEntries, rootPrefix, manifestEntry.jsonPath);
+    if (!editorDataPath) {
+      throw new Error(t("project.missingProjectFile", { path: manifestEntry.jsonPath }));
+    }
+
+    const editorDataPayload = JSON.parse(readBytesAsText(archiveEntries.get(editorDataPath)));
+    const entryWithoutPreview = createProjectKeycapEntry({}, {
+      manifestEntry,
+      editorDataPayload,
+    });
+    const previewEntryPath = manifestEntry.previewPath
+      ? findProjectArchiveEntryPath(archiveEntries, rootPrefix, manifestEntry.previewPath)
+      : "";
+    const previewImageDataUrl = previewEntryPath
+      ? await readBytesAsDataUrl(archiveEntries.get(previewEntryPath), previewEntryPath)
+      : createProjectPreviewPlaceholderDataUrl(entryWithoutPreview.params);
+
+    keycaps.push(createProjectKeycapEntry(entryWithoutPreview.params, {
+      manifestEntry,
+      editorDataPayload,
+      previewImageDataUrl,
+    }));
+  }
+
+  state.project = createEmptyProjectState({
+    name: manifest.name,
+    keycaps,
+    activeKeycapId: manifest.activeKeycapId,
+    directoryHandle: null,
+    isDirty: false,
+  });
+  const activeEntry = keycaps.find((entry) => entry.id === state.project.activeKeycapId) ?? keycaps[0] ?? null;
+  if (activeEntry) {
+    activateProjectKeycapEntry(activeEntry);
+  } else {
+    state.lastImportBindingReport = null;
+    state.isImportBindingNoticeCollapsed = false;
+  }
+
+  state.sidebarTab = "project";
+  state.editorStatus = activeEntry ? "dirty" : state.editorStatus;
+  state.editorSummary = activeEntry ? t("status.loadedDirty") : state.editorSummary;
+  setProjectStatus("success", t("project.loaded", { name: state.project.name, count: keycaps.length }));
+  render({ animateInspector: true });
+
+  if (activeEntry) {
+    await executeKeycapPreview({ silent: true });
+  }
 }
 
 async function importEditorDataFromDrop(files) {
@@ -4195,6 +5865,29 @@ async function importEditorDataFromDrop(files) {
   }
 
   await importEditorDataFile(jsonFile);
+}
+
+async function importFileTransferFromDrop(dataTransfer) {
+  const directoryHandle = await getDroppedDirectoryHandle(dataTransfer);
+  if (directoryHandle) {
+    await importProjectDirectory(directoryHandle);
+    return;
+  }
+
+  const files = await getDroppedFiles(dataTransfer);
+  const projectManifestFile = findDroppedProjectManifestFile(files);
+  if (projectManifestFile) {
+    await importProjectFiles(files, projectManifestFile);
+    return;
+  }
+
+  const projectArchiveFile = files.find((file) => isProjectArchiveFileName(file.name));
+  if (projectArchiveFile) {
+    await importProjectArchiveFile(projectArchiveFile);
+    return;
+  }
+
+  await importEditorDataFromDrop(files);
 }
 
 function handleWindowDragEnter(event) {
@@ -4241,7 +5934,7 @@ async function handleWindowDrop(event) {
   resetEditorDataDropState();
 
   try {
-    await importEditorDataFromDrop(Array.from(event.dataTransfer?.files ?? []));
+    await importFileTransferFromDrop(event.dataTransfer);
   } catch (error) {
     setExportStatus(
       "error",
@@ -4544,6 +6237,7 @@ function handleFieldChange(event) {
   }
 
   syncDerivedKeycapParams(state.keycapParams);
+  syncActiveProjectKeycapFromCurrent();
   const changedPrimaryField = LINKED_SIZE_UNIT_FIELDS[field] ?? field;
   if (field in LINKED_SIZE_UNIT_FIELDS || Object.values(LINKED_SIZE_UNIT_FIELDS).includes(field)) {
     syncLinkedSizeInputs(field);
@@ -4685,10 +6379,11 @@ function syncLinkedSizeInputs(changedField) {
   syncKeyUnitBasisCopy();
 }
 
-function schedulePreviewRefresh() {
+function schedulePreviewRefresh(options = {}) {
+  const { refreshActiveProjectPreview = true } = options;
   window.clearTimeout(previewDebounceTimer);
   previewDebounceTimer = window.setTimeout(() => {
-    executeKeycapPreview({ silent: true });
+    executeKeycapPreview({ silent: true, refreshActiveProjectPreview });
   }, 450);
 }
 
@@ -4724,17 +6419,17 @@ async function renderPreviewViewer() {
   });
 }
 
-function createColorLayerJob({ name, exportTarget, outputPath, colorFieldKey }) {
+function createColorLayerJob({ name, exportTarget, outputPath, colorFieldKey, params = state.keycapParams }) {
   return {
     name,
     exportTarget,
     outputPath,
-    colorHex: getColorFieldValue(colorFieldKey),
-    color: getColorFieldNumber(colorFieldKey),
+    colorHex: getColorFieldValue(colorFieldKey, params),
+    color: getColorFieldNumber(colorFieldKey, params),
   };
 }
 
-function createKeycapOffJobs(purpose) {
+function createKeycapOffJobs(purpose, params = state.keycapParams) {
   if (purpose === "preview" || purpose === "3mf") {
     return [
       createColorLayerJob({
@@ -4742,42 +6437,47 @@ function createKeycapOffJobs(purpose) {
         exportTarget: "body_core",
         outputPath: keycapBodyPreviewPath,
         colorFieldKey: "bodyColor",
+        params,
       }),
-      ...(isTypewriterRimRenderable(state.keycapParams)
+      ...(isTypewriterRimRenderable(params)
         ? [
             createColorLayerJob({
               name: "rim",
               exportTarget: "rim",
               outputPath: keycapRimPreviewPath,
               colorFieldKey: "rimColor",
+              params,
             }),
           ]
         : []),
-      ...(state.keycapParams.homingBarEnabled
+      ...(params.homingBarEnabled
         ? [
             createColorLayerJob({
               name: "homing",
               exportTarget: "homing",
               outputPath: keycapHomingPreviewPath,
               colorFieldKey: "homingBarColor",
+              params,
             }),
           ]
         : []),
       ...TOP_LEGEND_CONFIGS
-        .filter((config) => isTopLegendRenderable(config))
+        .filter((config) => isTopLegendRenderable(config, params))
         .map((config) => createColorLayerJob({
           name: config.partName,
           exportTarget: config.exportTarget,
           outputPath: config.outputPath,
           colorFieldKey: config.colorFieldKey,
+          params,
         })),
       ...SIDE_LEGEND_CONFIGS
-        .filter((config) => isSideLegendRenderable(config))
+        .filter((config) => isSideLegendRenderable(config, params))
         .map((config) => createColorLayerJob({
           name: `legend-${config.side}`,
           exportTarget: config.exportTarget,
           outputPath: config.outputPath,
           colorFieldKey: config.colorFieldKey,
+          params,
         })),
     ];
   }
@@ -4785,13 +6485,13 @@ function createKeycapOffJobs(purpose) {
   throw new Error(t("errors.unsupportedOffPurpose", { purpose }));
 }
 
-async function runKeycapOffJobs(jobs) {
+async function runKeycapOffJobs(jobs, params = state.keycapParams) {
   const outputs = [];
 
   for (const job of jobs) {
     const result = await runOpenScad({
       files: await createKeycapFiles({
-        params: state.keycapParams,
+        params,
         exportTarget: job.exportTarget,
       }),
       args: buildKeycapArgs({
@@ -4813,7 +6513,7 @@ async function runKeycapOffJobs(jobs) {
 }
 
 async function executeKeycapPreview(options = {}) {
-  const { silent = false } = options;
+  const { silent = false, refreshActiveProjectPreview = false } = options;
   const requestId = ++latestPreviewRequestId;
 
   state.editorStatus = "running";
@@ -4863,18 +6563,27 @@ async function executeKeycapPreview(options = {}) {
     state.previewLayers = [];
   }
 
-  renderPreviewViewer();
+  await renderPreviewViewer();
+  if (refreshActiveProjectPreview) {
+    refreshActiveProjectKeycapPreviewFromCurrent();
+  }
 }
 
-async function executeExport(format) {
+async function executeExport(format, options = {}) {
+  const {
+    params = state.keycapParams,
+    editorDataPayload = null,
+    closeOverlayOnSuccess = false,
+  } = options;
   state.exportsStatus = "running";
   state.exportsSummary = t("importExport.preparing");
   render();
 
+  let didSucceed = false;
   try {
     if (format === "editor-data") {
       const startedAt = performance.now();
-      const payload = createEditorDataPayload(state.keycapParams);
+      const payload = editorDataPayload ?? createEditorDataPayload(params);
       const json = JSON.stringify(payload, null, 2);
       const blob = new Blob([json], { type: "application/json;charset=utf-8" });
       downloadBlob(blob, buildEditorDataFilename(payload.params));
@@ -4890,7 +6599,7 @@ async function executeExport(format) {
         },
       );
     } else if (format === "3mf") {
-      const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf"));
+      const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf", params), params);
       const savedPartLabels = describePartLabels(offResults.map((entry) => entry.name));
       const blob = create3mfBlob(
         offResults.map((entry) => ({
@@ -4899,10 +6608,10 @@ async function executeExport(format) {
           ...entry.mesh,
         })),
         {
-          assemblyName: sanitizeExportBaseName(state.keycapParams.name),
+          assemblyName: sanitizeExportBaseName(params.name),
         },
       );
-      downloadBlob(blob, build3mfFilename());
+      downloadBlob(blob, build3mfFilename(params));
 
       setExportStatus(
         "success",
@@ -4918,7 +6627,7 @@ async function executeExport(format) {
     } else if (format === "stl") {
       const result = await runOpenScad({
         files: await createKeycapFiles({
-          params: state.keycapParams,
+          params,
           exportTarget: "single_material_shape",
         }),
         args: buildKeycapArgs({
@@ -4929,7 +6638,7 @@ async function executeExport(format) {
       });
       const [output] = result.outputs;
       const blob = new Blob([output.bytes], { type: "model/stl" });
-      downloadBlob(blob, buildStlFilename());
+      downloadBlob(blob, buildStlFilename(params));
 
       setExportStatus(
         "success",
@@ -4945,6 +6654,8 @@ async function executeExport(format) {
     } else {
       throw new Error(t("importExport.unsupportedExport", { format }));
     }
+
+    didSucceed = true;
   } catch (error) {
     setExportStatus(
       "error",
@@ -4957,6 +6668,10 @@ async function executeExport(format) {
         notes: `${error}`,
       },
     );
+  }
+
+  if (didSucceed && closeOverlayOnSuccess) {
+    state.keycapExportOverlayKeycapId = "";
   }
 
   render();

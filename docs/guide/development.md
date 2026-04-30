@@ -13,6 +13,8 @@
 
 - `src/main.js`
   入力項目、export 導線、JSON 入出力、状態管理
+- `src/lib/project-data.js`
+  プロジェクト manifest とプロジェクト内キーキャップ定義
 - `src/data/keycap-shape-registry.js`
   shape JSON の集約、selector、profile 切り替え
 - `src/data/keycap-shapes/*.json`
@@ -55,7 +57,7 @@
 変更内容に応じて追加確認する。
 
 - UI 変更:
-  パラメータ編集、JSON 保存 / 読み込み、メッセージ表示
+  パラメータ編集、JSON 保存 / 読み込み、プロジェクト保存 / 読み込み、メッセージ表示
 - SCAD 変更:
   representative な形状変更が preview に反映されること
 - export 変更:

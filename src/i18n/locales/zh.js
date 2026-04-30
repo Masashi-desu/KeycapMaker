@@ -12,6 +12,7 @@ const zh = Object.freeze({
   },
   navigation: {
     label: "工作区部分",
+    project: "项目",
     settings: "设置",
     export: "导出",
   },
@@ -25,8 +26,8 @@ const zh = Object.freeze({
     saving: "正在保存...",
   },
   dropOverlay: {
-    title: "拖放编辑数据 / 兼容输入 JSON",
-    body: "读取已保存的编辑数据，或读取缺少值会由默认值补齐的兼容输入 JSON。",
+    title: "拖放项目 / 编辑数据 JSON",
+    body: "读取项目目录、项目 ZIP、已保存的编辑数据或兼容输入 JSON。",
   },
   importReport: {
     title: "JSON 读取报告",
@@ -35,8 +36,13 @@ const zh = Object.freeze({
     expand: "展开 JSON 读取报告",
     collapse: "折叠 JSON 读取报告",
     more: "另有 {count} 个",
+    deleteParam: "从 JSON 中删除 {path}",
   },
   panels: {
+    project: {
+      title: "项目",
+      body: "将多个键帽保存在一起，并从列表切换当前编辑对象。",
+    },
     settings: {
       title: "设置",
       body: "可以根据输入调整所选键帽形状和字符，并自动在右侧更新预览。",
@@ -67,6 +73,48 @@ const zh = Object.freeze({
     stlTitle: "保存 STL",
     stlBody: "保存为单一材料、单一网格的 STL。颜色和字符会被忽略，只导出形状。如果需要颜色区分或字符，请保存为 3MF。",
     saveStl: "保存 STL",
+  },
+  project: {
+    nameTitle: "项目名称",
+    nameLabel: "项目名称",
+    nameHint: "用于保存目录和项目 manifest 的名称",
+    keycapsTitle: "键帽列表",
+    keycapsCount: "{count} 项",
+    empty: "还没有键帽。",
+    addCurrent: "添加正在编辑键帽的副本",
+    recapturePreview: "重新拍摄 {name} 的预览",
+    previewRecaptured: "已重新拍摄预览",
+    reorderKeycap: "更改 {name} 的显示顺序",
+    selectKeycap: "编辑 {name}",
+    activeKeycap: "编辑中",
+    exportAction: "导出",
+    exportKeycap: "导出 {name}",
+    exportChip: "键帽导出",
+    exportTitle: "导出 {name}",
+    settingsAction: "设置",
+    settingsKeycap: "{name} 的设置",
+    settingsChip: "键帽设置",
+    settingsTitle: "{name} 的设置",
+    deleteChip: "删除",
+    deleteTitle: "删除键帽",
+    deleteBody: "将此键帽从项目列表中删除。",
+    deleteAction: "删除",
+    save: "保存项目",
+    edited: "正在编辑项目",
+    added: "已将 {name} 添加到项目",
+    deleted: "已从项目中删除 {name}",
+    reordered: "已更改键帽列表的显示顺序",
+    loadedKeycap: "已切换到 {name}",
+    loaded: "已读取项目 {name}（{count} 项）",
+    saving: "正在保存项目",
+    savedDirectory: "已将项目 {name} 保存到目录",
+    savedZip: "当前环境不支持目录保存，因此已将项目 {name} 保存为 ZIP",
+    saveFailed: "项目保存失败: {message}",
+    directoryNotWritable: "无法写入此目录。",
+    permissionDenied: "未授予目录写入权限。",
+    previewDecodeFailed: "无法将预览图转换为保存数据。",
+    invalidPath: "项目内路径无效: {path}",
+    missingProjectFile: "找不到项目内文件: {path}",
   },
   nameGroup: {
     title: "名称",
@@ -114,7 +162,7 @@ const zh = Object.freeze({
         },
         legend: {
           title: "字符",
-          description: "集中调整输入文字、字体、外观、位置、凸起高度和嵌入量。也可以直接输入多个字符。",
+          description: "集中调整键顶多个位置和侧壁上的文字、字体、外观、位置和凸起高度。也可以直接输入多个字符。",
         },
         homing: {
           title: "手指定位标记",
@@ -138,7 +186,7 @@ const zh = Object.freeze({
         },
         legend: {
           title: "字符",
-          description: "集中调整输入文字、字体、外观、位置、凸起高度和嵌入量。也可以直接输入多个字符。",
+          description: "集中调整键顶多个位置和侧壁上的文字、字体、外观、位置和凸起高度。也可以直接输入多个字符。",
         },
         homing: {
           title: "手指定位标记",
@@ -162,7 +210,7 @@ const zh = Object.freeze({
         },
         legend: {
           title: "字符",
-          description: "集中调整输入文字、字体、外观、位置、凸起高度和嵌入量。也可以直接输入多个字符。",
+          description: "集中调整键顶多个位置和侧壁上的文字、字体、外观、位置和凸起高度。也可以直接输入多个字符。",
         },
         homing: {
           title: "手指定位标记",
@@ -186,7 +234,7 @@ const zh = Object.freeze({
         },
         legend: {
           title: "字符",
-          description: "集中调整输入文字、字体、外观、位置、凸起高度和嵌入量。也可以直接输入多个字符。",
+          description: "集中调整键顶多个位置和侧壁上的文字、字体、外观、位置和凸起高度。也可以直接输入多个字符。",
         },
         homing: {
           title: "手指定位标记",
@@ -401,9 +449,10 @@ const zh = Object.freeze({
       hint: "上表面基准面的右侧高度。中心高度固定，当前左右倾斜为 {roll}。",
     },
     legendEnabled: {
-      label: "添加字符",
+      label: "添加键顶字符",
       hint: "关闭后不会生成文字形状",
     },
+    legendPrintNotice: "根据打印机和切片软件的精度，可能需要调整文字大小或粗细补正。",
     legendText: {
       label: "输入字符",
       hint: "可以直接输入多个字符",
@@ -450,6 +499,49 @@ const zh = Object.freeze({
     legendOffsetY: {
       label: "前后位置",
       hint: "前后移动文字",
+    },
+    sideLegend: {
+      enabled: {
+        label: "在{side}侧壁添加字符",
+        hint: "关闭后不会生成{side}侧的文字形状",
+      },
+      color: {
+        label: "{side}字符颜色",
+        hint: "可直接输入颜色代码，或使用颜色选择器",
+      },
+      text: {
+        label: "{side}输入字符",
+        hint: "可以直接输入多个字符",
+      },
+      fontKey: {
+        label: "{side}字体",
+      },
+      fontStyleKey: {
+        label: "{side}字体内样式",
+      },
+      underlineEnabled: {
+        label: "为{side}添加下划线",
+        hint: "下划线位置和粗细使用 font 文件中的信息，不会替换为任意外观。",
+      },
+      size: {
+        label: "{side}文字大小",
+        hint: "更改侧壁字符的大小。",
+      },
+      outlineDelta: {
+        label: "{side}粗细补正",
+      },
+      height: {
+        label: "{side}文字高度",
+        hint: "设为 0 时会成为与侧壁齐平的嵌入式字符；提高数值则会向外凸起。",
+      },
+      offsetX: {
+        label: "{side}横向位置",
+        hint: "在侧壁上左右移动文字",
+      },
+      offsetY: {
+        label: "{side}纵向位置",
+        hint: "在侧壁上上下移动文字",
+      },
     },
     homingBarEnabled: {
       label: "添加定位标记",
@@ -529,6 +621,12 @@ const zh = Object.freeze({
     choc_v1: "Kailh Choc v1 用的双爪形状。适配使用 Choc v1 轴的薄型键盘。",
     alps: "Alps / Matias 系的插入形状。适配对应的 Alps 系轴体。",
     choc_v2: "Kailh Choc v2 用的十字形状。生成适配 Choc v2 轴的安装部。",
+  },
+  sideLabels: {
+    front: "前面",
+    back: "背面",
+    left: "左侧",
+    right: "右侧",
   },
   font: {
     defaultStyleLabel: "按字体默认",
