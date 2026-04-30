@@ -944,6 +944,12 @@ export function mergeEditorDataPayloadParams(payload, params) {
     return nextPayload;
   }
 
+  const previousProfileKey = resolveEditorDataPayloadShapeProfile(existingPayload);
+  const nextProfileKey = nextPayload.params?.shapeProfile;
+  if (previousProfileKey && nextProfileKey && previousProfileKey !== nextProfileKey) {
+    return nextPayload;
+  }
+
   const existingParams = getPlainObject(existingPayload.params) ?? {};
   return {
     ...existingPayload,
@@ -953,6 +959,17 @@ export function mergeEditorDataPayloadParams(payload, params) {
       ...nextPayload.params,
     },
   };
+}
+
+function resolveEditorDataPayloadShapeProfile(payload) {
+  try {
+    return parseEditorDataPayloadResult(payload).params.shapeProfile;
+  } catch {
+    const selectors = getPlainObject(payload?.selectors) ?? {};
+    const params = getPlainObject(payload?.params) ?? {};
+    const rawProfileKey = selectors.shapeProfile ?? params.shapeProfile ?? payload?.shapeProfile;
+    return isRecognizedShapeProfileKey(rawProfileKey) ? rawProfileKey : null;
+  }
 }
 
 export function deleteEditorDataPayloadPath(payload, path) {
