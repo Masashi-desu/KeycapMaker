@@ -321,6 +321,34 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "type": "frame",
+                  "id": "NyLPN",
+                  "name": "warningToggle",
+                  "width": 30,
+                  "height": 30,
+                  "fill": "#FFFFFF6B",
+                  "cornerRadius": 12,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#E0D5C3"
+                  },
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "z71Nx",
+                      "name": "warningToggleIcon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "chevron-up",
+                      "iconFontFamily": "lucide",
+                      "fill": "#7C6A58"
+                    }
+                  ]
                 }
               ]
             },
@@ -970,6 +998,772 @@
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "Bold"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "vuJw8",
+      "x": 1540,
+      "y": 1025,
+      "name": "Left Column / JSON Import Warning",
+      "width": 420,
+      "fill": "#FCFAF6",
+      "cornerRadius": 28,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "#D8CCB8"
+      },
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 22,
+      "children": [
+        {
+          "type": "frame",
+          "id": "xx1uy",
+          "name": "Segment Control",
+          "width": "fill_container",
+          "fill": "#EFE7DABD",
+          "cornerRadius": 20,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#D8CCB88F"
+          },
+          "layout": "horizontal",
+          "gap": 6,
+          "padding": 6,
+          "children": [
+            {
+              "type": "frame",
+              "id": "fwZYd",
+              "name": "segParams",
+              "width": "fill_container",
+              "fill": "#2D241CEB",
+              "cornerRadius": 14,
+              "padding": [
+                12,
+                10
+              ],
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "2SyU4",
+                  "name": "segParamsText",
+                  "fill": "#FFF9F0",
+                  "content": "設定",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "Bold"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "xTKlI",
+              "name": "segExport",
+              "width": "fill_container",
+              "fill": "#00000000",
+              "cornerRadius": 14,
+              "padding": [
+                12,
+                10
+              ],
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BnM3s",
+                  "name": "segExportText",
+                  "fill": "#6F5E4D",
+                  "content": "書き出し",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "Bold"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "BLcN6",
+          "name": "sectionIntro",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "children": [
+            {
+              "type": "text",
+              "id": "KdB0H",
+              "name": "sectionIntroTitle",
+              "fill": "#2D241C",
+              "content": "設定",
+              "fontFamily": "Inter",
+              "fontSize": 24,
+              "fontWeight": "Bold"
+            },
+            {
+              "type": "text",
+              "id": "QnJsH",
+              "name": "sectionIntroText",
+              "fill": "#7C6A58",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "選んだキーキャップの形や印字を、入力に合わせて右側へ自動反映しながら調整できます。",
+              "lineHeight": 1.45,
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "JFr26",
+          "name": "Import Binding Warning Card",
+          "width": "fill_container",
+          "fill": "#F8E0B4",
+          "cornerRadius": 18,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#B8884C73"
+          },
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 14,
+          "children": [
+            {
+              "type": "frame",
+              "id": "SEZcB",
+              "name": "warningHeader",
+              "width": "fill_container",
+              "layout": "horizontal",
+              "gap": 11,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "c0pz7",
+                  "name": "warningCopy",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "0oy7Q",
+                      "name": "warningTitle",
+                      "fill": "#2D241C",
+                      "content": "JSON 読み込みレポート",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "BzRhT",
+                      "name": "warningBody",
+                      "fill": "#7C6A58",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "editor-data-unbound-params-test.json のうち 4 件のパラメータは現在の形状へ反映できなかったため読み飛ばしました。",
+                      "lineHeight": 1.45,
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "krskW",
+              "name": "Skipped Parameter Rows",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "I7loL",
+                  "name": "row params.topCornerRadius",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF6B",
+                  "cornerRadius": 12,
+                  "layout": "horizontal",
+                  "gap": 10,
+                  "padding": [
+                    6,
+                    8
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VURre",
+                      "name": "parameterName",
+                      "fill": "#2D241C",
+                      "content": "params.topCornerRadius",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "lIxOg",
+                      "name": "parameterValue",
+                      "fill": "#5B4B3D",
+                      "content": "2",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "Bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "rYwOe",
+                  "name": "row params.topCornerRadiusLeftTop",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF6B",
+                  "cornerRadius": 12,
+                  "layout": "horizontal",
+                  "gap": 10,
+                  "padding": [
+                    6,
+                    8
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "e1B2l",
+                      "name": "parameterName",
+                      "fill": "#2D241C",
+                      "content": "params.topCornerRadiusLeftTop",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y5FFc",
+                      "name": "parameterValue",
+                      "fill": "#5B4B3D",
+                      "content": "2.5",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "Bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "s6YVH",
+                  "name": "row params.legacyNestedField",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF6B",
+                  "cornerRadius": 12,
+                  "layout": "horizontal",
+                  "gap": 10,
+                  "padding": [
+                    6,
+                    8
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "NRDMm",
+                      "name": "parameterName",
+                      "fill": "#2D241C",
+                      "content": "params.legacyNestedField",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Zcz6p",
+                      "name": "parameterValue",
+                      "fill": "#5B4B3D",
+                      "content": "4",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "Bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "USyhD",
+                  "name": "row legacyTopLevelField",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF6B",
+                  "cornerRadius": 12,
+                  "layout": "horizontal",
+                  "gap": 10,
+                  "padding": [
+                    6,
+                    8
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "5NgT5",
+                      "name": "parameterName",
+                      "fill": "#2D241C",
+                      "content": "legacyTopLevelField",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Ngtup",
+                      "name": "parameterValue",
+                      "fill": "#5B4B3D",
+                      "content": "7",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "Bold"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "BLgVH",
+      "x": 5330,
+      "y": 0,
+      "name": "Keycap Editor Screen / JSON Drop",
+      "width": 1440,
+      "height": 980,
+      "fill": {
+        "type": "gradient",
+        "gradientType": "linear",
+        "enabled": true,
+        "rotation": 135,
+        "size": {
+          "height": 1
+        },
+        "colors": [
+          {
+            "color": "#F4F1EA",
+            "position": 0
+          },
+          {
+            "color": "#E7E0D2",
+            "position": 1
+          }
+        ]
+      },
+      "layout": "vertical",
+      "padding": 24,
+      "children": [
+        {
+          "type": "frame",
+          "id": "RD87L",
+          "name": "Workspace",
+          "width": "fill_container",
+          "gap": 20,
+          "padding": [
+            0,
+            80
+          ],
+          "justifyContent": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "vagKq",
+              "name": "Parameters",
+              "width": 420,
+              "fill": "#FCFAF624",
+              "cornerRadius": 28,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#D8CCB847"
+              },
+              "layout": "vertical",
+              "gap": 14,
+              "padding": 22,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "qM49w",
+                  "name": "Segment Control",
+                  "width": "fill_container",
+                  "fill": "#EFE7DABD",
+                  "cornerRadius": 20,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#D8CCB88F"
+                  },
+                  "gap": 6,
+                  "padding": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "dropSegParams",
+                      "name": "segParams",
+                      "width": "fill_container",
+                      "fill": "#2D241CEB",
+                      "cornerRadius": 14,
+                      "padding": [
+                        12,
+                        10
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "dropSegParamsText",
+                          "name": "segParamsText",
+                          "fill": "#FFF9F0",
+                          "content": "設定",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "Bold"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dropSegExport",
+                      "name": "segExport",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": 14,
+                      "padding": [
+                        12,
+                        10
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "dropSegExportText",
+                          "name": "segExportText",
+                          "fill": "#6F5E4D",
+                          "content": "書き出し",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "Bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "nj2Py",
+                  "name": "sectionIntro",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dropIntroTitle",
+                      "name": "sectionIntroTitle",
+                      "fill": "#2D241C",
+                      "content": "設定",
+                      "fontFamily": "Inter",
+                      "fontSize": 24,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "dropIntroText",
+                      "name": "sectionIntroText",
+                      "fill": "#7C6A58",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "選んだキーキャップの形や印字を、入力に合わせて右側へ自動反映しながら調整できます。",
+                      "lineHeight": 1.45,
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fEZdS",
+                  "name": "Name Card",
+                  "width": "fill_container",
+                  "fill": "#FFF8EE38",
+                  "cornerRadius": 22,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#D8CCB83D"
+                  },
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 18,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dropNameTitle",
+                      "fill": "#2D241C",
+                      "content": "名称",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dropNameInput",
+                      "width": "fill_container",
+                      "fill": "#FFFFFF3D",
+                      "cornerRadius": 12,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#D8CCB857"
+                      },
+                      "padding": [
+                        8,
+                        12
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "dropNameValue",
+                          "fill": "#2D241C",
+                          "content": "keycap-preview",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "Bold"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "kPb1a",
+              "name": "Preview Area",
+              "width": "fill_container",
+              "height": 932,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "dropPreviewBody",
+                  "name": "previewKeycapBody",
+                  "width": 460,
+                  "height": 360,
+                  "fill": "#C5C7C3",
+                  "cornerRadius": 20,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#B5B8B2"
+                  },
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "id": "dropPreviewHoming",
+                      "name": "previewHomingBar",
+                      "x": 190,
+                      "y": 275,
+                      "width": 90,
+                      "height": 22,
+                      "fill": "#C56216",
+                      "cornerRadius": 11
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "2n9Qr",
+              "name": "languageControlLayer",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "width": 1392,
+              "height": 40,
+              "justifyContent": "end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "b6MKY",
+                  "name": "languageComboboxButton",
+                  "width": 118,
+                  "height": 40,
+                  "fill": "#FCFAF6",
+                  "cornerRadius": 14,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#D8CCB88F"
+                  },
+                  "gap": 8,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dropLanguageText",
+                      "fill": "#2D241C",
+                      "content": "LANGUAGE",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "Bold"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "FwUE0",
+          "name": "Drop Overlay",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 980,
+          "fill": "#2D241C2E",
+          "padding": 24,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Tfipz",
+              "name": "Drop Overlay Card",
+              "width": 520,
+              "fill": "#FCFAF6",
+              "cornerRadius": 22,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#D8CCB8"
+              },
+              "layout": "horizontal",
+              "gap": 14,
+              "padding": [
+                22,
+                24
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "okxCw",
+                  "name": "dropJsonIconBox",
+                  "width": 54,
+                  "height": 54,
+                  "fill": "#2D241C14",
+                  "cornerRadius": 16,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "EXUJ9",
+                      "name": "dropJsonIcon",
+                      "width": 26,
+                      "height": 26,
+                      "iconFontName": "file",
+                      "iconFontFamily": "lucide",
+                      "fill": "#2D241C"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QiQwk",
+                  "name": "dropCopy",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "QlRHz",
+                      "name": "dropOverlayTitle",
+                      "fill": "#2D241C",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "編集データ / 互換入力 JSON をドロップ",
+                      "lineHeight": 1.2,
+                      "fontFamily": "Inter",
+                      "fontSize": 22,
+                      "fontWeight": "Bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Aiivb",
+                      "name": "dropOverlayBody",
+                      "fill": "#7C6A58",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "保存済みの編集データ、または不足値を既定で補う互換入力 JSON を読み込みます。",
+                      "lineHeight": 1.6,
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "wJQtq",
+                      "name": "dropJsonChip",
+                      "fill": "#2D241C14",
+                      "cornerRadius": 10,
+                      "padding": [
+                        4,
+                        9
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "TCSCF",
+                          "name": "dropJsonChipText",
+                          "fill": "#2D241C",
+                          "content": "JSON",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "Bold"
+                        }
+                      ]
                     }
                   ]
                 }

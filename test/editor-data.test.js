@@ -9,6 +9,7 @@ import {
   EDITOR_DATA_SCHEMA_VERSION,
   getTopSurfaceShapePreset,
   parseEditorDataPayload,
+  parseEditorDataPayloadWithReport,
   sanitizeExportBaseName,
   syncDerivedKeycapParams,
 } from "../src/lib/editor-data.js";
@@ -69,6 +70,36 @@ test("kind なしの疎 JSON も top-level パラメータを bind して不足�
   assert.equal(parsed.homingBarChamfer, defaults.homingBarChamfer);
   assert.equal(parsed.legendFontKey, defaults.legendFontKey);
   assert.ok(Number.isFinite(parsed.topBackHeight));
+});
+
+test("JSON 読み込み時に bind できないパラメータを報告する", () => {
+  const { params, bindingReport } = parseEditorDataPayloadWithReport({
+    shapeProfile: "typewriter",
+    keyWidth: 19,
+    topCornerRadius: 2,
+    oldCustomField: true,
+    params: {
+      keyDepth: 18.5,
+      legacyNestedField: 4,
+    },
+  });
+
+  assert.equal(params.shapeProfile, "typewriter");
+  assert.equal(params.keyWidth, 19);
+  assert.equal(params.keyDepth, 18.5);
+  assert.equal(bindingReport.profileKey, "typewriter");
+  assert.deepEqual(
+    bindingReport.unboundParams.map((entry) => entry.path).sort(),
+    ["oldCustomField", "params.legacyNestedField", "topCornerRadius"].sort(),
+  );
+  assert.deepEqual(
+    Object.fromEntries(bindingReport.unboundParams.map((entry) => [entry.path, entry.value])),
+    {
+      oldCustomField: true,
+      "params.legacyNestedField": 4,
+      topCornerRadius: 2,
+    },
+  );
 });
 
 test("homing bar の面取り量は負数を 0 に丸める", () => {

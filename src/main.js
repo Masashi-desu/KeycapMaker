@@ -23,7 +23,7 @@ import {
   createInitialKeycapParams,
   getTopSurfaceShapePreset,
   listEditableParamKeys,
-  parseEditorDataPayload,
+  parseEditorDataPayloadWithReport,
   resolveStemType,
   sanitizeEditorParamValue,
   sanitizeExportBaseName,
@@ -206,6 +206,7 @@ const DEFAULT_KEY_UNIT_MM = 18;
 const KEY_UNIT_MIN_MM = 1;
 const KEY_UNIT_STORAGE_KEY = "keycap-maker:key-unit-mm";
 const KEY_UNIT_FIELD_KEY = "keyUnitMm";
+const IMPORT_BINDING_NOTICE_MAX_ITEMS = 6;
 const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
@@ -1810,6 +1811,8 @@ const state = {
   sidebarTab: "params",
   isMobileInspectorHidden: false,
   isImportDragActive: false,
+  lastImportBindingReport: null,
+  isImportBindingNoticeCollapsed: false,
   legendFontPickerFieldKey: "",
   legendFontPickerQuery: "",
   copiedFontAttributionKey: "",
@@ -2141,8 +2144,12 @@ function renderShell() {
     <main class="app-shell">
       <div class="drop-overlay" data-import-drop-overlay aria-hidden="true" hidden>
         <div class="drop-overlay__card">
-          <strong data-i18n="dropOverlay.title"></strong>
-          <span data-i18n="dropOverlay.body"></span>
+          <span class="drop-overlay__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.file}</span>
+          <span class="drop-overlay__copy">
+            <strong data-i18n="dropOverlay.title"></strong>
+            <span data-i18n="dropOverlay.body"></span>
+          </span>
+          <span class="drop-overlay__chip" aria-hidden="true">JSON</span>
         </div>
       </div>
       <div class="language-control" data-language-control></div>
@@ -2367,6 +2374,86 @@ function focusLegendFontPickerQuery() {
   });
 }
 
+function renderImportBindingNotice() {
+  const report = state.lastImportBindingReport;
+  const unboundParams = report?.unboundParams ?? [];
+  if (unboundParams.length === 0) {
+    return "";
+  }
+
+  const isCollapsed = state.isImportBindingNoticeCollapsed;
+  const listId = "import-binding-notice-list";
+  const toggleLabel = isCollapsed
+    ? t("importReport.expand")
+    : t("importReport.collapse");
+  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
+  const viewTransitionName = createViewTransitionName("import-binding-notice", "report");
+  const visibleParams = unboundParams.slice(0, IMPORT_BINDING_NOTICE_MAX_ITEMS);
+  const remainingCount = unboundParams.length - visibleParams.length;
+  const remainingMarkup = remainingCount > 0
+    ? `<span class="import-binding-notice__more">${escapeHtml(t("importReport.more", { count: remainingCount }))}</span>`
+    : "";
+
+  return `
+    <section class="import-binding-notice" role="status" aria-live="polite" style="view-transition-name: ${viewTransitionName};">
+      <div class="import-binding-notice__header">
+        <span class="import-binding-notice__copy">
+          <strong>${escapeHtml(t("importReport.title"))}</strong>
+          <span ${isCollapsed ? "hidden" : ""}>${escapeHtml(t("importReport.unboundBody", {
+            count: unboundParams.length,
+            fileName: report.fileName,
+          }))}</span>
+        </span>
+        <button
+          class="field-group-toggle import-binding-notice__toggle"
+          type="button"
+          data-import-binding-toggle
+          aria-expanded="${isCollapsed ? "false" : "true"}"
+          aria-controls="${listId}"
+          aria-label="${escapeHtml(toggleLabel)}"
+          title="${escapeHtml(toggleLabel)}"
+        >
+          <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+        </button>
+      </div>
+      <div class="import-binding-notice__list" id="${listId}" aria-label="${escapeHtml(t("importReport.unboundListLabel"))}" ${isCollapsed ? "hidden" : ""}>
+        ${visibleParams.map((entry) => `
+          <span class="import-binding-notice__row">
+            <code class="import-binding-notice__name">${escapeHtml(entry.path)}</code>
+            <code class="import-binding-notice__value">${escapeHtml(formatImportBindingValue(entry.value))}</code>
+          </span>
+        `).join("")}
+        ${remainingMarkup}
+      </div>
+    </section>
+  `;
+}
+
+function toggleImportBindingNotice() {
+  state.isImportBindingNoticeCollapsed = !state.isImportBindingNoticeCollapsed;
+  render({ animateInspector: true });
+}
+
+function formatImportBindingValue(value) {
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value == null) {
+    return String(value);
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 function renderParametersTab() {
   const activeFieldGroups = getActiveFieldGroups();
 
@@ -2376,6 +2463,8 @@ function renderParametersTab() {
         <h1 class="panel-title">${t("panels.settings.title")}</h1>
         <p class="panel-text">${t("panels.settings.body")}</p>
       </div>
+
+      ${renderImportBindingNotice()}
 
       <div class="parameter-group-list">
         ${renderNameFieldCard()}
@@ -2392,6 +2481,8 @@ function renderExportTab() {
         <h1 class="panel-title">${t("panels.export.title")}</h1>
         <p class="panel-text">${t("panels.export.body")}</p>
       </div>
+
+      ${renderImportBindingNotice()}
 
       <div class="export-button-list">
         <section class="export-action-card" aria-labelledby="export-json-title">
@@ -3573,6 +3664,12 @@ function handleInspectorCardClick(event) {
     return;
   }
 
+  const importBindingToggleButton = getClosestFromEventTarget(event, "[data-import-binding-toggle]");
+  if (importBindingToggleButton) {
+    toggleImportBindingNotice();
+    return;
+  }
+
   const groupToggleButton = getClosestFromEventTarget(event, "[data-field-group-toggle]");
   if (groupToggleButton) {
     toggleFieldGroup(groupToggleButton.dataset.fieldGroupToggle);
@@ -3978,12 +4075,22 @@ function attachEditorDataDropListeners() {
 async function importEditorDataFile(file) {
   const startedAt = performance.now();
   const text = await file.text();
+  state.lastImportBindingReport = null;
   const payload = JSON.parse(text);
-  const nextParams = parseEditorDataPayload(payload);
+  const {
+    params: nextParams,
+    bindingReport,
+  } = parseEditorDataPayloadWithReport(payload);
+  const unboundParamCount = bindingReport.unboundParams.length;
 
   state.keycapParams = nextParams;
   state.editorStatus = "dirty";
   state.editorSummary = t("status.loadedDirty");
+  state.isImportBindingNoticeCollapsed = false;
+  state.lastImportBindingReport = {
+    ...bindingReport,
+    fileName: file.name,
+  };
   setExportStatus(
     "success",
     t("importExport.loaded", { fileName: file.name }),
@@ -3992,7 +4099,9 @@ async function importEditorDataFile(file) {
       label: t("importExport.loadLabel"),
       elapsedMs: Math.round(performance.now() - startedAt),
       byteLength: file.size,
-      notes: t("importExport.loadNote", { fileName: file.name }),
+      notes: unboundParamCount > 0
+        ? t("importExport.loadNoteWithUnbound", { fileName: file.name, count: unboundParamCount })
+        : t("importExport.loadNote", { fileName: file.name }),
     },
   );
 

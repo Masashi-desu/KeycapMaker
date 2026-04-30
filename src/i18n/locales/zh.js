@@ -28,6 +28,14 @@ const zh = Object.freeze({
     title: "拖放编辑数据 / 兼容输入 JSON",
     body: "读取已保存的编辑数据，或读取缺少值会由默认值补齐的兼容输入 JSON。",
   },
+  importReport: {
+    title: "JSON 读取报告",
+    unboundBody: "{fileName} 中有 {count} 个参数无法应用到当前形状，已跳过。",
+    unboundListLabel: "已跳过的参数",
+    expand: "展开 JSON 读取报告",
+    collapse: "折叠 JSON 读取报告",
+    more: "另有 {count} 个",
+  },
   panels: {
     settings: {
       title: "设置",
@@ -550,6 +558,7 @@ const zh = Object.freeze({
     loaded: "已读取编辑数据 ({fileName})",
     loadLabel: "编辑数据读取",
     loadNote: "已将 {fileName} 应用到当前编辑内容",
+    loadNoteWithUnbound: "已将 {fileName} 应用到当前编辑内容。正在显示 {count} 个已跳过的参数。",
     noJsonFile: "未找到 JSON 文件。",
     loadFailed: "读取编辑数据失败",
     loadFailedLabel: "编辑数据读取失败",

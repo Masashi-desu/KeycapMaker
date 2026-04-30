@@ -28,6 +28,14 @@ const ja = Object.freeze({
     title: "編集データ / 互換入力 JSON をドロップ",
     body: "保存済みの編集データ、または不足値を既定で補う互換入力 JSON を読み込みます。",
   },
+  importReport: {
+    title: "JSON 読み込みレポート",
+    unboundBody: "{fileName} のうち {count} 件のパラメータは現在の形状へ反映できなかったため読み飛ばしました。",
+    unboundListLabel: "反映できなかったパラメータ",
+    expand: "JSON 読み込みレポートを展開",
+    collapse: "JSON 読み込みレポートを折りたたむ",
+    more: "ほか {count} 件",
+  },
   panels: {
     settings: {
       title: "設定",
@@ -592,6 +600,7 @@ const ja = Object.freeze({
     loaded: "編集データを読み込みました ({fileName})",
     loadLabel: "編集データ読込",
     loadNote: "{fileName} を現在の編集内容へ反映",
+    loadNoteWithUnbound: "{fileName} を現在の編集内容へ反映。反映できなかったパラメータ {count} 件を表示しています。",
     noJsonFile: "JSON ファイルが見つかりません。",
     loadFailed: "編集データの読み込みに失敗しました",
     loadFailedLabel: "編集データ読込失敗",

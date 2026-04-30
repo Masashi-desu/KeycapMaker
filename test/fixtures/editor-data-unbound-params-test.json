@@ -1,0 +1,20 @@
+{
+  "kind": "keycap-maker/editor-params-patch",
+  "schemaVersion": 1,
+  "selectors": {
+    "shapeProfile": "typewriter"
+  },
+  "params": {
+    "name": "unbound-params-test",
+    "keyWidth": 19,
+    "keyDepth": 18.5,
+    "legendEnabled": true,
+    "legendText": "TEST",
+    "rimEnabled": true,
+    "rimWidth": 1.2,
+    "topCornerRadius": 2,
+    "topCornerRadiusLeftTop": 2.5,
+    "legacyNestedField": 4
+  },
+  "legacyTopLevelField": 7
+}

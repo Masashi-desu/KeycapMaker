@@ -223,16 +223,44 @@ pre {
 
 .drop-overlay__card {
   display: grid;
-  gap: 8px;
-  max-width: min(460px, calc(100vw - 48px));
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  max-width: min(540px, calc(100vw - 48px));
   padding: 22px 24px;
-  border-radius: 24px;
+  border-radius: 22px;
   border: 1px solid color-mix(in srgb, var(--border) 52%, white 48%);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 32%), var(--panel);
   box-shadow:
     0 20px 44px rgba(45, 36, 28, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.34);
-  text-align: center;
+  text-align: left;
+}
+
+.drop-overlay__icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: rgba(45, 36, 28, 0.08);
+  color: var(--text);
+}
+
+.drop-overlay__icon svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.drop-overlay__copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
 }
 
 .drop-overlay__card strong {
@@ -241,11 +269,24 @@ pre {
   color: var(--text);
 }
 
-.drop-overlay__card span,
+.drop-overlay__copy > span,
 .note-card p {
   font-size: 13px;
   line-height: 1.6;
   color: var(--muted);
+}
+
+.drop-overlay__chip {
+  grid-column: 2;
+  justify-self: start;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(45, 36, 28, 0.08);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 .editor-screen {
@@ -1370,6 +1411,104 @@ pre {
 .checkbox-pill input {
   margin: 0;
   accent-color: var(--panel-dark);
+}
+
+.import-binding-notice {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, #b8884c 42%, var(--glass-border-surface) 58%);
+  background: color-mix(in srgb, #fff8ee 78%, #b8884c 22%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 8px 20px rgba(45, 36, 28, 0.04);
+  transform-origin: top center;
+}
+
+.import-binding-notice__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 11px;
+}
+
+.import-binding-notice__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.import-binding-notice__copy strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.import-binding-notice__copy span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.import-binding-notice__toggle {
+  align-self: center;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.import-binding-notice__list {
+  display: grid;
+  gap: 6px;
+}
+
+.import-binding-notice__list[hidden] {
+  display: none;
+}
+
+.import-binding-notice__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(64px, max-content);
+  gap: 10px;
+  align-items: center;
+  min-height: 30px;
+  border-radius: 12px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(45, 36, 28, 0.08);
+}
+
+.import-binding-notice__name,
+.import-binding-notice__value,
+.import-binding-notice__more {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  color: var(--text);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.import-binding-notice__value {
+  justify-self: end;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted) 28%);
+  text-align: right;
+  word-break: break-word;
+}
+
+.import-binding-notice__more {
+  min-height: 26px;
+  justify-self: start;
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.42);
+  font-family: inherit;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px rgba(45, 36, 28, 0.08);
 }
 
 .export-action-card {

@@ -28,6 +28,14 @@ const ko = Object.freeze({
     title: "편집 데이터 / 호환 입력 JSON 드롭",
     body: "저장된 편집 데이터 또는 누락값을 기본값으로 보완하는 호환 입력 JSON을 불러옵니다.",
   },
+  importReport: {
+    title: "JSON 불러오기 리포트",
+    unboundBody: "{fileName}의 파라미터 {count}개는 현재 형상에 적용할 수 없어 건너뛰었습니다.",
+    unboundListLabel: "건너뛴 파라미터",
+    expand: "JSON 불러오기 리포트 펼치기",
+    collapse: "JSON 불러오기 리포트 접기",
+    more: "{count}개 더",
+  },
   panels: {
     settings: {
       title: "설정",
@@ -550,6 +558,7 @@ const ko = Object.freeze({
     loaded: "편집 데이터를 불러왔습니다 ({fileName})",
     loadLabel: "편집 데이터 불러오기",
     loadNote: "{fileName}을(를) 현재 편집 내용에 반영",
+    loadNoteWithUnbound: "{fileName}을(를) 현재 편집 내용에 반영했습니다. 건너뛴 파라미터 {count}개를 표시합니다.",
     noJsonFile: "JSON 파일을 찾을 수 없습니다.",
     loadFailed: "편집 데이터 불러오기에 실패했습니다",
     loadFailedLabel: "편집 데이터 불러오기 실패",

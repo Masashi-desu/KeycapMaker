@@ -933,6 +933,12 @@ function getCompatibleTopLevelParams(payload) {
   );
 }
 
+function getCompatibleTopLevelParamCandidates(payload) {
+  return Object.fromEntries(
+    Object.entries(payload).filter(([key]) => !RESERVED_COMPAT_PAYLOAD_KEYS.has(key)),
+  );
+}
+
 function hasKnownKeys(object, allowedKeys) {
   return Object.keys(object).some((key) => allowedKeys.has(key));
 }
@@ -1010,7 +1016,41 @@ function parseCompatibleEditorDataPayload(payload) {
   };
 }
 
-export function parseEditorDataPayload(payload) {
+function collectEditorDataBindingReport(payload, profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
+  const bindableKeys = new Set(listEditableParamKeys(profileKey));
+  const unboundParamMap = new Map();
+  const addParams = (params, source) => {
+    for (const [key, value] of Object.entries(params)) {
+      if (bindableKeys.has(key)) {
+        continue;
+      }
+
+      const path = source === "params" ? `params.${key}` : key;
+      if (!unboundParamMap.has(path)) {
+        unboundParamMap.set(path, {
+          key,
+          path,
+          source,
+          value,
+        });
+      }
+    }
+  };
+
+  if (isCurrentOrLegacyEditorDataKind(payload.kind)) {
+    addParams(getPlainObject(payload.params) ?? {}, "params");
+  } else {
+    addParams(getPlainObject(payload.params) ?? {}, "params");
+    addParams(getCompatibleTopLevelParamCandidates(payload), "top-level");
+  }
+
+  return {
+    profileKey,
+    unboundParams: Array.from(unboundParamMap.values()),
+  };
+}
+
+function parseEditorDataPayloadResult(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new Error("編集データ JSON の形式が不正です。");
   }
@@ -1037,7 +1077,18 @@ export function parseEditorDataPayload(payload) {
     sanitizedContext[key] = nextParams[key];
   }
 
-  return syncDerivedKeycapParams(nextParams);
+  return {
+    params: syncDerivedKeycapParams(nextParams),
+    bindingReport: collectEditorDataBindingReport(payload, rawProfileKey),
+  };
+}
+
+export function parseEditorDataPayloadWithReport(payload) {
+  return parseEditorDataPayloadResult(payload);
+}
+
+export function parseEditorDataPayload(payload) {
+  return parseEditorDataPayloadResult(payload).params;
 }
 
 export function createInitialKeycapParams(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {

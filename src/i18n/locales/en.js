@@ -28,6 +28,14 @@ const en = Object.freeze({
     title: "Drop editor data / compatible JSON",
     body: "Load saved editor data, or a compatible JSON file whose missing values will be filled from defaults.",
   },
+  importReport: {
+    title: "JSON Import Report",
+    unboundBody: "{count} parameters in {fileName} could not be applied to the current shape and were skipped.",
+    unboundListLabel: "Skipped parameters",
+    expand: "Expand JSON import report",
+    collapse: "Collapse JSON import report",
+    more: "{count} more",
+  },
   panels: {
     settings: {
       title: "Settings",
@@ -600,6 +608,7 @@ const en = Object.freeze({
     loaded: "Loaded editor data ({fileName})",
     loadLabel: "Editor Data Load",
     loadNote: "Applied {fileName} to the current editor state",
+    loadNoteWithUnbound: "Applied {fileName} to the current editor state. Showing {count} skipped parameters.",
     noJsonFile: "No JSON file was found.",
     loadFailed: "Failed to load editor data",
     loadFailedLabel: "Editor Data Load Failed",
