@@ -322,13 +322,16 @@ export function mountPreviewScene(container, layers, options = {}) {
   const canvas = renderer.domElement;
   let isHoveringMesh = false;
   let isInteracting = false;
-  let mobileScrollGesture = null;
 
   const syncControlsState = (enabled) => {
     controls.enabled = enabled;
     if (!isInteracting) {
       canvas.style.cursor = enabled ? "grab" : "default";
     }
+  };
+
+  const syncCanvasTouchAction = () => {
+    canvas.style.touchAction = isCompactPreviewViewport() ? "pan-y" : "none";
   };
 
   const applyViewOffset = () => {
@@ -385,19 +388,6 @@ export function mountPreviewScene(container, layers, options = {}) {
   };
 
   const handlePointerMove = (event) => {
-    if (mobileScrollGesture?.pointerId === event.pointerId) {
-      const deltaY = mobileScrollGesture.lastClientY - event.clientY;
-      mobileScrollGesture.lastClientY = event.clientY;
-
-      if (Math.abs(deltaY) > 0) {
-        const scrollElement = document.scrollingElement ?? document.documentElement;
-        scrollElement.scrollTop += deltaY;
-      }
-
-      event.preventDefault();
-      return;
-    }
-
     if (isInteracting) {
       return;
     }
@@ -417,34 +407,6 @@ export function mountPreviewScene(container, layers, options = {}) {
   const handlePointerDownCapture = (event) => {
     const isOverMesh = updateHoverState(event.clientX, event.clientY);
     syncControlsState(isOverMesh);
-
-    if (isOverMesh || !isCompactPreviewViewport() || event.pointerType !== "touch") {
-      mobileScrollGesture = null;
-      return;
-    }
-
-    mobileScrollGesture = {
-      pointerId: event.pointerId,
-      lastClientY: event.clientY,
-    };
-
-    try {
-      canvas.setPointerCapture(event.pointerId);
-    } catch (error) {}
-  };
-
-  const handlePointerRelease = (event) => {
-    if (mobileScrollGesture?.pointerId !== event.pointerId) {
-      return;
-    }
-
-    mobileScrollGesture = null;
-    isHoveringMesh = false;
-    syncControlsState(false);
-
-    if (canvas.hasPointerCapture?.(event.pointerId)) {
-      canvas.releasePointerCapture(event.pointerId);
-    }
   };
 
   const handleWheelCapture = (event) => {
@@ -488,9 +450,8 @@ export function mountPreviewScene(container, layers, options = {}) {
   canvas.addEventListener("pointermove", handlePointerMove);
   canvas.addEventListener("pointerleave", handlePointerLeave);
   canvas.addEventListener("pointerdown", handlePointerDownCapture, { capture: true });
-  canvas.addEventListener("pointerup", handlePointerRelease);
-  canvas.addEventListener("pointercancel", handlePointerRelease);
   canvas.addEventListener("wheel", handleWheelCapture, { capture: true, passive: true });
+  syncCanvasTouchAction();
   syncControlsState(false);
 
   controls.addEventListener("start", handleControlStart);
@@ -515,6 +476,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   };
 
   const handleResize = () => {
+    syncCanvasTouchAction();
     syncViewportCanvasBounds();
     controls.enablePan = true;
     enforceCompactCameraFraming();
@@ -553,8 +515,6 @@ export function mountPreviewScene(container, layers, options = {}) {
     canvas.removeEventListener("pointermove", handlePointerMove);
     canvas.removeEventListener("pointerleave", handlePointerLeave);
     canvas.removeEventListener("pointerdown", handlePointerDownCapture, { capture: true });
-    canvas.removeEventListener("pointerup", handlePointerRelease);
-    canvas.removeEventListener("pointercancel", handlePointerRelease);
     canvas.removeEventListener("wheel", handleWheelCapture, { capture: true });
     controls.removeEventListener("start", handleControlStart);
     controls.removeEventListener("end", handleControlEnd);
