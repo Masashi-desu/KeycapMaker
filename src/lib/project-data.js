@@ -238,6 +238,20 @@ export function createProjectKeycapEntry(params = {}, options = {}) {
   };
 }
 
+export function createProjectKeycapEntriesForSave(keycaps = []) {
+  return assignProjectKeycapDisplayOrder(Array.isArray(keycaps) ? keycaps : [])
+    .map((entry) => createProjectKeycapEntry(entry.params, {
+      id: entry.id,
+      name: entry.name,
+      jsonPath: entry.jsonPath,
+      previewPath: entry.previewPath,
+      displayOrder: entry.displayOrder,
+      editorDataPayload: entry.editorDataPayload,
+      previewImageDataUrl: entry.previewImageDataUrl,
+      previewViewState: entry.previewViewState,
+    }));
+}
+
 export function createEmptyProjectState(options = {}) {
   const keycaps = assignProjectKeycapDisplayOrder(
     sortProjectKeycapsByDisplayOrder(Array.isArray(options.keycaps) ? options.keycaps : []),

@@ -40,6 +40,7 @@ import {
   PROJECT_MANIFEST_FILENAME,
   assignProjectKeycapDisplayOrder,
   createEmptyProjectState,
+  createProjectKeycapEntriesForSave,
   createProjectKeycapEntry,
   createProjectManifest,
   createProjectPreviewPlaceholderDataUrl,
@@ -5245,10 +5246,20 @@ async function selectProjectDirectoryForSave() {
     return null;
   }
 
-  const directoryHandle = await window.showDirectoryPicker({
-    id: "keycap-maker-project",
-    mode: "readwrite",
-  });
+  let directoryHandle;
+  try {
+    directoryHandle = await window.showDirectoryPicker({
+      id: "keycap-maker-project",
+      mode: "readwrite",
+    });
+  } catch (error) {
+    if (error?.name === "SecurityError") {
+      return null;
+    }
+
+    throw error;
+  }
+
   if (!(await ensureDirectoryWritePermission(directoryHandle))) {
     throw new Error(t("project.permissionDenied"));
   }
@@ -5280,16 +5291,7 @@ function prepareProjectForSave() {
   }
 
   state.project.name = normalizeProjectName(state.project.name, DEFAULT_PROJECT_NAME);
-  state.project.keycaps = state.project.keycaps.map((entry) => createProjectKeycapEntry(entry.params, {
-    id: entry.id,
-    name: entry.name,
-    jsonPath: entry.jsonPath,
-    previewPath: entry.previewPath,
-    displayOrder: index,
-    editorDataPayload: entry.editorDataPayload,
-    previewImageDataUrl: entry.previewImageDataUrl,
-    previewViewState: entry.previewViewState,
-  }));
+  state.project.keycaps = createProjectKeycapEntriesForSave(state.project.keycaps);
   return state.project;
 }
 

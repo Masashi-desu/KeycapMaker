@@ -8,6 +8,7 @@ import {
   PROJECT_DATA_SCHEMA_VERSION,
   assignProjectKeycapDisplayOrder,
   createEmptyProjectState,
+  createProjectKeycapEntriesForSave,
   createProjectKeycapEntry,
   createProjectManifest,
   createProjectPreviewPlaceholderDataUrl,
@@ -124,6 +125,41 @@ test("キーキャップの表示順を displayOrder で保持し、一覧順に
   assert.deepEqual(manifest.keycaps.map((entry) => entry.displayOrder), [0, 1]);
   assert.deepEqual(parsed.keycaps.map((entry) => entry.id), ["keycap-b", "keycap-a"]);
   assert.deepEqual(parsed.keycaps.map((entry) => entry.displayOrder), [0, 1]);
+});
+
+test("プロジェクト保存前のキーキャップ定義は現在の一覧順で正規化する", () => {
+  const params = createDefaultKeycapParams("custom-shell");
+  const entries = [
+    createProjectKeycapEntry({ ...params, name: "First" }, {
+      id: "keycap-first",
+      displayOrder: 7,
+      previewImageDataUrl: "data:image/png;base64,AA==",
+      previewViewState: {
+        direction: [1, 0, 0],
+        distanceScale: 2,
+        targetScale: [0, 0, 0],
+        viewOffsetRatio: [0, 0],
+      },
+    }),
+    createProjectKeycapEntry({ ...params, name: "Second" }, {
+      id: "keycap-second",
+      displayOrder: 3,
+      previewImageDataUrl: "data:image/png;base64,BB==",
+      previewViewState: {
+        direction: [0, 1, 0],
+        distanceScale: 3,
+        targetScale: [0, 0, 0],
+        viewOffsetRatio: [0.1, 0.2],
+      },
+    }),
+  ];
+
+  const normalized = createProjectKeycapEntriesForSave(entries);
+
+  assert.deepEqual(normalized.map((entry) => entry.id), ["keycap-first", "keycap-second"]);
+  assert.deepEqual(normalized.map((entry) => entry.displayOrder), [0, 1]);
+  assert.deepEqual(normalized.map((entry) => entry.previewViewState?.direction), [[1, 0, 0], [0, 1, 0]]);
+  assert.deepEqual(normalized.map((entry) => entry.editorDataPayload.params.name), ["First", "Second"]);
 });
 
 test("プロジェクト manifest 以外の JSON は拒否する", () => {
