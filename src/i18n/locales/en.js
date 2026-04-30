@@ -324,6 +324,22 @@ const en = Object.freeze({
       label: "Top Radius",
       hint: "Corner radius of the added keytop's top surface. Current maximum: {maxRadius}.",
     },
+    topHatTopRadiusIndividualEnabled: {
+      label: "Individual",
+      hint: "Turn on to adjust each corner radius of the added keytop separately.",
+    },
+    topHatTopRadiusLeftTop: {
+      label: "Top-Left Radius",
+    },
+    topHatTopRadiusRightTop: {
+      label: "Top-Right Radius",
+    },
+    topHatTopRadiusRightBottom: {
+      label: "Bottom-Right Radius",
+    },
+    topHatTopRadiusLeftBottom: {
+      label: "Bottom-Left Radius",
+    },
     topHatHeight: {
       label: "Height",
       hint: "Height from the existing keytop surface to the added top surface. Negative values recess it. Current range: {minHeight} to {maxHeight}.",

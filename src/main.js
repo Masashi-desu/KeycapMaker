@@ -698,6 +698,36 @@ const TOP_CORNER_RADIUS_CONTROL_ORDER = Object.freeze([
   { key: "topCornerRadiusLeftBottom", corner: "left-bottom" },
   { key: "topCornerRadiusRightBottom", corner: "right-bottom" },
 ]);
+const TOP_HAT_TOP_RADIUS_INDIVIDUAL_FIELD_KEY = "topHatTopRadiusIndividualEnabled";
+const TOP_HAT_TOP_RADIUS_FIELD_KEYS = Object.freeze([
+  "topHatTopRadiusLeftTop",
+  "topHatTopRadiusRightTop",
+  "topHatTopRadiusRightBottom",
+  "topHatTopRadiusLeftBottom",
+]);
+const TOP_HAT_TOP_RADIUS_CONTROL_ORDER = Object.freeze([
+  { key: "topHatTopRadiusLeftTop", corner: "left-top" },
+  { key: "topHatTopRadiusRightTop", corner: "right-top" },
+  { key: "topHatTopRadiusLeftBottom", corner: "left-bottom" },
+  { key: "topHatTopRadiusRightBottom", corner: "right-bottom" },
+]);
+const CORNER_RADIUS_FIELD_SETS = Object.freeze([
+  {
+    sharedFieldKey: "topCornerRadius",
+    individualFieldKey: TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY,
+    fieldKeys: TOP_CORNER_RADIUS_FIELD_KEYS,
+    controlOrder: TOP_CORNER_RADIUS_CONTROL_ORDER,
+  },
+  {
+    sharedFieldKey: "topHatTopRadius",
+    individualFieldKey: TOP_HAT_TOP_RADIUS_INDIVIDUAL_FIELD_KEY,
+    fieldKeys: TOP_HAT_TOP_RADIUS_FIELD_KEYS,
+    controlOrder: TOP_HAT_TOP_RADIUS_CONTROL_ORDER,
+  },
+]);
+const CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS = new Set(
+  CORNER_RADIUS_FIELD_SETS.map((fieldSet) => fieldSet.individualFieldKey),
+);
 
 function clampMinimum(value, fallback, minimum) {
   const nextValue = Number(value);
@@ -1432,10 +1462,56 @@ const fieldGroupTemplates = [
         key: "topHatTopRadius",
         label: () => t("fields.topHatTopRadius.label"),
         hint: (params) => getTopHatTopRadiusHint(params),
+        type: "corner-radius",
         unit: "mm",
-        step: 0.1,
+        step: TOP_CORNER_RADIUS_STEP,
         min: 0,
+        max: (params) => getTopHatTopRadiusMax(params),
+        individualFieldKey: TOP_HAT_TOP_RADIUS_INDIVIDUAL_FIELD_KEY,
+        controlOrder: TOP_HAT_TOP_RADIUS_CONTROL_ORDER,
         visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: TOP_HAT_TOP_RADIUS_INDIVIDUAL_FIELD_KEY,
+        label: () => t("fields.topHatTopRadiusIndividualEnabled.label"),
+        hint: () => t("fields.topHatTopRadiusIndividualEnabled.hint"),
+        type: "checkbox",
+      },
+      {
+        key: "topHatTopRadiusLeftTop",
+        label: () => t("fields.topHatTopRadiusLeftTop.label"),
+        hint: (params) => getTopHatTopRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopHatTopRadiusMax(params),
+      },
+      {
+        key: "topHatTopRadiusRightTop",
+        label: () => t("fields.topHatTopRadiusRightTop.label"),
+        hint: (params) => getTopHatTopRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopHatTopRadiusMax(params),
+      },
+      {
+        key: "topHatTopRadiusRightBottom",
+        label: () => t("fields.topHatTopRadiusRightBottom.label"),
+        hint: (params) => getTopHatTopRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopHatTopRadiusMax(params),
+      },
+      {
+        key: "topHatTopRadiusLeftBottom",
+        label: () => t("fields.topHatTopRadiusLeftBottom.label"),
+        hint: (params) => getTopHatTopRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopHatTopRadiusMax(params),
       },
       {
         key: "topHatHeight",
@@ -3129,14 +3205,17 @@ function renderCornerRadiusField(field, fieldClassName = "") {
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
   const fieldLabel = resolveDynamicCopy(field.label);
   const fieldHint = resolveDynamicCopy(field.hint);
-  const individualEnabled = Boolean(state.keycapParams[TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY]);
-  const toggleConfig = getFieldConfig(TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY);
+  const fieldSet = CORNER_RADIUS_FIELD_SETS.find((item) => item.sharedFieldKey === field.key) ?? CORNER_RADIUS_FIELD_SETS[0];
+  const individualFieldKey = field.individualFieldKey ?? fieldSet.individualFieldKey;
+  const controlOrder = field.controlOrder ?? fieldSet.controlOrder;
+  const individualEnabled = Boolean(state.keycapParams[individualFieldKey]);
+  const toggleConfig = getFieldConfig(individualFieldKey);
   const toggleLabel = resolveDynamicCopy(toggleConfig?.label);
   const toggleHint = resolveDynamicCopy(toggleConfig?.hint);
   const controls = individualEnabled
     ? `
       <span class="corner-radius-grid corner-radius-grid--individual">
-        ${TOP_CORNER_RADIUS_CONTROL_ORDER.map(({ key, corner }) => renderCornerRadiusNumberControl(key, corner)).join("")}
+        ${controlOrder.map(({ key, corner }) => renderCornerRadiusNumberControl(key, corner)).join("")}
       </span>
     `
     : `
@@ -3154,7 +3233,7 @@ function renderCornerRadiusField(field, fieldClassName = "") {
       <span class="corner-radius-panel">
         ${controls}
         <label class="checkbox-pill corner-radius-toggle" title="${escapeHtml(toggleHint)}">
-          <input type="checkbox" data-field="${TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY}" ${individualEnabled ? "checked" : ""} />
+          <input type="checkbox" data-field="${individualFieldKey}" ${individualEnabled ? "checked" : ""} />
           <span>${toggleLabel}</span>
         </label>
       </span>
@@ -4194,6 +4273,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topHatTopDepth",
   "topHatInset",
   "topHatTopRadius",
+  ...TOP_HAT_TOP_RADIUS_FIELD_KEYS,
   "topHatHeight",
   "topHatShoulderAngle",
   "topHatShoulderRadius",
@@ -4382,9 +4462,17 @@ function applyTopSurfaceShapePreset(surfaceShape) {
   state.keycapParams.dishDepth = preset.dishDepth;
 }
 
-function syncTopCornerRadiusFieldsToSharedValue() {
-  const sharedRadius = Number(state.keycapParams.topCornerRadius ?? 0);
-  TOP_CORNER_RADIUS_FIELD_KEYS.forEach((fieldKey) => {
+function findCornerRadiusFieldSetByIndividualField(fieldKey) {
+  return CORNER_RADIUS_FIELD_SETS.find((fieldSet) => fieldSet.individualFieldKey === fieldKey);
+}
+
+function findCornerRadiusFieldSetBySharedField(fieldKey) {
+  return CORNER_RADIUS_FIELD_SETS.find((fieldSet) => fieldSet.sharedFieldKey === fieldKey);
+}
+
+function syncCornerRadiusFieldsToSharedValue(fieldSet) {
+  const sharedRadius = Number(state.keycapParams[fieldSet.sharedFieldKey] ?? 0);
+  fieldSet.fieldKeys.forEach((fieldKey) => {
     state.keycapParams[fieldKey] = sharedRadius;
   });
 }
@@ -4408,8 +4496,9 @@ function handleFieldChange(event) {
     syncLinkedSizeInputs(field);
   } else if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
-    if (field === TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY) {
-      syncTopCornerRadiusFieldsToSharedValue();
+    const cornerRadiusFieldSet = findCornerRadiusFieldSetByIndividualField(field);
+    if (cornerRadiusFieldSet) {
+      syncCornerRadiusFieldsToSharedValue(cornerRadiusFieldSet);
     }
   } else if (input.tagName === "SELECT") {
     if (field === "shapeProfile") {
@@ -4443,8 +4532,9 @@ function handleFieldChange(event) {
       applyTopEdgeHeightChange(field, nextValue);
     } else {
       state.keycapParams[field] = nextValue;
-      if (field === "topCornerRadius" && !state.keycapParams[TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY]) {
-        syncTopCornerRadiusFieldsToSharedValue();
+      const cornerRadiusFieldSet = findCornerRadiusFieldSetBySharedField(field);
+      if (cornerRadiusFieldSet && !state.keycapParams[cornerRadiusFieldSet.individualFieldKey]) {
+        syncCornerRadiusFieldsToSharedValue(cornerRadiusFieldSet);
       }
     }
 
@@ -4484,7 +4574,7 @@ function handleFieldChange(event) {
     || field === "homingBarEnabled"
     || field === "rimEnabled"
     || field === "topHatEnabled"
-    || field === TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY
+    || CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS.has(field)
     || field === "topSurfaceShape"
     || field === "topSlopeInputMode"
     || EDITOR_SELECTOR_KEYS.includes(field)

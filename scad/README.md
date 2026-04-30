@@ -41,6 +41,7 @@
 - `samples/keycap-top-orientation.scad`: 上面中央高さ固定 + pitch / roll の確認用サンプル
 - `samples/keycap-top-offset.scad`: stem 原点を固定したキートップ中心の XY offset 確認用サンプル
 - `samples/keycap-top-hat.scad`: custom shell の top-hat キートップ確認用サンプル
+- `samples/keycap-top-hat-top-radii.scad`: custom shell の top-hat 上面4隅R個別指定確認用サンプル
 - `samples/keycap-top-hat-recess.scad`: custom shell のマイナス高さ top-hat 凹み確認用サンプル
 - `samples/keycap-top-hat-rounded-shoulder.scad`: custom shell の top-hat shoulder R 確認用サンプル
 - `samples/keycap-top-hat-concave-shoulder.scad`: custom shell のマイナス top-hat shoulder R 確認用サンプル

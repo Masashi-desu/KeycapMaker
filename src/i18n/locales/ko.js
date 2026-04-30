@@ -324,6 +324,22 @@ const ko = Object.freeze({
       label: "상면 R",
       hint: "추가 키톱 상면의 모서리 반경입니다. 현재 최대값은 {maxRadius}입니다.",
     },
+    topHatTopRadiusIndividualEnabled: {
+      label: "개별",
+      hint: "켜면 추가 키톱 상면 네 모서리의 R을 각각 조정할 수 있습니다.",
+    },
+    topHatTopRadiusLeftTop: {
+      label: "왼쪽 위 R",
+    },
+    topHatTopRadiusRightTop: {
+      label: "오른쪽 위 R",
+    },
+    topHatTopRadiusRightBottom: {
+      label: "오른쪽 아래 R",
+    },
+    topHatTopRadiusLeftBottom: {
+      label: "왼쪽 아래 R",
+    },
     topHatHeight: {
       label: "높이",
       hint: "기존 키톱 면에서 추가 상면까지의 높이입니다. 음수는 키톱을 파냅니다. 현재 범위는 {minHeight}부터 {maxHeight}까지입니다.",

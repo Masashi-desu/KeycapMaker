@@ -324,6 +324,22 @@ const ja = Object.freeze({
       label: "上面のR",
       hint: "追加するキートップ上面の角丸です。現在の最大は {maxRadius} です",
     },
+    topHatTopRadiusIndividualEnabled: {
+      label: "個別",
+      hint: "オンにすると追加するキートップ上面の四隅のRを個別に調整できます",
+    },
+    topHatTopRadiusLeftTop: {
+      label: "左上R",
+    },
+    topHatTopRadiusRightTop: {
+      label: "右上R",
+    },
+    topHatTopRadiusRightBottom: {
+      label: "右下R",
+    },
+    topHatTopRadiusLeftBottom: {
+      label: "左下R",
+    },
     topHatHeight: {
       label: "高さ",
       hint: "既存のキートップ面から追加上面までの高さです。マイナスで凹ませます。現在の範囲は {minHeight} から {maxHeight} です",

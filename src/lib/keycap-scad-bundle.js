@@ -84,6 +84,12 @@ const TOP_CORNER_RADIUS_FIELD_KEYS = Object.freeze([
   "topCornerRadiusRightBottom",
   "topCornerRadiusLeftBottom",
 ]);
+const TOP_HAT_TOP_RADIUS_FIELD_KEYS = Object.freeze([
+  "topHatTopRadiusLeftTop",
+  "topHatTopRadiusRightTop",
+  "topHatTopRadiusRightBottom",
+  "topHatTopRadiusLeftBottom",
+]);
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
@@ -692,6 +698,13 @@ function formatDefinitionValue(value) {
 async function createKeycapDefinitions({ params, exportTarget }) {
   const shapeGeometry = resolveShapeGeometryParameters(params);
   const topSurfaceShape = params.topSurfaceShape ?? (Math.abs(Number(params.dishDepth ?? 0)) > 0.001 ? "spherical" : "flat");
+  const topHatTopRadius = Math.max(numberOr(params.topHatTopRadius, 1.8), 0);
+  const topHatTopRadiusIndividualEnabled = Boolean(params.topHatTopRadiusIndividualEnabled);
+  const topHatTopRadii = topHatTopRadiusIndividualEnabled
+    ? TOP_HAT_TOP_RADIUS_FIELD_KEYS.map((fieldKey) => (
+      Math.max(numberOr(params[fieldKey], topHatTopRadius), 0)
+    ))
+    : [topHatTopRadius, topHatTopRadius, topHatTopRadius, topHatTopRadius];
   const topLegendDefinitionList = await Promise.all(TOP_LEGEND_CONFIGS.map((config) => (
     resolveLegendBridgeDefinitions({
       params,
@@ -755,7 +768,9 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_hat_top_width: Math.max(numberOr(params.topHatTopWidth, 10.5), 0.2),
     user_top_hat_top_depth: Math.max(numberOr(params.topHatTopDepth, 9.5), 0.2),
     user_top_hat_inset: Math.max(numberOr(params.topHatInset, 2.0), 0),
-    user_top_hat_top_radius: Math.max(numberOr(params.topHatTopRadius, 1.8), 0),
+    user_top_hat_top_radius: topHatTopRadius,
+    user_top_hat_top_radius_individual_enabled: topHatTopRadiusIndividualEnabled,
+    user_top_hat_top_radii: topHatTopRadii,
     user_top_hat_height: numberOr(params.topHatHeight, 1.4),
     user_top_hat_shoulder_angle: Math.min(Math.max(numberOr(params.topHatShoulderAngle, 45), 5), 85),
     user_top_hat_shoulder_radius: numberOr(params.topHatShoulderRadius, 0),

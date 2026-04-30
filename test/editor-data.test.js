@@ -435,6 +435,18 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
     topHatShoulderAngle: 45,
     topHatShoulderRadius: 0.6,
   });
+  const individualTopHat = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topHatEnabled: true,
+    topHatTopWidth: 4,
+    topHatTopDepth: 6,
+    topHatTopRadius: 1.2,
+    topHatTopRadiusIndividualEnabled: true,
+    topHatTopRadiusLeftTop: 0.4,
+    topHatTopRadiusRightTop: 99,
+    topHatTopRadiusRightBottom: 1.6,
+    topHatTopRadiusLeftBottom: 2.4,
+  });
   const recessedTopHat = parseEditorDataPayload({
     shapeProfile: "custom-shell",
     topHatEnabled: true,
@@ -471,6 +483,11 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
   assert.ok(wideTopHat.topHatHeight <= 0.051);
   assert.ok(smallTopHat.topHatHeight > wideTopHat.topHatHeight);
   assert.equal(smallTopHat.topHatShoulderRadius, 0.6);
+  assert.equal(individualTopHat.topHatTopRadiusIndividualEnabled, true);
+  assert.equal(individualTopHat.topHatTopRadiusLeftTop, 0.4);
+  assert.equal(individualTopHat.topHatTopRadiusRightTop, 2);
+  assert.equal(individualTopHat.topHatTopRadiusRightBottom, 1.6);
+  assert.equal(individualTopHat.topHatTopRadiusLeftBottom, 2);
   assert.ok(Math.abs(recessedTopHat.topHatHeight + 1.45) < 1e-9);
   assert.equal(shallowRecessTopHat.topHatHeight, -0.8);
   assert.equal(shallowRecessTopHat.topHatShoulderRadius, -0.4);
@@ -479,6 +496,8 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
   assert.equal(jisTopHat.topHatEnabled, true);
   assert.ok(jisTopHat.topHatInset < jisTopHat.keyWidth / 2);
   assert.ok(jisTopHat.topHatTopRadius < 3);
+  assert.equal(jisTopHat.topHatTopRadiusIndividualEnabled, false);
+  assert.equal(jisTopHat.topHatTopRadiusLeftTop, jisTopHat.topHatTopRadius);
   assert.ok(jisTopHat.topHatHeight < 20);
   assert.ok(jisTopHat.topHatShoulderRadius <= jisTopHat.topHatInset);
   assert.equal(jisEnterDefaults.topHatEnabled, false);

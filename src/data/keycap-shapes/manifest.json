@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 14,
+  "schemaVersion": 15,
   "defaultProfileKey": "custom-shell",
   "selectorKeys": [
     "shapeProfile",

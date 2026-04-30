@@ -91,6 +91,12 @@ const TOP_CORNER_RADIUS_FIELD_KEYS = Object.freeze([
   "topCornerRadiusRightBottom",
   "topCornerRadiusLeftBottom",
 ]);
+const TOP_HAT_TOP_RADIUS_FIELD_KEYS = Object.freeze([
+  "topHatTopRadiusLeftTop",
+  "topHatTopRadiusRightTop",
+  "topHatTopRadiusRightBottom",
+  "topHatTopRadiusLeftBottom",
+]);
 const RESERVED_COMPAT_PAYLOAD_KEYS = new Set(["kind", "schemaVersion", "profileSchemaVersion", "savedAt", "selectors", "params"]);
 const KNOWN_EDITOR_PARAM_KEYS = Object.freeze(
   Array.from(new Set(keycapEditorProfiles.profiles.flatMap((profile) => Object.keys(profile.defaults ?? {})))),
@@ -707,6 +713,14 @@ export function syncDerivedKeycapParams(params = {}) {
     params.topHatHeight = clampTopHatHeight(params.topHatHeight, params, defaults.topHatHeight ?? 1.4);
     params.topHatShoulderRadius = clampTopHatShoulderRadius(params.topHatShoulderRadius, params, defaults.topHatShoulderRadius ?? 0);
     params.topHatTopRadius = clampTopHatTopRadius(params.topHatTopRadius, params, defaults.topHatTopRadius ?? 0);
+    params.topHatTopRadiusIndividualEnabled = typeof params.topHatTopRadiusIndividualEnabled === "boolean"
+      ? params.topHatTopRadiusIndividualEnabled
+      : Boolean(defaults.topHatTopRadiusIndividualEnabled);
+    TOP_HAT_TOP_RADIUS_FIELD_KEYS.forEach((fieldKey) => {
+      params[fieldKey] = params.topHatTopRadiusIndividualEnabled
+        ? clampTopHatTopRadius(params[fieldKey], params, defaults[fieldKey] ?? params.topHatTopRadius)
+        : params.topHatTopRadius;
+    });
   }
   params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
   params.rimHeightUp = clampNonNegativeNumber(params.rimHeightUp, defaults.rimHeightUp ?? 0);
@@ -831,7 +845,7 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
     return clampTopHatTopDepth(value, paramsContext, fallback);
   }
 
-  if (fieldKey === "topHatTopRadius") {
+  if (fieldKey === "topHatTopRadius" || TOP_HAT_TOP_RADIUS_FIELD_KEYS.includes(fieldKey)) {
     return clampTopHatTopRadius(value, paramsContext, fallback);
   }
 
