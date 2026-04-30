@@ -683,6 +683,20 @@ const TOP_SLOPE_INPUT_MODE_OPTIONS = Object.freeze([
   { value: "angle", labelKey: "options.topSlopeInputMode.angle" },
   { value: "edge-height", labelKey: "options.topSlopeInputMode.edge-height" },
 ]);
+const TOP_CORNER_RADIUS_STEP = 0.1;
+const TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY = "topCornerRadiusIndividualEnabled";
+const TOP_CORNER_RADIUS_FIELD_KEYS = Object.freeze([
+  "topCornerRadiusLeftTop",
+  "topCornerRadiusRightTop",
+  "topCornerRadiusRightBottom",
+  "topCornerRadiusLeftBottom",
+]);
+const TOP_CORNER_RADIUS_CONTROL_ORDER = Object.freeze([
+  { key: "topCornerRadiusLeftTop", corner: "left-top" },
+  { key: "topCornerRadiusRightTop", corner: "right-top" },
+  { key: "topCornerRadiusLeftBottom", corner: "left-bottom" },
+  { key: "topCornerRadiusRightBottom", corner: "right-bottom" },
+]);
 
 function clampMinimum(value, fallback, minimum) {
   const nextValue = Number(value);
@@ -837,6 +851,37 @@ function getTopRightHeightHint(params) {
 
 function getTopSurfaceShapeHint() {
   return t("fields.topSurfaceShape.hint");
+}
+
+function floorToNumericStep(value, step, base = 0) {
+  const numericValue = Number(value);
+  const numericStep = Number(step);
+  const numericBase = Number(base);
+
+  if (!Number.isFinite(numericValue) || !Number.isFinite(numericStep) || numericStep <= 0 || !Number.isFinite(numericBase)) {
+    return numericValue;
+  }
+
+  const digits = countStepDigits(numericStep);
+  const scale = 10 ** Math.min(Math.max(digits, 0), 6);
+  const stepCount = Math.floor((((numericValue - numericBase) * scale) + Number.EPSILON) / (numericStep * scale));
+  return Math.max(numericBase, Number((numericBase + (stepCount * numericStep)).toFixed(digits)));
+}
+
+function getTopCornerRadiusGeometryMax(params = state.keycapParams) {
+  const geometry = resolveTopPlaneGeometry(params);
+  return Math.max(Math.min(
+    geometry.topRight - geometry.topLeft,
+    geometry.topBack - geometry.topFront,
+  ) / 2, 0);
+}
+
+function getTopCornerRadiusMax(params = state.keycapParams) {
+  return floorToNumericStep(getTopCornerRadiusGeometryMax(params), TOP_CORNER_RADIUS_STEP, 0);
+}
+
+function getTopCornerRadiusHint(params) {
+  return t("fields.topCornerRadius.hint", { maxRadius: formatMillimeter(getTopCornerRadiusMax(params)) });
 }
 
 function getDishDepthHint(params) {
@@ -1264,6 +1309,58 @@ const fieldGroupTemplates = [
         type: "select",
         options: TOP_SURFACE_SHAPE_OPTIONS,
         dependentFieldKeys: ["dishDepth"],
+      },
+      {
+        key: "topCornerRadius",
+        label: () => t("fields.topCornerRadius.label"),
+        hint: (params) => getTopCornerRadiusHint(params),
+        type: "corner-radius",
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopCornerRadiusMax(params),
+      },
+      {
+        key: TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY,
+        label: () => t("fields.topCornerRadiusIndividualEnabled.label"),
+        hint: () => t("fields.topCornerRadiusIndividualEnabled.hint"),
+        type: "checkbox",
+      },
+      {
+        key: "topCornerRadiusLeftTop",
+        label: () => t("fields.topCornerRadiusLeftTop.label"),
+        hint: (params) => getTopCornerRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopCornerRadiusMax(params),
+      },
+      {
+        key: "topCornerRadiusRightTop",
+        label: () => t("fields.topCornerRadiusRightTop.label"),
+        hint: (params) => getTopCornerRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopCornerRadiusMax(params),
+      },
+      {
+        key: "topCornerRadiusRightBottom",
+        label: () => t("fields.topCornerRadiusRightBottom.label"),
+        hint: (params) => getTopCornerRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopCornerRadiusMax(params),
+      },
+      {
+        key: "topCornerRadiusLeftBottom",
+        label: () => t("fields.topCornerRadiusLeftBottom.label"),
+        hint: (params) => getTopCornerRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopCornerRadiusMax(params),
       },
       {
         key: "dishDepth",
@@ -2899,6 +2996,81 @@ function renderLegendFontAttributionCard(font) {
   `;
 }
 
+function renderCornerRadiusIcon(corner = "all") {
+  const corners = corner === "all"
+    ? ["left-top", "right-top", "right-bottom", "left-bottom"]
+    : [corner];
+
+  return `
+    <span class="corner-radius-icon corner-radius-icon--${escapeHtml(corner)}" aria-hidden="true">
+      ${corners.map((cornerName) => `<span class="corner-radius-icon__mark corner-radius-icon__mark--${escapeHtml(cornerName)}"></span>`).join("")}
+    </span>
+  `;
+}
+
+function renderCornerRadiusNumberControl(fieldKey, corner = "all") {
+  const fieldConfig = getFieldConfig(fieldKey);
+  const value = state.keycapParams[fieldKey];
+  const label = resolveDynamicCopy(fieldConfig?.label);
+  const fieldMin = resolveFieldAttribute(fieldConfig?.min);
+  const fieldMax = resolveFieldAttribute(fieldConfig?.max);
+  const fieldStep = resolveFieldAttribute(fieldConfig?.step);
+
+  return `
+    <label class="corner-radius-control">
+      ${renderCornerRadiusIcon(corner)}
+      <span class="field-control corner-radius-control__input">
+        <input
+          type="number"
+          data-field="${fieldKey}"
+          value="${formatNumericFieldValue(fieldKey, value)}"
+          ${fieldMin != null ? `min="${fieldMin}"` : ""}
+          ${fieldMax != null ? `max="${fieldMax}"` : ""}
+          ${fieldStep != null ? `step="${fieldStep}"` : ""}
+          aria-label="${escapeHtml(label)}"
+        />
+      </span>
+    </label>
+  `;
+}
+
+function renderCornerRadiusField(field, fieldClassName = "") {
+  const fieldViewTransitionName = createViewTransitionName("field", field.key);
+  const fieldLabel = resolveDynamicCopy(field.label);
+  const fieldHint = resolveDynamicCopy(field.hint);
+  const individualEnabled = Boolean(state.keycapParams[TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY]);
+  const toggleConfig = getFieldConfig(TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY);
+  const toggleLabel = resolveDynamicCopy(toggleConfig?.label);
+  const toggleHint = resolveDynamicCopy(toggleConfig?.hint);
+  const controls = individualEnabled
+    ? `
+      <span class="corner-radius-grid corner-radius-grid--individual">
+        ${TOP_CORNER_RADIUS_CONTROL_ORDER.map(({ key, corner }) => renderCornerRadiusNumberControl(key, corner)).join("")}
+      </span>
+    `
+    : `
+      <span class="corner-radius-grid corner-radius-grid--shared">
+        ${renderCornerRadiusNumberControl(field.key, "all")}
+      </span>
+    `;
+
+  return `
+    <div class="field field--corner-radius${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      <span class="field-copy">
+        <span class="field-label">${fieldLabel}</span>
+        <span class="field-hint">${fieldHint}</span>
+      </span>
+      <span class="corner-radius-panel">
+        ${controls}
+        <label class="checkbox-pill corner-radius-toggle" title="${escapeHtml(toggleHint)}">
+          <input type="checkbox" data-field="${TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY}" ${individualEnabled ? "checked" : ""} />
+          <span>${toggleLabel}</span>
+        </label>
+      </span>
+    </div>
+  `;
+}
+
 function renderLegendFontPickerOptions(fieldKey = state.legendFontPickerFieldKey || "legendFontKey") {
   const matchingFonts = getLegendFontPickerResults();
   if (matchingFonts.length === 0) {
@@ -3151,6 +3323,10 @@ function renderField(field, options = {}) {
         </span>
       </div>
     `;
+  }
+
+  if (field.type === "corner-radius") {
+    return renderCornerRadiusField(field, fieldClassName);
   }
 
   if (field.type === "linked-size") {
@@ -3902,6 +4078,8 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topBackHeight",
   "topLeftHeight",
   "topRightHeight",
+  "topCornerRadius",
+  ...TOP_CORNER_RADIUS_FIELD_KEYS,
   "typewriterMountHeight",
   "topHatTopWidth",
   "topHatTopDepth",
@@ -4095,6 +4273,13 @@ function applyTopSurfaceShapePreset(surfaceShape) {
   state.keycapParams.dishDepth = preset.dishDepth;
 }
 
+function syncTopCornerRadiusFieldsToSharedValue() {
+  const sharedRadius = Number(state.keycapParams.topCornerRadius ?? 0);
+  TOP_CORNER_RADIUS_FIELD_KEYS.forEach((fieldKey) => {
+    state.keycapParams[fieldKey] = sharedRadius;
+  });
+}
+
 function handleFieldChange(event) {
   const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
@@ -4114,6 +4299,9 @@ function handleFieldChange(event) {
     syncLinkedSizeInputs(field);
   } else if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
+    if (field === TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY) {
+      syncTopCornerRadiusFieldsToSharedValue();
+    }
   } else if (input.tagName === "SELECT") {
     if (field === "shapeProfile") {
       applyShapeProfileParams(input.value);
@@ -4146,6 +4334,9 @@ function handleFieldChange(event) {
       applyTopEdgeHeightChange(field, nextValue);
     } else {
       state.keycapParams[field] = nextValue;
+      if (field === "topCornerRadius" && !state.keycapParams[TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY]) {
+        syncTopCornerRadiusFieldsToSharedValue();
+      }
     }
 
     if (Object.values(LINKED_SIZE_UNIT_FIELDS).includes(field)) {
@@ -4184,6 +4375,7 @@ function handleFieldChange(event) {
     || field === "homingBarEnabled"
     || field === "rimEnabled"
     || field === "topHatEnabled"
+    || field === TOP_CORNER_RADIUS_INDIVIDUAL_FIELD_KEY
     || field === "topSurfaceShape"
     || field === "topSlopeInputMode"
     || EDITOR_SELECTOR_KEYS.includes(field)
@@ -4198,6 +4390,7 @@ function handleFieldChange(event) {
   if (changedPrimaryField === "keyWidth") {
     syncFieldHint("jisEnterNotchWidth");
     syncFieldHint("typewriterCornerRadius");
+    syncFieldHint("topCornerRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatInset");
@@ -4208,6 +4401,7 @@ function handleFieldChange(event) {
   if (changedPrimaryField === "keyDepth") {
     syncFieldHint("jisEnterNotchDepth");
     syncFieldHint("typewriterCornerRadius");
+    syncFieldHint("topCornerRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatInset");
@@ -4225,6 +4419,7 @@ function handleFieldChange(event) {
   }
 
   if (changedPrimaryField === "topScale" || changedPrimaryField === "topHatTopWidth" || changedPrimaryField === "topHatTopDepth" || changedPrimaryField === "topHatInset" || changedPrimaryField === "topHatShoulderAngle") {
+    syncFieldHint("topCornerRadius");
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatInset");

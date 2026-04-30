@@ -124,6 +124,15 @@ profile_right_angle = required_param(user_profile_right_angle, "user_profile_rig
 top_thickness = max(required_param(user_top_thickness, "user_top_thickness"), 0.05);
 bottom_corner_radius = max(required_param(user_bottom_corner_radius, "user_bottom_corner_radius"), 0);
 top_corner_radius = max(required_param(user_top_corner_radius, "user_top_corner_radius"), 0);
+top_corner_individual_enabled = is_undef(user_top_corner_individual_enabled)
+    ? false
+    : user_top_corner_individual_enabled;
+top_corner_radii_source = top_corner_individual_enabled
+    ? required_param(user_top_corner_radii, "user_top_corner_radii")
+    : [top_corner_radius, top_corner_radius, top_corner_radius, top_corner_radius];
+top_corner_radii = top_corner_individual_enabled
+    ? [for (index = [0 : 3]) max(top_corner_radii_source[index], 0)]
+    : undef;
 dish_radius = positive_dimension(required_param(user_dish_radius, "user_dish_radius"));
 requested_dish_depth = required_param(user_dish_depth, "user_dish_depth");
 requested_top_shape_type = is_undef(user_top_shape_type)
@@ -1075,7 +1084,8 @@ module keycap_body_shell_positive(quality = "export") {
             roll_deg = top_roll_deg,
             quality = quality,
             top_offset_x = top_offset_x,
-            top_offset_y = top_offset_y
+            top_offset_y = top_offset_y,
+            top_corner_radii = top_corner_radii
         );
     }
 }
@@ -1248,7 +1258,8 @@ module keycap_stem_clip_volume(quality = "export") {
                     quality = quality,
                     top_offset_x = top_offset_x,
                     top_offset_y = top_offset_y,
-                    bottom_extension = stem_clip_bottom_extension
+                    bottom_extension = stem_clip_bottom_extension,
+                    top_corner_radii = top_corner_radii
                 );
             }
     }

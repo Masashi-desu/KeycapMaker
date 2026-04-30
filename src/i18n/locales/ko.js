@@ -224,6 +224,26 @@ const ko = Object.freeze({
       label: "R",
       hint: "{maxRadius}이면 둥글고, 0 mm에 가까울수록 모서리가 살아납니다.",
     },
+    topCornerRadius: {
+      label: "상면 R",
+      hint: "키톱 상면의 네 모서리를 함께 둥글게 합니다. 현재 최대값은 {maxRadius}입니다.",
+    },
+    topCornerRadiusIndividualEnabled: {
+      label: "개별",
+      hint: "켜면 네 모서리의 R을 각각 조정할 수 있습니다.",
+    },
+    topCornerRadiusLeftTop: {
+      label: "왼쪽 위 R",
+    },
+    topCornerRadiusRightTop: {
+      label: "오른쪽 위 R",
+    },
+    topCornerRadiusRightBottom: {
+      label: "오른쪽 아래 R",
+    },
+    topCornerRadiusLeftBottom: {
+      label: "왼쪽 아래 R",
+    },
     jisEnterNotchWidth: {
       label: "파임 폭",
       hint: "왼쪽 아래 파임의 가로 폭입니다. 최댓값은 {maxWidth}입니다.",

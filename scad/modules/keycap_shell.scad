@@ -28,6 +28,18 @@ function keycap_center_surface_z(top_center_height, dish_depth) =
 function keycap_inner_corner_radius(corner_radius, wall) =
     max(corner_radius - wall, 0);
 
+function keycap_corner_radius_list(radius) =
+    [radius, radius, radius, radius];
+
+function keycap_resolved_corner_radii(radius, corner_radii = undef) =
+    let(default_radii = keycap_corner_radius_list(radius))
+    is_undef(corner_radii)
+        ? default_radii
+        : [for (index = [0 : 3]) max(is_undef(corner_radii[index]) ? default_radii[index] : corner_radii[index], 0)];
+
+function keycap_inner_corner_radii(corner_radii, wall) =
+    [for (radius = corner_radii) keycap_inner_corner_radius(radius, wall)];
+
 function keycap_top_hat_safe_shoulder_angle(angle) =
     min(max(angle, 5), 85);
 
@@ -149,6 +161,98 @@ function keycap_surface_z(
     )
     plane_z + dish_offset;
 
+function rounded_rect_corner_scale(size, radius_a, radius_b) =
+    radius_a + radius_b > 0.001 ? size / (radius_a + radius_b) : 1;
+
+function rounded_rect_safe_corner_radii(width, depth, corner_radii) =
+    let(
+        left_top = max(corner_radii[0], 0),
+        right_top = max(corner_radii[1], 0),
+        right_bottom = max(corner_radii[2], 0),
+        left_bottom = max(corner_radii[3], 0),
+        scale = min(
+            1,
+            rounded_rect_corner_scale(width, left_top, right_top),
+            rounded_rect_corner_scale(width, left_bottom, right_bottom),
+            rounded_rect_corner_scale(depth, left_top, left_bottom),
+            rounded_rect_corner_scale(depth, right_top, right_bottom)
+        )
+    )
+    [left_top * scale, right_top * scale, right_bottom * scale, left_bottom * scale];
+
+function rounded_rect_corner_arc_steps(radius, quality = "export") =
+    radius <= 0.001
+        ? 1
+        : max(
+            ceil(keycap_curve_steps(
+                radius,
+                quality,
+                minimum_steps = 18,
+                preview_max_steps = 48,
+                export_max_steps = 96
+            ) / 4),
+            2
+        );
+
+function rounded_rect_corner_arc_points(cx, cy, radius, start_angle, end_angle, steps, fallback) =
+    radius <= 0.001
+        ? [fallback]
+        : [
+            for (index = [0 : steps])
+                let(angle = start_angle + (end_angle - start_angle) * index / max(steps, 1))
+                [cx + radius * cos(angle), cy + radius * sin(angle)]
+        ];
+
+// corner_radii order: [left_top, right_top, right_bottom, left_bottom].
+module rounded_rect_coords_with_corner_radii(left, right, front, back, corner_radii, quality = "export") {
+    width = max(right - left, 0.2);
+    depth = max(back - front, 0.2);
+    safe_radii = rounded_rect_safe_corner_radii(width, depth, keycap_resolved_corner_radii(0, corner_radii));
+    left_top_radius = safe_radii[0];
+    right_top_radius = safe_radii[1];
+    right_bottom_radius = safe_radii[2];
+    left_bottom_radius = safe_radii[3];
+
+    polygon(points = concat(
+        rounded_rect_corner_arc_points(
+            right - right_bottom_radius,
+            front + right_bottom_radius,
+            right_bottom_radius,
+            -90,
+            0,
+            rounded_rect_corner_arc_steps(right_bottom_radius, quality),
+            [right, front]
+        ),
+        rounded_rect_corner_arc_points(
+            right - right_top_radius,
+            back - right_top_radius,
+            right_top_radius,
+            0,
+            90,
+            rounded_rect_corner_arc_steps(right_top_radius, quality),
+            [right, back]
+        ),
+        rounded_rect_corner_arc_points(
+            left + left_top_radius,
+            back - left_top_radius,
+            left_top_radius,
+            90,
+            180,
+            rounded_rect_corner_arc_steps(left_top_radius, quality),
+            [left, back]
+        ),
+        rounded_rect_corner_arc_points(
+            left + left_bottom_radius,
+            front + left_bottom_radius,
+            left_bottom_radius,
+            180,
+            270,
+            rounded_rect_corner_arc_steps(left_bottom_radius, quality),
+            [left, front]
+        )
+    ));
+}
+
 module rounded_rect_coords(left, right, front, back, radius, quality = "export") {
     width = max(right - left, 0.2);
     depth = max(back - front, 0.2);
@@ -229,11 +333,16 @@ module keycap_top_face(
     roll_deg = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    corner_radii = undef
 ) {
     keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
         linear_extrude(height = 0.01, center = true)
-            rounded_rect_coords(left, right, front, back, radius, quality);
+            if (is_undef(corner_radii)) {
+                rounded_rect_coords(left, right, front, back, radius, quality);
+            } else {
+                rounded_rect_coords_with_corner_radii(left, right, front, back, corner_radii, quality);
+            }
 }
 
 module keycap_top_prism(
@@ -249,12 +358,17 @@ module keycap_top_prism(
     base_z = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    corner_radii = undef
 ) {
     keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
         translate([0, 0, base_z])
             linear_extrude(height = max(height, 0.01))
-                rounded_rect_coords(left, right, front, back, radius, quality);
+                if (is_undef(corner_radii)) {
+                    rounded_rect_coords(left, right, front, back, radius, quality);
+                } else {
+                    rounded_rect_coords_with_corner_radii(left, right, front, back, corner_radii, quality);
+                }
 }
 
 module keycap_outer_shell(
@@ -271,7 +385,8 @@ module keycap_outer_shell(
     roll_deg = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    top_corner_radii = undef
 ) {
     base_left = -width / 2;
     base_right = width / 2;
@@ -304,7 +419,8 @@ module keycap_outer_shell(
             roll_deg,
             quality,
             top_offset_x = top_offset_x,
-            top_offset_y = top_offset_y
+            top_offset_y = top_offset_y,
+            corner_radii = top_corner_radii
         );
     }
 }
@@ -327,10 +443,14 @@ module keycap_inner_clearance_volume(
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
-    bottom_extension = 1
-    ) {
+    bottom_extension = 1,
+    top_corner_radii = undef
+) {
     inner_height = keycap_inner_height(top_center_height, dish_depth, top_thickness);
     safe_bottom_extension = max(bottom_extension, 0.01);
+    inner_top_corner_radii = is_undef(top_corner_radii)
+        ? undef
+        : keycap_inner_corner_radii(top_corner_radii, wall);
 
     base_left = -width / 2 + wall;
     base_right = width / 2 - wall;
@@ -364,7 +484,8 @@ module keycap_inner_clearance_volume(
             roll_deg,
             quality,
             top_offset_x = top_offset_x,
-            top_offset_y = top_offset_y
+            top_offset_y = top_offset_y,
+            corner_radii = inner_top_corner_radii
         );
     }
 }
@@ -386,7 +507,8 @@ module keycap_inner_hollow(
     roll_deg = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    top_corner_radii = undef
 ) {
     keycap_inner_clearance_volume(
         width = width,
@@ -405,7 +527,8 @@ module keycap_inner_hollow(
         roll_deg = roll_deg,
         quality = quality,
         top_offset_x = top_offset_x,
-        top_offset_y = top_offset_y
+        top_offset_y = top_offset_y,
+        top_corner_radii = top_corner_radii
     );
 }
 
@@ -480,7 +603,8 @@ module keycap_dish_cut(
     dish_plan_depth = undef,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    top_corner_radii = undef
 ) {
     if (keycap_dish_is_active(dish_type, dish_depth) && dish_depth > 0) {
         keycap_dish_volume(
@@ -521,7 +645,8 @@ module keycap_dish_bump(
     dish_plan_depth = undef,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    top_corner_radii = undef
 ) {
     if (keycap_dish_is_active(dish_type, dish_depth) && dish_depth < 0) {
         bump_clip_height = max(abs(dish_depth) + max(dish_radius, 0.1) + 2, 2);
@@ -556,7 +681,8 @@ module keycap_dish_bump(
                 height = bump_clip_height,
                 quality = quality,
                 top_offset_x = top_offset_x,
-                top_offset_y = top_offset_y
+                top_offset_y = top_offset_y,
+                corner_radii = top_corner_radii
             );
         }
     }
@@ -581,7 +707,8 @@ module keycap_apply_top_surface(
     dish_plan_depth = undef,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    top_corner_radii = undef
 ) {
     if (!keycap_dish_is_active(dish_type, dish_depth)) {
         children();
@@ -627,7 +754,8 @@ module keycap_apply_top_surface(
                 dish_plan_depth = dish_plan_depth,
                 quality = quality,
                 top_offset_x = top_offset_x,
-                top_offset_y = top_offset_y
+                top_offset_y = top_offset_y,
+                top_corner_radii = top_corner_radii
             );
         }
     }
@@ -651,7 +779,8 @@ module keycap_top_surface_region(
     dish_plan_depth = undef,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    top_corner_radii = undef
 ) {
     region_width = max(right - left, 0.1);
     region_depth = max(back - front, 0.1);
@@ -676,7 +805,8 @@ module keycap_top_surface_region(
         dish_plan_depth = dish_plan_depth,
         quality = quality,
         top_offset_x = top_offset_x,
-        top_offset_y = top_offset_y
+        top_offset_y = top_offset_y,
+        top_corner_radii = top_corner_radii
     )
         keycap_top_prism(
             left = left,
@@ -691,7 +821,8 @@ module keycap_top_surface_region(
             base_z = base_z,
             quality = quality,
             top_offset_x = top_offset_x,
-            top_offset_y = top_offset_y
+            top_offset_y = top_offset_y,
+            corner_radii = top_corner_radii
         );
 }
 
@@ -818,7 +949,8 @@ module keycap_shell(
     roll_deg = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    top_corner_radii = undef
 ) {
     base_left = -width / 2;
     base_right = width / 2;
@@ -828,6 +960,9 @@ module keycap_shell(
     top_right = base_right - top_center_height * tan(right_angle);
     top_front = base_front + top_center_height * tan(front_angle);
     top_back = base_back - top_center_height * tan(back_angle);
+    resolved_top_corner_radii = is_undef(top_corner_radii)
+        ? undef
+        : keycap_resolved_corner_radii(top_corner_radius, top_corner_radii);
 
     difference() {
         union() {
@@ -847,7 +982,8 @@ module keycap_shell(
                 roll_deg = roll_deg,
                 quality = quality,
                 top_offset_x = top_offset_x,
-                top_offset_y = top_offset_y
+                top_offset_y = top_offset_y,
+                top_corner_radii = resolved_top_corner_radii
             )
                 keycap_outer_shell(
                     width = width,
@@ -863,7 +999,8 @@ module keycap_shell(
                     roll_deg = roll_deg,
                     quality = quality,
                     top_offset_x = top_offset_x,
-                    top_offset_y = top_offset_y
+                    top_offset_y = top_offset_y,
+                    top_corner_radii = resolved_top_corner_radii
                 );
 
             if (top_hat_enabled && top_hat_height > 0) {
@@ -912,7 +1049,8 @@ module keycap_shell(
             roll_deg = roll_deg,
             quality = quality,
             top_offset_x = top_offset_x,
-            top_offset_y = top_offset_y
+            top_offset_y = top_offset_y,
+            top_corner_radii = resolved_top_corner_radii
         );
 
         if (top_hat_enabled && top_hat_height < 0) {

@@ -224,6 +224,26 @@ const zh = Object.freeze({
       label: "R",
       hint: "{maxRadius} 时为圆形，接近 0 mm 时边角更尖。",
     },
+    topCornerRadius: {
+      label: "上面 R",
+      hint: "同时圆化键顶上表面的四个角。当前最大值为 {maxRadius}。",
+    },
+    topCornerRadiusIndividualEnabled: {
+      label: "分别调整",
+      hint: "开启后可分别调整四个角的 R。",
+    },
+    topCornerRadiusLeftTop: {
+      label: "左上 R",
+    },
+    topCornerRadiusRightTop: {
+      label: "右上 R",
+    },
+    topCornerRadiusRightBottom: {
+      label: "右下 R",
+    },
+    topCornerRadiusLeftBottom: {
+      label: "左下 R",
+    },
     jisEnterNotchWidth: {
       label: "缺口宽度",
       hint: "左下缺口的横向宽度。最大 {maxWidth}。",

@@ -224,6 +224,26 @@ const ja = Object.freeze({
       label: "R",
       hint: "{maxRadius} で丸、0 mm に近づけると角が立ちます",
     },
+    topCornerRadius: {
+      label: "上面のR",
+      hint: "キートップ上面の四隅をまとめて丸めます。現在の最大は {maxRadius} です",
+    },
+    topCornerRadiusIndividualEnabled: {
+      label: "個別",
+      hint: "オンにすると四隅のRを個別に調整できます",
+    },
+    topCornerRadiusLeftTop: {
+      label: "左上R",
+    },
+    topCornerRadiusRightTop: {
+      label: "右上R",
+    },
+    topCornerRadiusRightBottom: {
+      label: "右下R",
+    },
+    topCornerRadiusLeftBottom: {
+      label: "左下R",
+    },
     jisEnterNotchWidth: {
       label: "欠き込み幅",
       hint: "左下に空ける横方向の欠き込みです。最大 {maxWidth} です",

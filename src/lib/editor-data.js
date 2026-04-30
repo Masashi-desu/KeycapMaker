@@ -85,6 +85,12 @@ const TOP_HAT_MAX_SHOULDER_ANGLE = 85;
 const TOP_HAT_MIN_SHOULDER_RADIUS = 0;
 const TOP_HAT_EDGE_CLEARANCE = 0.2;
 const TOP_HAT_RECESS_CLEARANCE = 0.05;
+const TOP_CORNER_RADIUS_FIELD_KEYS = Object.freeze([
+  "topCornerRadiusLeftTop",
+  "topCornerRadiusRightTop",
+  "topCornerRadiusRightBottom",
+  "topCornerRadiusLeftBottom",
+]);
 const RESERVED_COMPAT_PAYLOAD_KEYS = new Set(["kind", "schemaVersion", "profileSchemaVersion", "savedAt", "selectors", "params"]);
 const KNOWN_EDITOR_PARAM_KEYS = Object.freeze(
   Array.from(new Set(keycapEditorProfiles.profiles.flatMap((profile) => Object.keys(profile.defaults ?? {})))),
@@ -581,6 +587,18 @@ function resolveTopPlaneGeometry(params = {}) {
   };
 }
 
+function getTopCornerRadiusMax(params = {}) {
+  const geometry = resolveTopPlaneGeometry(params);
+  return Math.max(Math.min(
+    geometry.topRight - geometry.topLeft,
+    geometry.topBack - geometry.topFront,
+  ) / 2, 0);
+}
+
+function clampTopCornerRadius(value, params = {}, fallback = 0) {
+  return clampNumberRange(value, fallback, 0, getTopCornerRadiusMax(params));
+}
+
 function resolveTopEdgeHeights(params = {}) {
   const geometry = resolveTopPlaneGeometry(params);
   const topPitchDeg = Number(params.topPitchDeg ?? 0);
@@ -632,6 +650,21 @@ export function syncDerivedKeycapParams(params = {}) {
     params.topSurfaceShape,
     resolveProfileTopSurfaceShape(profileKey, defaults.topSurfaceShape, "flat"),
   );
+  if ("topCornerRadius" in defaults || "topCornerRadius" in params) {
+    params.topCornerRadius = clampTopCornerRadius(
+      params.topCornerRadius,
+      params,
+      defaults.topCornerRadius ?? 0,
+    );
+    params.topCornerRadiusIndividualEnabled = typeof params.topCornerRadiusIndividualEnabled === "boolean"
+      ? params.topCornerRadiusIndividualEnabled
+      : Boolean(defaults.topCornerRadiusIndividualEnabled);
+    TOP_CORNER_RADIUS_FIELD_KEYS.forEach((fieldKey) => {
+      params[fieldKey] = params.topCornerRadiusIndividualEnabled
+        ? clampTopCornerRadius(params[fieldKey], params, defaults[fieldKey] ?? params.topCornerRadius)
+        : params.topCornerRadius;
+    });
+  }
   params.typewriterCornerRadius = clampTypewriterCornerRadius(
     params.typewriterCornerRadius,
     defaults.typewriterCornerRadius ?? getTypewriterCornerRadiusMax(params),
@@ -756,6 +789,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "topScale") {
     return clampNumberRange(value, fallback, 0.5, 1);
+  }
+
+  if (fieldKey === "topCornerRadius" || TOP_CORNER_RADIUS_FIELD_KEYS.includes(fieldKey)) {
+    return clampTopCornerRadius(value, paramsContext, fallback);
   }
 
   if (findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.outlineDelta)) {

@@ -78,6 +78,12 @@ const SIDE_LEGEND_CONFIGS = Object.freeze([
   { side: "left", paramPrefix: "sideLegendLeft", userPrefix: "side_legend_left", minimumWidthField: "keyDepth" },
   { side: "right", paramPrefix: "sideLegendRight", userPrefix: "side_legend_right", minimumWidthField: "keyDepth" },
 ]);
+const TOP_CORNER_RADIUS_FIELD_KEYS = Object.freeze([
+  "topCornerRadiusLeftTop",
+  "topCornerRadiusRightTop",
+  "topCornerRadiusRightBottom",
+  "topCornerRadiusLeftBottom",
+]);
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
@@ -113,6 +119,20 @@ function clampTypewriterCornerRadius(value, fallback = 0) {
 function clampMinimum(value, fallback, minimum) {
   const nextValue = Number(value);
   return Number.isFinite(nextValue) ? Math.max(nextValue, minimum) : fallback;
+}
+
+function clampNumberRange(value, fallback, minimum, maximum) {
+  const safeMaximum = Math.max(Number(maximum) || minimum, minimum);
+  const fallbackValue = Number(fallback);
+  const nextValue = Number(value);
+  const resolvedFallback = Number.isFinite(fallbackValue)
+    ? Math.min(Math.max(fallbackValue, minimum), safeMaximum)
+    : minimum;
+  if (!Number.isFinite(nextValue)) {
+    return resolvedFallback;
+  }
+
+  return Math.min(Math.max(nextValue, minimum), safeMaximum);
 }
 
 function numberOr(value, fallback) {
@@ -175,6 +195,20 @@ function resolveShapeGeometryParameters(params = {}) {
   const topScale = clampTopScale(params.topScale, defaults.topScale ?? 1);
   const horizontalAngle = resolveTopScaleAngle(keyWidth, topCenterHeight, topScale);
   const verticalAngle = resolveTopScaleAngle(keyDepth, topCenterHeight, topScale);
+  const topWidth = isTypewriterGeometryType(geometryType) ? keyWidth : keyWidth * topScale;
+  const topDepth = isTypewriterGeometryType(geometryType) ? keyDepth : keyDepth * topScale;
+  const topCornerRadiusMax = Math.max(Math.min(topWidth, topDepth) / 2, 0);
+  const defaultTopCornerRadius = Math.max(Number(geometryDefaults.topCornerRadius ?? 0), 0);
+  const topCornerRadius = clampNumberRange(
+    params.topCornerRadius,
+    defaultTopCornerRadius,
+    0,
+    topCornerRadiusMax,
+  );
+  const topCornerIndividualEnabled = Boolean(params.topCornerRadiusIndividualEnabled);
+  const topCornerRadii = TOP_CORNER_RADIUS_FIELD_KEYS.map((fieldKey) => (
+    clampNumberRange(params[fieldKey], topCornerRadius, 0, topCornerRadiusMax)
+  ));
 
   return {
     shapeGeometryType: geometryType,
@@ -184,7 +218,9 @@ function resolveShapeGeometryParameters(params = {}) {
     profileRightAngle: isTypewriterGeometryType(geometryType) ? 0 : horizontalAngle,
     topThickness: Math.max(Number(geometryDefaults.topThickness ?? 0.05), 0.05),
     bottomCornerRadius: Math.max(Number(geometryDefaults.bottomCornerRadius ?? 0), 0),
-    topCornerRadius: Math.max(Number(geometryDefaults.topCornerRadius ?? 0), 0),
+    topCornerRadius,
+    topCornerIndividualEnabled,
+    topCornerRadii,
   };
 }
 
@@ -642,6 +678,10 @@ function formatDefinitionValue(value) {
     return value ? "true" : "false";
   }
 
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => formatDefinitionValue(item)).join(", ")}]`;
+  }
+
   if (typeof value === "string") {
     return JSON.stringify(value);
   }
@@ -702,6 +742,8 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_thickness: shapeGeometry.topThickness,
     user_bottom_corner_radius: shapeGeometry.bottomCornerRadius,
     user_top_corner_radius: shapeGeometry.topCornerRadius,
+    user_top_corner_individual_enabled: shapeGeometry.topCornerIndividualEnabled,
+    user_top_corner_radii: shapeGeometry.topCornerRadii,
     user_top_shape_type: topSurfaceShape,
     user_dish_radius: params.dishRadius,
     user_dish_depth: params.dishDepth,

@@ -417,6 +417,52 @@ test("正方形キーの topScale は上面を正方形のまま縮める", asyn
   }
 });
 
+test("custom shell の上面Rを SCAD wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topCornerRadius: 2.5,
+        topCornerRadiusIndividualEnabled: true,
+        topCornerRadiusLeftTop: 1,
+        topCornerRadiusRightTop: 2,
+        topCornerRadiusRightBottom: 3,
+        topCornerRadiusLeftBottom: 4,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.equal(readScadDefinition(jobScad, "user_top_corner_radius"), 2.5);
+    assert.equal(readRawScadDefinition(jobScad, "user_top_corner_individual_enabled"), "true");
+    assert.equal(readRawScadDefinition(jobScad, "user_top_corner_radii"), "[1, 2, 3, 4]");
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("typewriter の上面基準高さを SCAD wrapper へ渡す", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,

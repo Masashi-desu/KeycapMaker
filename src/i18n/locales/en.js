@@ -224,6 +224,26 @@ const en = Object.freeze({
       label: "R",
       hint: "{maxRadius} is fully round; values near 0 mm make the corners sharper.",
     },
+    topCornerRadius: {
+      label: "Top Radius",
+      hint: "Rounds all four corners of the keytop surface together. Current maximum: {maxRadius}.",
+    },
+    topCornerRadiusIndividualEnabled: {
+      label: "Individual",
+      hint: "Turn on to adjust each corner radius separately.",
+    },
+    topCornerRadiusLeftTop: {
+      label: "Top-Left Radius",
+    },
+    topCornerRadiusRightTop: {
+      label: "Top-Right Radius",
+    },
+    topCornerRadiusRightBottom: {
+      label: "Bottom-Right Radius",
+    },
+    topCornerRadiusLeftBottom: {
+      label: "Bottom-Left Radius",
+    },
     jisEnterNotchWidth: {
       label: "Notch Width",
       hint: "Horizontal width of the lower-left notch. Maximum: {maxWidth}.",
