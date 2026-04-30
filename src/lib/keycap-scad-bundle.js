@@ -45,6 +45,33 @@ const LEGEND_FIELD_SUFFIXES = Object.freeze({
   offsetX: "OffsetX",
   offsetY: "OffsetY",
 });
+const TOP_LEGEND_CONFIGS = Object.freeze([
+  { slot: "center", paramPrefix: "legend", userPrefix: "legend", exportTarget: "legend" },
+  {
+    slot: "left-top",
+    paramPrefix: "topLegendLeftTop",
+    userPrefix: "top_legend_left_top",
+    exportTarget: "top_legend_left_top",
+  },
+  {
+    slot: "right-top",
+    paramPrefix: "topLegendRightTop",
+    userPrefix: "top_legend_right_top",
+    exportTarget: "top_legend_right_top",
+  },
+  {
+    slot: "left-bottom",
+    paramPrefix: "topLegendLeftBottom",
+    userPrefix: "top_legend_left_bottom",
+    exportTarget: "top_legend_left_bottom",
+  },
+  {
+    slot: "right-bottom",
+    paramPrefix: "topLegendRightBottom",
+    userPrefix: "top_legend_right_bottom",
+    exportTarget: "top_legend_right_bottom",
+  },
+]);
 const SIDE_LEGEND_CONFIGS = Object.freeze([
   { side: "front", paramPrefix: "sideLegendFront", userPrefix: "side_legend_front", minimumWidthField: "keyWidth" },
   { side: "back", paramPrefix: "sideLegendBack", userPrefix: "side_legend_back", minimumWidthField: "keyWidth" },
@@ -625,15 +652,18 @@ function formatDefinitionValue(value) {
 async function createKeycapDefinitions({ params, exportTarget }) {
   const shapeGeometry = resolveShapeGeometryParameters(params);
   const topSurfaceShape = params.topSurfaceShape ?? (Math.abs(Number(params.dishDepth ?? 0)) > 0.001 ? "spherical" : "flat");
-  const topLegendDefinitions = await resolveLegendBridgeDefinitions({
-    params,
-    paramPrefix: "legend",
-    userPrefix: "legend",
-    // Keep this as an overlarge surface-fitting region, not a key footprint cap.
-    // Oversized legends are allowed to overhang instead of being clipped.
-    minimumWidth: positiveTextMetric(params.keyWidth),
-    minimumDepth: positiveTextMetric(params.keyDepth),
-  });
+  const topLegendDefinitionList = await Promise.all(TOP_LEGEND_CONFIGS.map((config) => (
+    resolveLegendBridgeDefinitions({
+      params,
+      paramPrefix: config.paramPrefix,
+      userPrefix: config.userPrefix,
+      // Keep this as an overlarge surface-fitting region, not a key footprint cap.
+      // Oversized legends are allowed to overhang instead of being clipped.
+      minimumWidth: positiveTextMetric(params.keyWidth),
+      minimumDepth: positiveTextMetric(params.keyDepth),
+    })
+  )));
+  const topLegendDefinitions = Object.assign({}, ...topLegendDefinitionList);
   const sideLegendDefinitionList = await Promise.all(SIDE_LEGEND_CONFIGS.map((config) => (
     resolveLegendBridgeDefinitions({
       params,
@@ -756,7 +786,7 @@ async function getRuntimeAssetsForFont(fontKey) {
 
 function getLegendFontKeys(params = {}) {
   return [
-    params.legendFontKey,
+    ...TOP_LEGEND_CONFIGS.map((config) => params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey)]),
     ...SIDE_LEGEND_CONFIGS.map((config) => params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey)]),
   ].filter(Boolean);
 }

@@ -80,6 +80,15 @@ const zh = Object.freeze({
     expand: "展开{title}",
     collapse: "折叠{title}",
   },
+  legendCards: {
+    center: "中央字符",
+    rightTop: "右上字符",
+    rightBottom: "右下字符",
+    leftTop: "左上字符",
+    leftBottom: "左下字符",
+    keytop: "键顶",
+    sidewall: "{side}侧壁",
+  },
   stemCards: {
     clearance: "间隙",
   },
@@ -500,6 +509,8 @@ const zh = Object.freeze({
     body: "本体",
     rim: "键圈",
     legend: "字符",
+    topLegend: "{position}",
+    sideLegend: "{side}侧面字符",
     homing: "定位标记",
   },
   preview: {

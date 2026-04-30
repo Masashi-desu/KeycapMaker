@@ -97,7 +97,7 @@ flowchart LR
 ## 現在のユーザー向け出力
 
 - `3MF`
-  body / rim / homing / legend の各メッシュを part object として保持し、components 親 object にまとめる
+  body / rim / homing / キートップ legend / sidewall legend の各メッシュを part object として保持し、components 親 object にまとめる
 - `STL`
   オプション扱いの単色形状出力。色と legend は含めず、単一メッシュとして保存する
 - `編集データ JSON`
@@ -105,7 +105,7 @@ flowchart LR
 
 ## 現時点の実装制約
 
-- legend はキートップ 1 件と sidewall front / back / left / right の固定 4 面モデル
+- legend はキートップ上の中央 / 右上 / 右下 / 左上 / 左下と sidewall front / back / left / right の固定モデル
 - キートップ legend の露出面は top dish 前提
 - sidewall legend は各側面の中央基準面の傾きに合わせて配置し、壁の内側面まで自動で埋め込む。角丸や JIS Enter の欠き込み面へは自動追従しない
 - variable font の native style は使えるが、italic / slanted は font 側に実データがない限り出せない

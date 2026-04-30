@@ -11,7 +11,7 @@
 
 ## 現在の主要ファイル
 
-- `base/keycap.scad`: `export_target` で `preview / body / body_core / rim / homing / legend / single_material_shape` を切り替える基礎エントリ
+- `base/keycap.scad`: `export_target` で `preview / body / body_core / rim / homing / legend / top_legend_* / side_legend_* / single_material_shape` を切り替える基礎エントリ
 - `modules/keycap_shell.scad`: `top_center_height + pitch / roll` 基準の外形シェル、dish、内側 hollow
 - `modules/keycap_jis_enter.scad`: JIS / ISO 系の縦長 Enter footprint 用シェル、typewriter variant、内側 hollow
 - `modules/stem_mx.scad`: MX 互換 stem ボディ
@@ -32,6 +32,7 @@
 - `samples/keycap-typewriter-rim-tilted.scad`: pitch / roll 付き typewriter key rim の接合確認用サンプル
 - `samples/keycap-legend-seat.scad`: flush legend の座面切り抜き確認用サンプル
 - `samples/keycap-multi-character-legend.scad`: 複数文字でも明示サイズを保つか確認するサンプル
+- `samples/keycap-top-legends.scad`: キートップ上の中央 / 右上 / 右下 / 左上 / 左下 legend 配置確認用サンプル
 - `samples/keycap-rounded-legend.scad`: 丸みのある書体の legend 品質確認用サンプル
 - `samples/keycap-homing-bar.scad`: homing bar 単体出力の確認用サンプル
 - `samples/keycap-stem-clip.scad`: 強い左右傾斜でも stem が内側天井で止まるか確認するサンプル

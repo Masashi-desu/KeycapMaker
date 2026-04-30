@@ -16,7 +16,7 @@ import {
 export const DEFAULT_EXPORT_BASE_NAME = "keycap-preview";
 export const EDITOR_DATA_KIND = "keycap-maker/editor-params";
 export const LEGACY_EDITOR_DATA_KINDS = new Set([EDITOR_DATA_KIND.replace("keycap-maker", "keycap" + "s-maker")]);
-export const EDITOR_DATA_SCHEMA_VERSION = 4;
+export const EDITOR_DATA_SCHEMA_VERSION = 5;
 export const EDITOR_DATA_COMPAT_KIND = "keycap-maker/editor-params-patch";
 export const EDITOR_DATA_COMPAT_SCHEMA_VERSION = 1;
 
@@ -39,6 +39,10 @@ const COLOR_FIELD_KEYS = new Set([
   "bodyColor",
   "rimColor",
   "legendColor",
+  "topLegendRightTopColor",
+  "topLegendRightBottomColor",
+  "topLegendLeftTopColor",
+  "topLegendLeftBottomColor",
   "sideLegendFrontColor",
   "sideLegendBackColor",
   "sideLegendLeftColor",
@@ -63,7 +67,15 @@ const LEGEND_FIELD_SUFFIXES = Object.freeze({
   offsetX: "OffsetX",
   offsetY: "OffsetY",
 });
-const LEGEND_PARAM_PREFIXES = Object.freeze(["legend", "sideLegendFront", "sideLegendBack", "sideLegendLeft", "sideLegendRight"]);
+const TOP_LEGEND_PARAM_PREFIXES = Object.freeze([
+  "legend",
+  "topLegendLeftTop",
+  "topLegendRightTop",
+  "topLegendLeftBottom",
+  "topLegendRightBottom",
+]);
+const SIDE_LEGEND_PARAM_PREFIXES = Object.freeze(["sideLegendFront", "sideLegendBack", "sideLegendLeft", "sideLegendRight"]);
+const LEGEND_PARAM_PREFIXES = Object.freeze([...TOP_LEGEND_PARAM_PREFIXES, ...SIDE_LEGEND_PARAM_PREFIXES]);
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const TOP_HAT_MIN_SIZE = 0.2;

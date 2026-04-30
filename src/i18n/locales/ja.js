@@ -81,6 +81,11 @@ const ja = Object.freeze({
     collapse: "{title}を折りたたむ",
   },
   legendCards: {
+    center: "中央の印字",
+    rightTop: "右上の印字",
+    rightBottom: "右下の印字",
+    leftTop: "左上の印字",
+    leftBottom: "左下の印字",
     keytop: "キートップ",
     sidewall: "{side}サイドウォール",
   },
@@ -101,7 +106,7 @@ const ja = Object.freeze({
         },
         legend: {
           title: "印字",
-          description: "キートップとサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
+          description: "キートップ上の複数位置とサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
         },
         homing: {
           title: "指の目印",
@@ -125,7 +130,7 @@ const ja = Object.freeze({
         },
         legend: {
           title: "印字",
-          description: "キートップとサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
+          description: "キートップ上の複数位置とサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
         },
         homing: {
           title: "指の目印",
@@ -149,7 +154,7 @@ const ja = Object.freeze({
         },
         legend: {
           title: "印字",
-          description: "キートップとサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
+          description: "キートップ上の複数位置とサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
         },
         homing: {
           title: "指の目印",
@@ -173,7 +178,7 @@ const ja = Object.freeze({
         },
         legend: {
           title: "印字",
-          description: "キートップとサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
+          description: "キートップ上の複数位置とサイドウォールの文字、書体、見た目、位置、盛り上がりをまとめて調整します。複数文字もそのまま入力できます。",
         },
         homing: {
           title: "指の目印",
@@ -546,6 +551,7 @@ const ja = Object.freeze({
     body: "本体",
     rim: "キーリム",
     legend: "印字",
+    topLegend: "{position}",
     sideLegend: "{side}サイド印字",
     homing: "目印",
   },

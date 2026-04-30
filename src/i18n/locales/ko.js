@@ -80,6 +80,15 @@ const ko = Object.freeze({
     expand: "{title} 펼치기",
     collapse: "{title} 접기",
   },
+  legendCards: {
+    center: "중앙 각인",
+    rightTop: "오른쪽 위 각인",
+    rightBottom: "오른쪽 아래 각인",
+    leftTop: "왼쪽 위 각인",
+    leftBottom: "왼쪽 아래 각인",
+    keytop: "키톱",
+    sidewall: "{side} 측면",
+  },
   stemCards: {
     clearance: "클리어런스",
   },
@@ -500,6 +509,8 @@ const ko = Object.freeze({
     body: "본체",
     rim: "키 림",
     legend: "각인",
+    topLegend: "{position}",
+    sideLegend: "{side} 측면 각인",
     homing: "위치 표시",
   },
   preview: {

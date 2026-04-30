@@ -1,7 +1,18 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-const OVERLAY_LAYER_NAMES = new Set(["legend", "legend-front", "legend-back", "legend-left", "legend-right", "homing"]);
+const OVERLAY_LAYER_NAMES = new Set([
+  "legend",
+  "legend-left-top",
+  "legend-right-top",
+  "legend-left-bottom",
+  "legend-right-bottom",
+  "legend-front",
+  "legend-back",
+  "legend-left",
+  "legend-right",
+  "homing",
+]);
 const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 6;
 const MIN_NORMAL_LENGTH_SQ = 1e-12;
 const DEFAULT_CAMERA_OFFSET = new THREE.Vector3(1.42, 1.18, 1.32);

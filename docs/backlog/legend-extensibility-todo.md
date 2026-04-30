@@ -9,7 +9,7 @@
 - body と legend は separate volume として扱っており、その点では疎結合
 - 文字形状の生成は `scad/modules/legend_block.scad` に分離されている
 - キートップ legend の露出面は `scad/base/keycap.scad` で top dish 前提の surface fitting を使う
-- UI と bridge はキートップ `user_legend_*` と固定 4 面の `user_side_legend_*` を持つ
+- UI と bridge はキートップ中央の `user_legend_*`、キートップ四隅の `user_top_legend_*`、固定 4 面の `user_side_legend_*` を持つ
 - 3MF 生成器は可変個 mesh を扱えるため、ボトルネックは主に UI / bridge / SCAD 配置面の層にある
 
 ## 結論
@@ -17,7 +17,7 @@
 - 単一 top legend:
   現状の構成で維持できる
 - 複数 top legend:
-  データモデルとジョブ生成の拡張が必要
+  中央 / 右上 / 右下 / 左上 / 左下の固定スロットまでは対応済み。任意個の `legendItems[]` 形式は未対応
 - side legend:
   front / back / left / right の固定 4 面は対応済み。各側面の中央基準面の傾きには追従し、壁の内側面まで自動で埋め込む。任意面、複数 side legend、角丸や欠き込みへの厳密追従は未対応
 
@@ -30,7 +30,7 @@
 
 ### 2. データモデルは固定 legend 前提
 
-- `src/main.js` の UI はキートップ 1 件と sidewall 4 面の固定項目を持つ
+- `src/main.js` の UI はキートップ 5 スロットと sidewall 4 面の固定項目を持つ
 - 任意個の `legendItems[]` にはまだ移行していない
 
 ### 3. レイヤー管理が固定名
@@ -57,7 +57,7 @@
 
 ### Phase 3. part / layer 管理の一般化
 
-- 固定レイヤー名ではなく、可変個 part を preview / export に流す
+- 固定レイヤー名ではなく、将来の可変個 part を preview / export に流す
 - overlay 判定は `name` 固定ではなく属性で扱う
 
 ### Phase 4. side legend の導入
@@ -67,7 +67,7 @@
 
 ### Phase 5. サンプルと検証の追加
 
-- 複数 top legend 用サンプルを追加する
+- 任意個 top legend に移行する場合は追加サンプルを増やす。固定 5 スロット用サンプルは `scad/samples/keycap-top-legends.scad` で対応済み
 - side legend 用サンプルを追加する
 - preview / export / Bambu Studio での確認観点を追加する
 

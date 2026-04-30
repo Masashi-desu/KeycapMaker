@@ -21,6 +21,14 @@
 - `rim`
 - `homing`
 - `legend`
+- `top_legend_right_top`
+- `top_legend_right_bottom`
+- `top_legend_left_top`
+- `top_legend_left_bottom`
+- `side_legend_front`
+- `side_legend_back`
+- `side_legend_left`
+- `side_legend_right`
 - `single_material_shape`
 
 この構成により、preview 用表示と part 単位 export を同じ基礎形状から扱います。
@@ -85,7 +93,7 @@ flowchart TD
   stemNominals["scad/presets/stem-nominals.scad"] --> wrapper
   wrapper --> worker["src/openscad-worker.js"]
   worker --> wasm["bundled OpenSCAD WASM runtime"]
-  wasm --> off["body / rim / homing / legend の OFF"]
+  wasm --> off["body / rim / homing / legend 系の OFF"]
   off --> preview["preview-scene.js / Three.js"]
   off --> export3mf["export-3mf.js / 3MF"]
   wasm --> exportStl["single_material_shape / STL"]
@@ -119,6 +127,8 @@ flowchart TD
   spherical top でも legend 表面へ body が被らないか確認する回帰用
 - `scad/samples/keycap-multi-character-legend.scad`
   複数文字でも自動縮小せず、明示サイズを保つか確認する回帰用
+- `scad/samples/keycap-top-legends.scad`
+  キートップ上の中央 / 右上 / 右下 / 左上 / 左下 legend 配置確認用
 - `scad/samples/keycap-rounded-legend.scad`
   丸みのある書体で legend 輪郭の品質を確認する回帰用
 - `scad/samples/keycap-sidewall-legend.scad`
@@ -150,8 +160,8 @@ flowchart TD
 - 3MF 内では part ごとに object resource を分ける
 - `build` には part 直列ではなく、body / rim / homing / legend 系 part を `components` として束ねた親 object を 1 件だけ置く
 - 親 object の `name` には UI の `名称` を使う
-- 現在の part 候補は `body`、`rim`、`homing`、`legend`、`legend-front`、`legend-back`、`legend-left`、`legend-right`
-- キートップ legend が無効なら `legend` object は含まれない
+- 現在の part 候補は `body`、`rim`、`homing`、`legend`、`legend-left-top`、`legend-right-top`、`legend-left-bottom`、`legend-right-bottom`、`legend-front`、`legend-back`、`legend-left`、`legend-right`
+- キートップ legend が無効なら対応する `legend*` object は含まれない
 - sidewall legend が無効なら対応する `legend-*` object は含まれない
 - typewriter key rim が無効なら rim object は含まれない
 - homing bar が無効なら homing object は含まれない
@@ -196,7 +206,7 @@ flowchart TD
 
 ## 現在の既知制約
 
-- legend はキートップ 1 件と sidewall front / back / left / right の固定 4 面モデル
+- legend はキートップ上の中央 / 右上 / 右下 / 左上 / 左下と sidewall front / back / left / right の固定モデル
 - キートップ legend の露出面は top dish 前提
 - sidewall legend は各側面の中央基準面の傾きに合わせて配置し、壁の内側面まで自動で埋め込む。角丸や JIS Enter の欠き込み面へは自動追従しない
 - font asset は variable / static の混在を許容するが、native style の有無は font ごとに異なる

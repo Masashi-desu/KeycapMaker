@@ -81,6 +81,11 @@ const en = Object.freeze({
     collapse: "Collapse {title}",
   },
   legendCards: {
+    center: "Center Legend",
+    rightTop: "Upper Right Legend",
+    rightBottom: "Lower Right Legend",
+    leftTop: "Upper Left Legend",
+    leftBottom: "Lower Left Legend",
     keytop: "Keytop",
     sidewall: "{side} Sidewall",
   },
@@ -101,7 +106,7 @@ const en = Object.freeze({
         },
         legend: {
           title: "Legend",
-          description: "Adjust keytop and sidewall legend text, typeface, appearance, position, and height. Multi-character legends can be entered as-is.",
+          description: "Adjust legend text, typeface, appearance, position, and height across multiple keytop positions and sidewalls. Multi-character legends can be entered as-is.",
         },
         homing: {
           title: "Homing Mark",
@@ -125,7 +130,7 @@ const en = Object.freeze({
         },
         legend: {
           title: "Legend",
-          description: "Adjust keytop and sidewall legend text, typeface, appearance, position, and height. Multi-character legends can be entered as-is.",
+          description: "Adjust legend text, typeface, appearance, position, and height across multiple keytop positions and sidewalls. Multi-character legends can be entered as-is.",
         },
         homing: {
           title: "Homing Mark",
@@ -149,7 +154,7 @@ const en = Object.freeze({
         },
         legend: {
           title: "Legend",
-          description: "Adjust keytop and sidewall legend text, typeface, appearance, position, and height. Multi-character legends can be entered as-is.",
+          description: "Adjust legend text, typeface, appearance, position, and height across multiple keytop positions and sidewalls. Multi-character legends can be entered as-is.",
         },
         homing: {
           title: "Homing Mark",
@@ -173,7 +178,7 @@ const en = Object.freeze({
         },
         legend: {
           title: "Legend",
-          description: "Adjust keytop and sidewall legend text, typeface, appearance, position, and height. Multi-character legends can be entered as-is.",
+          description: "Adjust legend text, typeface, appearance, position, and height across multiple keytop positions and sidewalls. Multi-character legends can be entered as-is.",
         },
         homing: {
           title: "Homing Mark",
@@ -554,6 +559,7 @@ const en = Object.freeze({
     body: "Body",
     rim: "Key Rim",
     legend: "Legend",
+    topLegend: "{position}",
     sideLegend: "{side} Side Legend",
     homing: "Homing Mark",
   },

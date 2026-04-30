@@ -227,6 +227,65 @@ test("印字サイズの初期値は 5mm にする", () => {
   assert.equal(createDefaultKeycapParams("typewriter-jis-enter").legendSize, 5.0);
 });
 
+test("キートップ四隅の印字は中央と同じパラメータセットを持つ", () => {
+  const shapeKeys = ["custom-shell", "jis-enter", "typewriter", "typewriter-jis-enter"];
+  const prefixes = ["topLegendRightTop", "topLegendRightBottom", "topLegendLeftTop", "topLegendLeftBottom"];
+  const textDefaults = {
+    topLegendLeftTopText: "1",
+    topLegendRightTopText: "2",
+    topLegendLeftBottomText: "3",
+    topLegendRightBottomText: "4",
+  };
+  const offsetDefaults = {
+    "custom-shell": { x: 0.72, y: 0.72 },
+    "jis-enter": { x: 1.08, y: 1.44 },
+    "typewriter": { x: 0.72, y: 0.72 },
+    "typewriter-jis-enter": { x: 1.08, y: 1.44 },
+  };
+  const suffixes = [
+    "Enabled",
+    "Color",
+    "Text",
+    "FontKey",
+    "FontStyleKey",
+    "UnderlineEnabled",
+    "Size",
+    "OutlineDelta",
+    "Height",
+    "Embed",
+    "OffsetX",
+    "OffsetY",
+  ];
+
+  for (const shapeKey of shapeKeys) {
+    const defaults = createDefaultKeycapParams(shapeKey);
+    const { x, y } = offsetDefaults[shapeKey];
+    const expectedOffsets = {
+      topLegendLeftTop: { x, y: -y },
+      topLegendRightTop: { x: -x, y: -y },
+      topLegendLeftBottom: { x, y },
+      topLegendRightBottom: { x: -x, y },
+    };
+
+    for (const prefix of prefixes) {
+      for (const suffix of suffixes) {
+        assert.ok(`${prefix}${suffix}` in defaults);
+      }
+
+      assert.equal(defaults[`${prefix}Enabled`], false);
+      assert.equal(defaults[`${prefix}Size`], 3.5);
+      assert.equal(defaults[`${prefix}Height`], 0);
+      assert.equal(defaults[`${prefix}Embed`], 0.6);
+      assert.equal(defaults[`${prefix}Color`], "#212529");
+      assert.equal(defaults[`${prefix}OffsetX`], expectedOffsets[prefix].x);
+      assert.equal(defaults[`${prefix}OffsetY`], expectedOffsets[prefix].y);
+    }
+    for (const [textKey, expectedText] of Object.entries(textDefaults)) {
+      assert.equal(defaults[textKey], expectedText);
+    }
+  }
+});
+
 test("サイドウォール印字サイズは4mm、高さ初期値は面一にする", () => {
   const shapeKeys = ["custom-shell", "jis-enter", "typewriter", "typewriter-jis-enter"];
   const sideSizeKeys = ["sideLegendFrontSize", "sideLegendBackSize", "sideLegendLeftSize", "sideLegendRightSize"];

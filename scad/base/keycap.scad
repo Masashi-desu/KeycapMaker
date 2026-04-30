@@ -212,17 +212,109 @@ legend_bottom_skin = min(0.2, max(top_thickness * 0.5, 0.05));
 legend_embed = min(max(requested_legend_embed, 0), max(top_thickness - legend_bottom_skin, 0));
 // keycap_shell() builds the top face from a 0.01-thick slab, so subtraction must overshoot the surface slightly.
 legend_visible_surface_overlap = 0.02;
-legend_has_text = len(legend_text) > 0;
 legend_surface_height = max(legend_height, 0);
 legend_below_surface = legend_surface_height == 0
     ? max(legend_embed, max(top_thickness - legend_bottom_skin, 0))
     : legend_embed;
 legend_total_height = max(legend_below_surface + legend_surface_height, 0);
-legend_plan_left = legend_offset_x - legend_width / 2;
-legend_plan_right = legend_offset_x + legend_width / 2;
-legend_plan_front = legend_offset_y - legend_depth / 2;
-legend_plan_back = legend_offset_y + legend_depth / 2;
-legend_plan_radius = 0;
+top_legend_anchor_width = top_hat_enabled ? top_hat_top_width : key_width;
+top_legend_anchor_depth = top_hat_enabled ? top_hat_top_depth : key_depth;
+// Keep corner legend anchors on the outer reference; defaults can offset inward from here.
+top_legend_anchor_offset_ratio = 0.25;
+function top_legend_anchor_x(anchor) =
+    anchor == "right"
+        ? top_legend_anchor_width * top_legend_anchor_offset_ratio
+        : anchor == "left"
+            ? -top_legend_anchor_width * top_legend_anchor_offset_ratio
+            : 0;
+function top_legend_anchor_y(anchor) =
+    anchor == "top"
+        ? top_legend_anchor_depth * top_legend_anchor_offset_ratio
+        : anchor == "bottom"
+            ? -top_legend_anchor_depth * top_legend_anchor_offset_ratio
+            : 0;
+function top_legend_below_surface(surface_height, embed) =
+    surface_height == 0
+        ? max(embed, max(top_thickness - legend_bottom_skin, 0))
+        : embed;
+function top_legend_total_height(surface_height, below_surface) =
+    max(below_surface + surface_height, 0);
+
+top_legend_right_top_enabled = required_param(user_top_legend_right_top_enabled, "user_top_legend_right_top_enabled");
+top_legend_right_top_text = required_param(user_top_legend_right_top_text, "user_top_legend_right_top_text");
+top_legend_right_top_font_name = required_param(user_top_legend_right_top_font_name, "user_top_legend_right_top_font_name");
+top_legend_right_top_underline_enabled = required_param(user_top_legend_right_top_underline_enabled, "user_top_legend_right_top_underline_enabled");
+top_legend_right_top_underline_width = max(required_param(user_top_legend_right_top_underline_width, "user_top_legend_right_top_underline_width"), 0);
+top_legend_right_top_underline_thickness = max(required_param(user_top_legend_right_top_underline_thickness, "user_top_legend_right_top_underline_thickness"), 0);
+top_legend_right_top_underline_offset_y = required_param(user_top_legend_right_top_underline_offset_y, "user_top_legend_right_top_underline_offset_y");
+top_legend_right_top_width = positive_dimension(required_param(user_top_legend_right_top_width, "user_top_legend_right_top_width"));
+top_legend_right_top_depth = positive_dimension(required_param(user_top_legend_right_top_depth, "user_top_legend_right_top_depth"));
+top_legend_right_top_text_size_value = positive_dimension(is_undef(user_top_legend_right_top_text_size) ? top_legend_right_top_depth : user_top_legend_right_top_text_size);
+top_legend_right_top_height = max(required_param(user_top_legend_right_top_height, "user_top_legend_right_top_height"), 0);
+top_legend_right_top_outline_delta = required_param(user_top_legend_right_top_outline_delta, "user_top_legend_right_top_outline_delta");
+top_legend_right_top_offset_x = required_param(user_top_legend_right_top_offset_x, "user_top_legend_right_top_offset_x");
+top_legend_right_top_offset_y = required_param(user_top_legend_right_top_offset_y, "user_top_legend_right_top_offset_y");
+top_legend_right_top_embed = min(max(required_param(user_top_legend_right_top_embed, "user_top_legend_right_top_embed"), 0), max(top_thickness - legend_bottom_skin, 0));
+top_legend_right_top_surface_height = max(top_legend_right_top_height, 0);
+top_legend_right_top_below_surface = top_legend_below_surface(top_legend_right_top_surface_height, top_legend_right_top_embed);
+top_legend_right_top_total_height = top_legend_total_height(top_legend_right_top_surface_height, top_legend_right_top_below_surface);
+
+top_legend_right_bottom_enabled = required_param(user_top_legend_right_bottom_enabled, "user_top_legend_right_bottom_enabled");
+top_legend_right_bottom_text = required_param(user_top_legend_right_bottom_text, "user_top_legend_right_bottom_text");
+top_legend_right_bottom_font_name = required_param(user_top_legend_right_bottom_font_name, "user_top_legend_right_bottom_font_name");
+top_legend_right_bottom_underline_enabled = required_param(user_top_legend_right_bottom_underline_enabled, "user_top_legend_right_bottom_underline_enabled");
+top_legend_right_bottom_underline_width = max(required_param(user_top_legend_right_bottom_underline_width, "user_top_legend_right_bottom_underline_width"), 0);
+top_legend_right_bottom_underline_thickness = max(required_param(user_top_legend_right_bottom_underline_thickness, "user_top_legend_right_bottom_underline_thickness"), 0);
+top_legend_right_bottom_underline_offset_y = required_param(user_top_legend_right_bottom_underline_offset_y, "user_top_legend_right_bottom_underline_offset_y");
+top_legend_right_bottom_width = positive_dimension(required_param(user_top_legend_right_bottom_width, "user_top_legend_right_bottom_width"));
+top_legend_right_bottom_depth = positive_dimension(required_param(user_top_legend_right_bottom_depth, "user_top_legend_right_bottom_depth"));
+top_legend_right_bottom_text_size_value = positive_dimension(is_undef(user_top_legend_right_bottom_text_size) ? top_legend_right_bottom_depth : user_top_legend_right_bottom_text_size);
+top_legend_right_bottom_height = max(required_param(user_top_legend_right_bottom_height, "user_top_legend_right_bottom_height"), 0);
+top_legend_right_bottom_outline_delta = required_param(user_top_legend_right_bottom_outline_delta, "user_top_legend_right_bottom_outline_delta");
+top_legend_right_bottom_offset_x = required_param(user_top_legend_right_bottom_offset_x, "user_top_legend_right_bottom_offset_x");
+top_legend_right_bottom_offset_y = required_param(user_top_legend_right_bottom_offset_y, "user_top_legend_right_bottom_offset_y");
+top_legend_right_bottom_embed = min(max(required_param(user_top_legend_right_bottom_embed, "user_top_legend_right_bottom_embed"), 0), max(top_thickness - legend_bottom_skin, 0));
+top_legend_right_bottom_surface_height = max(top_legend_right_bottom_height, 0);
+top_legend_right_bottom_below_surface = top_legend_below_surface(top_legend_right_bottom_surface_height, top_legend_right_bottom_embed);
+top_legend_right_bottom_total_height = top_legend_total_height(top_legend_right_bottom_surface_height, top_legend_right_bottom_below_surface);
+
+top_legend_left_top_enabled = required_param(user_top_legend_left_top_enabled, "user_top_legend_left_top_enabled");
+top_legend_left_top_text = required_param(user_top_legend_left_top_text, "user_top_legend_left_top_text");
+top_legend_left_top_font_name = required_param(user_top_legend_left_top_font_name, "user_top_legend_left_top_font_name");
+top_legend_left_top_underline_enabled = required_param(user_top_legend_left_top_underline_enabled, "user_top_legend_left_top_underline_enabled");
+top_legend_left_top_underline_width = max(required_param(user_top_legend_left_top_underline_width, "user_top_legend_left_top_underline_width"), 0);
+top_legend_left_top_underline_thickness = max(required_param(user_top_legend_left_top_underline_thickness, "user_top_legend_left_top_underline_thickness"), 0);
+top_legend_left_top_underline_offset_y = required_param(user_top_legend_left_top_underline_offset_y, "user_top_legend_left_top_underline_offset_y");
+top_legend_left_top_width = positive_dimension(required_param(user_top_legend_left_top_width, "user_top_legend_left_top_width"));
+top_legend_left_top_depth = positive_dimension(required_param(user_top_legend_left_top_depth, "user_top_legend_left_top_depth"));
+top_legend_left_top_text_size_value = positive_dimension(is_undef(user_top_legend_left_top_text_size) ? top_legend_left_top_depth : user_top_legend_left_top_text_size);
+top_legend_left_top_height = max(required_param(user_top_legend_left_top_height, "user_top_legend_left_top_height"), 0);
+top_legend_left_top_outline_delta = required_param(user_top_legend_left_top_outline_delta, "user_top_legend_left_top_outline_delta");
+top_legend_left_top_offset_x = required_param(user_top_legend_left_top_offset_x, "user_top_legend_left_top_offset_x");
+top_legend_left_top_offset_y = required_param(user_top_legend_left_top_offset_y, "user_top_legend_left_top_offset_y");
+top_legend_left_top_embed = min(max(required_param(user_top_legend_left_top_embed, "user_top_legend_left_top_embed"), 0), max(top_thickness - legend_bottom_skin, 0));
+top_legend_left_top_surface_height = max(top_legend_left_top_height, 0);
+top_legend_left_top_below_surface = top_legend_below_surface(top_legend_left_top_surface_height, top_legend_left_top_embed);
+top_legend_left_top_total_height = top_legend_total_height(top_legend_left_top_surface_height, top_legend_left_top_below_surface);
+
+top_legend_left_bottom_enabled = required_param(user_top_legend_left_bottom_enabled, "user_top_legend_left_bottom_enabled");
+top_legend_left_bottom_text = required_param(user_top_legend_left_bottom_text, "user_top_legend_left_bottom_text");
+top_legend_left_bottom_font_name = required_param(user_top_legend_left_bottom_font_name, "user_top_legend_left_bottom_font_name");
+top_legend_left_bottom_underline_enabled = required_param(user_top_legend_left_bottom_underline_enabled, "user_top_legend_left_bottom_underline_enabled");
+top_legend_left_bottom_underline_width = max(required_param(user_top_legend_left_bottom_underline_width, "user_top_legend_left_bottom_underline_width"), 0);
+top_legend_left_bottom_underline_thickness = max(required_param(user_top_legend_left_bottom_underline_thickness, "user_top_legend_left_bottom_underline_thickness"), 0);
+top_legend_left_bottom_underline_offset_y = required_param(user_top_legend_left_bottom_underline_offset_y, "user_top_legend_left_bottom_underline_offset_y");
+top_legend_left_bottom_width = positive_dimension(required_param(user_top_legend_left_bottom_width, "user_top_legend_left_bottom_width"));
+top_legend_left_bottom_depth = positive_dimension(required_param(user_top_legend_left_bottom_depth, "user_top_legend_left_bottom_depth"));
+top_legend_left_bottom_text_size_value = positive_dimension(is_undef(user_top_legend_left_bottom_text_size) ? top_legend_left_bottom_depth : user_top_legend_left_bottom_text_size);
+top_legend_left_bottom_height = max(required_param(user_top_legend_left_bottom_height, "user_top_legend_left_bottom_height"), 0);
+top_legend_left_bottom_outline_delta = required_param(user_top_legend_left_bottom_outline_delta, "user_top_legend_left_bottom_outline_delta");
+top_legend_left_bottom_offset_x = required_param(user_top_legend_left_bottom_offset_x, "user_top_legend_left_bottom_offset_x");
+top_legend_left_bottom_offset_y = required_param(user_top_legend_left_bottom_offset_y, "user_top_legend_left_bottom_offset_y");
+top_legend_left_bottom_embed = min(max(required_param(user_top_legend_left_bottom_embed, "user_top_legend_left_bottom_embed"), 0), max(top_thickness - legend_bottom_skin, 0));
+top_legend_left_bottom_surface_height = max(top_legend_left_bottom_height, 0);
+top_legend_left_bottom_below_surface = top_legend_below_surface(top_legend_left_bottom_surface_height, top_legend_left_bottom_embed);
+top_legend_left_bottom_total_height = top_legend_total_height(top_legend_left_bottom_surface_height, top_legend_left_bottom_below_surface);
 
 side_legend_front_enabled = required_param(user_side_legend_front_enabled, "user_side_legend_front_enabled");
 side_legend_front_text = required_param(user_side_legend_front_text, "user_side_legend_front_text");
@@ -384,51 +476,110 @@ homing_bar_anchor_plane_z = keycap_top_plane_height(
 );
 homing_bar_surface_delta = homing_bar_anchor_surface_z - homing_bar_anchor_plane_z;
 
-module keycap_legend_flat_block(height = legend_total_height, quality = "export") {
-    if (legend_enabled && legend_has_text && legend_total_height > 0) {
+module keycap_top_legend_flat_block(
+    enabled,
+    label,
+    width,
+    depth,
+    height,
+    anchor_x,
+    anchor_y,
+    offset_x,
+    offset_y,
+    below_surface,
+    font_name,
+    underline_enabled,
+    underline_width,
+    underline_thickness,
+    underline_offset_y,
+    outline_delta,
+    text_size,
+    quality = "export"
+) {
+    if (enabled && len(label) > 0 && height > 0) {
         keycap_top_plane_transform(active_top_center_height, top_pitch_deg, top_roll_deg, top_offset_x, top_offset_y)
             legend_block(
-                label = legend_text,
-                width = legend_width,
-                depth = legend_depth,
+                label = label,
+                width = width,
+                depth = depth,
                 height = height,
-                offset_x = legend_offset_x,
-                offset_y = legend_offset_y,
-                base_z = -legend_below_surface,
-                font_name = legend_font_name,
-                underline_enabled = legend_underline_enabled,
-                underline_width = legend_underline_width,
-                underline_thickness = legend_underline_thickness,
-                underline_offset_y = legend_underline_offset_y,
-                outline_delta = legend_outline_delta,
-                text_size = legend_text_size_value,
+                offset_x = anchor_x + offset_x,
+                offset_y = anchor_y + offset_y,
+                base_z = -below_surface,
+                font_name = font_name,
+                underline_enabled = underline_enabled,
+                underline_width = underline_width,
+                underline_thickness = underline_thickness,
+                underline_offset_y = underline_offset_y,
+                outline_delta = outline_delta,
+                text_size = text_size,
                 quality = quality
             );
     }
 }
 
-module keycap_legend_surface_volume(top_overlap = 0, quality = "export") {
-    if (legend_enabled && legend_has_text && legend_total_height > 0) {
+module keycap_top_legend_surface_volume(
+    enabled,
+    label,
+    width,
+    depth,
+    surface_height,
+    below_surface,
+    total_height,
+    anchor_x,
+    anchor_y,
+    offset_x,
+    offset_y,
+    font_name,
+    underline_enabled,
+    underline_width,
+    underline_thickness,
+    underline_offset_y,
+    outline_delta,
+    text_size,
+    top_overlap = 0,
+    quality = "export"
+) {
+    if (enabled && len(label) > 0 && total_height > 0) {
+        center_x = anchor_x + offset_x;
+        center_y = anchor_y + offset_y;
+
         intersection() {
-            keycap_legend_flat_block(
-                height = legend_total_height + top_overlap,
+            keycap_top_legend_flat_block(
+                enabled = enabled,
+                label = label,
+                width = width,
+                depth = depth,
+                height = total_height + top_overlap,
+                anchor_x = anchor_x,
+                anchor_y = anchor_y,
+                offset_x = offset_x,
+                offset_y = offset_y,
+                below_surface = below_surface,
+                font_name = font_name,
+                underline_enabled = underline_enabled,
+                underline_width = underline_width,
+                underline_thickness = underline_thickness,
+                underline_offset_y = underline_offset_y,
+                outline_delta = outline_delta,
+                text_size = text_size,
                 quality = quality
             );
 
             keycap_top_surface_region(
-                left = legend_plan_left,
-                right = legend_plan_right,
-                front = legend_plan_front,
-                back = legend_plan_back,
-                radius = legend_plan_radius,
+                left = center_x - width / 2,
+                right = center_x + width / 2,
+                front = center_y - depth / 2,
+                back = center_y + depth / 2,
+                radius = 0,
                 top_center_height = active_top_center_height,
                 dish_type = active_top_shape_type,
                 dish_depth = active_dish_depth,
                 dish_radius = dish_radius,
                 pitch_deg = top_pitch_deg,
                 roll_deg = top_roll_deg,
-                base_z = -legend_below_surface,
-                top_extra_z = legend_surface_height + top_overlap,
+                base_z = -below_surface,
+                top_extra_z = surface_height + top_overlap,
                 dish_plan_width = key_width,
                 dish_plan_depth = key_depth,
                 quality = quality,
@@ -439,12 +590,161 @@ module keycap_legend_surface_volume(top_overlap = 0, quality = "export") {
     }
 }
 
+module keycap_legend_surface_volume(top_overlap = 0, quality = "export") {
+    keycap_top_legend_surface_volume(
+        enabled = legend_enabled,
+        label = legend_text,
+        width = legend_width,
+        depth = legend_depth,
+        surface_height = legend_surface_height,
+        below_surface = legend_below_surface,
+        total_height = legend_total_height,
+        anchor_x = 0,
+        anchor_y = 0,
+        offset_x = legend_offset_x,
+        offset_y = legend_offset_y,
+        font_name = legend_font_name,
+        underline_enabled = legend_underline_enabled,
+        underline_width = legend_underline_width,
+        underline_thickness = legend_underline_thickness,
+        underline_offset_y = legend_underline_offset_y,
+        outline_delta = legend_outline_delta,
+        text_size = legend_text_size_value,
+        top_overlap = top_overlap,
+        quality = quality
+    );
+}
+
 module keycap_legend_volume(quality = "export") {
     keycap_legend_surface_volume(0, quality);
 }
 
 module keycap_legend_visible_volume(quality = "export") {
     keycap_legend_surface_volume(legend_visible_surface_overlap, quality);
+}
+
+module keycap_top_legend_right_top_volume(top_overlap = 0, quality = "export") {
+    keycap_top_legend_surface_volume(
+        enabled = top_legend_right_top_enabled,
+        label = top_legend_right_top_text,
+        width = top_legend_right_top_width,
+        depth = top_legend_right_top_depth,
+        surface_height = top_legend_right_top_surface_height,
+        below_surface = top_legend_right_top_below_surface,
+        total_height = top_legend_right_top_total_height,
+        anchor_x = top_legend_anchor_x("right"),
+        anchor_y = top_legend_anchor_y("top"),
+        offset_x = top_legend_right_top_offset_x,
+        offset_y = top_legend_right_top_offset_y,
+        font_name = top_legend_right_top_font_name,
+        underline_enabled = top_legend_right_top_underline_enabled,
+        underline_width = top_legend_right_top_underline_width,
+        underline_thickness = top_legend_right_top_underline_thickness,
+        underline_offset_y = top_legend_right_top_underline_offset_y,
+        outline_delta = top_legend_right_top_outline_delta,
+        text_size = top_legend_right_top_text_size_value,
+        top_overlap = top_overlap,
+        quality = quality
+    );
+}
+
+module keycap_top_legend_right_bottom_volume(top_overlap = 0, quality = "export") {
+    keycap_top_legend_surface_volume(
+        enabled = top_legend_right_bottom_enabled,
+        label = top_legend_right_bottom_text,
+        width = top_legend_right_bottom_width,
+        depth = top_legend_right_bottom_depth,
+        surface_height = top_legend_right_bottom_surface_height,
+        below_surface = top_legend_right_bottom_below_surface,
+        total_height = top_legend_right_bottom_total_height,
+        anchor_x = top_legend_anchor_x("right"),
+        anchor_y = top_legend_anchor_y("bottom"),
+        offset_x = top_legend_right_bottom_offset_x,
+        offset_y = top_legend_right_bottom_offset_y,
+        font_name = top_legend_right_bottom_font_name,
+        underline_enabled = top_legend_right_bottom_underline_enabled,
+        underline_width = top_legend_right_bottom_underline_width,
+        underline_thickness = top_legend_right_bottom_underline_thickness,
+        underline_offset_y = top_legend_right_bottom_underline_offset_y,
+        outline_delta = top_legend_right_bottom_outline_delta,
+        text_size = top_legend_right_bottom_text_size_value,
+        top_overlap = top_overlap,
+        quality = quality
+    );
+}
+
+module keycap_top_legend_left_top_volume(top_overlap = 0, quality = "export") {
+    keycap_top_legend_surface_volume(
+        enabled = top_legend_left_top_enabled,
+        label = top_legend_left_top_text,
+        width = top_legend_left_top_width,
+        depth = top_legend_left_top_depth,
+        surface_height = top_legend_left_top_surface_height,
+        below_surface = top_legend_left_top_below_surface,
+        total_height = top_legend_left_top_total_height,
+        anchor_x = top_legend_anchor_x("left"),
+        anchor_y = top_legend_anchor_y("top"),
+        offset_x = top_legend_left_top_offset_x,
+        offset_y = top_legend_left_top_offset_y,
+        font_name = top_legend_left_top_font_name,
+        underline_enabled = top_legend_left_top_underline_enabled,
+        underline_width = top_legend_left_top_underline_width,
+        underline_thickness = top_legend_left_top_underline_thickness,
+        underline_offset_y = top_legend_left_top_underline_offset_y,
+        outline_delta = top_legend_left_top_outline_delta,
+        text_size = top_legend_left_top_text_size_value,
+        top_overlap = top_overlap,
+        quality = quality
+    );
+}
+
+module keycap_top_legend_left_bottom_volume(top_overlap = 0, quality = "export") {
+    keycap_top_legend_surface_volume(
+        enabled = top_legend_left_bottom_enabled,
+        label = top_legend_left_bottom_text,
+        width = top_legend_left_bottom_width,
+        depth = top_legend_left_bottom_depth,
+        surface_height = top_legend_left_bottom_surface_height,
+        below_surface = top_legend_left_bottom_below_surface,
+        total_height = top_legend_left_bottom_total_height,
+        anchor_x = top_legend_anchor_x("left"),
+        anchor_y = top_legend_anchor_y("bottom"),
+        offset_x = top_legend_left_bottom_offset_x,
+        offset_y = top_legend_left_bottom_offset_y,
+        font_name = top_legend_left_bottom_font_name,
+        underline_enabled = top_legend_left_bottom_underline_enabled,
+        underline_width = top_legend_left_bottom_underline_width,
+        underline_thickness = top_legend_left_bottom_underline_thickness,
+        underline_offset_y = top_legend_left_bottom_underline_offset_y,
+        outline_delta = top_legend_left_bottom_outline_delta,
+        text_size = top_legend_left_bottom_text_size_value,
+        top_overlap = top_overlap,
+        quality = quality
+    );
+}
+
+module keycap_top_corner_legends_volume(quality = "export") {
+    keycap_top_legend_right_top_volume(0, quality);
+    keycap_top_legend_right_bottom_volume(0, quality);
+    keycap_top_legend_left_top_volume(0, quality);
+    keycap_top_legend_left_bottom_volume(0, quality);
+}
+
+module keycap_top_corner_legends_visible_volume(quality = "export") {
+    keycap_top_legend_right_top_volume(legend_visible_surface_overlap, quality);
+    keycap_top_legend_right_bottom_volume(legend_visible_surface_overlap, quality);
+    keycap_top_legend_left_top_volume(legend_visible_surface_overlap, quality);
+    keycap_top_legend_left_bottom_volume(legend_visible_surface_overlap, quality);
+}
+
+module keycap_top_legends_volume(quality = "export") {
+    keycap_legend_volume(quality);
+    keycap_top_corner_legends_volume(quality);
+}
+
+module keycap_top_legends_visible_volume(quality = "export") {
+    keycap_legend_visible_volume(quality);
+    keycap_top_corner_legends_visible_volume(quality);
 }
 
 function keycap_sidewall_reference_z(offset_y) =
@@ -783,7 +1083,7 @@ module keycap_body_shell_positive(quality = "export") {
 module keycap_body_shell(quality = "export") {
     difference() {
         keycap_body_shell_positive(quality);
-        keycap_legend_visible_volume(quality);
+        keycap_top_legends_visible_volume(quality);
         keycap_side_legends_visible_volume(quality);
         if (rim_enabled) {
             keycap_body_rim_clearance_volume(quality);
@@ -1031,7 +1331,7 @@ module keycap_rim(quality = "export") {
     if (rim_enabled) {
         difference() {
             keycap_rim_positive(quality);
-            keycap_legend_visible_volume(quality);
+            keycap_top_legends_visible_volume(quality);
             keycap_side_legends_visible_volume(quality);
         }
     }
@@ -1055,6 +1355,22 @@ module keycap_single_material_shape(quality = "export") {
 
 module keycap_legend(quality = "export") {
     keycap_legend_volume(quality);
+}
+
+module keycap_top_legend_right_top(quality = "export") {
+    keycap_top_legend_right_top_volume(0, quality);
+}
+
+module keycap_top_legend_right_bottom(quality = "export") {
+    keycap_top_legend_right_bottom_volume(0, quality);
+}
+
+module keycap_top_legend_left_top(quality = "export") {
+    keycap_top_legend_left_top_volume(0, quality);
+}
+
+module keycap_top_legend_left_bottom(quality = "export") {
+    keycap_top_legend_left_bottom_volume(0, quality);
 }
 
 module keycap_side_legend_front(quality = "export") {
@@ -1093,6 +1409,22 @@ module export_legend() {
     keycap_legend("export");
 }
 
+module export_top_legend_right_top() {
+    keycap_top_legend_right_top("export");
+}
+
+module export_top_legend_right_bottom() {
+    keycap_top_legend_right_bottom("export");
+}
+
+module export_top_legend_left_top() {
+    keycap_top_legend_left_top("export");
+}
+
+module export_top_legend_left_bottom() {
+    keycap_top_legend_left_bottom("export");
+}
+
 module export_side_legend_front() {
     keycap_side_legend_front("export");
 }
@@ -1117,7 +1449,7 @@ module preview_model() {
     union() {
         keycap_body("preview");
         keycap_rim("preview");
-        keycap_legend("preview");
+        keycap_top_legends_volume("preview");
         keycap_side_legends_volume("preview");
     }
 }
@@ -1132,6 +1464,14 @@ if (resolved_export_target == "body") {
     export_rim();
 } else if (resolved_export_target == "legend") {
     export_legend();
+} else if (resolved_export_target == "top_legend_right_top") {
+    export_top_legend_right_top();
+} else if (resolved_export_target == "top_legend_right_bottom") {
+    export_top_legend_right_bottom();
+} else if (resolved_export_target == "top_legend_left_top") {
+    export_top_legend_left_top();
+} else if (resolved_export_target == "top_legend_left_bottom") {
+    export_top_legend_left_bottom();
 } else if (resolved_export_target == "side_legend_front") {
     export_side_legend_front();
 } else if (resolved_export_target == "side_legend_back") {

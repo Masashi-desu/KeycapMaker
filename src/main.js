@@ -46,6 +46,53 @@ const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
 const keycapStlExportPath = "/outputs/keycap-single-material.stl";
+const TOP_LEGEND_CONFIGS = Object.freeze([
+  {
+    id: "center",
+    paramPrefix: "legend",
+    exportTarget: "legend",
+    outputPath: keycapLegendPreviewPath,
+    colorFieldKey: "legendColor",
+    titleKey: "legendCards.center",
+    partName: "legend",
+  },
+  {
+    id: "left-top",
+    paramPrefix: "topLegendLeftTop",
+    exportTarget: "top_legend_left_top",
+    outputPath: "/outputs/keycap-top-legend-left-top-preview.off",
+    colorFieldKey: "topLegendLeftTopColor",
+    titleKey: "legendCards.leftTop",
+    partName: "legend-left-top",
+  },
+  {
+    id: "right-top",
+    paramPrefix: "topLegendRightTop",
+    exportTarget: "top_legend_right_top",
+    outputPath: "/outputs/keycap-top-legend-right-top-preview.off",
+    colorFieldKey: "topLegendRightTopColor",
+    titleKey: "legendCards.rightTop",
+    partName: "legend-right-top",
+  },
+  {
+    id: "left-bottom",
+    paramPrefix: "topLegendLeftBottom",
+    exportTarget: "top_legend_left_bottom",
+    outputPath: "/outputs/keycap-top-legend-left-bottom-preview.off",
+    colorFieldKey: "topLegendLeftBottomColor",
+    titleKey: "legendCards.leftBottom",
+    partName: "legend-left-bottom",
+  },
+  {
+    id: "right-bottom",
+    paramPrefix: "topLegendRightBottom",
+    exportTarget: "top_legend_right_bottom",
+    outputPath: "/outputs/keycap-top-legend-right-bottom-preview.off",
+    colorFieldKey: "topLegendRightBottomColor",
+    titleKey: "legendCards.rightBottom",
+    partName: "legend-right-bottom",
+  },
+]);
 const SIDE_LEGEND_CONFIGS = Object.freeze([
   {
     side: "front",
@@ -198,12 +245,12 @@ function createLegendFieldKeys(paramPrefix, { side = null } = {}) {
 }
 
 const LEGEND_CARD_DEFINITIONS = Object.freeze([
-  {
-    id: "legend-card-keytop",
-    title: () => t("legendCards.keytop"),
-    enabledFieldKey: legendParamKey("legend", LEGEND_FIELD_SUFFIXES.enabled),
-    fieldKeys: createLegendFieldKeys("legend"),
-  },
+  ...TOP_LEGEND_CONFIGS.map((config) => ({
+    id: `legend-card-${config.id}`,
+    title: () => t(config.titleKey),
+    enabledFieldKey: legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled),
+    fieldKeys: createLegendFieldKeys(config.paramPrefix),
+  })),
   ...SIDE_LEGEND_CONFIGS.map((config) => ({
     id: `legend-card-${config.side}`,
     title: () => t("legendCards.sidewall", { side: getSideLegendLabel(config.side) }),
@@ -238,6 +285,10 @@ const DEFAULT_KEYCAP_COLORS = Object.freeze({
   bodyColor: "#f8f9fa",
   rimColor: "#d8ccb8",
   legendColor: "#212529",
+  topLegendRightTopColor: "#212529",
+  topLegendRightBottomColor: "#212529",
+  topLegendLeftTopColor: "#212529",
+  topLegendLeftBottomColor: "#212529",
   sideLegendFrontColor: "#212529",
   sideLegendBackColor: "#212529",
   sideLegendLeftColor: "#212529",
@@ -1428,7 +1479,10 @@ const fieldGroupTemplates = [
     title: () => t("shapeProfiles.custom-shell.fieldGroups.legend.title"),
     description: () => t("shapeProfiles.custom-shell.fieldGroups.legend.description"),
     fields: [
-      ...createLegendControlFields({ paramPrefix: "legend", collapseControlled: true }),
+      ...TOP_LEGEND_CONFIGS.flatMap((config) => createLegendControlFields({
+        paramPrefix: config.paramPrefix,
+        collapseControlled: true,
+      })),
       ...SIDE_LEGEND_CONFIGS.flatMap((config) => createLegendControlFields({
         paramPrefix: config.paramPrefix,
         side: config.side,
@@ -1846,6 +1900,11 @@ function getColorFieldNumber(fieldKey) {
 }
 
 function getPartLabel(partName) {
+  const topLegendConfig = TOP_LEGEND_CONFIGS.find((config) => partName === config.partName);
+  if (topLegendConfig) {
+    return t("partLabels.topLegend", { position: t(topLegendConfig.titleKey) });
+  }
+
   const sideLegendConfig = SIDE_LEGEND_CONFIGS.find((config) => partName === `legend-${config.side}`);
   if (sideLegendConfig) {
     return t("partLabels.sideLegend", { side: getSideLegendLabel(sideLegendConfig.side) });
@@ -1958,8 +2017,10 @@ function isLegendTextSet(value = state.keycapParams.legendText) {
   return String(value ?? "").trim().length > 0;
 }
 
-function isLegendRenderable() {
-  return state.keycapParams.legendEnabled && isLegendTextSet();
+function isTopLegendRenderable(config) {
+  const enabledKey = legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled);
+  const textKey = legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.text);
+  return state.keycapParams[enabledKey] && isLegendTextSet(state.keycapParams[textKey]);
 }
 
 function isSideLegendRenderable(config) {
@@ -4118,7 +4179,7 @@ function handleFieldChange(event) {
   state.editorSummary = t("status.dirty");
 
   if (
-    field === "legendEnabled"
+    TOP_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
     || SIDE_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
     || field === "homingBarEnabled"
     || field === "rimEnabled"
@@ -4308,16 +4369,14 @@ function createKeycapOffJobs(purpose) {
             }),
           ]
         : []),
-      ...(isLegendRenderable()
-        ? [
-            createColorLayerJob({
-              name: "legend",
-              exportTarget: "legend",
-              outputPath: keycapLegendPreviewPath,
-              colorFieldKey: "legendColor",
-            }),
-          ]
-        : []),
+      ...TOP_LEGEND_CONFIGS
+        .filter((config) => isTopLegendRenderable(config))
+        .map((config) => createColorLayerJob({
+          name: config.partName,
+          exportTarget: config.exportTarget,
+          outputPath: config.outputPath,
+          colorFieldKey: config.colorFieldKey,
+        })),
       ...SIDE_LEGEND_CONFIGS
         .filter((config) => isSideLegendRenderable(config))
         .map((config) => createColorLayerJob({
