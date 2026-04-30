@@ -5222,6 +5222,29 @@ async function dataUrlToUint8Array(dataUrl) {
   return new Uint8Array(await blob.arrayBuffer());
 }
 
+async function blobToUint8Array(blob) {
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
+async function create3mfExportBlob(params = state.keycapParams) {
+  const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf", params), params);
+  const blob = create3mfBlob(
+    offResults.map((entry) => ({
+      name: `keycap-${entry.name}`,
+      colorHex: entry.colorHex,
+      ...entry.mesh,
+    })),
+    {
+      assemblyName: sanitizeExportBaseName(params.name),
+    },
+  );
+
+  return {
+    blob,
+    offResults,
+  };
+}
+
 function prepareProjectForSave() {
   if (state.project.activeKeycapId) {
     refreshActiveProjectKeycapPreviewFromCurrent();
@@ -5244,6 +5267,8 @@ async function downloadProjectZip(project) {
     files[`${projectDirectoryName}/${entry.previewPath}`] = await dataUrlToUint8Array(
       entry.previewImageDataUrl || createProjectPreviewPlaceholderDataUrl(entry.params),
     );
+    const { blob } = await create3mfExportBlob(entry.params);
+    files[`${projectDirectoryName}/${entry.threeMfPath}`] = await blobToUint8Array(blob);
   }
 
   const zipBytes = zipSync(files, { level: 6 });
@@ -6507,18 +6532,8 @@ async function executeExport(format, options = {}) {
         },
       );
     } else if (format === "3mf") {
-      const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf", params), params);
+      const { blob, offResults } = await create3mfExportBlob(params);
       const savedPartLabels = describePartLabels(offResults.map((entry) => entry.name));
-      const blob = create3mfBlob(
-        offResults.map((entry) => ({
-          name: `keycap-${entry.name}`,
-          colorHex: entry.colorHex,
-          ...entry.mesh,
-        })),
-        {
-          assemblyName: sanitizeExportBaseName(params.name),
-        },
-      );
       downloadBlob(blob, build3mfFilename(params));
 
       setExportStatus(

@@ -10,10 +10,12 @@
 
 ```text
 プロジェクト名/
+├── KeycapMaker.json
 ├── keycaps/
 │   ├── <keycap>.json
 │   └── <keycap>.png または <keycap>.svg
-└── KeycapMaker.json
+└── 3mf/
+    └── <keycap>.3mf
 ```
 
 - `KeycapMaker.json`
@@ -22,6 +24,8 @@
   既存の編集再開用 JSON と同じ canonical editor data です。
 - `keycaps/*.(png|svg|webp|jpg)`
   プロジェクトセグメントの一覧に表示するプレビュー画像です。通常は現在の Three.js preview を縮小した PNG を保存し、preview が取得できない場合は SVG placeholder を保存します。
+- `3mf/*.3mf`
+  各キーキャップの印刷用 3MF です。プロジェクト保存時に各 `keycaps/*.json` の編集値から生成し、ZIP に同梱します。
 
 ## Manifest
 
@@ -40,6 +44,7 @@
       "name": "Esc",
       "jsonPath": "keycaps/Esc.json",
       "previewPath": "keycaps/Esc.png",
+      "threeMfPath": "3mf/Esc.3mf",
       "displayOrder": 0,
       "previewViewState": {
         "direction": [0.62, 0.52, 0.58],
@@ -56,7 +61,7 @@
 
 - `kind` は `keycap-maker/project` 固定です。
 - `schemaVersion` は `1` です。互換性のない変更を入れる場合だけ更新します。
-- `jsonPath` と `previewPath` はプロジェクトディレクトリからの相対パスです。
+- `jsonPath`、`previewPath`、`threeMfPath` はプロジェクトディレクトリからの相対パスです。
 - `displayOrder` はプロジェクトセグメントの表示順です。保存時は現在の一覧順に 0 始まりで振り直します。
 - `previewViewState` は一覧用 preview を撮影したときのカメラ方向、距離、表示オフセットです。省略可能です。
 - キーキャップ本体の編集値は manifest に複製せず、各 `keycaps/*.json` を正とします。
@@ -100,7 +105,7 @@
 
 ## 保存
 
-プロジェクト保存は常に ZIP ダウンロードとして扱います。ZIP 内部には同じディレクトリ構成で `KeycapMaker.json` と `keycaps/` を格納します。
+プロジェクト保存は常に ZIP ダウンロードとして扱います。ZIP 内部には同じディレクトリ構成で `KeycapMaker.json`、`keycaps/`、`3mf/` を格納します。各キーキャップについて、編集再開用 JSON、一覧用 preview、印刷用 3MF を同梱します。
 
 ディレクトリへの直接書き込みは行いません。GitHub Pages 上の静的配信アプリとして、保存時のブラウザ差分や File System Access API の権限差分を避けるためです。
 

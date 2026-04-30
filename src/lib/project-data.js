@@ -9,6 +9,7 @@ export const PROJECT_DATA_KIND = "keycap-maker/project";
 export const PROJECT_DATA_SCHEMA_VERSION = 1;
 export const PROJECT_MANIFEST_FILENAME = "KeycapMaker.json";
 export const PROJECT_KEYCAPS_DIRNAME = "keycaps";
+export const PROJECT_THREE_MF_DIRNAME = "3mf";
 export const DEFAULT_PROJECT_NAME = "Keycap Project";
 
 const PROJECT_IMAGE_EXTENSION_BY_MIME = Object.freeze({
@@ -18,6 +19,7 @@ const PROJECT_IMAGE_EXTENSION_BY_MIME = Object.freeze({
   "image/svg+xml": "svg",
 });
 const PROJECT_ASSET_MIME_BY_EXTENSION = Object.freeze({
+  "3mf": "model/3mf",
   json: "application/json",
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -220,6 +222,10 @@ export function createProjectKeycapEntry(params = {}, options = {}) {
     options.previewPath ?? manifestEntry.previewPath,
     `${PROJECT_KEYCAPS_DIRNAME}/${fileBaseName}.${previewExtension}`,
   );
+  const threeMfPath = normalizeProjectAssetPath(
+    options.threeMfPath ?? manifestEntry.threeMfPath,
+    `${PROJECT_THREE_MF_DIRNAME}/${fileBaseName}.3mf`,
+  );
   const displayOrder = normalizeProjectKeycapDisplayOrder(
     options.displayOrder ?? manifestEntry.displayOrder,
     0,
@@ -230,6 +236,7 @@ export function createProjectKeycapEntry(params = {}, options = {}) {
     name,
     jsonPath,
     previewPath,
+    threeMfPath,
     displayOrder,
     params: keycapParams,
     editorDataPayload,
@@ -286,6 +293,7 @@ export function createProjectManifest(project = {}, savedAt = new Date().toISOSt
       name: sanitizeExportBaseName(entry.name ?? entry.params?.name, DEFAULT_EXPORT_BASE_NAME),
       jsonPath: normalizeProjectAssetPath(entry.jsonPath),
       previewPath: normalizeProjectAssetPath(entry.previewPath),
+      threeMfPath: normalizeProjectAssetPath(entry.threeMfPath),
       displayOrder: normalizeProjectKeycapDisplayOrder(entry.displayOrder),
       ...(normalizeProjectPreviewViewState(entry.previewViewState)
         ? { previewViewState: normalizeProjectPreviewViewState(entry.previewViewState) }
@@ -330,6 +338,7 @@ export function parseProjectManifest(payload, fallbackName = DEFAULT_PROJECT_NAM
             name: sanitizeExportBaseName(normalizedEntry.name, DEFAULT_EXPORT_BASE_NAME),
             jsonPath,
             previewPath: normalizeProjectAssetPath(normalizedEntry.previewPath),
+            threeMfPath: normalizeProjectAssetPath(normalizedEntry.threeMfPath),
             displayOrder: normalizeProjectKeycapDisplayOrder(normalizedEntry.displayOrder, index),
             previewViewState: normalizeProjectPreviewViewState(normalizedEntry.previewViewState),
           };
