@@ -1978,12 +1978,12 @@ pre {
 }
 
 .project-keycap-export-button:hover,
-.project-keycap-settings-button:hover {
+.project-keycap-design-button:hover {
   border-color: color-mix(in srgb, var(--border) 70%, var(--text) 30%);
   background: rgba(45, 36, 28, 0.12);
 }
 
-.project-keycap-settings-button {
+.project-keycap-design-button {
   background: rgba(45, 36, 28, 0.08);
   color: var(--text);
 }
@@ -2124,7 +2124,7 @@ pre {
   display: none;
 }
 
-.project-keycap-settings-dialog {
+.project-keycap-design-dialog {
   width: min(460px, calc(100vw - 48px));
 }
 

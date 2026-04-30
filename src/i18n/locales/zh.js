@@ -13,7 +13,7 @@ const zh = Object.freeze({
   navigation: {
     label: "工作区部分",
     project: "项目",
-    settings: "设置",
+    design: "设计",
     export: "导出",
   },
   actions: {
@@ -43,8 +43,8 @@ const zh = Object.freeze({
       title: "项目",
       body: "将多个键帽保存在一起，并从列表切换当前编辑对象。",
     },
-    settings: {
-      title: "设置",
+    design: {
+      title: "设计",
       body: "可以根据输入调整所选键帽形状和字符，并自动在右侧更新预览。",
     },
     export: {
@@ -53,8 +53,8 @@ const zh = Object.freeze({
     },
   },
   mobileInspector: {
-    hide: "将设置卡片移到上方",
-    show: "恢复设置卡片",
+    hide: "将设计卡片移到上方",
+    show: "恢复设计卡片",
   },
   exportPanel: {
     jsonChip: "可继续编辑的 JSON",
@@ -91,10 +91,10 @@ const zh = Object.freeze({
     exportKeycap: "导出 {name}",
     exportChip: "键帽导出",
     exportTitle: "导出 {name}",
-    settingsAction: "设置",
-    settingsKeycap: "{name} 的设置",
-    settingsChip: "键帽设置",
-    settingsTitle: "{name} 的设置",
+    designAction: "设计",
+    designKeycap: "{name} 的设计",
+    designChip: "键帽设计",
+    designTitle: "{name} 的设计",
     deleteChip: "删除",
     deleteTitle: "删除键帽",
     deleteBody: "将此键帽从项目列表中删除。",
@@ -654,7 +654,7 @@ const zh = Object.freeze({
     homing: "定位标记",
   },
   preview: {
-    placeholder: "尚未显示预览。更改设置后会自动更新为最新形状。",
+    placeholder: "尚未显示预览。更改设计后会自动更新为最新形状。",
     running: "正在更新预览",
     successSingle: "预览更新完成。正在显示{parts}。",
     successMultiple: "预览更新完成。正在按颜色分开显示{parts}。",

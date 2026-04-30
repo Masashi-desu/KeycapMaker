@@ -13,7 +13,7 @@ const en = Object.freeze({
   navigation: {
     label: "Workspace sections",
     project: "Project",
-    settings: "Settings",
+    design: "Design",
     export: "Export",
   },
   actions: {
@@ -43,8 +43,8 @@ const en = Object.freeze({
       title: "Project",
       body: "Keep multiple keycaps together and switch the current edit target from the list.",
     },
-    settings: {
-      title: "Settings",
+    design: {
+      title: "Design",
       body: "Adjust the selected keycap shape and legend while the preview updates automatically on the right.",
     },
     export: {
@@ -53,8 +53,8 @@ const en = Object.freeze({
     },
   },
   mobileInspector: {
-    hide: "Move settings card up",
-    show: "Restore settings card",
+    hide: "Move design card up",
+    show: "Restore design card",
   },
   exportPanel: {
     jsonChip: "Editable JSON",
@@ -91,10 +91,10 @@ const en = Object.freeze({
     exportKeycap: "Export {name}",
     exportChip: "Keycap Export",
     exportTitle: "Export {name}",
-    settingsAction: "Settings",
-    settingsKeycap: "Settings for {name}",
-    settingsChip: "Keycap Settings",
-    settingsTitle: "Settings for {name}",
+    designAction: "Design",
+    designKeycap: "Design for {name}",
+    designChip: "Keycap Design",
+    designTitle: "Design for {name}",
     deleteChip: "Delete",
     deleteTitle: "Delete Keycap",
     deleteBody: "Remove this keycap from the project list.",
@@ -654,7 +654,7 @@ const en = Object.freeze({
     homing: "Homing Mark",
   },
   preview: {
-    placeholder: "No preview yet. Change a setting to automatically update the latest shape.",
+    placeholder: "No preview yet. Change the design to automatically update the latest shape.",
     running: "Updating preview",
     successSingle: "Preview updated. Showing {parts}.",
     successMultiple: "Preview updated. Showing {parts} separated by color.",

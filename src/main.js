@@ -200,7 +200,7 @@ const EXPORT_ICON_MARKUP = Object.freeze({
       <path d="M12 15V3" />
     </svg>
   `,
-  settings: `
+  design: `
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M4 21v-7" />
       <path d="M4 10V3" />
@@ -392,8 +392,8 @@ const workspaceSections = [
     labelKey: "navigation.project",
   },
   {
-    id: "params",
-    labelKey: "navigation.settings",
+    id: "design",
+    labelKey: "navigation.design",
   },
 ];
 
@@ -679,7 +679,7 @@ const TOP_SURFACE_SHAPE_OPTIONS = Object.freeze([
   { value: "spherical", labelKey: "options.topSurfaceShape.spherical" },
 ]);
 const CROSS_COMPATIBLE_STEM_TYPES = new Set(["mx", "choc_v2"]);
-const SETTINGS_NAME_FIELD = Object.freeze({
+const DESIGN_NAME_FIELD = Object.freeze({
   key: "name",
   label: () => t("fields.name.label"),
   hint: () => t("fields.name.hint"),
@@ -1861,7 +1861,7 @@ const fieldGroupTemplates = [
 ];
 
 const fieldConfigByKey = new Map([
-  [SETTINGS_NAME_FIELD.key, SETTINGS_NAME_FIELD],
+  [DESIGN_NAME_FIELD.key, DESIGN_NAME_FIELD],
   ...fieldGroupTemplates.flatMap((group) => group.fields).map((field) => [field.key, field]),
 ]);
 function createFieldGroupCollapseState() {
@@ -1958,13 +1958,13 @@ const state = {
   projectSummary: "",
   project: createEmptyProjectState(),
   keycapExportOverlayKeycapId: "",
-  keycapSettingsOverlayKeycapId: "",
+  keycapDesignOverlayKeycapId: "",
   editorStatus: "idle",
   editorSummary: translate(initialLocale, "status.notGenerated"),
   editorLogs: [],
   editorError: "",
   previewLayers: [],
-  sidebarTab: "params",
+  sidebarTab: "design",
   isMobileInspectorHidden: false,
   isImportDragActive: false,
   lastImportBindingReport: null,
@@ -2517,7 +2517,7 @@ function renderInspectorContent() {
     return renderProjectTab();
   }
 
-  return renderParametersTab();
+  return renderDesignTab();
 }
 
 function focusLegendFontPickerQuery() {
@@ -2747,14 +2747,14 @@ function renderProjectKeycapList() {
             <span>${escapeHtml(t("project.exportAction"))}</span>
           </button>
           <button
-            class="project-keycap-action-button project-keycap-settings-button"
+            class="project-keycap-action-button project-keycap-design-button"
             type="button"
-            data-project-keycap-settings="${escapeHtml(entry.id)}"
-            aria-label="${escapeHtml(t("project.settingsKeycap", { name: entry.name }))}"
-            title="${escapeHtml(t("project.settingsKeycap", { name: entry.name }))}"
+            data-project-keycap-design="${escapeHtml(entry.id)}"
+            aria-label="${escapeHtml(t("project.designKeycap", { name: entry.name }))}"
+            title="${escapeHtml(t("project.designKeycap", { name: entry.name }))}"
           >
-            ${EXPORT_ICON_MARKUP.settings}
-            <span>${escapeHtml(t("project.settingsAction"))}</span>
+            ${EXPORT_ICON_MARKUP.design}
+            <span>${escapeHtml(t("project.designAction"))}</span>
           </button>
         </div>
       </div>
@@ -2766,8 +2766,8 @@ function getKeycapExportOverlayEntry() {
   return state.project.keycaps.find((entry) => entry.id === state.keycapExportOverlayKeycapId) ?? null;
 }
 
-function getKeycapSettingsOverlayEntry() {
-  return state.project.keycaps.find((entry) => entry.id === state.keycapSettingsOverlayKeycapId) ?? null;
+function getKeycapDesignOverlayEntry() {
+  return state.project.keycaps.find((entry) => entry.id === state.keycapDesignOverlayKeycapId) ?? null;
 }
 
 function syncKeycapExportOverlayScrollLock(isLocked) {
@@ -2807,12 +2807,12 @@ function renderKeycapExportOverlay() {
   }
 
   const entry = getKeycapExportOverlayEntry();
-  const settingsEntry = getKeycapSettingsOverlayEntry();
-  syncKeycapExportOverlayScrollLock(Boolean(entry || settingsEntry));
+  const designEntry = getKeycapDesignOverlayEntry();
+  syncKeycapExportOverlayScrollLock(Boolean(entry || designEntry));
 
   if (!entry) {
-    if (settingsEntry) {
-      renderKeycapSettingsOverlay(overlayRoot, settingsEntry);
+    if (designEntry) {
+      renderKeycapDesignOverlay(overlayRoot, designEntry);
       return;
     }
 
@@ -2872,24 +2872,24 @@ function renderKeycapExportOverlay() {
   `;
 }
 
-function renderKeycapSettingsOverlay(overlayRoot, entry) {
+function renderKeycapDesignOverlay(overlayRoot, entry) {
   overlayRoot.innerHTML = `
-    <div class="keycap-export-overlay" data-keycap-settings-overlay role="presentation">
+    <div class="keycap-export-overlay" data-keycap-design-overlay role="presentation">
       <section
-        class="keycap-export-dialog project-keycap-settings-dialog"
+        class="keycap-export-dialog project-keycap-design-dialog"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="keycap-settings-title"
+        aria-labelledby="keycap-design-title"
       >
         <div class="keycap-export-dialog__header">
           <span class="keycap-export-dialog__title-stack">
-            <span class="chip-label">${escapeHtml(t("project.settingsChip"))}</span>
-            <h2 id="keycap-settings-title">${escapeHtml(t("project.settingsTitle", { name: entry.name }))}</h2>
+            <span class="chip-label">${escapeHtml(t("project.designChip"))}</span>
+            <h2 id="keycap-design-title">${escapeHtml(t("project.designTitle", { name: entry.name }))}</h2>
           </span>
           <button
             class="field-group-toggle keycap-export-dialog__close"
             type="button"
-            data-keycap-settings-close
+            data-keycap-design-close
             aria-label="${escapeHtml(t("actions.close"))}"
             title="${escapeHtml(t("actions.close"))}"
           >
@@ -2897,12 +2897,12 @@ function renderKeycapSettingsOverlay(overlayRoot, entry) {
           </button>
         </div>
         <div class="keycap-export-dialog__body">
-          <section class="export-option-action keycap-export-option project-keycap-danger-option" aria-labelledby="keycap-settings-delete-title">
+          <section class="export-option-action keycap-export-option project-keycap-danger-option" aria-labelledby="keycap-design-delete-title">
             <div class="export-action-card__header">
               <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.trash}</span>
               <span class="export-action-card__title-stack">
                 <span class="chip-label">${escapeHtml(t("project.deleteChip"))}</span>
-                <strong id="keycap-settings-delete-title">${escapeHtml(t("project.deleteTitle"))}</strong>
+                <strong id="keycap-design-delete-title">${escapeHtml(t("project.deleteTitle"))}</strong>
               </span>
             </div>
             <p class="export-action-card__text">${escapeHtml(t("project.deleteBody"))}</p>
@@ -2993,14 +2993,14 @@ function renderProjectTab() {
   `;
 }
 
-function renderParametersTab() {
+function renderDesignTab() {
   const activeFieldGroups = getActiveFieldGroups();
 
   return `
-    <div class="inspector-panel inspector-panel--params">
+    <div class="inspector-panel inspector-panel--design">
       <div class="panel-intro">
-        <h1 class="panel-title">${t("panels.settings.title")}</h1>
-        <p class="panel-text">${t("panels.settings.body")}</p>
+        <h1 class="panel-title">${t("panels.design.title")}</h1>
+        <p class="panel-text">${t("panels.design.body")}</p>
       </div>
 
       ${renderImportBindingNotice()}
@@ -3063,12 +3063,12 @@ function renderParameterCardHeader({
 }
 
 function renderNameFieldCard() {
-  const groupViewTransitionName = createViewTransitionName("field-group", SETTINGS_NAME_FIELD.key);
-  const fieldViewTransitionName = createViewTransitionName("field", SETTINGS_NAME_FIELD.key);
-  const value = state.keycapParams[SETTINGS_NAME_FIELD.key];
-  const fieldLabel = resolveDynamicCopy(SETTINGS_NAME_FIELD.label);
-  const fieldPlaceholder = resolveDynamicCopy(SETTINGS_NAME_FIELD.placeholder);
-  const titleId = "settings-name-card-title";
+  const groupViewTransitionName = createViewTransitionName("field-group", DESIGN_NAME_FIELD.key);
+  const fieldViewTransitionName = createViewTransitionName("field", DESIGN_NAME_FIELD.key);
+  const value = state.keycapParams[DESIGN_NAME_FIELD.key];
+  const fieldLabel = resolveDynamicCopy(DESIGN_NAME_FIELD.label);
+  const fieldPlaceholder = resolveDynamicCopy(DESIGN_NAME_FIELD.placeholder);
+  const titleId = "design-name-card-title";
 
   return `
     <section class="field-group-card" aria-labelledby="${titleId}" style="view-transition-name: ${groupViewTransitionName};">
@@ -3081,12 +3081,12 @@ function renderNameFieldCard() {
       <div class="field-group-body">
         <span class="field-control name-field-control" style="view-transition-name: ${fieldViewTransitionName};">
           <input
-            id="settings-name-input"
+            id="design-name-input"
             type="text"
-            data-field="${SETTINGS_NAME_FIELD.key}"
+            data-field="${DESIGN_NAME_FIELD.key}"
             value="${escapeHtml(value)}"
             aria-label="${escapeHtml(fieldLabel)}"
-            ${SETTINGS_NAME_FIELD.maxLength != null ? `maxlength="${SETTINGS_NAME_FIELD.maxLength}"` : ""}
+            ${DESIGN_NAME_FIELD.maxLength != null ? `maxlength="${DESIGN_NAME_FIELD.maxLength}"` : ""}
             ${fieldPlaceholder ? `placeholder="${escapeHtml(fieldPlaceholder)}"` : ""}
             spellcheck="false"
             autocomplete="off"
@@ -4353,9 +4353,9 @@ function handleInspectorCardClick(event) {
     return;
   }
 
-  const projectKeycapSettingsButton = getClosestFromEventTarget(event, "[data-project-keycap-settings]");
-  if (projectKeycapSettingsButton) {
-    openKeycapSettingsOverlay(projectKeycapSettingsButton.dataset.projectKeycapSettings);
+  const projectKeycapDesignButton = getClosestFromEventTarget(event, "[data-project-keycap-design]");
+  if (projectKeycapDesignButton) {
+    openKeycapDesignOverlay(projectKeycapDesignButton.dataset.projectKeycapDesign);
     return;
   }
 
@@ -4554,7 +4554,7 @@ function openKeycapExportOverlay(entryId) {
   }
 
   state.keycapExportOverlayKeycapId = entry.id;
-  state.keycapSettingsOverlayKeycapId = "";
+  state.keycapDesignOverlayKeycapId = "";
   state.exportsSummary = "";
   render();
 }
@@ -4568,23 +4568,23 @@ function closeKeycapExportOverlay() {
   render();
 }
 
-function openKeycapSettingsOverlay(entryId) {
+function openKeycapDesignOverlay(entryId) {
   const entry = state.project.keycaps.find((item) => item.id === entryId);
   if (!entry || state.exportsStatus === "running") {
     return;
   }
 
   state.keycapExportOverlayKeycapId = "";
-  state.keycapSettingsOverlayKeycapId = entry.id;
+  state.keycapDesignOverlayKeycapId = entry.id;
   render();
 }
 
-function closeKeycapSettingsOverlay() {
-  if (!state.keycapSettingsOverlayKeycapId) {
+function closeKeycapDesignOverlay() {
+  if (!state.keycapDesignOverlayKeycapId) {
     return;
   }
 
-  state.keycapSettingsOverlayKeycapId = "";
+  state.keycapDesignOverlayKeycapId = "";
   render();
 }
 
@@ -4621,9 +4621,9 @@ function handleKeycapExportOverlayClick(event) {
     return;
   }
 
-  const settingsCloseButton = getClosestFromEventTarget(event, "[data-keycap-settings-close]");
-  if (settingsCloseButton || (event.target instanceof Element && event.target.matches("[data-keycap-settings-overlay]"))) {
-    closeKeycapSettingsOverlay();
+  const designCloseButton = getClosestFromEventTarget(event, "[data-keycap-design-close]");
+  if (designCloseButton || (event.target instanceof Element && event.target.matches("[data-keycap-design-overlay]"))) {
+    closeKeycapDesignOverlay();
   }
 }
 
@@ -4831,8 +4831,8 @@ function handleWindowKeydown(event) {
     shouldRender = true;
   }
 
-  if (state.keycapSettingsOverlayKeycapId) {
-    state.keycapSettingsOverlayKeycapId = "";
+  if (state.keycapDesignOverlayKeycapId) {
+    state.keycapDesignOverlayKeycapId = "";
     shouldRender = true;
   }
 
@@ -5149,7 +5149,7 @@ async function applyProjectKeycapSelection(entryId) {
 async function deleteProjectKeycap(entryId) {
   const entryIndex = state.project.keycaps.findIndex((item) => item.id === entryId);
   if (entryIndex === -1) {
-    closeKeycapSettingsOverlay();
+    closeKeycapDesignOverlay();
     return;
   }
 
@@ -5163,7 +5163,7 @@ async function deleteProjectKeycap(entryId) {
   state.project.keycaps = nextKeycaps;
   state.project.activeKeycapId = nextActiveEntry?.id ?? "";
   state.project.isDirty = true;
-  state.keycapSettingsOverlayKeycapId = "";
+  state.keycapDesignOverlayKeycapId = "";
   state.keycapExportOverlayKeycapId = "";
   setProjectStatus("success", t("project.deleted", { name: removedEntry.name }));
 

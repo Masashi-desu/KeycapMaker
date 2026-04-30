@@ -13,7 +13,7 @@ const ja = Object.freeze({
   navigation: {
     label: "作業セクション",
     project: "プロジェクト",
-    settings: "設定",
+    design: "設計",
     export: "書き出し",
   },
   actions: {
@@ -43,8 +43,8 @@ const ja = Object.freeze({
       title: "プロジェクト",
       body: "複数のキーキャップをまとめて保持し、一覧から現在の編集対象を切り替えます。",
     },
-    settings: {
-      title: "設定",
+    design: {
+      title: "設計",
       body: "選んだキーキャップの形や印字を、入力に合わせて右側へ自動反映しながら調整できます。",
     },
     export: {
@@ -53,8 +53,8 @@ const ja = Object.freeze({
     },
   },
   mobileInspector: {
-    hide: "設定カードを上へしまう",
-    show: "設定カードを戻す",
+    hide: "設計カードを上へしまう",
+    show: "設計カードを戻す",
   },
   exportPanel: {
     jsonChip: "編集再開用 JSON",
@@ -91,10 +91,10 @@ const ja = Object.freeze({
     exportKeycap: "{name} を書き出す",
     exportChip: "キーキャップ書き出し",
     exportTitle: "{name} の書き出し",
-    settingsAction: "設定",
-    settingsKeycap: "{name} の設定",
-    settingsChip: "キーキャップ設定",
-    settingsTitle: "{name} の設定",
+    designAction: "設計",
+    designKeycap: "{name} の設計",
+    designChip: "キーキャップ設計",
+    designTitle: "{name} の設計",
     deleteChip: "削除",
     deleteTitle: "キーキャップを削除",
     deleteBody: "このキーキャップをプロジェクト一覧から削除します。",
@@ -654,7 +654,7 @@ const ja = Object.freeze({
     homing: "目印",
   },
   preview: {
-    placeholder: "まだ見た目を表示していません。設定を変えると自動で最新の形に更新されます。",
+    placeholder: "まだ見た目を表示していません。設計を変えると自動で最新の形に更新されます。",
     running: "見た目を更新しています",
     successSingle: "見た目の更新が完了しました。{parts}を表示しています。",
     successMultiple: "見た目の更新が完了しました。{parts}を色ごとに分けて表示しています。",

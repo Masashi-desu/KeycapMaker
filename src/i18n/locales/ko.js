@@ -13,7 +13,7 @@ const ko = Object.freeze({
   navigation: {
     label: "작업 섹션",
     project: "프로젝트",
-    settings: "설정",
+    design: "디자인",
     export: "내보내기",
   },
   actions: {
@@ -43,8 +43,8 @@ const ko = Object.freeze({
       title: "프로젝트",
       body: "여러 키캡을 함께 보관하고 목록에서 현재 편집 대상을 전환합니다.",
     },
-    settings: {
-      title: "설정",
+    design: {
+      title: "디자인",
       body: "선택한 키캡 형상과 각인을 입력에 맞춰 조정하고, 오른쪽 미리보기에 자동 반영할 수 있습니다.",
     },
     export: {
@@ -53,8 +53,8 @@ const ko = Object.freeze({
     },
   },
   mobileInspector: {
-    hide: "설정 카드를 위로 숨기기",
-    show: "설정 카드 되돌리기",
+    hide: "디자인 카드를 위로 숨기기",
+    show: "디자인 카드 되돌리기",
   },
   exportPanel: {
     jsonChip: "편집 재개용 JSON",
@@ -91,10 +91,10 @@ const ko = Object.freeze({
     exportKeycap: "{name} 내보내기",
     exportChip: "키캡 내보내기",
     exportTitle: "{name} 내보내기",
-    settingsAction: "설정",
-    settingsKeycap: "{name} 설정",
-    settingsChip: "키캡 설정",
-    settingsTitle: "{name} 설정",
+    designAction: "디자인",
+    designKeycap: "{name} 디자인",
+    designChip: "키캡 디자인",
+    designTitle: "{name} 디자인",
     deleteChip: "삭제",
     deleteTitle: "키캡 삭제",
     deleteBody: "이 키캡을 프로젝트 목록에서 삭제합니다.",
@@ -654,7 +654,7 @@ const ko = Object.freeze({
     homing: "위치 표시",
   },
   preview: {
-    placeholder: "아직 미리보기를 표시하지 않았습니다. 설정을 바꾸면 최신 형상으로 자동 업데이트됩니다.",
+    placeholder: "아직 미리보기를 표시하지 않았습니다. 디자인을 변경하면 최신 형상으로 자동 업데이트됩니다.",
     running: "미리보기를 업데이트하는 중",
     successSingle: "미리보기 업데이트가 완료되었습니다. {parts}을(를) 표시하고 있습니다.",
     successMultiple: "미리보기 업데이트가 완료되었습니다. {parts}을(를) 색상별로 나누어 표시하고 있습니다.",
