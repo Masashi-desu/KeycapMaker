@@ -36,7 +36,6 @@ import { create3mfBlob } from "./lib/export-3mf.js";
 import { parseOff } from "./lib/off-parser.js";
 import {
   DEFAULT_PROJECT_NAME,
-  PROJECT_KEYCAPS_DIRNAME,
   PROJECT_MANIFEST_FILENAME,
   assignProjectKeycapDisplayOrder,
   createEmptyProjectState,
@@ -5209,68 +5208,6 @@ async function readProjectFile(directoryHandle, relativePath) {
   return fileHandle.getFile();
 }
 
-async function writeProjectFile(directoryHandle, relativePath, content) {
-  const fileHandle = await getProjectFileHandle(directoryHandle, relativePath, { create: true });
-  if (typeof fileHandle.createWritable !== "function") {
-    throw new Error(t("project.directoryNotWritable"));
-  }
-
-  const writable = await fileHandle.createWritable();
-  await writable.write(content);
-  await writable.close();
-}
-
-async function ensureDirectoryWritePermission(directoryHandle) {
-  if (!directoryHandle || typeof directoryHandle.getFileHandle !== "function") {
-    return false;
-  }
-
-  if (typeof directoryHandle.queryPermission !== "function" || typeof directoryHandle.requestPermission !== "function") {
-    return true;
-  }
-
-  const permissionOptions = { mode: "readwrite" };
-  if (await directoryHandle.queryPermission(permissionOptions) === "granted") {
-    return true;
-  }
-
-  return await directoryHandle.requestPermission(permissionOptions) === "granted";
-}
-
-async function selectProjectDirectoryForSave() {
-  if (await ensureDirectoryWritePermission(state.project.directoryHandle)) {
-    return state.project.directoryHandle;
-  }
-
-  if (typeof window.showDirectoryPicker !== "function") {
-    return null;
-  }
-
-  let directoryHandle;
-  try {
-    directoryHandle = await window.showDirectoryPicker({
-      id: "keycap-maker-project",
-      mode: "readwrite",
-    });
-  } catch (error) {
-    if (error?.name === "SecurityError") {
-      return null;
-    }
-
-    throw error;
-  }
-
-  if (!(await ensureDirectoryWritePermission(directoryHandle))) {
-    throw new Error(t("project.permissionDenied"));
-  }
-
-  state.project.directoryHandle = directoryHandle;
-  if (!String(state.project.name ?? "").trim() || state.project.name === DEFAULT_PROJECT_NAME) {
-    state.project.name = directoryHandle.name;
-  }
-  return directoryHandle;
-}
-
 async function dataUrlToBlob(dataUrl) {
   const response = await fetch(dataUrl);
   if (!response.ok) {
@@ -5293,29 +5230,6 @@ function prepareProjectForSave() {
   state.project.name = normalizeProjectName(state.project.name, DEFAULT_PROJECT_NAME);
   state.project.keycaps = createProjectKeycapEntriesForSave(state.project.keycaps);
   return state.project;
-}
-
-async function writeProjectToDirectory(directoryHandle, project) {
-  const manifest = createProjectManifest(project);
-  await directoryHandle.getDirectoryHandle(PROJECT_KEYCAPS_DIRNAME, { create: true });
-  await writeProjectFile(
-    directoryHandle,
-    PROJECT_MANIFEST_FILENAME,
-    JSON.stringify(manifest, null, 2),
-  );
-
-  for (const entry of project.keycaps) {
-    await writeProjectFile(
-      directoryHandle,
-      entry.jsonPath,
-      JSON.stringify(entry.editorDataPayload, null, 2),
-    );
-    await writeProjectFile(
-      directoryHandle,
-      entry.previewPath,
-      await dataUrlToBlob(entry.previewImageDataUrl || createProjectPreviewPlaceholderDataUrl(entry.params)),
-    );
-  }
 }
 
 async function downloadProjectZip(project) {
@@ -5342,17 +5256,9 @@ async function saveProject() {
 
   try {
     const project = prepareProjectForSave();
-    const directoryHandle = await selectProjectDirectoryForSave();
-    if (directoryHandle) {
-      await writeProjectToDirectory(directoryHandle, project);
-      state.project.directoryHandle = directoryHandle;
-      state.project.isDirty = false;
-      setProjectStatus("success", t("project.savedDirectory", { name: project.name }));
-    } else {
-      await downloadProjectZip(project);
-      state.project.isDirty = false;
-      setProjectStatus("success", t("project.savedZip", { name: project.name }));
-    }
+    await downloadProjectZip(project);
+    state.project.isDirty = false;
+    setProjectStatus("success", t("project.saved"));
   } catch (error) {
     setProjectStatus("error", t("project.saveFailed", { message: `${error}` }));
   }

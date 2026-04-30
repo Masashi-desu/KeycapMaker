@@ -75,7 +75,7 @@
   - 編集中のキーキャップのコピーを追加する
 - プロジェクトを保存
 
-プロジェクト一覧から選択したキーキャップを編集した場合、その active keycap の JSON はプロジェクト内で追従します。単体 JSON をドラッグして読み込んだ場合は、読み込んだ内容をキーキャップ一覧へ新規追加し、そのキーキャップを active keycap にします。読み込み済みプロジェクトの既存一覧と保存先情報は保持します。
+プロジェクト一覧から選択したキーキャップを編集した場合、その active keycap の JSON はプロジェクト内で追従します。単体 JSON をドラッグして読み込んだ場合は、読み込んだ内容をキーキャップ一覧へ新規追加し、そのキーキャップを active keycap にします。読み込み済みプロジェクトの既存一覧は保持します。
 
 一覧用 preview は撮影時の `previewViewState` を保持します。active keycap のパラメータを変更して preview が再生成された場合、同じ `previewViewState` で一覧画像を再撮影し、キーキャップ一覧の画像を更新します。
 
@@ -95,14 +95,14 @@
 
 - 編集データ JSON として読み込み、現在の編集値へ反映します。
 - 読み込んだ内容をキーキャップ一覧へ追加し、追加したキーキャップを現在の編集対象にします。
-- すでにプロジェクトを読み込んでいる場合も、既存のプロジェクト一覧と保存先情報は保持します。
+- すでにプロジェクトを読み込んでいる場合も、既存のプロジェクト一覧は保持します。
 - 現在の形状へ bind できないパラメータが含まれている場合も、元 JSON の該当フィールドは project keycap の `editorDataPayload` に保持します。該当キーキャップを active にした時点で JSON 読み込みレポートを再計算して表示し、レポート内の `×` からその path を JSON から削除できます。
 
 ## 保存
 
-ブラウザが File System Access API の `showDirectoryPicker()` と書き込み権限を提供する場合、選択されたディレクトリへ `KeycapMaker.json` と `keycaps/` を直接書き込みます。読み込んだプロジェクトディレクトリが書き込み可能な場合は、そのディレクトリを再利用します。
+プロジェクト保存は常に ZIP ダウンロードとして扱います。ZIP 内部には同じディレクトリ構成で `KeycapMaker.json` と `keycaps/` を格納します。
 
-ディレクトリ書き込みが使えない環境では、同じディレクトリ構成を持つ ZIP をダウンロードします。これは静的配信アプリとしてのフォールバックであり、プロジェクト形式の正本は ZIP 内の同一ディレクトリ構成です。
+ディレクトリへの直接書き込みは行いません。GitHub Pages 上の静的配信アプリとして、保存時のブラウザ差分や File System Access API の権限差分を避けるためです。
 
 保存済み ZIP はドラッグ & ドロップで直接読み込めます。読み込み時は archive 内から `KeycapMaker.json` を探し、同じ root 配下の `keycaps/` を展開してプロジェクトとして復元します。拡張子は `.zip` と、誤って `.zlp` になったファイル名も受け付けます。
 
@@ -111,6 +111,6 @@
 - `src/lib/project-data.js`
   project manifest、path、preview placeholder、project keycap entry の正規化。
 - `src/main.js`
-  プロジェクトセグメント UI、ディレクトリ drag/drop、File System Access API 保存、ZIP fallback。
+  プロジェクトセグメント UI、ディレクトリ / ZIP drag & drop、ZIP 保存。
 - `test/project-data.test.js`
   manifest round-trip、path 正規化、preview data URL、非プロジェクト JSON の拒否を確認する。
