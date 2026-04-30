@@ -331,7 +331,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   };
 
   const syncCanvasTouchAction = () => {
-    canvas.style.touchAction = isCompactPreviewViewport() ? "pan-y" : "none";
+    canvas.style.touchAction = "none";
   };
 
   const applyViewOffset = () => {

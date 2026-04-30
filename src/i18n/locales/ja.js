@@ -38,6 +38,10 @@ const ja = Object.freeze({
       body: "3MF / STL の印刷データと、あとで編集を再開するための JSON を保存できます。",
     },
   },
+  mobileInspector: {
+    hide: "設定カードを上へしまう",
+    show: "設定カードを戻す",
+  },
   exportPanel: {
     jsonChip: "編集再開用 JSON",
     jsonTitle: "編集データを保存",

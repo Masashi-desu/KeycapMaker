@@ -38,6 +38,10 @@ const en = Object.freeze({
       body: "Save 3MF / STL print data and JSON editor data for resuming edits later.",
     },
   },
+  mobileInspector: {
+    hide: "Move settings card up",
+    show: "Restore settings card",
+  },
   exportPanel: {
     jsonChip: "Editable JSON",
     jsonTitle: "Save Editor Data",

@@ -1657,6 +1657,7 @@ const state = {
   editorError: "",
   previewLayers: [],
   sidebarTab: "params",
+  isMobileInspectorHidden: false,
   isImportDragActive: false,
   legendFontPickerFieldKey: "",
   legendFontPickerQuery: "",
@@ -1989,31 +1990,40 @@ function renderShell() {
       <div class="language-control" data-language-control></div>
       <section class="editor-screen">
         <aside class="left-column">
-          <article class="inspector-card">
-            <nav
-              class="segment-control"
-              data-i18n-aria-label="navigation.label"
-              data-segment-control
-              style="--segment-count: ${workspaceSections.length}; --segment-index: 0;"
+          <div class="mobile-inspector-shell">
+            <article class="inspector-card">
+              <nav
+                class="segment-control"
+                data-i18n-aria-label="navigation.label"
+                data-segment-control
+                style="--segment-count: ${workspaceSections.length}; --segment-index: 0;"
+              >
+                <span class="segment-control__indicator" aria-hidden="true"></span>
+                ${workspaceSections
+                  .map(
+                    (section) => `
+                      <button
+                        class="segment-link"
+                        type="button"
+                        data-sidebar-tab="${section.id}"
+                        aria-pressed="false"
+                      >
+                        ${getWorkspaceSectionLabel(section)}
+                      </button>
+                    `,
+                  )
+                  .join("")}
+              </nav>
+              <div class="inspector-content" data-inspector-content></div>
+            </article>
+            <button
+              class="mobile-inspector-toggle"
+              type="button"
+              data-mobile-inspector-toggle
             >
-              <span class="segment-control__indicator" aria-hidden="true"></span>
-              ${workspaceSections
-                .map(
-                  (section) => `
-                    <button
-                      class="segment-link"
-                      type="button"
-                      data-sidebar-tab="${section.id}"
-                      aria-pressed="false"
-                    >
-                      ${getWorkspaceSectionLabel(section)}
-                    </button>
-                  `,
-                )
-                .join("")}
-            </nav>
-            <div class="inspector-content" data-inspector-content></div>
-          </article>
+              <span data-mobile-inspector-toggle-icon aria-hidden="true">↑</span>
+            </button>
+          </div>
         </aside>
 
         <section class="right-column">
@@ -2029,6 +2039,7 @@ function renderShell() {
 
   app.querySelector("[data-segment-control]")?.addEventListener("click", handleSegmentControlClick);
   app.querySelector("[data-language-control]")?.addEventListener("click", handleLanguageControlClick);
+  app.querySelector("[data-mobile-inspector-toggle]")?.addEventListener("click", handleMobileInspectorToggleClick);
   app.querySelector(".inspector-card")?.addEventListener("click", handleInspectorCardClick);
   app.querySelector(".inspector-card")?.addEventListener("input", handleInspectorCardInput);
   app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
@@ -2047,7 +2058,25 @@ function renderLayout() {
     return;
   }
 
-  editorScreen.className = `editor-screen editor-screen--${viewportLayoutMode}`;
+  editorScreen.className = [
+    "editor-screen",
+    `editor-screen--${viewportLayoutMode}`,
+    state.isMobileInspectorHidden ? "editor-screen--inspector-hidden" : "",
+  ].filter(Boolean).join(" ");
+
+  const mobileInspectorToggle = app.querySelector("[data-mobile-inspector-toggle]");
+  const mobileInspectorToggleIcon = app.querySelector("[data-mobile-inspector-toggle-icon]");
+  if (mobileInspectorToggle) {
+    const label = state.isMobileInspectorHidden
+      ? t("mobileInspector.show")
+      : t("mobileInspector.hide");
+    mobileInspectorToggle.setAttribute("aria-label", label);
+    mobileInspectorToggle.setAttribute("title", label);
+    mobileInspectorToggle.setAttribute("aria-expanded", state.isMobileInspectorHidden ? "false" : "true");
+  }
+  if (mobileInspectorToggleIcon) {
+    mobileInspectorToggleIcon.textContent = state.isMobileInspectorHidden ? "↓" : "↑";
+  }
 }
 
 function renderPersistentShellCopy() {
@@ -3271,6 +3300,11 @@ function handleSegmentControlClick(event) {
   }
 
   handleSidebarTabChange({ currentTarget: button });
+}
+
+function handleMobileInspectorToggleClick() {
+  state.isMobileInspectorHidden = !state.isMobileInspectorHidden;
+  renderLayout();
 }
 
 function handleInspectorCardClick(event) {

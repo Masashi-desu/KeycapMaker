@@ -38,6 +38,10 @@ const zh = Object.freeze({
       body: "可以保存用于打印的 3MF / STL 数据，以及稍后继续编辑用的 JSON。",
     },
   },
+  mobileInspector: {
+    hide: "将设置卡片移到上方",
+    show: "恢复设置卡片",
+  },
   exportPanel: {
     jsonChip: "可继续编辑的 JSON",
     jsonTitle: "保存编辑数据",

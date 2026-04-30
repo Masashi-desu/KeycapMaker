@@ -284,6 +284,15 @@ pre {
   -webkit-backdrop-filter: blur(0px) saturate(100%);
 }
 
+.mobile-inspector-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.mobile-inspector-toggle {
+  display: none;
+}
+
 .inspector-content {
   display: grid;
   gap: 14px;
@@ -1556,10 +1565,19 @@ pre {
 }
 
 @media (max-width: 760px) {
+  html,
+  body,
+  #app {
+    height: 100%;
+    overflow: hidden;
+  }
+
   .editor-screen {
     --mobile-shell-padding-top: var(--shell-padding-top);
     --mobile-shell-padding-bottom: max(var(--shell-padding-block), env(safe-area-inset-bottom, 0px));
     --mobile-preview-padding-bottom: max(clamp(12px, 4svh, 24px), env(safe-area-inset-bottom, 0px));
+    --mobile-inspector-toggle-size: 44px;
+    --mobile-inspector-peek: 54px;
     --mobile-viewport-height: calc(
       var(--visual-viewport-height) - var(--mobile-shell-padding-top) - var(--mobile-shell-padding-bottom)
     );
@@ -1572,6 +1590,15 @@ pre {
     grid-template-rows: minmax(var(--mobile-viewport-height), auto);
     justify-content: stretch;
     align-items: start;
+    height: var(--mobile-viewport-height);
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  .app-shell {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
   }
 
   .editor-screen--stack .left-column,
@@ -1582,12 +1609,59 @@ pre {
 
   .left-column {
     z-index: 2;
-    padding-bottom: var(--mobile-viewport-height);
+    height: var(--mobile-viewport-height);
     pointer-events: none;
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .mobile-inspector-shell {
+    height: 100%;
+    max-height: var(--mobile-viewport-height);
+    grid-template-rows: minmax(0, 1fr) var(--mobile-inspector-toggle-size);
+    pointer-events: none;
+    transform: translateY(0);
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .inspector-card {
+    max-height: calc(var(--mobile-viewport-height) - var(--mobile-inspector-toggle-size) - 10px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     pointer-events: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-inspector-toggle {
+    display: inline-grid;
+    place-items: center;
+    justify-self: center;
+    width: var(--mobile-inspector-toggle-size);
+    height: var(--mobile-inspector-toggle-size);
+    border: 1px solid color-mix(in srgb, var(--border) 56%, white 44%);
+    border-radius: 999px;
+    background: rgba(252, 250, 246, 0.9);
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow:
+      0 12px 24px rgba(45, 36, 28, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    pointer-events: auto;
+    touch-action: manipulation;
+    backdrop-filter: blur(12px) saturate(112%);
+    -webkit-backdrop-filter: blur(12px) saturate(112%);
+    cursor: pointer;
+  }
+
+  .mobile-inspector-toggle:focus-visible {
+    outline: 2px solid rgba(123, 155, 191, 0.58);
+    outline-offset: 2px;
+  }
+
+  .editor-screen--inspector-hidden .mobile-inspector-shell {
+    transform: translateY(calc(-1 * (var(--mobile-viewport-height) - var(--mobile-inspector-toggle-size) - var(--mobile-inspector-peek))));
   }
 
   .right-column {
