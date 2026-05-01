@@ -250,8 +250,6 @@ export function createProjectKeycapEntriesForSave(keycaps = []) {
     .map((entry) => createProjectKeycapEntry(entry.params, {
       id: entry.id,
       name: entry.name,
-      jsonPath: entry.jsonPath,
-      previewPath: entry.previewPath,
       displayOrder: entry.displayOrder,
       editorDataPayload: entry.editorDataPayload,
       previewImageDataUrl: entry.previewImageDataUrl,

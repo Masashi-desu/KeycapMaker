@@ -62,6 +62,7 @@
 - `kind` は `keycap-maker/project` 固定です。
 - `schemaVersion` は `1` です。互換性のない変更を入れる場合だけ更新します。
 - `jsonPath`、`previewPath`、`threeMfPath` はプロジェクトディレクトリからの相対パスです。
+- キーキャップ名を変更した場合、`jsonPath`、`previewPath`、`threeMfPath` は現在の保存名に追従します。
 - `displayOrder` はプロジェクトセグメントの表示順です。保存時は現在の一覧順に 0 始まりで振り直します。
 - `previewViewState` は一覧用 preview を撮影したときのカメラ方向、距離、表示オフセットです。省略可能です。
 - キーキャップ本体の編集値は manifest に複製せず、各 `keycaps/*.json` を正とします。

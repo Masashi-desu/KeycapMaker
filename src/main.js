@@ -5262,22 +5262,30 @@ function syncActiveProjectKeycapFromCurrent(options = {}) {
   }
 
   const currentEntry = state.project.keycaps[entryIndex];
+  const currentName = sanitizeExportBaseName(currentEntry.name, DEFAULT_EXPORT_BASE_NAME);
+  const nextName = sanitizeExportBaseName(state.keycapParams.name, DEFAULT_EXPORT_BASE_NAME);
+  const didNameChange = currentName !== nextName;
   const nextPreviewImageDataUrl = options.previewImageDataUrl ?? currentEntry.previewImageDataUrl;
   const nextPreviewViewState = options.previewViewState === undefined
     ? currentEntry.previewViewState
     : clonePreviewViewState(options.previewViewState);
-  const nextPreviewPath = options.previewPath ?? (
-    options.previewImageDataUrl && !isPreviewPathCompatibleWithDataUrl(currentEntry.previewPath, nextPreviewImageDataUrl)
-      ? undefined
-      : currentEntry.previewPath
-  );
+  const nextJsonPath = didNameChange ? undefined : currentEntry.jsonPath;
+  const nextPreviewPath = didNameChange
+    ? undefined
+    : options.previewPath ?? (
+        options.previewImageDataUrl && !isPreviewPathCompatibleWithDataUrl(currentEntry.previewPath, nextPreviewImageDataUrl)
+          ? undefined
+          : currentEntry.previewPath
+      );
+  const nextThreeMfPath = didNameChange ? undefined : currentEntry.threeMfPath;
   const nextEditorDataPayload = options.editorDataPayload
     ?? mergeEditorDataPayloadParams(currentEntry.editorDataPayload, state.keycapParams);
   state.project.keycaps[entryIndex] = createProjectEntryFromCurrentKeycap({
     id: currentEntry.id,
     name: state.keycapParams.name,
-    jsonPath: currentEntry.jsonPath,
+    jsonPath: nextJsonPath,
     previewPath: nextPreviewPath,
+    threeMfPath: nextThreeMfPath,
     displayOrder: currentEntry.displayOrder,
     editorDataPayload: nextEditorDataPayload,
     previewImageDataUrl: nextPreviewImageDataUrl,
