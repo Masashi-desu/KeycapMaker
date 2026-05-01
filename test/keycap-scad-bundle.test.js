@@ -417,6 +417,59 @@ test("正方形キーの topScale は上面を正方形のまま縮める", asyn
   }
 });
 
+test("topScale は尖った上面用の低い値を SCAD 角度へ変換する", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const keyWidth = 18;
+    const keyDepth = 18;
+    const topCenterHeight = 9.5;
+    const topScale = 0.02;
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        keyWidth,
+        keyDepth,
+        topCenterHeight,
+        topScale,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    const frontAngle = readScadDefinition(jobScad, "user_profile_front_angle");
+    const leftAngle = readScadDefinition(jobScad, "user_profile_left_angle");
+    const topWidth = keyWidth - topCenterHeight * Math.tan(leftAngle * Math.PI / 180) * 2;
+    const topDepth = keyDepth - topCenterHeight * Math.tan(frontAngle * Math.PI / 180) * 2;
+
+    assert.ok(Math.abs(frontAngle - leftAngle) < 1e-9);
+    assert.ok(Math.abs(topWidth - keyWidth * topScale) < 1e-9);
+    assert.ok(Math.abs(topDepth - keyDepth * topScale) < 1e-9);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("custom shell の上面Rを SCAD wrapper へ渡す", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,

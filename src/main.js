@@ -343,6 +343,10 @@ const STEM_CLEARANCE_CARD_DEFINITION = Object.freeze({
 const STEM_CARD_DEFINITIONS = Object.freeze([STEM_CLEARANCE_CARD_DEFINITION]);
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
+const TOP_SCALE_MIN = 0.02;
+const TOP_SCALE_MAX = 1;
+const TOP_SCALE_STEP = 0.01;
+const TOP_SCALE_MIN_FACE_SIZE = 0.2;
 const TOP_HAT_MIN_SIZE = 0.2;
 const TOP_HAT_MIN_HEIGHT = 0.05;
 const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
@@ -818,11 +822,57 @@ function atanDeg(value) {
   return (Math.atan(value) * 180) / Math.PI;
 }
 
-function clampTopScale(value, fallback = 1) {
+function roundUpTopScaleMinimum(value) {
+  return Math.ceil((value - 1e-9) / TOP_SCALE_STEP) * TOP_SCALE_STEP;
+}
+
+function resolveTopScaleActiveDishDepth(params = {}) {
+  const dishDepth = Number(params.dishDepth ?? 0);
+  const topSurfaceShape = params.topSurfaceShape ?? "flat";
+  return topSurfaceShape === "flat" || !Number.isFinite(dishDepth) ? 0 : dishDepth;
+}
+
+function resolveTopScaleInnerMinimumForAxis(size, topCenterHeight, innerHeight, wall) {
+  const denominator = innerHeight * size;
+  const availableInnerFace = size - (wall * 2) - TOP_SCALE_MIN_FACE_SIZE;
+  if (denominator <= 0 || availableInnerFace <= 0) {
+    return TOP_SCALE_MAX;
+  }
+
+  return Math.max(1 - (availableInnerFace * topCenterHeight) / denominator, 0);
+}
+
+function resolveTopScaleMinimum(params = {}) {
+  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const defaults = createDefaultKeycapParams(profileKey);
+  const geometryDefaults = resolveShapeProfileGeometryDefaults(profileKey);
+  const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
+  const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
+  const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+  const wall = clampMinimum(params.wallThickness, defaults.wallThickness ?? 1.2, 0);
+  const activeDishDepth = resolveTopScaleActiveDishDepth({ ...defaults, ...params, shapeProfile: profileKey });
+  const innerHeight = Math.max(
+    topCenterHeight - activeDishDepth - geometryDefaults.topThickness,
+    TOP_SCALE_MIN_FACE_SIZE,
+  );
+  const outerFaceMinimum = TOP_SCALE_MIN_FACE_SIZE / Math.max(Math.min(keyWidth, keyDepth), TOP_SCALE_MIN_FACE_SIZE);
+  const innerFaceMinimum = Math.max(
+    resolveTopScaleInnerMinimumForAxis(keyWidth, topCenterHeight, innerHeight, wall),
+    resolveTopScaleInnerMinimumForAxis(keyDepth, topCenterHeight, innerHeight, wall),
+  );
+  const rawMinimum = Math.max(TOP_SCALE_MIN, outerFaceMinimum, innerFaceMinimum);
+
+  return Math.min(roundUpTopScaleMinimum(rawMinimum), TOP_SCALE_MAX);
+}
+
+function clampTopScale(value, fallback = 1, params = {}) {
+  const minimum = resolveTopScaleMinimum(params);
   const nextValue = Number(value);
   const fallbackValue = Number(fallback);
-  const resolvedFallback = Number.isFinite(fallbackValue) ? fallbackValue : 1;
-  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : resolvedFallback, 0.5), 1);
+  const resolvedFallback = Number.isFinite(fallbackValue)
+    ? Math.min(Math.max(fallbackValue, minimum), TOP_SCALE_MAX)
+    : TOP_SCALE_MAX;
+  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : resolvedFallback, minimum), TOP_SCALE_MAX);
 }
 
 function resolveTopScaleAngle(size, topCenterHeight, topScale) {
@@ -864,7 +914,7 @@ function resolveProfileAngles(params = {}) {
   const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
   const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
   const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
-  const topScale = clampTopScale(params.topScale, defaults.topScale ?? 1);
+  const topScale = clampTopScale(params.topScale, defaults.topScale ?? 1, params);
   const horizontalAngle = resolveTopScaleAngle(keyWidth, topCenterHeight, topScale);
   const verticalAngle = resolveTopScaleAngle(keyDepth, topCenterHeight, topScale);
 
@@ -1364,7 +1414,7 @@ const fieldGroupTemplates = [
         hint: () => t("fields.topScale.hint"),
         unit: "",
         step: 0.01,
-        min: 0.5,
+        min: (params) => resolveTopScaleMinimum(params),
         max: 1,
       },
       {
