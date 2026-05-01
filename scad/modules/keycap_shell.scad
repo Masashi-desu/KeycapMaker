@@ -885,7 +885,9 @@ module keycap_top_hat_cap(
     top_offset_x = 0,
     top_offset_y = 0,
     top_corner_radii = undef,
-    bottom_corner_radii = undef
+    bottom_corner_radii = undef,
+    bottom_width = undef,
+    bottom_depth = undef
 ) {
     parent_width = max(parent_top_width, 0.2);
     parent_depth = max(parent_top_depth, 0.2);
@@ -893,8 +895,14 @@ module keycap_top_hat_cap(
     safe_top_depth = min(max(top_depth, 0.2), parent_depth);
     safe_height = abs(height);
     requested_outset = keycap_top_hat_shoulder_outset(safe_height, shoulder_angle);
-    base_width = min(safe_top_width + requested_outset * 2, parent_width);
-    base_depth = min(safe_top_depth + requested_outset * 2, parent_depth);
+    automatic_base_width = min(safe_top_width + requested_outset * 2, parent_width);
+    automatic_base_depth = min(safe_top_depth + requested_outset * 2, parent_depth);
+    base_width = is_undef(bottom_width)
+        ? automatic_base_width
+        : min(max(bottom_width, safe_top_width), parent_width);
+    base_depth = is_undef(bottom_depth)
+        ? automatic_base_depth
+        : min(max(bottom_depth, safe_top_depth), parent_depth);
     actual_outset = min((base_width - safe_top_width) / 2, (base_depth - safe_top_depth) / 2);
     safe_top_radius = min(max(top_radius, 0), safe_top_width / 2, safe_top_depth / 2);
     has_corner_radii = !is_undef(top_corner_radii) || !is_undef(bottom_corner_radii);
@@ -984,6 +992,8 @@ module keycap_shell(
     top_hat_enabled = false,
     top_hat_top_width = 10.5,
     top_hat_top_depth = 9.5,
+    top_hat_bottom_width = undef,
+    top_hat_bottom_depth = undef,
     top_hat_top_radius = 1.8,
     top_hat_top_radii = undef,
     top_hat_bottom_radius = 3.2,
@@ -1055,6 +1065,8 @@ module keycap_shell(
                     parent_top_depth = top_back - top_front,
                     top_width = top_hat_top_width,
                     top_depth = top_hat_top_depth,
+                    bottom_width = top_hat_bottom_width,
+                    bottom_depth = top_hat_bottom_depth,
                     top_radius = top_hat_top_radius,
                     bottom_radius = top_hat_bottom_radius,
                     bottom_corner_radii = top_hat_bottom_radii,
@@ -1108,6 +1120,8 @@ module keycap_shell(
                 parent_top_depth = top_back - top_front,
                 top_width = top_hat_top_width,
                 top_depth = top_hat_top_depth,
+                bottom_width = top_hat_bottom_width,
+                bottom_depth = top_hat_bottom_depth,
                 top_radius = top_hat_top_radius,
                 bottom_radius = top_hat_bottom_radius,
                 bottom_corner_radii = top_hat_bottom_radii,

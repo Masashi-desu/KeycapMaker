@@ -368,6 +368,18 @@ const zh = Object.freeze({
       secondaryLabel: "上面深度尺寸",
       miniLabel: "深度",
     },
+    topHatBottomWidth: {
+      label: "底面宽度",
+      hint: "追加键顶底面的宽度。当前最大值为 {maxWidth}。",
+      secondaryLabel: "底面尺寸",
+      miniLabel: "宽度",
+    },
+    topHatBottomDepth: {
+      label: "底面深度",
+      hint: "追加键顶底面的前后尺寸。当前最大值为 {maxDepth}。",
+      secondaryLabel: "底面深度尺寸",
+      miniLabel: "深度",
+    },
     topHatInset: {
       label: "上面内缩量",
       hint: "从 Enter 键顶轮廓向内缩小的距离。当前最大值为 {maxInset}。",

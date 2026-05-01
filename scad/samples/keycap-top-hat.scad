@@ -4,6 +4,8 @@ include <common/custom-shell-params.scad>
 user_top_hat_enabled = true;
 user_top_hat_top_width = 10.5;
 user_top_hat_top_depth = 9.5;
+user_top_hat_bottom_width = 13.3;
+user_top_hat_bottom_depth = 12.3;
 user_top_hat_top_radius = 1.8;
 user_top_hat_bottom_radius = 0.8;
 user_top_hat_bottom_radius_individual_enabled = true;

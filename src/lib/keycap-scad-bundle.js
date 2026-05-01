@@ -835,6 +835,8 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_hat_enabled: isTopHatGeometryType(shapeGeometry.shapeGeometryType) && Boolean(params.topHatEnabled),
     user_top_hat_top_width: Math.max(numberOr(params.topHatTopWidth, 10.5), 0.2),
     user_top_hat_top_depth: Math.max(numberOr(params.topHatTopDepth, 9.5), 0.2),
+    user_top_hat_bottom_width: Math.max(numberOr(params.topHatBottomWidth, numberOr(params.topHatTopWidth, 10.5)), 0.2),
+    user_top_hat_bottom_depth: Math.max(numberOr(params.topHatBottomDepth, numberOr(params.topHatTopDepth, 9.5)), 0.2),
     user_top_hat_inset: Math.max(numberOr(params.topHatInset, 2.0), 0),
     user_top_hat_top_radius: topHatTopRadius,
     user_top_hat_top_radius_individual_enabled: topHatTopRadiusIndividualEnabled,

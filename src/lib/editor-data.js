@@ -415,6 +415,18 @@ function clampTopHatTopDepth(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
   return clampNumberRange(value, fallback, TOP_HAT_MIN_SIZE, getTopHatUsableFootprintLimits(params).depth);
 }
 
+function clampTopHatBottomWidth(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  const topWidth = clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth);
+  return clampNumberRange(value, fallback, topWidth, limits.width);
+}
+
+function clampTopHatBottomDepth(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  const topDepth = clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth);
+  return clampNumberRange(value, fallback, topDepth, limits.depth);
+}
+
 function getTopHatTopRadiusMax(params = {}) {
   if (isJisEnterTopHatGeometry(params) && ("topHatInset" in params)) {
     const limits = getTopHatFootprintLimits(params);
@@ -453,11 +465,8 @@ function getTopHatBottomRadiusMax(params = {}) {
     return Math.max(Math.min(width, depth, lowerWidth, upperDepth, notchWidth || width, notchDepth || depth) / 2, 0);
   }
 
-  const limits = getTopHatUsableFootprintLimits(params);
-  const topWidth = clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth);
-  const topDepth = clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth);
-  const baseWidth = Math.min(topWidth + actualOutset * 2, limits.width);
-  const baseDepth = Math.min(topDepth + actualOutset * 2, limits.depth);
+  const baseWidth = clampTopHatBottomWidth(params.topHatBottomWidth, params, params.topHatBottomWidth);
+  const baseDepth = clampTopHatBottomDepth(params.topHatBottomDepth, params, params.topHatBottomDepth);
   return Math.max(Math.min(baseWidth, baseDepth) / 2, 0);
 }
 
@@ -470,19 +479,25 @@ function getTopHatShoulderOutset(params = {}) {
     return clampTopHatInset(params.topHatInset, params, params.topHatInset);
   }
 
-  const limits = getTopHatUsableFootprintLimits(params);
   const topWidth = clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth);
   const topDepth = clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth);
+  const bottomWidth = clampTopHatBottomWidth(params.topHatBottomWidth, params, params.topHatBottomWidth);
+  const bottomDepth = clampTopHatBottomDepth(params.topHatBottomDepth, params, params.topHatBottomDepth);
   return Math.min(
-    Math.max((limits.width - topWidth) / 2, 0),
-    Math.max((limits.depth - topDepth) / 2, 0),
+    Math.max((bottomWidth - topWidth) / 2, 0),
+    Math.max((bottomDepth - topDepth) / 2, 0),
   );
 }
 
 function getTopHatActualShoulderOutset(params = {}) {
+  const shoulderOutset = getTopHatShoulderOutset(params);
+  if (!isJisEnterTopHatGeometry(params) || !("topHatInset" in params)) {
+    return shoulderOutset;
+  }
+
   const height = Math.abs(clampTopHatHeight(params.topHatHeight, params, params.topHatHeight ?? TOP_HAT_MIN_HEIGHT));
   const shoulderAngle = clampTopHatShoulderAngle(params.topHatShoulderAngle, params.topHatShoulderAngle ?? 45);
-  return Math.min(getTopHatShoulderOutset(params), height / degTan(shoulderAngle));
+  return Math.min(shoulderOutset, height / degTan(shoulderAngle));
 }
 
 function getTopHatHeightMax(params = {}) {
@@ -809,6 +824,12 @@ export function syncDerivedKeycapParams(params = {}) {
     if ("topHatTopDepth" in defaults || "topHatTopDepth" in params) {
       params.topHatTopDepth = clampTopHatTopDepth(params.topHatTopDepth, params, defaults.topHatTopDepth ?? 9.5);
     }
+    if ("topHatBottomWidth" in defaults || "topHatBottomWidth" in params) {
+      params.topHatBottomWidth = clampTopHatBottomWidth(params.topHatBottomWidth, params, defaults.topHatBottomWidth ?? params.topHatTopWidth);
+    }
+    if ("topHatBottomDepth" in defaults || "topHatBottomDepth" in params) {
+      params.topHatBottomDepth = clampTopHatBottomDepth(params.topHatBottomDepth, params, defaults.topHatBottomDepth ?? params.topHatTopDepth);
+    }
     params.topHatHeight = clampTopHatHeight(params.topHatHeight, params, defaults.topHatHeight ?? 1.4);
     params.topHatShoulderRadius = clampTopHatShoulderRadius(params.topHatShoulderRadius, params, defaults.topHatShoulderRadius ?? 0);
     params.topHatTopRadius = clampTopHatTopRadius(params.topHatTopRadius, params, defaults.topHatTopRadius ?? 0);
@@ -955,6 +976,14 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "topHatTopDepth") {
     return clampTopHatTopDepth(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "topHatBottomWidth") {
+    return clampTopHatBottomWidth(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "topHatBottomDepth") {
+    return clampTopHatBottomDepth(value, paramsContext, fallback);
   }
 
   if (fieldKey === "topHatTopRadius" || TOP_HAT_TOP_RADIUS_FIELD_KEYS.includes(fieldKey)) {

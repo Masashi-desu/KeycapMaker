@@ -368,6 +368,18 @@ const en = Object.freeze({
       secondaryLabel: "Top Depth Size",
       miniLabel: "Depth",
     },
+    topHatBottomWidth: {
+      label: "Bottom Width",
+      hint: "Width of the added keytop's bottom surface. Current maximum: {maxWidth}.",
+      secondaryLabel: "Bottom Size",
+      miniLabel: "Width",
+    },
+    topHatBottomDepth: {
+      label: "Bottom Depth",
+      hint: "Front-to-back size of the added keytop's bottom surface. Current maximum: {maxDepth}.",
+      secondaryLabel: "Bottom Depth Size",
+      miniLabel: "Depth",
+    },
     topHatInset: {
       label: "Top Inset",
       hint: "Inset from the Enter keytop outline to the added top surface. Current maximum: {maxInset}.",

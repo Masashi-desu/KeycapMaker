@@ -360,6 +360,8 @@ const LINKED_SIZE_UNIT_FIELDS = Object.freeze({
   keyDepthUnits: "keyDepth",
   topHatTopWidthUnits: "topHatTopWidth",
   topHatTopDepthUnits: "topHatTopDepth",
+  topHatBottomWidthUnits: "topHatBottomWidth",
+  topHatBottomDepthUnits: "topHatBottomDepth",
 });
 const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
@@ -1123,25 +1125,63 @@ function getTopHatSafeInset(params = state.keycapParams) {
   return Math.min(Math.max(Number.isFinite(inset) ? inset : 0, 0), getJisEnterTopHatInsetMax(params));
 }
 
+function getTopHatTopWidthValue(params = state.keycapParams) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  const width = Number(params.topHatTopWidth ?? TOP_HAT_MIN_SIZE);
+  return Math.min(Math.max(Number.isFinite(width) ? width : TOP_HAT_MIN_SIZE, TOP_HAT_MIN_SIZE), limits.width);
+}
+
+function getTopHatTopDepthValue(params = state.keycapParams) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  const depth = Number(params.topHatTopDepth ?? TOP_HAT_MIN_SIZE);
+  return Math.min(Math.max(Number.isFinite(depth) ? depth : TOP_HAT_MIN_SIZE, TOP_HAT_MIN_SIZE), limits.depth);
+}
+
+function getTopHatBottomWidthMin(params = state.keycapParams) {
+  return getTopHatTopWidthValue(params);
+}
+
+function getTopHatBottomDepthMin(params = state.keycapParams) {
+  return getTopHatTopDepthValue(params);
+}
+
+function getTopHatBottomWidthValue(params = state.keycapParams) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  const width = Number(params.topHatBottomWidth ?? getTopHatBottomWidthMin(params));
+  return Math.min(Math.max(Number.isFinite(width) ? width : getTopHatBottomWidthMin(params), getTopHatBottomWidthMin(params)), limits.width);
+}
+
+function getTopHatBottomDepthValue(params = state.keycapParams) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  const depth = Number(params.topHatBottomDepth ?? getTopHatBottomDepthMin(params));
+  return Math.min(Math.max(Number.isFinite(depth) ? depth : getTopHatBottomDepthMin(params), getTopHatBottomDepthMin(params)), limits.depth);
+}
+
 function getTopHatShoulderOutset(params = state.keycapParams) {
   if (isJisEnterTopHatShapeProfile(params.shapeProfile) && "topHatInset" in params) {
     return getTopHatSafeInset(params);
   }
 
-  const limits = getTopHatUsableFootprintLimits(params);
-  const topWidth = Math.min(Math.max(Number(params.topHatTopWidth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.width);
-  const topDepth = Math.min(Math.max(Number(params.topHatTopDepth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.depth);
+  const topWidth = getTopHatTopWidthValue(params);
+  const topDepth = getTopHatTopDepthValue(params);
+  const bottomWidth = getTopHatBottomWidthValue(params);
+  const bottomDepth = getTopHatBottomDepthValue(params);
   return Math.min(
-    Math.max((limits.width - topWidth) / 2, 0),
-    Math.max((limits.depth - topDepth) / 2, 0),
+    Math.max((bottomWidth - topWidth) / 2, 0),
+    Math.max((bottomDepth - topDepth) / 2, 0),
   );
 }
 
 function getTopHatActualShoulderOutset(params = state.keycapParams) {
+  const shoulderOutset = getTopHatShoulderOutset(params);
+  if (!isJisEnterTopHatShapeProfile(params.shapeProfile) || !("topHatInset" in params)) {
+    return shoulderOutset;
+  }
+
   const rawHeight = Number(params.topHatHeight ?? TOP_HAT_MIN_HEIGHT);
   const height = Math.abs(Number.isFinite(rawHeight) ? rawHeight : TOP_HAT_MIN_HEIGHT);
   const shoulderAngle = getTopHatSafeShoulderAngle(params);
-  return Math.min(getTopHatShoulderOutset(params), height / Math.tan((shoulderAngle * Math.PI) / 180));
+  return Math.min(shoulderOutset, height / Math.tan((shoulderAngle * Math.PI) / 180));
 }
 
 function getTopHatHeightMax(params = state.keycapParams) {
@@ -1169,8 +1209,8 @@ function getTopHatTopRadiusMax(params = state.keycapParams) {
     return Math.max(Math.min(width, depth, lowerWidth, upperDepth, notchWidth || width, notchDepth || depth) / 2, 0);
   }
 
-  const width = Math.min(Math.max(Number(params.topHatTopWidth ?? 0), 0), getTopHatUsableFootprintLimits(params).width);
-  const depth = Math.min(Math.max(Number(params.topHatTopDepth ?? 0), 0), getTopHatUsableFootprintLimits(params).depth);
+  const width = getTopHatTopWidthValue(params);
+  const depth = getTopHatTopDepthValue(params);
   return Math.max(Math.min(width, depth) / 2, 0);
 }
 
@@ -1192,6 +1232,16 @@ function getTopHatTopWidthHint(params) {
 function getTopHatTopDepthHint(params) {
   const limits = getTopHatUsableFootprintLimits(params);
   return t("fields.topHatTopDepth.hint", { maxDepth: formatMillimeter(limits.depth) });
+}
+
+function getTopHatBottomWidthHint(params) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  return t("fields.topHatBottomWidth.hint", { maxWidth: formatMillimeter(limits.width) });
+}
+
+function getTopHatBottomDepthHint(params) {
+  const limits = getTopHatUsableFootprintLimits(params);
+  return t("fields.topHatBottomDepth.hint", { maxDepth: formatMillimeter(limits.depth) });
 }
 
 function getTopHatInsetHint(params) {
@@ -1218,11 +1268,8 @@ function getTopHatBottomRadiusMax(params = state.keycapParams) {
     return Math.max(Math.min(width, depth, lowerWidth, upperDepth, notchWidth || width, notchDepth || depth) / 2, 0);
   }
 
-  const limits = getTopHatUsableFootprintLimits(params);
-  const topWidth = Math.min(Math.max(Number(params.topHatTopWidth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.width);
-  const topDepth = Math.min(Math.max(Number(params.topHatTopDepth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.depth);
-  const baseWidth = Math.min(topWidth + actualOutset * 2, limits.width);
-  const baseDepth = Math.min(topDepth + actualOutset * 2, limits.depth);
+  const baseWidth = getTopHatBottomWidthValue(params);
+  const baseDepth = getTopHatBottomDepthValue(params);
   return Math.max(Math.min(baseWidth, baseDepth) / 2, 0);
 }
 
@@ -1608,6 +1655,8 @@ const fieldGroupTemplates = [
         dependentFieldKeys: [
           "topHatTopWidth",
           "topHatTopDepth",
+          "topHatBottomWidth",
+          "topHatBottomDepth",
           "topHatInset",
           "topHatTopRadius",
           "topHatBottomRadius",
@@ -1646,6 +1695,40 @@ const fieldGroupTemplates = [
         secondaryUnit: "u",
         secondaryStep: 0.05,
         secondaryMin: () => TOP_HAT_MIN_SIZE / getKeyUnitMm(),
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatBottomWidth",
+        label: () => t("fields.topHatBottomWidth.label"),
+        hint: (params) => getTopHatBottomWidthHint(params),
+        type: "linked-size",
+        unit: "mm",
+        step: 0.1,
+        min: (params) => getTopHatBottomWidthMin(params),
+        max: (params) => getTopHatUsableFootprintLimits(params).width,
+        primaryMiniLabel: () => t("fields.topHatBottomWidth.miniLabel"),
+        secondaryLabel: () => t("fields.topHatBottomWidth.secondaryLabel"),
+        secondaryField: "topHatBottomWidthUnits",
+        secondaryUnit: "u",
+        secondaryStep: 0.05,
+        secondaryMin: (params) => getTopHatBottomWidthMin(params) / getKeyUnitMm(),
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatBottomDepth",
+        label: () => t("fields.topHatBottomDepth.label"),
+        hint: (params) => getTopHatBottomDepthHint(params),
+        type: "linked-size",
+        unit: "mm",
+        step: 0.1,
+        min: (params) => getTopHatBottomDepthMin(params),
+        max: (params) => getTopHatUsableFootprintLimits(params).depth,
+        primaryMiniLabel: () => t("fields.topHatBottomDepth.miniLabel"),
+        secondaryLabel: () => t("fields.topHatBottomDepth.secondaryLabel"),
+        secondaryField: "topHatBottomDepthUnits",
+        secondaryUnit: "u",
+        secondaryStep: 0.05,
+        secondaryMin: (params) => getTopHatBottomDepthMin(params) / getKeyUnitMm(),
         visibleWhen: (params) => params.topHatEnabled,
       },
       {
@@ -6084,6 +6167,8 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "typewriterMountHeight",
   "topHatTopWidth",
   "topHatTopDepth",
+  "topHatBottomWidth",
+  "topHatBottomDepth",
   "topHatInset",
   "topHatTopRadius",
   ...TOP_HAT_TOP_RADIUS_FIELD_KEYS,
@@ -6144,6 +6229,9 @@ function syncVisibleTopFieldState(activeField = null) {
     }
 
     syncFieldHint(fieldKey);
+    if (Object.values(LINKED_SIZE_UNIT_FIELDS).includes(fieldKey)) {
+      syncLinkedSizeInputs(fieldKey);
+    }
   });
 }
 
@@ -6154,6 +6242,14 @@ function getNumericFieldMinimum(fieldKey, fieldConfig) {
 
   if (fieldKey === "topHatTopWidthUnits" || fieldKey === "topHatTopDepthUnits") {
     return TOP_HAT_MIN_SIZE / getKeyUnitMm();
+  }
+
+  if (fieldKey === "topHatBottomWidthUnits") {
+    return getTopHatBottomWidthMin() / getKeyUnitMm();
+  }
+
+  if (fieldKey === "topHatBottomDepthUnits") {
+    return getTopHatBottomDepthMin() / getKeyUnitMm();
   }
 
   const minimum = Number(resolveFieldAttribute(fieldConfig?.min));
@@ -6408,6 +6504,7 @@ function handleFieldChange(event) {
     syncFieldHint("topCornerRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopWidth");
+    syncFieldHint("topHatBottomWidth");
     syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
     syncFieldHint("topHatBottomRadius");
@@ -6420,6 +6517,7 @@ function handleFieldChange(event) {
     syncFieldHint("topCornerRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopDepth");
+    syncFieldHint("topHatBottomDepth");
     syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
     syncFieldHint("topHatBottomRadius");
@@ -6436,10 +6534,20 @@ function handleFieldChange(event) {
     syncFieldHint("topHatShoulderRadius");
   }
 
-  if (changedPrimaryField === "topScale" || changedPrimaryField === "topHatTopWidth" || changedPrimaryField === "topHatTopDepth" || changedPrimaryField === "topHatInset" || changedPrimaryField === "topHatShoulderAngle") {
+  if (
+    changedPrimaryField === "topScale"
+    || changedPrimaryField === "topHatTopWidth"
+    || changedPrimaryField === "topHatTopDepth"
+    || changedPrimaryField === "topHatBottomWidth"
+    || changedPrimaryField === "topHatBottomDepth"
+    || changedPrimaryField === "topHatInset"
+    || changedPrimaryField === "topHatShoulderAngle"
+  ) {
     syncFieldHint("topCornerRadius");
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatTopDepth");
+    syncFieldHint("topHatBottomWidth");
+    syncFieldHint("topHatBottomDepth");
     syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
     syncFieldHint("topHatBottomRadius");

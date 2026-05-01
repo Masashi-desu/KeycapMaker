@@ -36,6 +36,51 @@ test("preview normals keep top-hat-like creases hard", () => {
   assertNormalClose(readNormal(geometry, 3), { x: 0, y: -Math.SQRT1_2, z: Math.SQRT1_2 }, "second face normal at shared edge");
 });
 
+test("preview normals keep shallow top-hat shoulders hard", () => {
+  const shallowTiltY = Math.cos(Math.PI / 9);
+  const shallowTiltZ = Math.sin(Math.PI / 9);
+  const geometry = createPreviewGeometry({
+    vertices: [
+      { x: 0, y: 0, z: 0 },
+      { x: 1, y: 0, z: 0 },
+      { x: 0, y: 1, z: 0 },
+      { x: 0, y: shallowTiltY, z: shallowTiltZ },
+    ],
+    faces: [
+      [0, 1, 2],
+      [0, 1, 3],
+    ],
+  });
+
+  assertNormalClose(readNormal(geometry, 0), { x: 0, y: 0, z: 1 }, "first face normal at shallow shared edge");
+  assertNormalClose(readNormal(geometry, 3), { x: 0, y: -shallowTiltZ, z: shallowTiltY }, "second face normal at shallow shared edge");
+});
+
+test("preview normals still smooth low-angle facets", () => {
+  const lowTiltY = Math.cos(Math.PI / 18);
+  const lowTiltZ = Math.sin(Math.PI / 18);
+  const expectedNormal = {
+    x: 0,
+    y: -Math.sin(Math.PI / 36),
+    z: Math.cos(Math.PI / 36),
+  };
+  const geometry = createPreviewGeometry({
+    vertices: [
+      { x: 0, y: 0, z: 0 },
+      { x: 1, y: 0, z: 0 },
+      { x: 0, y: 1, z: 0 },
+      { x: 0, y: lowTiltY, z: lowTiltZ },
+    ],
+    faces: [
+      [0, 1, 2],
+      [0, 1, 3],
+    ],
+  });
+
+  assertNormalClose(readNormal(geometry, 0), expectedNormal, "first face normal at low-angle shared edge");
+  assertNormalClose(readNormal(geometry, 3), expectedNormal, "second face normal at low-angle shared edge");
+});
+
 test("preview normals do not blend faces that only touch at one vertex", () => {
   const shallowTiltY = Math.cos(Math.PI / 9);
   const shallowTiltZ = Math.sin(Math.PI / 9);

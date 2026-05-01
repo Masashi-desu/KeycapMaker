@@ -13,7 +13,7 @@ const OVERLAY_LAYER_NAMES = new Set([
   "legend-right",
   "homing",
 ]);
-const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 6;
+const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 12;
 const MIN_NORMAL_LENGTH_SQ = 1e-12;
 const DEFAULT_CAMERA_OFFSET = new THREE.Vector3(1.42, 1.18, 1.32);
 const COMPACT_CAMERA_DISTANCE_SCALE = 4.2;

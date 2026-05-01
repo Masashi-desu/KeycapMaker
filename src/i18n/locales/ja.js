@@ -368,6 +368,18 @@ const ja = Object.freeze({
       secondaryLabel: "上面奥行きサイズ",
       miniLabel: "奥行き",
     },
+    topHatBottomWidth: {
+      label: "底面の横幅",
+      hint: "追加するキートップ底面の横幅です。現在の最大は {maxWidth} です",
+      secondaryLabel: "底面サイズ",
+      miniLabel: "横幅",
+    },
+    topHatBottomDepth: {
+      label: "底面の奥行き",
+      hint: "追加するキートップ底面の前後寸法です。現在の最大は {maxDepth} です",
+      secondaryLabel: "底面奥行きサイズ",
+      miniLabel: "奥行き",
+    },
     topHatInset: {
       label: "上面の縮め量",
       hint: "エンターキー上面の輪郭から内側へ縮める量です。現在の最大は {maxInset} です",

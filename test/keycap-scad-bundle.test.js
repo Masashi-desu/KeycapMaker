@@ -671,6 +671,8 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
         topHatEnabled: true,
         topHatTopWidth: 11.2,
         topHatTopDepth: 9.4,
+        topHatBottomWidth: 12.6,
+        topHatBottomDepth: 10.8,
         topHatTopRadius: 1.3,
         topHatTopRadiusIndividualEnabled: true,
         topHatTopRadiusLeftTop: 0.7,
@@ -721,6 +723,8 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
     assert.match(customJobScad, /^user_top_hat_enabled = true;/m);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_width"), 11.2);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_depth"), 9.4);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_bottom_width"), 12.6);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_bottom_depth"), 10.8);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_radius"), 1.3);
     assert.equal(readRawScadDefinition(customJobScad, "user_top_hat_top_radius_individual_enabled"), "true");
     assert.equal(readRawScadDefinition(customJobScad, "user_top_hat_top_radii"), "[0.7, 1.1, 1.9, 1.5]");
