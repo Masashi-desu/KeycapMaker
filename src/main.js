@@ -5743,47 +5743,69 @@ function createWebkitDirectoryHandle(directoryEntry) {
   };
 }
 
-async function getDroppedDirectoryHandle(dataTransfer) {
-  for (const item of Array.from(dataTransfer?.items ?? [])) {
+function createDroppedTransferSnapshot(dataTransfer) {
+  const items = Array.from(dataTransfer?.items ?? []);
+  const dataTransferFiles = Array.from(dataTransfer?.files ?? []);
+  const itemFiles = [];
+  const fileSystemHandlePromises = [];
+  const webkitDirectoryHandles = [];
+
+  for (const item of items) {
     if (item.kind !== "file") {
       continue;
     }
 
-    if (typeof item.getAsFileSystemHandle === "function") {
+    if (typeof item.getAsFile === "function") {
       try {
-        const handle = await item.getAsFileSystemHandle();
-        if (handle?.kind === "directory") {
-          return handle;
+        const file = item.getAsFile();
+        if (file) {
+          itemFiles.push(file);
         }
       } catch {}
     }
 
+    if (typeof item.getAsFileSystemHandle === "function") {
+      fileSystemHandlePromises.push(item.getAsFileSystemHandle().catch(() => null));
+    }
+
     const entry = typeof item.webkitGetAsEntry === "function" ? item.webkitGetAsEntry() : null;
     if (entry?.isDirectory) {
-      return createWebkitDirectoryHandle(entry);
+      webkitDirectoryHandles.push(createWebkitDirectoryHandle(entry));
     }
   }
 
-  return null;
+  return {
+    files: dataTransferFiles.length > 0 ? dataTransferFiles : itemFiles,
+    fileSystemHandlePromises,
+    webkitDirectoryHandles,
+  };
 }
 
-async function getDroppedFiles(dataTransfer) {
-  const files = Array.from(dataTransfer?.files ?? []);
-  if (files.length > 0) {
-    return files;
+async function getDroppedDirectoryHandle(dropSnapshot) {
+  for (const handlePromise of dropSnapshot.fileSystemHandlePromises) {
+    const handle = await handlePromise;
+    if (handle?.kind === "directory") {
+      return handle;
+    }
+  }
+
+  return dropSnapshot.webkitDirectoryHandles[0] ?? null;
+}
+
+async function getDroppedFiles(dropSnapshot) {
+  if (dropSnapshot.files.length > 0) {
+    return dropSnapshot.files;
   }
 
   const handleFiles = [];
-  for (const item of Array.from(dataTransfer?.items ?? [])) {
-    if (item.kind !== "file" || typeof item.getAsFileSystemHandle !== "function") {
+  for (const handlePromise of dropSnapshot.fileSystemHandlePromises) {
+    const handle = await handlePromise;
+    if (handle?.kind !== "file") {
       continue;
     }
 
     try {
-      const handle = await item.getAsFileSystemHandle();
-      if (handle?.kind === "file") {
-        handleFiles.push(await handle.getFile());
-      }
+      handleFiles.push(await handle.getFile());
     } catch {}
   }
 
@@ -6078,13 +6100,14 @@ async function importEditorDataFromDrop(files) {
 }
 
 async function importFileTransferFromDrop(dataTransfer) {
-  const directoryHandle = await getDroppedDirectoryHandle(dataTransfer);
+  const dropSnapshot = createDroppedTransferSnapshot(dataTransfer);
+  const directoryHandle = await getDroppedDirectoryHandle(dropSnapshot);
   if (directoryHandle) {
     await importProjectDirectory(directoryHandle);
     return;
   }
 
-  const files = await getDroppedFiles(dataTransfer);
+  const files = await getDroppedFiles(dropSnapshot);
   const projectManifestFile = findDroppedProjectManifestFile(files);
   if (projectManifestFile) {
     await importProjectFiles(files, projectManifestFile);
