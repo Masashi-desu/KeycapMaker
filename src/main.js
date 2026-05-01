@@ -792,6 +792,19 @@ const TOP_HAT_TOP_RADIUS_CONTROL_ORDER = Object.freeze([
   { key: "topHatTopRadiusLeftBottom", corner: "left-bottom" },
   { key: "topHatTopRadiusRightBottom", corner: "right-bottom" },
 ]);
+const TOP_HAT_BOTTOM_RADIUS_INDIVIDUAL_FIELD_KEY = "topHatBottomRadiusIndividualEnabled";
+const TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS = Object.freeze([
+  "topHatBottomRadiusLeftTop",
+  "topHatBottomRadiusRightTop",
+  "topHatBottomRadiusRightBottom",
+  "topHatBottomRadiusLeftBottom",
+]);
+const TOP_HAT_BOTTOM_RADIUS_CONTROL_ORDER = Object.freeze([
+  { key: "topHatBottomRadiusLeftTop", corner: "left-top" },
+  { key: "topHatBottomRadiusRightTop", corner: "right-top" },
+  { key: "topHatBottomRadiusLeftBottom", corner: "left-bottom" },
+  { key: "topHatBottomRadiusRightBottom", corner: "right-bottom" },
+]);
 const CORNER_RADIUS_FIELD_SETS = Object.freeze([
   {
     sharedFieldKey: "topCornerRadius",
@@ -804,6 +817,12 @@ const CORNER_RADIUS_FIELD_SETS = Object.freeze([
     individualFieldKey: TOP_HAT_TOP_RADIUS_INDIVIDUAL_FIELD_KEY,
     fieldKeys: TOP_HAT_TOP_RADIUS_FIELD_KEYS,
     controlOrder: TOP_HAT_TOP_RADIUS_CONTROL_ORDER,
+  },
+  {
+    sharedFieldKey: "topHatBottomRadius",
+    individualFieldKey: TOP_HAT_BOTTOM_RADIUS_INDIVIDUAL_FIELD_KEY,
+    fieldKeys: TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS,
+    controlOrder: TOP_HAT_BOTTOM_RADIUS_CONTROL_ORDER,
   },
 ]);
 const CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS = new Set(
@@ -1181,6 +1200,34 @@ function getTopHatInsetHint(params) {
 
 function getTopHatTopRadiusHint(params) {
   return t("fields.topHatTopRadius.hint", { maxRadius: formatMillimeter(getTopHatTopRadiusMax(params)) });
+}
+
+function getTopHatBottomRadiusMax(params = state.keycapParams) {
+  const actualOutset = getTopHatActualShoulderOutset(params);
+
+  if (isJisEnterTopHatShapeProfile(params.shapeProfile) && "topHatInset" in params) {
+    const limits = getTopHatFootprintLimits(params);
+    const topInset = getTopHatSafeInset(params);
+    const baseInset = Math.max(topInset - actualOutset, 0);
+    const width = Math.max(limits.width - baseInset * 2, TOP_HAT_MIN_SIZE);
+    const depth = Math.max(limits.depth - baseInset * 2, TOP_HAT_MIN_SIZE);
+    const notchWidth = Math.min(Math.max(Number(params.jisEnterNotchWidth ?? 0), 0), Math.max(width - TOP_HAT_MIN_SIZE, 0));
+    const notchDepth = Math.min(Math.max(Number(params.jisEnterNotchDepth ?? 0), 0), Math.max(depth - TOP_HAT_MIN_SIZE, 0));
+    const lowerWidth = Math.max(width - notchWidth, TOP_HAT_MIN_SIZE);
+    const upperDepth = Math.max(depth - notchDepth, TOP_HAT_MIN_SIZE);
+    return Math.max(Math.min(width, depth, lowerWidth, upperDepth, notchWidth || width, notchDepth || depth) / 2, 0);
+  }
+
+  const limits = getTopHatUsableFootprintLimits(params);
+  const topWidth = Math.min(Math.max(Number(params.topHatTopWidth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.width);
+  const topDepth = Math.min(Math.max(Number(params.topHatTopDepth ?? TOP_HAT_MIN_SIZE), TOP_HAT_MIN_SIZE), limits.depth);
+  const baseWidth = Math.min(topWidth + actualOutset * 2, limits.width);
+  const baseDepth = Math.min(topDepth + actualOutset * 2, limits.depth);
+  return Math.max(Math.min(baseWidth, baseDepth) / 2, 0);
+}
+
+function getTopHatBottomRadiusHint(params) {
+  return t("fields.topHatBottomRadius.hint", { maxRadius: formatMillimeter(getTopHatBottomRadiusMax(params)) });
 }
 
 function getTopHatHeightHint(params) {
@@ -1563,6 +1610,7 @@ const fieldGroupTemplates = [
           "topHatTopDepth",
           "topHatInset",
           "topHatTopRadius",
+          "topHatBottomRadius",
           "topHatHeight",
           "topHatShoulderAngle",
           "topHatShoulderRadius",
@@ -1622,6 +1670,61 @@ const fieldGroupTemplates = [
         individualFieldKey: TOP_HAT_TOP_RADIUS_INDIVIDUAL_FIELD_KEY,
         controlOrder: TOP_HAT_TOP_RADIUS_CONTROL_ORDER,
         visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatBottomRadius",
+        label: () => t("fields.topHatBottomRadius.label"),
+        hint: (params) => getTopHatBottomRadiusHint(params),
+        type: "corner-radius",
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopHatBottomRadiusMax(params),
+        individualFieldKey: TOP_HAT_BOTTOM_RADIUS_INDIVIDUAL_FIELD_KEY,
+        controlOrder: TOP_HAT_BOTTOM_RADIUS_CONTROL_ORDER,
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: TOP_HAT_BOTTOM_RADIUS_INDIVIDUAL_FIELD_KEY,
+        label: () => t("fields.topHatBottomRadiusIndividualEnabled.label"),
+        hint: () => t("fields.topHatBottomRadiusIndividualEnabled.hint"),
+        type: "checkbox",
+      },
+      {
+        key: "topHatBottomRadiusLeftTop",
+        label: () => t("fields.topHatBottomRadiusLeftTop.label"),
+        hint: (params) => getTopHatBottomRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopHatBottomRadiusMax(params),
+      },
+      {
+        key: "topHatBottomRadiusRightTop",
+        label: () => t("fields.topHatBottomRadiusRightTop.label"),
+        hint: (params) => getTopHatBottomRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopHatBottomRadiusMax(params),
+      },
+      {
+        key: "topHatBottomRadiusRightBottom",
+        label: () => t("fields.topHatBottomRadiusRightBottom.label"),
+        hint: (params) => getTopHatBottomRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopHatBottomRadiusMax(params),
+      },
+      {
+        key: "topHatBottomRadiusLeftBottom",
+        label: () => t("fields.topHatBottomRadiusLeftBottom.label"),
+        hint: (params) => getTopHatBottomRadiusHint(params),
+        unit: "mm",
+        step: TOP_CORNER_RADIUS_STEP,
+        min: 0,
+        max: (params) => getTopHatBottomRadiusMax(params),
       },
       {
         key: TOP_HAT_TOP_RADIUS_INDIVIDUAL_FIELD_KEY,
@@ -5984,6 +6087,8 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topHatInset",
   "topHatTopRadius",
   ...TOP_HAT_TOP_RADIUS_FIELD_KEYS,
+  "topHatBottomRadius",
+  ...TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS,
   "topHatHeight",
   "topHatShoulderAngle",
   "topHatShoulderRadius",
@@ -6305,6 +6410,7 @@ function handleFieldChange(event) {
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
+    syncFieldHint("topHatBottomRadius");
     syncFieldHint("topHatShoulderRadius");
   }
 
@@ -6316,6 +6422,7 @@ function handleFieldChange(event) {
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
+    syncFieldHint("topHatBottomRadius");
     syncFieldHint("topHatShoulderRadius");
   }
 
@@ -6324,6 +6431,7 @@ function handleFieldChange(event) {
     syncFieldHint("rimWidth");
     syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
+    syncFieldHint("topHatBottomRadius");
     syncFieldHint("topHatHeight");
     syncFieldHint("topHatShoulderRadius");
   }
@@ -6334,11 +6442,13 @@ function handleFieldChange(event) {
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatInset");
     syncFieldHint("topHatTopRadius");
+    syncFieldHint("topHatBottomRadius");
     syncFieldHint("topHatHeight");
     syncFieldHint("topHatShoulderRadius");
   }
 
   if (field === "topHatHeight") {
+    syncFieldHint("topHatBottomRadius");
     syncFieldHint("topHatShoulderRadius");
   }
 

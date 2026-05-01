@@ -324,6 +324,7 @@ module keycap_jis_enter_top_hat_cap(
     notch_depth,
     top_inset,
     top_radius,
+    bottom_radius,
     height,
     shoulder_angle,
     top_center_height,
@@ -334,7 +335,8 @@ module keycap_jis_enter_top_hat_cap(
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
-    top_corner_radii = undef
+    top_corner_radii = undef,
+    bottom_corner_radii = undef
 ) {
     inset_limit = jis_enter_plan_inset_limit(left, right, front, back, notch_width, notch_depth);
     safe_top_inset = jis_enter_plan_safe_inset(left, right, front, back, notch_width, notch_depth, top_inset);
@@ -343,11 +345,14 @@ module keycap_jis_enter_top_hat_cap(
     base_inset = max(safe_top_inset - requested_outset, 0);
     actual_outset = safe_top_inset - base_inset;
     safe_top_radius = max(top_radius, 0);
-    safe_top_corner_radii = is_undef(top_corner_radii)
+    has_corner_radii = !is_undef(top_corner_radii) || !is_undef(bottom_corner_radii);
+    safe_top_corner_radii = !has_corner_radii
         ? undef
         : keycap_resolved_corner_radii(safe_top_radius, top_corner_radii);
-    base_radius = max(safe_top_radius + actual_outset, 0);
-    base_corner_radii = keycap_corner_radii_add(safe_top_corner_radii, max(actual_outset, 0));
+    base_radius = max(bottom_radius, 0);
+    base_corner_radii = !has_corner_radii
+        ? undef
+        : keycap_resolved_corner_radii(base_radius, bottom_corner_radii);
     safe_shoulder_radius = abs(keycap_top_hat_safe_shoulder_radius(shoulder_radius));
     shoulder_radius_limit = max(min(safe_height, actual_outset), 0);
     shoulder_curve_amount = shoulder_radius_limit <= 0.001
@@ -885,6 +890,8 @@ module keycap_jis_enter_shell(
     top_hat_inset = 1.5,
     top_hat_top_radius = 1.8,
     top_hat_top_radii = undef,
+    top_hat_bottom_radius = 3.2,
+    top_hat_bottom_radii = undef,
     top_hat_height = 1.4,
     top_hat_shoulder_angle = 45,
     top_hat_shoulder_radius = 0,
@@ -958,6 +965,8 @@ module keycap_jis_enter_shell(
                     notch_depth = safe_notch_depth,
                     top_inset = top_hat_inset,
                     top_radius = top_hat_top_radius,
+                    bottom_radius = top_hat_bottom_radius,
+                    bottom_corner_radii = top_hat_bottom_radii,
                     top_corner_radii = top_hat_top_radii,
                     height = top_hat_height,
                     shoulder_angle = top_hat_shoulder_angle,
@@ -1013,6 +1022,8 @@ module keycap_jis_enter_shell(
                 notch_depth = safe_notch_depth,
                 top_inset = top_hat_inset,
                 top_radius = top_hat_top_radius,
+                bottom_radius = top_hat_bottom_radius,
+                bottom_corner_radii = top_hat_bottom_radii,
                 top_corner_radii = top_hat_top_radii,
                 height = top_hat_height,
                 shoulder_angle = top_hat_shoulder_angle,

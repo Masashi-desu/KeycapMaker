@@ -161,6 +161,16 @@ top_hat_top_radii_source = top_hat_top_radius_individual_enabled
 top_hat_top_radii = top_hat_top_radius_individual_enabled
     ? [for (index = [0 : 3]) max(top_hat_top_radii_source[index], 0)]
     : undef;
+top_hat_bottom_radius = max(required_param(user_top_hat_bottom_radius, "user_top_hat_bottom_radius"), 0);
+top_hat_bottom_radius_individual_enabled = is_undef(user_top_hat_bottom_radius_individual_enabled)
+    ? false
+    : user_top_hat_bottom_radius_individual_enabled;
+top_hat_bottom_radii_source = top_hat_bottom_radius_individual_enabled
+    ? required_param(user_top_hat_bottom_radii, "user_top_hat_bottom_radii")
+    : [top_hat_bottom_radius, top_hat_bottom_radius, top_hat_bottom_radius, top_hat_bottom_radius];
+top_hat_bottom_radii = top_hat_bottom_radius_individual_enabled
+    ? [for (index = [0 : 3]) max(top_hat_bottom_radii_source[index], 0)]
+    : undef;
 requested_top_hat_height = required_param(user_top_hat_height, "user_top_hat_height");
 top_hat_recess_limit = max(top_thickness - 0.05, 0);
 top_hat_height = requested_top_hat_height < 0
@@ -1058,6 +1068,8 @@ module keycap_body_shell_positive(quality = "export") {
             top_hat_inset = top_hat_inset,
             top_hat_top_radius = top_hat_top_radius,
             top_hat_top_radii = top_hat_top_radii,
+            top_hat_bottom_radius = top_hat_bottom_radius,
+            top_hat_bottom_radii = top_hat_bottom_radii,
             top_hat_height = top_hat_height,
             top_hat_shoulder_angle = top_hat_shoulder_angle,
             top_hat_shoulder_radius = top_hat_shoulder_radius,
@@ -1088,6 +1100,8 @@ module keycap_body_shell_positive(quality = "export") {
             top_hat_top_depth = top_hat_top_depth,
             top_hat_top_radius = top_hat_top_radius,
             top_hat_top_radii = top_hat_top_radii,
+            top_hat_bottom_radius = top_hat_bottom_radius,
+            top_hat_bottom_radii = top_hat_bottom_radii,
             top_hat_height = top_hat_height,
             top_hat_shoulder_angle = top_hat_shoulder_angle,
             top_hat_shoulder_radius = top_hat_shoulder_radius,

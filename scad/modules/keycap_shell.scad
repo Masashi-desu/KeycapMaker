@@ -873,6 +873,7 @@ module keycap_top_hat_cap(
     top_width,
     top_depth,
     top_radius,
+    bottom_radius,
     height,
     shoulder_angle,
     top_center_height,
@@ -883,7 +884,8 @@ module keycap_top_hat_cap(
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
-    top_corner_radii = undef
+    top_corner_radii = undef,
+    bottom_corner_radii = undef
 ) {
     parent_width = max(parent_top_width, 0.2);
     parent_depth = max(parent_top_depth, 0.2);
@@ -895,20 +897,21 @@ module keycap_top_hat_cap(
     base_depth = min(safe_top_depth + requested_outset * 2, parent_depth);
     actual_outset = min((base_width - safe_top_width) / 2, (base_depth - safe_top_depth) / 2);
     safe_top_radius = min(max(top_radius, 0), safe_top_width / 2, safe_top_depth / 2);
-    safe_top_corner_radii = is_undef(top_corner_radii)
+    has_corner_radii = !is_undef(top_corner_radii) || !is_undef(bottom_corner_radii);
+    safe_top_corner_radii = !has_corner_radii
         ? undef
         : rounded_rect_safe_corner_radii(
             safe_top_width,
             safe_top_depth,
             keycap_resolved_corner_radii(safe_top_radius, top_corner_radii)
         );
-    base_radius = min(safe_top_radius + max(actual_outset, 0), base_width / 2, base_depth / 2);
-    base_corner_radii = is_undef(safe_top_corner_radii)
+    base_radius = min(max(bottom_radius, 0), base_width / 2, base_depth / 2);
+    base_corner_radii = !has_corner_radii
         ? undef
         : rounded_rect_safe_corner_radii(
             base_width,
             base_depth,
-            keycap_corner_radii_add(safe_top_corner_radii, max(actual_outset, 0))
+            keycap_resolved_corner_radii(base_radius, bottom_corner_radii)
         );
     safe_shoulder_radius = abs(keycap_top_hat_safe_shoulder_radius(shoulder_radius));
     shoulder_radius_limit = max(min(safe_height, actual_outset), 0);
@@ -983,6 +986,8 @@ module keycap_shell(
     top_hat_top_depth = 9.5,
     top_hat_top_radius = 1.8,
     top_hat_top_radii = undef,
+    top_hat_bottom_radius = 3.2,
+    top_hat_bottom_radii = undef,
     top_hat_height = 1.4,
     top_hat_shoulder_angle = 45,
     top_hat_shoulder_radius = 0,
@@ -1051,6 +1056,8 @@ module keycap_shell(
                     top_width = top_hat_top_width,
                     top_depth = top_hat_top_depth,
                     top_radius = top_hat_top_radius,
+                    bottom_radius = top_hat_bottom_radius,
+                    bottom_corner_radii = top_hat_bottom_radii,
                     top_corner_radii = top_hat_top_radii,
                     height = top_hat_height,
                     shoulder_angle = top_hat_shoulder_angle,
@@ -1102,6 +1109,8 @@ module keycap_shell(
                 top_width = top_hat_top_width,
                 top_depth = top_hat_top_depth,
                 top_radius = top_hat_top_radius,
+                bottom_radius = top_hat_bottom_radius,
+                bottom_corner_radii = top_hat_bottom_radii,
                 top_corner_radii = top_hat_top_radii,
                 height = top_hat_height,
                 shoulder_angle = top_hat_shoulder_angle,

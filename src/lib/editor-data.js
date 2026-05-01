@@ -102,6 +102,12 @@ const TOP_HAT_TOP_RADIUS_FIELD_KEYS = Object.freeze([
   "topHatTopRadiusRightBottom",
   "topHatTopRadiusLeftBottom",
 ]);
+const TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS = Object.freeze([
+  "topHatBottomRadiusLeftTop",
+  "topHatBottomRadiusRightTop",
+  "topHatBottomRadiusRightBottom",
+  "topHatBottomRadiusLeftBottom",
+]);
 const RESERVED_COMPAT_PAYLOAD_KEYS = new Set(["kind", "schemaVersion", "profileSchemaVersion", "savedAt", "selectors", "params"]);
 const KNOWN_EDITOR_PARAM_KEYS = Object.freeze(
   Array.from(new Set(keycapEditorProfiles.profiles.flatMap((profile) => Object.keys(profile.defaults ?? {})))),
@@ -429,6 +435,34 @@ function getTopHatTopRadiusMax(params = {}) {
 
 function clampTopHatTopRadius(value, params = {}, fallback = 0) {
   return clampNumberRange(value, fallback, 0, getTopHatTopRadiusMax(params));
+}
+
+function getTopHatBottomRadiusMax(params = {}) {
+  const actualOutset = getTopHatActualShoulderOutset(params);
+
+  if (isJisEnterTopHatGeometry(params) && ("topHatInset" in params)) {
+    const limits = getTopHatFootprintLimits(params);
+    const topInset = clampTopHatInset(params.topHatInset, params, params.topHatInset);
+    const baseInset = Math.max(topInset - actualOutset, 0);
+    const width = Math.max(limits.width - baseInset * 2, TOP_HAT_MIN_SIZE);
+    const depth = Math.max(limits.depth - baseInset * 2, TOP_HAT_MIN_SIZE);
+    const notchWidth = Math.min(Math.max(Number(params.jisEnterNotchWidth ?? 0), 0), Math.max(width - TOP_HAT_MIN_SIZE, 0));
+    const notchDepth = Math.min(Math.max(Number(params.jisEnterNotchDepth ?? 0), 0), Math.max(depth - TOP_HAT_MIN_SIZE, 0));
+    const lowerWidth = Math.max(width - notchWidth, TOP_HAT_MIN_SIZE);
+    const upperDepth = Math.max(depth - notchDepth, TOP_HAT_MIN_SIZE);
+    return Math.max(Math.min(width, depth, lowerWidth, upperDepth, notchWidth || width, notchDepth || depth) / 2, 0);
+  }
+
+  const limits = getTopHatUsableFootprintLimits(params);
+  const topWidth = clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth);
+  const topDepth = clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth);
+  const baseWidth = Math.min(topWidth + actualOutset * 2, limits.width);
+  const baseDepth = Math.min(topDepth + actualOutset * 2, limits.depth);
+  return Math.max(Math.min(baseWidth, baseDepth) / 2, 0);
+}
+
+function clampTopHatBottomRadius(value, params = {}, fallback = 0) {
+  return clampNumberRange(value, fallback, 0, getTopHatBottomRadiusMax(params));
 }
 
 function getTopHatShoulderOutset(params = {}) {
@@ -778,6 +812,7 @@ export function syncDerivedKeycapParams(params = {}) {
     params.topHatHeight = clampTopHatHeight(params.topHatHeight, params, defaults.topHatHeight ?? 1.4);
     params.topHatShoulderRadius = clampTopHatShoulderRadius(params.topHatShoulderRadius, params, defaults.topHatShoulderRadius ?? 0);
     params.topHatTopRadius = clampTopHatTopRadius(params.topHatTopRadius, params, defaults.topHatTopRadius ?? 0);
+    params.topHatBottomRadius = clampTopHatBottomRadius(params.topHatBottomRadius, params, defaults.topHatBottomRadius ?? 0);
     params.topHatTopRadiusIndividualEnabled = typeof params.topHatTopRadiusIndividualEnabled === "boolean"
       ? params.topHatTopRadiusIndividualEnabled
       : Boolean(defaults.topHatTopRadiusIndividualEnabled);
@@ -785,6 +820,14 @@ export function syncDerivedKeycapParams(params = {}) {
       params[fieldKey] = params.topHatTopRadiusIndividualEnabled
         ? clampTopHatTopRadius(params[fieldKey], params, defaults[fieldKey] ?? params.topHatTopRadius)
         : params.topHatTopRadius;
+    });
+    params.topHatBottomRadiusIndividualEnabled = typeof params.topHatBottomRadiusIndividualEnabled === "boolean"
+      ? params.topHatBottomRadiusIndividualEnabled
+      : Boolean(defaults.topHatBottomRadiusIndividualEnabled);
+    TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS.forEach((fieldKey) => {
+      params[fieldKey] = params.topHatBottomRadiusIndividualEnabled
+        ? clampTopHatBottomRadius(params[fieldKey], params, defaults[fieldKey] ?? params.topHatBottomRadius)
+        : params.topHatBottomRadius;
     });
   }
   params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
@@ -916,6 +959,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "topHatTopRadius" || TOP_HAT_TOP_RADIUS_FIELD_KEYS.includes(fieldKey)) {
     return clampTopHatTopRadius(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "topHatBottomRadius" || TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS.includes(fieldKey)) {
+    return clampTopHatBottomRadius(value, paramsContext, fallback);
   }
 
   if (fieldKey === "topHatHeight") {

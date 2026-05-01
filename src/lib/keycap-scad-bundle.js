@@ -90,6 +90,12 @@ const TOP_HAT_TOP_RADIUS_FIELD_KEYS = Object.freeze([
   "topHatTopRadiusRightBottom",
   "topHatTopRadiusLeftBottom",
 ]);
+const TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS = Object.freeze([
+  "topHatBottomRadiusLeftTop",
+  "topHatBottomRadiusRightTop",
+  "topHatBottomRadiusRightBottom",
+  "topHatBottomRadiusLeftBottom",
+]);
 const TYPEWRITER_MIN_STEM_HEIGHT = 0.6;
 const TYPEWRITER_STEM_MOUNT_OVERLAP = 0.02;
 const TOP_SCALE_MIN = 0.02;
@@ -760,6 +766,13 @@ async function createKeycapDefinitions({ params, exportTarget }) {
       Math.max(numberOr(params[fieldKey], topHatTopRadius), 0)
     ))
     : [topHatTopRadius, topHatTopRadius, topHatTopRadius, topHatTopRadius];
+  const topHatBottomRadius = Math.max(numberOr(params.topHatBottomRadius, topHatTopRadius), 0);
+  const topHatBottomRadiusIndividualEnabled = Boolean(params.topHatBottomRadiusIndividualEnabled);
+  const topHatBottomRadii = topHatBottomRadiusIndividualEnabled
+    ? TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS.map((fieldKey) => (
+      Math.max(numberOr(params[fieldKey], topHatBottomRadius), 0)
+    ))
+    : [topHatBottomRadius, topHatBottomRadius, topHatBottomRadius, topHatBottomRadius];
   const topLegendDefinitionList = await Promise.all(TOP_LEGEND_CONFIGS.map((config) => (
     resolveLegendBridgeDefinitions({
       params,
@@ -826,6 +839,9 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_hat_top_radius: topHatTopRadius,
     user_top_hat_top_radius_individual_enabled: topHatTopRadiusIndividualEnabled,
     user_top_hat_top_radii: topHatTopRadii,
+    user_top_hat_bottom_radius: topHatBottomRadius,
+    user_top_hat_bottom_radius_individual_enabled: topHatBottomRadiusIndividualEnabled,
+    user_top_hat_bottom_radii: topHatBottomRadii,
     user_top_hat_height: numberOr(params.topHatHeight, 1.4),
     user_top_hat_shoulder_angle: Math.min(Math.max(numberOr(params.topHatShoulderAngle, 45), 5), 85),
     user_top_hat_shoulder_radius: numberOr(params.topHatShoulderRadius, 0),

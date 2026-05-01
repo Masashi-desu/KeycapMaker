@@ -376,6 +376,26 @@ const zh = Object.freeze({
       label: "上面 R",
       hint: "追加键顶上表面的圆角。当前最大值为 {maxRadius}。",
     },
+    topHatBottomRadius: {
+      label: "底面 R",
+      hint: "追加键顶底面的圆角。当前最大值为 {maxRadius}。",
+    },
+    topHatBottomRadiusIndividualEnabled: {
+      label: "分别调整",
+      hint: "开启后可分别调整追加键顶底面四个角的 R。",
+    },
+    topHatBottomRadiusLeftTop: {
+      label: "底面左上 R",
+    },
+    topHatBottomRadiusRightTop: {
+      label: "底面右上 R",
+    },
+    topHatBottomRadiusRightBottom: {
+      label: "底面右下 R",
+    },
+    topHatBottomRadiusLeftBottom: {
+      label: "底面左下 R",
+    },
     topHatTopRadiusIndividualEnabled: {
       label: "分别调整",
       hint: "开启后可分别调整追加键顶上表面四个角的 R。",
