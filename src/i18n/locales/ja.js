@@ -152,11 +152,11 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
+          description: "キーキャップ全体の大きさ、上面中央の高さ、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
         },
         top: {
           title: "キートップ",
-          description: "上面中央の基準高さを固定したまま、フラット / シンドリカル / スフェリカルと top-hat の有無を切り替えられます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+          description: "フラット / シンドリカル / スフェリカルと top-hat の有無、前後左右の傾きを調整できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
         },
         legend: {
           title: "印字",
@@ -176,11 +176,11 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "タイプライター風の薄いキートップ外形を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
+          description: "タイプライター風の薄いキートップ外形と厚みを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
         },
         top: {
           title: "キートップ",
-          description: "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+          description: "前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
         },
         legend: {
           title: "印字",
@@ -200,11 +200,11 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法と左下の欠き込みを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
+          description: "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法、上面中央の高さ、左下の欠き込みを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
         },
         top: {
           title: "キートップ",
-          description: "カスタムシェルと同じく、上面中央の基準高さ、フラット / シンドリカル / スフェリカル、前後左右の傾きを調整できます。",
+          description: "カスタムシェルと同じく、フラット / シンドリカル / スフェリカル、前後左右の傾きを調整できます。",
         },
         legend: {
           title: "印字",
@@ -224,11 +224,11 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、左下の欠き込み、R を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
+          description: "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、キートップの厚み、左下の欠き込み、R を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
         },
         top: {
           title: "キートップ",
-          description: "タイプライターと同じく、薄いキートップの厚み、リム、前後左右の傾きを調整できます。",
+          description: "タイプライターと同じく、リム、前後左右の傾き、取り付け基準高さを調整できます。",
         },
         legend: {
           title: "印字",
@@ -245,9 +245,9 @@ const ja = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "キーキャップ全体の大きさと、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
-    shapeDescriptionTypewriter: "タイプライター風の薄いキートップ外形を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
-    topDescription: "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+    shapeDescriptionShell: "キーキャップ全体の大きさ、上面中央の高さ、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
+    shapeDescriptionTypewriter: "タイプライター風の薄いキートップ外形と厚みを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
+    topDescription: "前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
   },
   fields: {
     name: {
@@ -272,7 +272,13 @@ const ja = Object.freeze({
     },
     wallThickness: {
       label: "肉厚",
-      hint: "キーキャップの丈夫さに関わる厚みです",
+      hint: "サイドウォールとキートップの材料厚です",
+      primaryMiniLabel: "サイドウォール",
+      secondaryLabel: "キートップ",
+    },
+    topThickness: {
+      label: "キートップ肉厚",
+      hint: "キートップ上面の裏側に残す厚みです",
     },
     typewriterCornerRadius: {
       label: "R",

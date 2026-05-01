@@ -25,6 +25,7 @@
     "topOffsetX": 0,
     "topOffsetY": 0,
     "wallThickness": 1.2,
+    "topThickness": 1.5,
     "topScale": 0.75,
     "topSurfaceShape": "flat",
     "dishRadius": 45,
@@ -162,10 +163,11 @@
     {
       "id": "shape",
       "title": "キーキャップの形",
-      "description": "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法と左下の欠き込みを調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
+      "description": "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法、上面中央の高さ、左下の欠き込みを調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
       "fieldKeys": [
         "shapeProfile",
         "keyWidth",
+        "topCenterHeight",
         "keyDepth",
         "jisEnterNotchWidth",
         "jisEnterNotchDepth",
@@ -177,9 +179,8 @@
     {
       "id": "top",
       "title": "キートップ",
-      "description": "カスタムシェルと同じく、上面中央の基準高さ、フラット / シンドリカル / スフェリカル、前後左右の傾きを調整できます。",
+      "description": "カスタムシェルと同じく、フラット / シンドリカル / スフェリカル、前後左右の傾きを調整できます。",
       "fieldKeys": [
-        "topCenterHeight",
         "topOffsetX",
         "topOffsetY",
         "topSurfaceShape",

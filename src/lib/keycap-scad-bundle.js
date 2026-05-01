@@ -96,6 +96,7 @@ const TOP_SCALE_MIN = 0.02;
 const TOP_SCALE_MAX = 1;
 const TOP_SCALE_STEP = 0.01;
 const TOP_SCALE_MIN_FACE_SIZE = 0.2;
+const TOP_THICKNESS_MIN = 0.05;
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
 const fontBinaryPromises = new Map();
 const fontMetadataPromises = new Map();
@@ -178,6 +179,12 @@ function resolveTopScaleInnerMinimumForAxis(size, topCenterHeight, innerHeight, 
   return Math.max(1 - (availableInnerFace * topCenterHeight) / denominator, 0);
 }
 
+function resolveTopThickness(params = {}, defaults = createDefaultKeycapParams(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY), geometryDefaults = getShapeProfileGeometryDefaults(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY)) {
+  const fallback = Math.max(Number(defaults.topThickness ?? geometryDefaults.topThickness ?? TOP_THICKNESS_MIN), TOP_THICKNESS_MIN);
+  const nextValue = Number(params.topThickness);
+  return Number.isFinite(nextValue) ? Math.max(nextValue, TOP_THICKNESS_MIN) : fallback;
+}
+
 function resolveTopScaleMinimum(params = {}) {
   const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
   const defaults = createDefaultKeycapParams(profileKey);
@@ -185,7 +192,7 @@ function resolveTopScaleMinimum(params = {}) {
   const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
   const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
   const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
-  const topThickness = Math.max(Number(geometryDefaults.topThickness ?? 0.05), 0.05);
+  const topThickness = resolveTopThickness(params, defaults, geometryDefaults);
   const wall = clampMinimum(params.wallThickness, defaults.wallThickness ?? 1.2, 0);
   const activeDishDepth = resolveTopScaleActiveDishDepth({ ...defaults, ...params, shapeProfile: profileKey });
   const innerHeight = Math.max(topCenterHeight - activeDishDepth - topThickness, TOP_SCALE_MIN_FACE_SIZE);
@@ -270,7 +277,7 @@ function resolveShapeGeometryParameters(params = {}) {
     profileBackAngle: isTypewriterGeometryType(geometryType) ? 0 : verticalAngle,
     profileLeftAngle: isTypewriterGeometryType(geometryType) ? 0 : horizontalAngle,
     profileRightAngle: isTypewriterGeometryType(geometryType) ? 0 : horizontalAngle,
-    topThickness: Math.max(Number(geometryDefaults.topThickness ?? 0.05), 0.05),
+    topThickness: resolveTopThickness(params, defaults, geometryDefaults),
     bottomCornerRadius: Math.max(Number(geometryDefaults.bottomCornerRadius ?? 0), 0),
     topCornerRadius,
     topCornerIndividualEnabled,

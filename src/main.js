@@ -347,6 +347,7 @@ const TOP_SCALE_MIN = 0.02;
 const TOP_SCALE_MAX = 1;
 const TOP_SCALE_STEP = 0.01;
 const TOP_SCALE_MIN_FACE_SIZE = 0.2;
+const TOP_THICKNESS_MIN = 0.05;
 const TOP_HAT_MIN_SIZE = 0.2;
 const TOP_HAT_MIN_HEIGHT = 0.05;
 const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
@@ -850,9 +851,10 @@ function resolveTopScaleMinimum(params = {}) {
   const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
   const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
   const wall = clampMinimum(params.wallThickness, defaults.wallThickness ?? 1.2, 0);
+  const topThickness = resolveTopThickness(params, defaults, geometryDefaults);
   const activeDishDepth = resolveTopScaleActiveDishDepth({ ...defaults, ...params, shapeProfile: profileKey });
   const innerHeight = Math.max(
-    topCenterHeight - activeDishDepth - geometryDefaults.topThickness,
+    topCenterHeight - activeDishDepth - topThickness,
     TOP_SCALE_MIN_FACE_SIZE,
   );
   const outerFaceMinimum = TOP_SCALE_MIN_FACE_SIZE / Math.max(Math.min(keyWidth, keyDepth), TOP_SCALE_MIN_FACE_SIZE);
@@ -890,16 +892,25 @@ function resolveShapeProfileGeometryDefaults(profileKey = DEFAULT_SHAPE_PROFILE_
     profileBackAngle: clampMinimum(geometryDefaults.profileBackAngle, Number(geometryDefaults.profileBackAngle) || 0, 0),
     profileLeftAngle: clampMinimum(geometryDefaults.profileLeftAngle, Number(geometryDefaults.profileLeftAngle) || 0, 0),
     profileRightAngle: clampMinimum(geometryDefaults.profileRightAngle, Number(geometryDefaults.profileRightAngle) || 0, 0),
-    topThickness: clampMinimum(geometryDefaults.topThickness, Number(geometryDefaults.topThickness) || 0.05, 0.05),
+    topThickness: clampMinimum(geometryDefaults.topThickness, Number(geometryDefaults.topThickness) || TOP_THICKNESS_MIN, TOP_THICKNESS_MIN),
     bottomCornerRadius: clampMinimum(geometryDefaults.bottomCornerRadius, Number(geometryDefaults.bottomCornerRadius) || 0, 0),
     topCornerRadius: clampMinimum(geometryDefaults.topCornerRadius, Number(geometryDefaults.topCornerRadius) || 0, 0),
   };
+}
+
+function resolveTopThickness(params = {}, defaults = createDefaultKeycapParams(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY), geometryDefaults = resolveShapeProfileGeometryDefaults(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY)) {
+  return clampMinimum(
+    params.topThickness,
+    defaults.topThickness ?? geometryDefaults.topThickness ?? TOP_THICKNESS_MIN,
+    TOP_THICKNESS_MIN,
+  );
 }
 
 function resolveProfileAngles(params = {}) {
   const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
   const defaults = createDefaultKeycapParams(profileKey);
   const geometryDefaults = resolveShapeProfileGeometryDefaults(profileKey);
+  const topThickness = resolveTopThickness(params, defaults, geometryDefaults);
 
   if (isTypewriterShapeProfile(profileKey)) {
     return {
@@ -907,7 +918,7 @@ function resolveProfileAngles(params = {}) {
       back: 0,
       left: 0,
       right: 0,
-      topThickness: geometryDefaults.topThickness,
+      topThickness,
     };
   }
 
@@ -923,7 +934,7 @@ function resolveProfileAngles(params = {}) {
     back: verticalAngle,
     left: horizontalAngle,
     right: horizontalAngle,
-    topThickness: geometryDefaults.topThickness,
+    topThickness,
   };
 }
 
@@ -1396,9 +1407,24 @@ const fieldGroupTemplates = [
         key: "wallThickness",
         label: () => t("fields.wallThickness.label"),
         hint: () => t("fields.wallThickness.hint"),
+        type: "number-pair",
         unit: "mm",
         step: 0.05,
         min: 0.4,
+        primaryMiniLabel: () => t("fields.wallThickness.primaryMiniLabel"),
+        secondaryLabel: () => t("fields.wallThickness.secondaryLabel"),
+        secondaryField: "topThickness",
+        secondaryUnit: "mm",
+        secondaryStep: 0.05,
+        secondaryMin: TOP_THICKNESS_MIN,
+      },
+      {
+        key: "topThickness",
+        label: () => t("fields.topThickness.label"),
+        hint: () => t("fields.topThickness.hint"),
+        unit: "mm",
+        step: 0.05,
+        min: TOP_THICKNESS_MIN,
       },
       {
         key: "typewriterCornerRadius",
@@ -1991,7 +2017,10 @@ function getKeyUnitBasisFieldConfig() {
 function getShapeProfileVisibleFieldKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   return new Set(
     getShapeProfileFieldGroups(profileKey)
-      .flatMap((group) => group.fieldKeys ?? [])
+      .flatMap((group) => (group.fieldKeys ?? []).flatMap((fieldKey) => {
+        const fieldConfig = getFieldConfig(fieldKey, profileKey);
+        return [fieldKey, fieldConfig?.secondaryField];
+      }))
       .filter(Boolean),
   );
 }
@@ -3974,7 +4003,11 @@ function renderField(field, options = {}) {
     const secondaryMinValue = resolveFieldAttribute(field.secondaryMin ?? secondaryFieldConfig?.min);
     const secondaryMaxValue = resolveFieldAttribute(field.secondaryMax ?? secondaryFieldConfig?.max);
     const secondaryStepValue = resolveFieldAttribute(field.secondaryStep ?? secondaryFieldConfig?.step);
-    const leadingIcon = field.key === "topOffsetX" ? renderKeyTopOffsetIcon() : "";
+    const leadingIcon = field.key === "topOffsetX"
+      ? renderKeyTopOffsetIcon()
+      : field.key === "wallThickness"
+        ? renderKeyWallThicknessIcon()
+        : "";
     const numberPairIconClassName = getLeadingIconFieldClassName(leadingIcon);
 
     return `
@@ -4046,7 +4079,7 @@ function renderField(field, options = {}) {
 
   const leadingIcon = field.key === "topCenterHeight"
     ? renderKeyTopCenterHeightIcon()
-    : field.key === "wallThickness"
+    : field.key === "wallThickness" || field.key === "topThickness"
       ? renderKeyWallThicknessIcon()
       : field.key === "topScale"
         ? renderKeyTopTaperIcon()
@@ -5936,6 +5969,7 @@ async function handleWindowDrop(event) {
 
 const TOP_LIVE_FIELD_KEYS = new Set([
   "topCenterHeight",
+  "topThickness",
   "topPitchDeg",
   "topRollDeg",
   "topFrontHeight",

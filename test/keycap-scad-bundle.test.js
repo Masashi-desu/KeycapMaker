@@ -417,6 +417,47 @@ test("正方形キーの topScale は上面を正方形のまま縮める", asyn
   }
 });
 
+test("サイドウォール肉厚とキートップ肉厚を別々の SCAD パラメータへ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        wallThickness: 1.1,
+        topThickness: 2.4,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.equal(readScadDefinition(jobScad, "user_wall_thickness"), 1.1);
+    assert.equal(readScadDefinition(jobScad, "user_top_thickness"), 2.4);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("topScale は尖った上面用の低い値を SCAD 角度へ変換する", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,

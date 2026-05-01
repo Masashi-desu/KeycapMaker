@@ -82,6 +82,7 @@ const TOP_SCALE_MIN = 0.02;
 const TOP_SCALE_MAX = 1;
 const TOP_SCALE_STEP = 0.01;
 const TOP_SCALE_MIN_FACE_SIZE = 0.2;
+const TOP_THICKNESS_MIN = 0.05;
 const TOP_HAT_MIN_SIZE = 0.2;
 const TOP_HAT_MIN_HEIGHT = 0.05;
 const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
@@ -206,9 +207,10 @@ function resolveTopScaleMinimum(params = {}) {
   const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
   const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
   const wall = clampMinimum(params.wallThickness, defaults.wallThickness ?? 1.2, 0);
+  const topThickness = resolveTopThickness(params, defaults, geometryDefaults);
   const activeDishDepth = resolveActiveDishDepth({ ...defaults, ...params, shapeProfile: profileKey });
   const innerHeight = Math.max(
-    topCenterHeight - activeDishDepth - geometryDefaults.topThickness,
+    topCenterHeight - activeDishDepth - topThickness,
     TOP_SCALE_MIN_FACE_SIZE,
   );
   const outerFaceMinimum = TOP_SCALE_MIN_FACE_SIZE / Math.max(Math.min(keyWidth, keyDepth), TOP_SCALE_MIN_FACE_SIZE);
@@ -586,16 +588,25 @@ function resolveShapeProfileGeometryDefaults(profileKey = DEFAULT_SHAPE_PROFILE_
     profileBackAngle: clampMinimum(geometryDefaults.profileBackAngle, Number(geometryDefaults.profileBackAngle) || 0, 0),
     profileLeftAngle: clampMinimum(geometryDefaults.profileLeftAngle, Number(geometryDefaults.profileLeftAngle) || 0, 0),
     profileRightAngle: clampMinimum(geometryDefaults.profileRightAngle, Number(geometryDefaults.profileRightAngle) || 0, 0),
-    topThickness: clampMinimum(geometryDefaults.topThickness, Number(geometryDefaults.topThickness) || 0.05, 0.05),
+    topThickness: clampMinimum(geometryDefaults.topThickness, Number(geometryDefaults.topThickness) || TOP_THICKNESS_MIN, TOP_THICKNESS_MIN),
     bottomCornerRadius: clampMinimum(geometryDefaults.bottomCornerRadius, Number(geometryDefaults.bottomCornerRadius) || 0, 0),
     topCornerRadius: clampMinimum(geometryDefaults.topCornerRadius, Number(geometryDefaults.topCornerRadius) || 0, 0),
   };
+}
+
+function resolveTopThickness(params = {}, defaults = createDefaultKeycapParams(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY), geometryDefaults = resolveShapeProfileGeometryDefaults(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY)) {
+  return clampMinimum(
+    params.topThickness,
+    defaults.topThickness ?? geometryDefaults.topThickness ?? TOP_THICKNESS_MIN,
+    TOP_THICKNESS_MIN,
+  );
 }
 
 function resolveProfileAngles(params = {}) {
   const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
   const defaults = createDefaultKeycapParams(profileKey);
   const geometryDefaults = resolveShapeProfileGeometryDefaults(profileKey);
+  const topThickness = resolveTopThickness(params, defaults, geometryDefaults);
 
   if (isTypewriterGeometryType(geometryDefaults.geometryType)) {
     return {
@@ -603,7 +614,7 @@ function resolveProfileAngles(params = {}) {
       back: 0,
       left: 0,
       right: 0,
-      topThickness: geometryDefaults.topThickness,
+      topThickness,
     };
   }
 
@@ -619,7 +630,7 @@ function resolveProfileAngles(params = {}) {
     back: verticalAngle,
     left: horizontalAngle,
     right: horizontalAngle,
-    topThickness: geometryDefaults.topThickness,
+    topThickness,
   };
 }
 
@@ -693,10 +704,12 @@ function syncLegendFontParams(params = {}, prefix = "legend") {
 export function syncDerivedKeycapParams(params = {}) {
   const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
   const defaults = createDefaultKeycapParams(profileKey);
+  const geometryDefaults = resolveShapeProfileGeometryDefaults(profileKey);
 
   params.keyWidth = clampPositiveDimension(params.keyWidth, defaults.keyWidth ?? 18);
   params.keyDepth = clampPositiveDimension(params.keyDepth, defaults.keyDepth ?? 18);
   params.topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+  params.topThickness = resolveTopThickness(params, defaults, geometryDefaults);
   params.topPitchDeg = Number.isFinite(Number(params.topPitchDeg)) ? Number(params.topPitchDeg) : Number(defaults.topPitchDeg ?? 0);
   params.topRollDeg = Number.isFinite(Number(params.topRollDeg)) ? Number(params.topRollDeg) : Number(defaults.topRollDeg ?? 0);
   params.topOffsetX = Number.isFinite(Number(params.topOffsetX)) ? Number(params.topOffsetX) : Number(defaults.topOffsetX ?? 0);
@@ -855,6 +868,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "topScale") {
     return clampTopScale(value, fallback, paramsContext);
+  }
+
+  if (fieldKey === "topThickness") {
+    return clampMinimum(value, fallback, TOP_THICKNESS_MIN);
   }
 
   if (fieldKey === "topCornerRadius" || TOP_CORNER_RADIUS_FIELD_KEYS.includes(fieldKey)) {

@@ -30,6 +30,7 @@
     "rimHeightDown": 0.5,
     "rimColor": "#ff7f00",
     "wallThickness": 1.2,
+    "topThickness": 1.2,
     "topScale": 1,
     "topSurfaceShape": "flat",
     "dishRadius": 45,
@@ -158,10 +159,11 @@
     {
       "id": "shape",
       "title": "キーキャップの形",
-      "description": "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、左下の欠き込み、R を調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
+      "description": "タイプライター風の薄い JIS Enter footprint を基準に、全体寸法、キートップの厚み、左下の欠き込み、R を調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
       "fieldKeys": [
         "shapeProfile",
         "keyWidth",
+        "topCenterHeight",
         "keyDepth",
         "jisEnterNotchWidth",
         "jisEnterNotchDepth",
@@ -172,10 +174,9 @@
     {
       "id": "top",
       "title": "キートップ",
-      "description": "タイプライターと同じく、薄いキートップの厚み、リム、前後左右の傾きを調整できます。",
+      "description": "タイプライターと同じく、リム、前後左右の傾き、取り付け基準高さを調整できます。",
       "fieldKeys": [
         "typewriterMountHeight",
-        "topCenterHeight",
         "topOffsetX",
         "topOffsetY",
         "topSurfaceShape",

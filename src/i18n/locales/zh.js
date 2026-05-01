@@ -152,11 +152,11 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "调整键帽整体尺寸，以及向顶部收窄的程度。宽度和深度都按 {unitBase} mm = 1u 换算。",
+          description: "调整键帽整体尺寸、上表面中心高度以及向顶部收窄的程度。宽度和深度都按 {unitBase} mm = 1u 换算。",
         },
         top: {
           title: "键顶",
-          description: "在固定上表面中心基准高度的同时，可切换平面 / 圆柱 / 球面以及 top-hat 追加。切换为边缘高度输入时，内部仍会规范化为 pitch / roll。",
+          description: "可切换平面 / 圆柱 / 球面以及 top-hat 追加，并调整前后和左右倾斜。切换为边缘高度输入时，内部仍会规范化为 pitch / roll。",
         },
         legend: {
           title: "字符",
@@ -176,11 +176,11 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "调整打字机风格的薄键顶外形。宽度和深度都按 {unitBase} mm = 1u 换算；R 越大越圆，越小越接近方形。",
+          description: "调整打字机风格的薄键顶外形和厚度。宽度和深度都按 {unitBase} mm = 1u 换算；R 越大越圆，越小越接近方形。",
         },
         top: {
           title: "键顶",
-          description: "在固定上表面中心基准高度的同时，可用角度或边缘高度编辑前后和左右倾斜。边缘高度输入在内部会规范化为 pitch / roll。",
+          description: "可用角度或边缘高度编辑前后和左右倾斜。边缘高度输入在内部会规范化为 pitch / roll。",
         },
         legend: {
           title: "字符",
@@ -200,11 +200,11 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "以常见 JIS / ISO 系纵向 Enter 轮廓为基准，调整整体尺寸和左下缺口。宽度和深度都按 {unitBase} mm = 1u 换算。",
+          description: "以常见 JIS / ISO 系纵向 Enter 轮廓为基准，调整整体尺寸、上表面中心高度和左下缺口。宽度和深度都按 {unitBase} mm = 1u 换算。",
         },
         top: {
           title: "键顶",
-          description: "与自定义外壳一样，可调整上表面中心基准高度、平面 / 圆柱 / 球面，以及前后和左右倾斜。",
+          description: "与自定义外壳一样，可调整平面 / 圆柱 / 球面，以及前后和左右倾斜。",
         },
         legend: {
           title: "字符",
@@ -224,11 +224,11 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "以打字机风格的薄型 JIS Enter 轮廓为基准，调整整体尺寸、左下缺口和 R。宽度和深度都按 {unitBase} mm = 1u 换算。",
+          description: "以打字机风格的薄型 JIS Enter 轮廓为基准，调整整体尺寸、键顶厚度、左下缺口和 R。宽度和深度都按 {unitBase} mm = 1u 换算。",
         },
         top: {
           title: "键顶",
-          description: "与打字机形状一样，可调整薄键顶厚度、边框以及前后和左右倾斜。",
+          description: "与打字机形状一样，可调整边框、前后和左右倾斜以及安装基准高度。",
         },
         legend: {
           title: "字符",
@@ -245,9 +245,9 @@ const zh = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "调整键帽整体尺寸，以及向顶部收窄的程度。宽度和深度都按 {unitBase} mm = 1u 换算。",
-    shapeDescriptionTypewriter: "调整打字机风格的薄键顶外形。宽度和深度都按 {unitBase} mm = 1u 换算；R 越大越圆，越小越接近方形。",
-    topDescription: "在固定上表面中心基准高度的同时，可用角度或边缘高度编辑前后和左右倾斜。边缘高度输入在内部会规范化为 pitch / roll。",
+    shapeDescriptionShell: "调整键帽整体尺寸、上表面中心高度以及向顶部收窄的程度。宽度和深度都按 {unitBase} mm = 1u 换算。",
+    shapeDescriptionTypewriter: "调整打字机风格的薄键顶外形和厚度。宽度和深度都按 {unitBase} mm = 1u 换算；R 越大越圆，越小越接近方形。",
+    topDescription: "可用角度或边缘高度编辑前后和左右倾斜。边缘高度输入在内部会规范化为 pitch / roll。",
   },
   fields: {
     name: {
@@ -272,7 +272,13 @@ const zh = Object.freeze({
     },
     wallThickness: {
       label: "壁厚",
-      hint: "影响键帽强度的厚度",
+      hint: "分别设置侧壁与键顶的材料厚度",
+      primaryMiniLabel: "侧壁",
+      secondaryLabel: "键顶",
+    },
+    topThickness: {
+      label: "键顶厚度",
+      hint: "键顶上表面下方保留的材料厚度",
     },
     typewriterCornerRadius: {
       label: "R",

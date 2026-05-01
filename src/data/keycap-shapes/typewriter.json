@@ -28,6 +28,7 @@
     "rimHeightDown": 0.5,
     "rimColor": "#ff7f00",
     "wallThickness": 1.2,
+    "topThickness": 1.2,
     "topScale": 1,
     "topSurfaceShape": "flat",
     "dishRadius": 45,
@@ -156,10 +157,11 @@
     {
       "id": "shape",
       "title": "キーキャップの形",
-      "description": "タイプライター風の薄いキートップ外形を調整します。横幅と奥行きは 1u 換算カードの基準で換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
+      "description": "タイプライター風の薄いキートップ外形と厚みを調整します。横幅と奥行きは 1u 換算カードの基準で換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
       "fieldKeys": [
         "shapeProfile",
         "keyWidth",
+        "topCenterHeight",
         "keyDepth",
         "typewriterCornerRadius",
         "bodyColor"
@@ -168,10 +170,9 @@
     {
       "id": "top",
       "title": "キートップ",
-      "description": "上面中央の基準高さを固定したまま、前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+      "description": "前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
       "fieldKeys": [
         "typewriterMountHeight",
-        "topCenterHeight",
         "topOffsetX",
         "topOffsetY",
         "topSurfaceShape",
