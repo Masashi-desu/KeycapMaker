@@ -18,4 +18,7 @@ function resolveBase() {
 
 export default defineConfig({
   base: resolveBase(),
+  build: {
+    chunkSizeWarningLimit: 600,
+  },
 });
