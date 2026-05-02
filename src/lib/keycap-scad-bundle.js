@@ -227,6 +227,16 @@ function resolveTopScaleAngle(size, topCenterHeight, topScale) {
   return atanDeg(inset / Math.max(topCenterHeight, 0.1));
 }
 
+function getKeycapShoulderRadiusMax({ geometryType, keyWidth, keyDepth, topCenterHeight, topScale }) {
+  if (isTypewriterGeometryType(geometryType)) {
+    return 0;
+  }
+
+  const horizontalOutset = Math.max(Number(keyWidth) * (1 - Number(topScale)) / 2, 0);
+  const verticalOutset = Math.max(Number(keyDepth) * (1 - Number(topScale)) / 2, 0);
+  return Math.max(Math.min(Number(topCenterHeight), horizontalOutset, verticalOutset), 0);
+}
+
 function isTypewriterGeometryType(geometryType) {
   return geometryType === "typewriter" || geometryType === "typewriter_jis_enter";
 }
@@ -262,6 +272,19 @@ function resolveShapeGeometryParameters(params = {}) {
   const topScale = clampTopScale(params.topScale, defaults.topScale ?? 1, params);
   const horizontalAngle = resolveTopScaleAngle(keyWidth, topCenterHeight, topScale);
   const verticalAngle = resolveTopScaleAngle(keyDepth, topCenterHeight, topScale);
+  const keycapShoulderRadiusMax = getKeycapShoulderRadiusMax({
+    geometryType,
+    keyWidth,
+    keyDepth,
+    topCenterHeight,
+    topScale,
+  });
+  const keycapShoulderRadius = clampNumberRange(
+    params.keycapShoulderRadius,
+    defaults.keycapShoulderRadius ?? 0,
+    -keycapShoulderRadiusMax,
+    keycapShoulderRadiusMax,
+  );
   const topWidth = isTypewriterGeometryType(geometryType) ? keyWidth : keyWidth * topScale;
   const topDepth = isTypewriterGeometryType(geometryType) ? keyDepth : keyDepth * topScale;
   const topCornerRadiusMax = Math.max(Math.min(topWidth, topDepth) / 2, 0);
@@ -285,6 +308,7 @@ function resolveShapeGeometryParameters(params = {}) {
     profileRightAngle: isTypewriterGeometryType(geometryType) ? 0 : horizontalAngle,
     topThickness: resolveTopThickness(params, defaults, geometryDefaults),
     bottomCornerRadius: Math.max(Number(geometryDefaults.bottomCornerRadius ?? 0), 0),
+    keycapShoulderRadius,
     topCornerRadius,
     topCornerIndividualEnabled,
     topCornerRadii,
@@ -822,6 +846,7 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_profile_right_angle: shapeGeometry.profileRightAngle,
     user_top_thickness: shapeGeometry.topThickness,
     user_bottom_corner_radius: shapeGeometry.bottomCornerRadius,
+    user_keycap_shoulder_radius: shapeGeometry.keycapShoulderRadius,
     user_top_corner_radius: shapeGeometry.topCornerRadius,
     user_top_corner_individual_enabled: shapeGeometry.topCornerIndividualEnabled,
     user_top_corner_radii: shapeGeometry.topCornerRadii,

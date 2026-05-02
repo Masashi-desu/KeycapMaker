@@ -697,6 +697,7 @@ const DESIGN_NAME_FIELD = Object.freeze({
 const GEOMETRY_TYPE_RESET_FIELDS = new Set([
   "topCenterHeight",
   "topScale",
+  "keycapShoulderRadius",
   "topSurfaceShape",
   "dishRadius",
   "dishDepth",
@@ -1071,6 +1072,41 @@ function getTopCornerRadiusMax(params = state.keycapParams) {
 
 function getTopCornerRadiusHint(params) {
   return t("fields.topCornerRadius.hint", { maxRadius: formatMillimeter(getTopCornerRadiusMax(params)) });
+}
+
+function getKeycapShoulderOutset(params = state.keycapParams) {
+  if (isTypewriterShapeProfile(params.shapeProfile)) {
+    return 0;
+  }
+
+  const geometry = resolveTopPlaneGeometry(params);
+  const baseLeft = -Number(params.keyWidth ?? 0) / 2;
+  const baseRight = Number(params.keyWidth ?? 0) / 2;
+  const baseFront = -Number(params.keyDepth ?? 0) / 2;
+  const baseBack = Number(params.keyDepth ?? 0) / 2;
+
+  return Math.max(Math.min(
+    geometry.topLeft - baseLeft,
+    baseRight - geometry.topRight,
+    geometry.topFront - baseFront,
+    baseBack - geometry.topBack,
+  ), 0);
+}
+
+function getKeycapShoulderRadiusMax(params = state.keycapParams) {
+  const topCenterHeight = Math.max(Number(params.topCenterHeight ?? 0), 0);
+  return floorToNumericStep(Math.min(topCenterHeight, getKeycapShoulderOutset(params)), 0.05, 0);
+}
+
+function getKeycapShoulderRadiusMin(params = state.keycapParams) {
+  return -getKeycapShoulderRadiusMax(params);
+}
+
+function getKeycapShoulderRadiusHint(params) {
+  return t("fields.keycapShoulderRadius.hint", {
+    minRadius: formatMillimeter(getKeycapShoulderRadiusMin(params)),
+    maxRadius: formatMillimeter(getKeycapShoulderRadiusMax(params)),
+  });
 }
 
 function getDishDepthHint(params) {
@@ -1536,6 +1572,15 @@ const fieldGroupTemplates = [
         step: 0.01,
         min: (params) => resolveTopScaleMinimum(params),
         max: 1,
+      },
+      {
+        key: "keycapShoulderRadius",
+        label: () => t("fields.keycapShoulderRadius.label"),
+        hint: (params) => getKeycapShoulderRadiusHint(params),
+        unit: "mm",
+        step: 0.05,
+        min: (params) => getKeycapShoulderRadiusMin(params),
+        max: (params) => getKeycapShoulderRadiusMax(params),
       },
       {
         key: "bodyColor",
@@ -6195,6 +6240,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topRightHeight",
   "topCornerRadius",
   ...TOP_CORNER_RADIUS_FIELD_KEYS,
+  "keycapShoulderRadius",
   "typewriterMountHeight",
   "topHatTopWidth",
   "topHatTopDepth",
@@ -6533,6 +6579,7 @@ function handleFieldChange(event) {
     syncFieldHint("jisEnterNotchWidth");
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("topCornerRadius");
+    syncFieldHint("keycapShoulderRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatBottomWidth");
@@ -6546,6 +6593,7 @@ function handleFieldChange(event) {
     syncFieldHint("jisEnterNotchDepth");
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("topCornerRadius");
+    syncFieldHint("keycapShoulderRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatBottomDepth");
@@ -6575,6 +6623,7 @@ function handleFieldChange(event) {
     || changedPrimaryField === "topHatShoulderAngle"
   ) {
     syncFieldHint("topCornerRadius");
+    syncFieldHint("keycapShoulderRadius");
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatBottomWidth");

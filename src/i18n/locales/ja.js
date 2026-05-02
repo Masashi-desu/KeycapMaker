@@ -316,6 +316,10 @@ const ja = Object.freeze({
       label: "上面のすぼまり",
       hint: "数字を小さくすると、横幅と奥行きを同じ比率で保ったまま上面が細くなります",
     },
+    keycapShoulderRadius: {
+      label: "ショルダーR",
+      hint: "キーキャップ本体の肩を、0 では角面、プラスで丸く膨らませ、マイナスで凹ませます。現在の範囲は {minRadius} から {maxRadius} です",
+    },
     bodyColor: {
       label: "本体の色",
       hint: "カラーコードを直接入力するか、カラーピッカーで選べます",

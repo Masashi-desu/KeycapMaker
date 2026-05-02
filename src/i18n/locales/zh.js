@@ -316,6 +316,10 @@ const zh = Object.freeze({
       label: "顶部收窄",
       hint: "数值越小，顶部会在保持宽度和深度比例的同时收窄",
     },
+    keycapShoulderRadius: {
+      label: "肩部 R",
+      hint: "调整键帽本体肩部：0 保持平面折角，正值向外圆鼓，负值向内凹。当前范围为 {minRadius} 到 {maxRadius}。",
+    },
     bodyColor: {
       label: "本体颜色",
       hint: "可直接输入颜色代码，或使用颜色选择器",

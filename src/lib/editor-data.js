@@ -717,6 +717,39 @@ function clampTopCornerRadius(value, params = {}, fallback = 0) {
   return clampNumberRange(value, fallback, 0, getTopCornerRadiusMax(params));
 }
 
+function getKeycapShoulderOutset(params = {}) {
+  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  if (isTypewriterGeometryType(resolveShapeGeometryType(profileKey))) {
+    return 0;
+  }
+
+  const defaults = createDefaultKeycapParams(profileKey);
+  const resolvedAngles = resolveProfileAngles(params);
+  const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+
+  return Math.max(Math.min(
+    topCenterHeight * degTan(resolvedAngles.front),
+    topCenterHeight * degTan(resolvedAngles.back),
+    topCenterHeight * degTan(resolvedAngles.left),
+    topCenterHeight * degTan(resolvedAngles.right),
+  ), 0);
+}
+
+function getKeycapShoulderRadiusMax(params = {}) {
+  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const defaults = createDefaultKeycapParams(profileKey);
+  const topCenterHeight = clampMinimum(params.topCenterHeight, defaults.topCenterHeight ?? 9.5, 0.1);
+  return Math.max(Math.min(topCenterHeight, getKeycapShoulderOutset(params)), 0);
+}
+
+function getKeycapShoulderRadiusMin(params = {}) {
+  return -getKeycapShoulderRadiusMax(params);
+}
+
+function clampKeycapShoulderRadius(value, params = {}, fallback = 0) {
+  return clampNumberRange(value, fallback, getKeycapShoulderRadiusMin(params), getKeycapShoulderRadiusMax(params));
+}
+
 function resolveTopEdgeHeights(params = {}) {
   const geometry = resolveTopPlaneGeometry(params);
   const topPitchDeg = Number(params.topPitchDeg ?? 0);
@@ -770,6 +803,13 @@ export function syncDerivedKeycapParams(params = {}) {
     resolveProfileTopSurfaceShape(profileKey, defaults.topSurfaceShape, "flat"),
   );
   params.topScale = clampTopScale(params.topScale, defaults.topScale ?? 1, params);
+  if ("keycapShoulderRadius" in defaults || "keycapShoulderRadius" in params) {
+    params.keycapShoulderRadius = clampKeycapShoulderRadius(
+      params.keycapShoulderRadius,
+      params,
+      defaults.keycapShoulderRadius ?? 0,
+    );
+  }
   if ("topCornerRadius" in defaults || "topCornerRadius" in params) {
     params.topCornerRadius = clampTopCornerRadius(
       params.topCornerRadius,
@@ -940,6 +980,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "topCornerRadius" || TOP_CORNER_RADIUS_FIELD_KEYS.includes(fieldKey)) {
     return clampTopCornerRadius(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "keycapShoulderRadius") {
+    return clampKeycapShoulderRadius(value, paramsContext, fallback);
   }
 
   if (findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.outlineDelta)) {

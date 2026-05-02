@@ -316,6 +316,10 @@ const en = Object.freeze({
       label: "Top Taper",
       hint: "Lower numbers narrow the top face while keeping width and depth at the same ratio",
     },
+    keycapShoulderRadius: {
+      label: "Shoulder Radius",
+      hint: "Rounds the keycap body's shoulder: 0 keeps a faceted shoulder, positive values bulge it outward, and negative values recess it. Current range: {minRadius} to {maxRadius}.",
+    },
     bodyColor: {
       label: "Body Color",
       hint: "Enter a color code directly or use the color picker",

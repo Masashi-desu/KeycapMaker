@@ -316,6 +316,10 @@ const ko = Object.freeze({
       label: "상면 좁아짐",
       hint: "숫자가 작을수록 폭과 깊이 비율을 유지한 채 상면이 좁아집니다",
     },
+    keycapShoulderRadius: {
+      label: "숄더 R",
+      hint: "키캡 본체의 숄더를 조정합니다. 0은 각진 면, 양수는 둥글게 부풀림, 음수는 오목하게 파임입니다. 현재 범위는 {minRadius}부터 {maxRadius}까지입니다.",
+    },
     bodyColor: {
       label: "본체 색상",
       hint: "색상 코드를 직접 입력하거나 색상 선택기로 고를 수 있습니다",

@@ -123,6 +123,7 @@ profile_right_angle = required_param(user_profile_right_angle, "user_profile_rig
 
 top_thickness = max(required_param(user_top_thickness, "user_top_thickness"), 0.05);
 bottom_corner_radius = max(required_param(user_bottom_corner_radius, "user_bottom_corner_radius"), 0);
+keycap_shoulder_radius = keycap_top_hat_safe_shoulder_radius(required_param(user_keycap_shoulder_radius, "user_keycap_shoulder_radius"));
 top_corner_radius = max(required_param(user_top_corner_radius, "user_top_corner_radius"), 0);
 top_corner_individual_enabled = is_undef(user_top_corner_individual_enabled)
     ? false
@@ -1062,6 +1063,7 @@ module keycap_body_shell_positive(quality = "export") {
             left_angle = profile_left_angle,
             right_angle = profile_right_angle,
             bottom_corner_radius = bottom_corner_radius,
+            keycap_shoulder_radius = keycap_shoulder_radius,
             top_corner_radius = top_corner_radius,
             top_shape_type = top_shape_type,
             dish_radius = dish_radius,
@@ -1093,6 +1095,7 @@ module keycap_body_shell_positive(quality = "export") {
             left_angle = profile_left_angle,
             right_angle = profile_right_angle,
             bottom_corner_radius = bottom_corner_radius,
+            keycap_shoulder_radius = keycap_shoulder_radius,
             top_corner_radius = top_corner_radius,
             top_shape_type = top_shape_type,
             dish_radius = dish_radius,
