@@ -152,7 +152,7 @@ const ko = Object.freeze({
       fieldGroups: {
         shape: {
           title: "키캡 형상",
-          description: "키캡 전체 크기, 상면 중앙 높이, 위쪽으로 좁아지는 정도를 조정합니다. 폭과 깊이는 각각 {unitBase} mm를 1u로 환산합니다.",
+          description: "키캡 전체 크기, 상면 중앙 높이, 위쪽으로 좁아지는 정도, 상단 모서리 R과 본체 숄더 R을 조정합니다. 폭과 깊이는 각각 {unitBase} mm를 1u로 환산합니다.",
         },
         top: {
           title: "키톱",
@@ -200,7 +200,7 @@ const ko = Object.freeze({
       fieldGroups: {
         shape: {
           title: "키캡 형상",
-          description: "일반적인 JIS / ISO 계열 세로형 Enter footprint를 기준으로 전체 치수, 상면 중앙 높이, 왼쪽 아래 파임을 조정합니다. 폭과 깊이는 각각 {unitBase} mm를 1u로 환산합니다.",
+          description: "일반적인 JIS / ISO 계열 세로형 Enter footprint를 기준으로 전체 치수, 상면 중앙 높이, 왼쪽 아래 파임, 상단 모서리 R과 본체 숄더 R을 조정합니다. 폭과 깊이는 각각 {unitBase} mm를 1u로 환산합니다.",
         },
         top: {
           title: "키톱",
@@ -245,7 +245,7 @@ const ko = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "키캡 전체 크기, 상면 중앙 높이, 위쪽으로 좁아지는 정도를 조정합니다. 폭과 깊이는 각각 {unitBase} mm를 1u로 환산합니다.",
+    shapeDescriptionShell: "키캡 전체 크기, 상면 중앙 높이, 위쪽으로 좁아지는 정도, 상단 모서리 R과 본체 숄더 R을 조정합니다. 폭과 깊이는 각각 {unitBase} mm를 1u로 환산합니다.",
     shapeDescriptionTypewriter: "타자기풍의 얇은 키톱 외형과 두께를 조정합니다. 폭과 깊이는 각각 {unitBase} mm를 1u로 환산하며, R이 커질수록 둥글고 작아질수록 사각형에 가까워집니다.",
     topDescription: "앞뒤와 좌우 기울기를 각도 또는 모서리 높이로 편집할 수 있습니다. 모서리 높이 입력은 내부에서 pitch / roll로 정규화됩니다.",
   },
@@ -315,6 +315,10 @@ const ko = Object.freeze({
     topScale: {
       label: "상면 좁아짐",
       hint: "숫자가 작을수록 폭과 깊이 비율을 유지한 채 상면이 좁아집니다",
+    },
+    keycapEdgeRadius: {
+      label: "상단 모서리 R",
+      hint: "키톱과 사이드월이 만나는 부분을 둥글게 합니다. 0 mm이면 현재와 같은 각진 면입니다. 현재 최댓값은 {maxRadius}입니다.",
     },
     keycapShoulderRadius: {
       label: "숄더 R",

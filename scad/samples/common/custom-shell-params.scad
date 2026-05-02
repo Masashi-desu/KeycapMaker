@@ -13,6 +13,7 @@ user_profile_right_angle = 10;
 user_top_thickness = 1.5;
 user_bottom_corner_radius = 1.0;
 user_keycap_shoulder_radius = 0;
+user_keycap_edge_radius = 0;
 user_top_corner_radius = 1.5;
 user_top_shape_type = "flat";
 user_dish_radius = 45;

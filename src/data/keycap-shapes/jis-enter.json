@@ -28,6 +28,7 @@
     "topThickness": 1.5,
     "topScale": 0.75,
     "keycapShoulderRadius": 0,
+    "keycapEdgeRadius": 0,
     "topSurfaceShape": "flat",
     "dishRadius": 45,
     "dishDepth": 0,
@@ -170,7 +171,7 @@
     {
       "id": "shape",
       "title": "キーキャップの形",
-      "description": "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法、上面中央の高さ、左下の欠き込み、本体の肩Rを調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
+      "description": "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法、上面中央の高さ、左下の欠き込み、上端Rと本体の肩Rを調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
       "fieldKeys": [
         "shapeProfile",
         "keyWidth",
@@ -180,6 +181,7 @@
         "jisEnterNotchDepth",
         "wallThickness",
         "topScale",
+        "keycapEdgeRadius",
         "keycapShoulderRadius",
         "bodyColor"
       ]

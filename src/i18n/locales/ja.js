@@ -152,7 +152,7 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "キーキャップ全体の大きさ、上面中央の高さ、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
+          description: "キーキャップ全体の大きさ、上面中央の高さ、上に向かって細くなる具合、上端Rと本体の肩Rを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
         },
         top: {
           title: "キートップ",
@@ -200,7 +200,7 @@ const ja = Object.freeze({
       fieldGroups: {
         shape: {
           title: "キーキャップの形",
-          description: "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法、上面中央の高さ、左下の欠き込みを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
+          description: "一般的な JIS / ISO 系の縦長 Enter footprint を基準に、全体寸法、上面中央の高さ、左下の欠き込み、上端Rと本体の肩Rを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
         },
         top: {
           title: "キートップ",
@@ -245,7 +245,7 @@ const ja = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "キーキャップ全体の大きさ、上面中央の高さ、上に向かって細くなる具合を調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
+    shapeDescriptionShell: "キーキャップ全体の大きさ、上面中央の高さ、上に向かって細くなる具合、上端Rと本体の肩Rを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算します。",
     shapeDescriptionTypewriter: "タイプライター風の薄いキートップ外形と厚みを調整します。横幅と奥行きはそれぞれ {unitBase} mm を 1u として換算し、R を大きくすると丸く、小さくすると四角に近づきます。",
     topDescription: "前後と左右の傾きを角度または端の高さで編集できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
   },
@@ -315,6 +315,10 @@ const ja = Object.freeze({
     topScale: {
       label: "上面のすぼまり",
       hint: "数字を小さくすると、横幅と奥行きを同じ比率で保ったまま上面が細くなります",
+    },
+    keycapEdgeRadius: {
+      label: "上端R",
+      hint: "キートップとサイドウォールの接続部を丸めます。0 mm では現在と同じ角面です。現在の最大は {maxRadius} です",
     },
     keycapShoulderRadius: {
       label: "ショルダーR",

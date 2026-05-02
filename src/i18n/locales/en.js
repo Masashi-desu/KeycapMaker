@@ -152,7 +152,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust the overall keycap size, top center height, and taper toward the top. Width and depth are each converted using {unitBase} mm as 1u.",
+          description: "Adjust the overall keycap size, top center height, taper, top edge radius, and body shoulder radius. Width and depth are each converted using {unitBase} mm as 1u.",
         },
         top: {
           title: "Keytop",
@@ -200,7 +200,7 @@ const en = Object.freeze({
       fieldGroups: {
         shape: {
           title: "Keycap Shape",
-          description: "Adjust the overall size, top center height, and lower-left notch from a common JIS / ISO-style tall Enter footprint. Width and depth are each converted using {unitBase} mm as 1u.",
+          description: "Adjust the overall size, top center height, lower-left notch, top edge radius, and body shoulder radius from a common JIS / ISO-style tall Enter footprint. Width and depth are each converted using {unitBase} mm as 1u.",
         },
         top: {
           title: "Keytop",
@@ -245,7 +245,7 @@ const en = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "Adjust the overall keycap size, top center height, and taper toward the top. Width and depth are each converted using {unitBase} mm as 1u.",
+    shapeDescriptionShell: "Adjust the overall keycap size, top center height, taper, top edge radius, and body shoulder radius. Width and depth are each converted using {unitBase} mm as 1u.",
     shapeDescriptionTypewriter: "Adjust a thin typewriter-style keytop outline and thickness. Width and depth are each converted using {unitBase} mm as 1u; a larger R makes it rounder, and a smaller R makes it more square.",
     topDescription: "Edit front/back and left/right tilt by angle or edge height. Edge-height input is normalized internally to pitch / roll.",
   },
@@ -315,6 +315,10 @@ const en = Object.freeze({
     topScale: {
       label: "Top Taper",
       hint: "Lower numbers narrow the top face while keeping width and depth at the same ratio",
+    },
+    keycapEdgeRadius: {
+      label: "Top Edge Radius",
+      hint: "Rounds the transition between the keytop and sidewall. 0 mm keeps the current faceted edge. Current maximum: {maxRadius}.",
     },
     keycapShoulderRadius: {
       label: "Shoulder Radius",

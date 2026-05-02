@@ -742,6 +742,14 @@ function getKeycapShoulderRadiusMax(params = {}) {
   return Math.max(Math.min(topCenterHeight, getKeycapShoulderOutset(params)), 0);
 }
 
+function getKeycapEdgeRadiusMax(params = {}) {
+  return getKeycapShoulderRadiusMax(params);
+}
+
+function clampKeycapEdgeRadius(value, params = {}, fallback = 0) {
+  return clampNumberRange(value, fallback, 0, getKeycapEdgeRadiusMax(params));
+}
+
 function getKeycapShoulderRadiusMin(params = {}) {
   return -getKeycapShoulderRadiusMax(params);
 }
@@ -803,6 +811,13 @@ export function syncDerivedKeycapParams(params = {}) {
     resolveProfileTopSurfaceShape(profileKey, defaults.topSurfaceShape, "flat"),
   );
   params.topScale = clampTopScale(params.topScale, defaults.topScale ?? 1, params);
+  if ("keycapEdgeRadius" in defaults || "keycapEdgeRadius" in params) {
+    params.keycapEdgeRadius = clampKeycapEdgeRadius(
+      params.keycapEdgeRadius,
+      params,
+      defaults.keycapEdgeRadius ?? 0,
+    );
+  }
   if ("keycapShoulderRadius" in defaults || "keycapShoulderRadius" in params) {
     params.keycapShoulderRadius = clampKeycapShoulderRadius(
       params.keycapShoulderRadius,
@@ -984,6 +999,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "keycapShoulderRadius") {
     return clampKeycapShoulderRadius(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "keycapEdgeRadius") {
+    return clampKeycapEdgeRadius(value, paramsContext, fallback);
   }
 
   if (findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.outlineDelta)) {

@@ -26,6 +26,7 @@
     "topThickness": 1.5,
     "topScale": 0.75,
     "keycapShoulderRadius": 0,
+    "keycapEdgeRadius": 0,
     "topSurfaceShape": "flat",
     "topCornerRadius": 1.5,
     "topCornerRadiusIndividualEnabled": false,
@@ -177,7 +178,7 @@
     {
       "id": "shape",
       "title": "キーキャップの形",
-      "description": "キーキャップ全体の大きさ、上面中央の高さ、上に向かって細くなる具合、本体の肩Rを調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
+      "description": "キーキャップ全体の大きさ、上面中央の高さ、上に向かって細くなる具合、上端Rと本体の肩Rを調整します。横幅と奥行きは 1u 換算カードの基準で換算します。",
       "fieldKeys": [
         "shapeProfile",
         "keyWidth",
@@ -185,6 +186,7 @@
         "keyDepth",
         "wallThickness",
         "topScale",
+        "keycapEdgeRadius",
         "keycapShoulderRadius",
         "bodyColor"
       ]

@@ -152,7 +152,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "调整键帽整体尺寸、上表面中心高度以及向顶部收窄的程度。宽度和深度都按 {unitBase} mm = 1u 换算。",
+          description: "调整键帽整体尺寸、上表面中心高度、向顶部收窄的程度、顶边 R 和本体肩部 R。宽度和深度都按 {unitBase} mm = 1u 换算。",
         },
         top: {
           title: "键顶",
@@ -200,7 +200,7 @@ const zh = Object.freeze({
       fieldGroups: {
         shape: {
           title: "键帽形状",
-          description: "以常见 JIS / ISO 系纵向 Enter 轮廓为基准，调整整体尺寸、上表面中心高度和左下缺口。宽度和深度都按 {unitBase} mm = 1u 换算。",
+          description: "以常见 JIS / ISO 系纵向 Enter 轮廓为基准，调整整体尺寸、上表面中心高度、左下缺口、顶边 R 和本体肩部 R。宽度和深度都按 {unitBase} mm = 1u 换算。",
         },
         top: {
           title: "键顶",
@@ -245,7 +245,7 @@ const zh = Object.freeze({
     },
   },
   fieldGroups: {
-    shapeDescriptionShell: "调整键帽整体尺寸、上表面中心高度以及向顶部收窄的程度。宽度和深度都按 {unitBase} mm = 1u 换算。",
+    shapeDescriptionShell: "调整键帽整体尺寸、上表面中心高度、向顶部收窄的程度、顶边 R 和本体肩部 R。宽度和深度都按 {unitBase} mm = 1u 换算。",
     shapeDescriptionTypewriter: "调整打字机风格的薄键顶外形和厚度。宽度和深度都按 {unitBase} mm = 1u 换算；R 越大越圆，越小越接近方形。",
     topDescription: "可用角度或边缘高度编辑前后和左右倾斜。边缘高度输入在内部会规范化为 pitch / roll。",
   },
@@ -315,6 +315,10 @@ const zh = Object.freeze({
     topScale: {
       label: "顶部收窄",
       hint: "数值越小，顶部会在保持宽度和深度比例的同时收窄",
+    },
+    keycapEdgeRadius: {
+      label: "顶边 R",
+      hint: "圆化键顶与侧壁之间的过渡。0 mm 保持当前的平面折角。当前最大值为 {maxRadius}。",
     },
     keycapShoulderRadius: {
       label: "肩部 R",

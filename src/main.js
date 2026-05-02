@@ -1098,6 +1098,16 @@ function getKeycapShoulderRadiusMax(params = state.keycapParams) {
   return floorToNumericStep(Math.min(topCenterHeight, getKeycapShoulderOutset(params)), 0.05, 0);
 }
 
+function getKeycapEdgeRadiusMax(params = state.keycapParams) {
+  return getKeycapShoulderRadiusMax(params);
+}
+
+function getKeycapEdgeRadiusHint(params) {
+  return t("fields.keycapEdgeRadius.hint", {
+    maxRadius: formatMillimeter(getKeycapEdgeRadiusMax(params)),
+  });
+}
+
 function getKeycapShoulderRadiusMin(params = state.keycapParams) {
   return -getKeycapShoulderRadiusMax(params);
 }
@@ -1572,6 +1582,15 @@ const fieldGroupTemplates = [
         step: 0.01,
         min: (params) => resolveTopScaleMinimum(params),
         max: 1,
+      },
+      {
+        key: "keycapEdgeRadius",
+        label: () => t("fields.keycapEdgeRadius.label"),
+        hint: (params) => getKeycapEdgeRadiusHint(params),
+        unit: "mm",
+        step: 0.05,
+        min: 0,
+        max: (params) => getKeycapEdgeRadiusMax(params),
       },
       {
         key: "keycapShoulderRadius",
@@ -6240,6 +6259,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topRightHeight",
   "topCornerRadius",
   ...TOP_CORNER_RADIUS_FIELD_KEYS,
+  "keycapEdgeRadius",
   "keycapShoulderRadius",
   "typewriterMountHeight",
   "topHatTopWidth",
@@ -6579,6 +6599,7 @@ function handleFieldChange(event) {
     syncFieldHint("jisEnterNotchWidth");
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("topCornerRadius");
+    syncFieldHint("keycapEdgeRadius");
     syncFieldHint("keycapShoulderRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopWidth");
@@ -6593,6 +6614,7 @@ function handleFieldChange(event) {
     syncFieldHint("jisEnterNotchDepth");
     syncFieldHint("typewriterCornerRadius");
     syncFieldHint("topCornerRadius");
+    syncFieldHint("keycapEdgeRadius");
     syncFieldHint("keycapShoulderRadius");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopDepth");
@@ -6623,6 +6645,7 @@ function handleFieldChange(event) {
     || changedPrimaryField === "topHatShoulderAngle"
   ) {
     syncFieldHint("topCornerRadius");
+    syncFieldHint("keycapEdgeRadius");
     syncFieldHint("keycapShoulderRadius");
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatTopDepth");

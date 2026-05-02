@@ -237,6 +237,10 @@ function getKeycapShoulderRadiusMax({ geometryType, keyWidth, keyDepth, topCente
   return Math.max(Math.min(Number(topCenterHeight), horizontalOutset, verticalOutset), 0);
 }
 
+function getKeycapEdgeRadiusMax(params) {
+  return getKeycapShoulderRadiusMax(params);
+}
+
 function isTypewriterGeometryType(geometryType) {
   return geometryType === "typewriter" || geometryType === "typewriter_jis_enter";
 }
@@ -285,6 +289,18 @@ function resolveShapeGeometryParameters(params = {}) {
     -keycapShoulderRadiusMax,
     keycapShoulderRadiusMax,
   );
+  const keycapEdgeRadius = clampNumberRange(
+    params.keycapEdgeRadius,
+    defaults.keycapEdgeRadius ?? 0,
+    0,
+    getKeycapEdgeRadiusMax({
+      geometryType,
+      keyWidth,
+      keyDepth,
+      topCenterHeight,
+      topScale,
+    }),
+  );
   const topWidth = isTypewriterGeometryType(geometryType) ? keyWidth : keyWidth * topScale;
   const topDepth = isTypewriterGeometryType(geometryType) ? keyDepth : keyDepth * topScale;
   const topCornerRadiusMax = Math.max(Math.min(topWidth, topDepth) / 2, 0);
@@ -309,6 +325,7 @@ function resolveShapeGeometryParameters(params = {}) {
     topThickness: resolveTopThickness(params, defaults, geometryDefaults),
     bottomCornerRadius: Math.max(Number(geometryDefaults.bottomCornerRadius ?? 0), 0),
     keycapShoulderRadius,
+    keycapEdgeRadius,
     topCornerRadius,
     topCornerIndividualEnabled,
     topCornerRadii,
@@ -847,6 +864,7 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_thickness: shapeGeometry.topThickness,
     user_bottom_corner_radius: shapeGeometry.bottomCornerRadius,
     user_keycap_shoulder_radius: shapeGeometry.keycapShoulderRadius,
+    user_keycap_edge_radius: shapeGeometry.keycapEdgeRadius,
     user_top_corner_radius: shapeGeometry.topCornerRadius,
     user_top_corner_individual_enabled: shapeGeometry.topCornerIndividualEnabled,
     user_top_corner_radii: shapeGeometry.topCornerRadii,
