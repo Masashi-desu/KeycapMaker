@@ -349,6 +349,22 @@ const TOP_SCALE_MAX = 1;
 const TOP_SCALE_STEP = 0.01;
 const TOP_SCALE_MIN_FACE_SIZE = 0.2;
 const TOP_THICKNESS_MIN = 0.05;
+const THICKNESS_SLIDER_MAX = 3;
+const KEY_SIZE_SLIDER_MIN_UNITS = 0.5;
+const KEY_SIZE_SLIDER_MAX_UNITS = 4;
+const KEY_UNIT_SLIDER_MIN_MM = 10;
+const KEY_UNIT_SLIDER_MAX_MM = 24;
+const TOP_CENTER_HEIGHT_SLIDER_MAX = 20;
+const TOP_SLOPE_ANGLE_SLIDER_MAX_DEG = 15;
+const LEGEND_SIZE_SLIDER_MAX = 12;
+const LEGEND_DEPTH_SLIDER_MAX = 3;
+const TYPEWRITER_RIM_HEIGHT_SLIDER_MAX = 4;
+const HOMING_BAR_WIDTH_SLIDER_MAX = 4;
+const HOMING_BAR_HEIGHT_SLIDER_MAX = 2;
+const HOMING_BAR_CHAMFER_SLIDER_MAX = 1;
+const STEM_DELTA_SLIDER_MAX = 0.5;
+const STEM_INSET_DELTA_SLIDER_MAX = 1;
+const STEM_CHAMFER_SLIDER_MAX = 0.8;
 const TOP_HAT_MIN_SIZE = 0.2;
 const TOP_HAT_MIN_HEIGHT = 0.05;
 const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
@@ -464,6 +480,126 @@ function getKeyUnitCopyValues() {
   return {
     unitBase: formatKeyUnitMmValue(),
   };
+}
+
+function getKeySizeSliderMinimum() {
+  return Math.max(10, getKeyUnitMm() * KEY_SIZE_SLIDER_MIN_UNITS);
+}
+
+function getKeySizeSliderMaximum() {
+  return Math.max(getKeySizeSliderMinimum(), getKeyUnitMm() * KEY_SIZE_SLIDER_MAX_UNITS);
+}
+
+function getPositiveNumber(value, fallback = 0) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? Math.max(numericValue, 0) : fallback;
+}
+
+function getFieldAxisSliderExtent(params, axis) {
+  const size = axis === "y" ? params.keyDepth : params.keyWidth;
+  return Math.max(getPositiveNumber(size, DEFAULT_KEY_UNIT_MM) / 2, 1);
+}
+
+function getTopEdgeHeightSliderMaximum(params) {
+  return Math.max(getPositiveNumber(params.topCenterHeight, 0) * 2, TOP_CENTER_HEIGHT_SLIDER_MAX);
+}
+
+function getTypewriterMountHeightSliderMaximum(params) {
+  const minimum = getTypewriterMountHeightMinimum(params);
+  return Math.max(minimum + 5, 12);
+}
+
+function getLegendSizeSliderMaximum(params) {
+  const footprintLimit = Math.max(Math.min(
+    getPositiveNumber(params.keyWidth, DEFAULT_KEY_UNIT_MM),
+    getPositiveNumber(params.keyDepth, DEFAULT_KEY_UNIT_MM),
+  ), LEGEND_MIN_SIZE);
+  return Math.min(Math.max(footprintLimit, LEGEND_MIN_SIZE), LEGEND_SIZE_SLIDER_MAX);
+}
+
+function getLegendOffsetSliderRange(params, axis) {
+  const extent = getFieldAxisSliderExtent(params, axis);
+  return { min: -extent, max: extent };
+}
+
+function getHomingBarChamferSliderMaximum(params) {
+  return Math.min(
+    getPositiveNumber(params.homingBarWidth, HOMING_BAR_WIDTH_SLIDER_MAX),
+    getPositiveNumber(params.homingBarHeight, HOMING_BAR_HEIGHT_SLIDER_MAX),
+    HOMING_BAR_CHAMFER_SLIDER_MAX * 2,
+  ) / 2;
+}
+
+function isLegendFieldWithSuffix(fieldKey, suffix) {
+  return [...TOP_LEGEND_CONFIGS, ...SIDE_LEGEND_CONFIGS]
+    .some((config) => fieldKey === legendParamKey(config.paramPrefix, suffix));
+}
+
+const FIELD_SLIDER_RANGE_RESOLVERS = Object.freeze({
+  [KEY_UNIT_FIELD_KEY]: () => ({
+    min: KEY_UNIT_SLIDER_MIN_MM,
+    max: KEY_UNIT_SLIDER_MAX_MM,
+    step: 0.05,
+    guide: DEFAULT_KEY_UNIT_MM,
+  }),
+  keyWidth: () => ({ min: getKeySizeSliderMinimum(), max: getKeySizeSliderMaximum() }),
+  keyDepth: () => ({ min: getKeySizeSliderMinimum(), max: getKeySizeSliderMaximum() }),
+  jisEnterNotchWidth: (params) => ({ max: Math.max(getPositiveNumber(params.keyWidth, DEFAULT_KEY_UNIT_MM) - 0.2, 0) }),
+  jisEnterNotchDepth: (params) => ({ max: Math.max(getPositiveNumber(params.keyDepth, DEFAULT_KEY_UNIT_MM) - 0.2, 0) }),
+  typewriterCornerRadius: (params) => ({ max: getTypewriterCornerRadiusMax(params) }),
+  topCenterHeight: () => ({ max: TOP_CENTER_HEIGHT_SLIDER_MAX }),
+  topOffsetX: (params) => getLegendOffsetSliderRange(params, "x"),
+  topOffsetY: (params) => getLegendOffsetSliderRange(params, "y"),
+  topHatTopWidth: (params) => ({ max: getTopHatUsableFootprintLimits(params).width }),
+  topHatTopDepth: (params) => ({ max: getTopHatUsableFootprintLimits(params).depth }),
+  topHatHeight: (params) => ({ max: getTopHatHeightMax(params) }),
+  rimWidth: (params) => ({ max: getTypewriterRimMaxWidth(params) }),
+  rimHeightUp: () => ({ max: TYPEWRITER_RIM_HEIGHT_SLIDER_MAX }),
+  rimHeightDown: () => ({ max: TYPEWRITER_RIM_HEIGHT_SLIDER_MAX }),
+  topPitchDeg: () => ({ min: -TOP_SLOPE_ANGLE_SLIDER_MAX_DEG, max: TOP_SLOPE_ANGLE_SLIDER_MAX_DEG }),
+  topRollDeg: () => ({ min: -TOP_SLOPE_ANGLE_SLIDER_MAX_DEG, max: TOP_SLOPE_ANGLE_SLIDER_MAX_DEG }),
+  topFrontHeight: (params) => ({ min: 0, max: getTopEdgeHeightSliderMaximum(params) }),
+  topBackHeight: (params) => ({ min: 0, max: getTopEdgeHeightSliderMaximum(params) }),
+  topLeftHeight: (params) => ({ min: 0, max: getTopEdgeHeightSliderMaximum(params) }),
+  topRightHeight: (params) => ({ min: 0, max: getTopEdgeHeightSliderMaximum(params) }),
+  homingBarLength: (params) => ({ max: getPositiveNumber(params.keyWidth, DEFAULT_KEY_UNIT_MM) }),
+  homingBarWidth: () => ({ max: HOMING_BAR_WIDTH_SLIDER_MAX, step: 0.01 }),
+  homingBarHeight: () => ({ max: HOMING_BAR_HEIGHT_SLIDER_MAX }),
+  homingBarChamfer: (params) => ({ max: getHomingBarChamferSliderMaximum(params) }),
+  homingBarOffsetY: (params) => getLegendOffsetSliderRange(params, "y"),
+  typewriterMountHeight: (params) => ({
+    min: getTypewriterMountHeightMinimum(params),
+    max: getTypewriterMountHeightSliderMaximum(params),
+  }),
+  stemOuterDelta: () => ({ min: -STEM_DELTA_SLIDER_MAX, max: STEM_DELTA_SLIDER_MAX }),
+  stemCrossMargin: () => ({ min: -STEM_DELTA_SLIDER_MAX, max: STEM_DELTA_SLIDER_MAX }),
+  stemCrossChamfer: () => ({ max: STEM_CHAMFER_SLIDER_MAX }),
+  stemInsetDelta: () => ({ min: -STEM_INSET_DELTA_SLIDER_MAX, max: STEM_INSET_DELTA_SLIDER_MAX }),
+});
+
+function resolveFieldSliderRange(fieldKey, params = state.keycapParams) {
+  const resolver = FIELD_SLIDER_RANGE_RESOLVERS[fieldKey];
+  if (resolver) {
+    return resolver(params);
+  }
+
+  if (isLegendFieldWithSuffix(fieldKey, LEGEND_FIELD_SUFFIXES.size)) {
+    return { max: getLegendSizeSliderMaximum(params) };
+  }
+  if (isLegendFieldWithSuffix(fieldKey, LEGEND_FIELD_SUFFIXES.height)) {
+    return { max: LEGEND_DEPTH_SLIDER_MAX };
+  }
+  if (isLegendFieldWithSuffix(fieldKey, LEGEND_FIELD_SUFFIXES.embed)) {
+    return { max: LEGEND_DEPTH_SLIDER_MAX };
+  }
+  if (isLegendFieldWithSuffix(fieldKey, LEGEND_FIELD_SUFFIXES.offsetX)) {
+    return getLegendOffsetSliderRange(params, "x");
+  }
+  if (isLegendFieldWithSuffix(fieldKey, LEGEND_FIELD_SUFFIXES.offsetY)) {
+    return getLegendOffsetSliderRange(params, "y");
+  }
+
+  return null;
 }
 
 function getWorkspaceSectionLabel(section) {
@@ -1522,6 +1658,11 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.1,
         min: 10,
+        slider: {
+          min: getKeySizeSliderMinimum,
+          max: getKeySizeSliderMaximum,
+          step: 0.1,
+        },
         primaryMiniLabel: () => t("fields.keyDepth.miniLabel"),
         secondaryLabel: () => t("fields.keyDepth.secondaryLabel"),
         secondaryField: "keyDepthUnits",
@@ -1553,6 +1694,11 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.05,
         min: 0.4,
+        slider: {
+          min: 0.4,
+          max: THICKNESS_SLIDER_MAX,
+          step: 0.05,
+        },
         primaryMiniLabel: () => t("fields.wallThickness.primaryMiniLabel"),
         secondaryLabel: () => t("fields.wallThickness.secondaryLabel"),
         secondaryField: "topThickness",
@@ -1567,6 +1713,11 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.05,
         min: TOP_THICKNESS_MIN,
+        slider: {
+          min: TOP_THICKNESS_MIN,
+          max: THICKNESS_SLIDER_MAX,
+          step: 0.05,
+        },
       },
       {
         key: "typewriterCornerRadius",
@@ -1584,6 +1735,11 @@ const fieldGroupTemplates = [
         step: 0.01,
         min: (params) => resolveTopScaleMinimum(params),
         max: 1,
+        slider: {
+          min: (params) => resolveTopScaleMinimum(params),
+          max: TOP_SCALE_MAX,
+          step: TOP_SCALE_STEP,
+        },
       },
       {
         key: "keycapEdgeRadius",
@@ -2208,6 +2364,10 @@ const FIELD_GROUP_DESCRIPTION_RESOLVERS = Object.freeze({
 });
 
 function getFieldConfig(fieldKey, profileKey = state.keycapParams?.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY) {
+  if (fieldKey === KEY_UNIT_FIELD_KEY) {
+    return getKeyUnitBasisFieldConfig();
+  }
+
   const baseField = fieldConfigByKey.get(fieldKey);
   if (!baseField) {
     return null;
@@ -2265,6 +2425,12 @@ function getKeyUnitBasisFieldConfig() {
     unit: "mm",
     min: KEY_UNIT_MIN_MM,
     step: 0.05,
+    slider: {
+      min: KEY_UNIT_SLIDER_MIN_MM,
+      max: KEY_UNIT_SLIDER_MAX_MM,
+      step: 0.05,
+      guide: DEFAULT_KEY_UNIT_MM,
+    },
   };
 }
 
@@ -2699,6 +2865,7 @@ function renderShell() {
   app.querySelector(".inspector-card")?.addEventListener("click", handleInspectorCardClick);
   app.querySelector(".inspector-card")?.addEventListener("input", handleInspectorCardInput);
   app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
+  app.querySelector(".inspector-card")?.addEventListener("wheel", handleInspectorCardWheel, { passive: false });
   app.querySelector(".inspector-card")?.addEventListener("compositionend", handleInspectorCardCompositionEnd);
   app.querySelector(".inspector-card")?.addEventListener("keydown", handleInspectorCardKeydown);
   app.querySelector(".inspector-card")?.addEventListener("dragstart", handleInspectorCardDragStart);
@@ -3773,6 +3940,142 @@ function resolveFieldAttribute(value, params = state.keycapParams) {
   return typeof value === "function" ? value(params) : value;
 }
 
+function normalizeRangeAttribute(value) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
+}
+
+function canAutoRenderSliderForField(field) {
+  if (!field || field.slider === false) {
+    return false;
+  }
+
+  return field.type == null
+    || field.type === "number-pair"
+    || field.type === "linked-size"
+    || field.type === "corner-radius"
+    || field.type === "key-unit-basis";
+}
+
+function resolveDefaultFieldSliderConfig(field, params = state.keycapParams) {
+  if (!canAutoRenderSliderForField(field)) {
+    return null;
+  }
+
+  const sliderRange = resolveFieldSliderRange(field.key, params);
+  const sliderMinimum = sliderRange?.min ?? field.min;
+  const sliderMaximum = sliderRange?.max ?? field.max;
+  if (sliderMinimum == null || sliderMaximum == null) {
+    return null;
+  }
+
+  return {
+    min: sliderMinimum,
+    max: sliderMaximum,
+    step: sliderRange?.step ?? field.step,
+    guide: sliderRange?.guide,
+  };
+}
+
+function resolveFieldSliderConfig(field, params = state.keycapParams) {
+  if (!field || field.slider === false) {
+    return null;
+  }
+
+  const defaultSlider = resolveDefaultFieldSliderConfig(field, params);
+  if (field.slider == null) {
+    return defaultSlider;
+  }
+
+  return {
+    ...(defaultSlider ?? {}),
+    ...field.slider,
+  };
+}
+
+function resolveFieldSliderAttributes(field, params = state.keycapParams) {
+  const sliderConfig = resolveFieldSliderConfig(field, params);
+  if (!sliderConfig) {
+    return null;
+  }
+
+  const sliderMinimum = normalizeRangeAttribute(resolveFieldAttribute(sliderConfig.min, params));
+  const sliderMaximum = normalizeRangeAttribute(resolveFieldAttribute(sliderConfig.max, params));
+  const guideValue = resolveFieldSliderGuideValue(field, sliderConfig, params);
+  const guidePosition = resolveSliderGuidePosition(sliderMinimum, sliderMaximum, guideValue);
+
+  return {
+    min: sliderMinimum,
+    max: sliderMaximum,
+    step: normalizeRangeAttribute(resolveFieldAttribute(sliderConfig.step, params)),
+    guide: guideValue,
+    guidePosition,
+  };
+}
+
+function canRenderFieldSlider(sliderAttributes) {
+  return sliderAttributes
+    && sliderAttributes.min != null
+    && sliderAttributes.max != null
+    && sliderAttributes.min <= sliderAttributes.max;
+}
+
+function clampSliderValue(value, sliderAttributes) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return sliderAttributes?.max ?? 0;
+  }
+
+  return Math.min(Math.max(numericValue, sliderAttributes.min), sliderAttributes.max);
+}
+
+function formatSliderFieldValue(fieldKey, value, sliderAttributes) {
+  return formatNumericFieldValue(fieldKey, clampSliderValue(value, sliderAttributes));
+}
+
+function resolveStandardFieldSliderGuideValue(fieldKey, params = state.keycapParams) {
+  if (fieldKey === "dishDepth") {
+    return getTopSurfaceShapePreset(params.topSurfaceShape ?? "flat").dishDepth;
+  }
+
+  if (isTopEdgeHeightField(fieldKey)) {
+    return resolveTopEdgeHeights({
+      ...params,
+      topPitchDeg: 0,
+      topRollDeg: 0,
+    })[fieldKey];
+  }
+
+  const initialParams = createInitialKeycapParams(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
+  return initialParams[fieldKey];
+}
+
+function resolveFieldSliderGuideValue(field, sliderConfig, params = state.keycapParams) {
+  if (!field || !sliderConfig || sliderConfig.guide === false) {
+    return null;
+  }
+
+  const guideSource = sliderConfig.guide ?? "initial";
+  if (guideSource === "initial") {
+    return normalizeRangeAttribute(resolveStandardFieldSliderGuideValue(field.key, params));
+  }
+
+  return normalizeRangeAttribute(resolveFieldAttribute(guideSource, params));
+}
+
+function resolveSliderGuidePosition(minimum, maximum, guideValue) {
+  if (guideValue == null || minimum == null || maximum == null || minimum >= maximum) {
+    return null;
+  }
+
+  const clampedGuideValue = Math.min(Math.max(guideValue, minimum), maximum);
+  return ((clampedGuideValue - minimum) / (maximum - minimum)) * 100;
+}
+
+function formatSliderGuidePosition(position) {
+  return `${formatCompactNumber(position, 2)}%`;
+}
+
 function resolveFieldOptions(field, params = state.keycapParams) {
   const options = typeof field.options === "function" ? field.options(params) : field.options ?? [];
   return options.map((option) => localizeFieldOption(field.key, option));
@@ -3886,10 +4189,12 @@ function renderCornerRadiusNumberControl(fieldKey, corner = "all") {
   const fieldMin = resolveFieldAttribute(fieldConfig?.min);
   const fieldMax = resolveFieldAttribute(fieldConfig?.max);
   const fieldStep = resolveFieldAttribute(fieldConfig?.step);
+  const sliderMarkup = renderSliderRangeControl(fieldKey, fieldConfig, value, label);
 
   return `
-    <label class="corner-radius-control">
+    <span class="corner-radius-control">
       ${renderCornerRadiusIcon(corner)}
+      ${sliderMarkup}
       <span class="field-control corner-radius-control__input">
         <input
           type="number"
@@ -3901,7 +4206,7 @@ function renderCornerRadiusNumberControl(fieldKey, corner = "all") {
           aria-label="${escapeHtml(label)}"
         />
       </span>
-    </label>
+    </span>
   `;
 }
 
@@ -3942,6 +4247,48 @@ function renderCornerRadiusField(field, fieldClassName = "") {
         </label>
       </span>
     </div>
+  `;
+}
+
+function renderSliderRangeControl(fieldKey, fieldConfig, value, label, options = {}) {
+  const sliderAttributes = resolveFieldSliderAttributes(fieldConfig);
+  if (!canRenderFieldSlider(sliderAttributes)) {
+    return "";
+  }
+
+  const inputAttributes = options.inputAttributes ?? `data-field="${fieldKey}" data-field-control="slider"`;
+  const sliderDisabled = sliderAttributes.min >= sliderAttributes.max;
+  const sliderGuidePosition = sliderAttributes.guidePosition;
+  const sliderGuideStyle = sliderGuidePosition == null
+    ? ""
+    : ` style="--field-slider-guide-position: ${formatSliderGuidePosition(sliderGuidePosition)};"`;
+
+  return `
+    <span class="field-range-slider" data-field-slider="${fieldKey}">
+      <span class="field-slider-row">
+        <span class="field-slider-limit" data-field-slider-limit="min">${formatNumericFieldValue(fieldKey, sliderAttributes.min)}</span>
+        <span class="field-slider-track"${sliderGuideStyle}>
+          <input
+            type="range"
+            ${inputAttributes}
+            value="${formatSliderFieldValue(fieldKey, value, sliderAttributes)}"
+            min="${sliderAttributes.min}"
+            max="${sliderAttributes.max}"
+            ${sliderAttributes.step != null ? `step="${sliderAttributes.step}"` : ""}
+            ${sliderDisabled ? "disabled" : ""}
+            aria-label="${escapeHtml(label)}"
+          />
+          <span class="field-slider-guide-rail" aria-hidden="true">
+            <span
+              class="field-slider-guide"
+              data-field-slider-guide
+              ${sliderGuidePosition == null ? "hidden" : ""}
+            ></span>
+          </span>
+        </span>
+        <span class="field-slider-limit" data-field-slider-limit="max">${formatNumericFieldValue(fieldKey, sliderAttributes.max)}</span>
+      </span>
+    </span>
   `;
 }
 
@@ -3988,6 +4335,7 @@ function renderField(field, options = {}) {
   const fieldMin = resolveFieldAttribute(field.min);
   const fieldMax = resolveFieldAttribute(field.max);
   const fieldStep = resolveFieldAttribute(field.step);
+  const sliderAttributes = resolveFieldSliderAttributes(field);
   const secondaryMin = resolveFieldAttribute(field.secondaryMin);
   const secondaryStep = resolveFieldAttribute(field.secondaryStep);
   const fieldClassName = options.className ? ` ${options.className}` : "";
@@ -3999,6 +4347,9 @@ function renderField(field, options = {}) {
     const inputId = `field-control-${field.key}`;
     const leadingIcon = renderKeyUnitBasisIcon();
     const leadingIconClassName = getLeadingIconFieldClassName(leadingIcon);
+    const keyUnitSliderMarkup = renderSliderRangeControl(field.key, field, getKeyUnitMm(), fieldLabel, {
+      inputAttributes: "data-key-unit-mm data-key-unit-slider",
+    });
 
     return `
       <div class="field field--key-unit-basis${leadingIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
@@ -4007,6 +4358,7 @@ function renderField(field, options = {}) {
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
         </label>
+        ${keyUnitSliderMarkup ? `<span class="field-range-control field-range-control--key-unit">${keyUnitSliderMarkup}</span>` : ""}
         <span class="field-control">
           <input
             id="${inputId}"
@@ -4210,14 +4562,16 @@ function renderField(field, options = {}) {
         ? renderKeyDepthBasisIcon()
         : "";
     const linkedSizeIconClassName = getLeadingIconFieldClassName(leadingIcon);
+    const linkedSizeSliderMarkup = renderSliderRangeControl(field.key, field, value, fieldLabel);
 
     return `
-      <label class="field field--linked-size${linkedSizeIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      <div class="field field--linked-size${linkedSizeIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         ${leadingIcon}
         <span class="field-copy">
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
         </span>
+        ${linkedSizeSliderMarkup ? `<span class="field-range-control field-range-control--linked-size">${linkedSizeSliderMarkup}</span>` : ""}
         <span class="field-control-cluster field-control-cluster--linked-size">
           <span class="field-mini-control">
             <span class="field-mini-control__label">${primaryMiniLabel}</span>
@@ -4229,6 +4583,7 @@ function renderField(field, options = {}) {
                 ${fieldMin != null ? `min="${fieldMin}"` : ""}
                 ${fieldMax != null ? `max="${fieldMax}"` : ""}
                 ${fieldStep != null ? `step="${fieldStep}"` : ""}
+                aria-label="${escapeHtml(primaryMiniLabel || fieldLabel)}"
               />
               ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
             </span>
@@ -4242,12 +4597,13 @@ function renderField(field, options = {}) {
                 value="${formatUnitInputValue(value)}"
                 ${secondaryMin != null ? `min="${secondaryMin}"` : ""}
                 ${secondaryStep != null ? `step="${secondaryStep}"` : ""}
+                aria-label="${escapeHtml(secondaryLabel || fieldLabel)}"
               />
               ${field.secondaryUnit ? `<span class="field-unit">${field.secondaryUnit}</span>` : ""}
             </span>
           </span>
         </span>
-      </label>
+      </div>
     `;
   }
 
@@ -4263,6 +4619,9 @@ function renderField(field, options = {}) {
         ? renderKeyWallThicknessIcon()
         : "";
     const numberPairIconClassName = getLeadingIconFieldClassName(leadingIcon);
+    const primarySliderMarkup = renderSliderRangeControl(field.key, field, value, primaryMiniLabel || fieldLabel);
+    const secondarySliderMarkup = renderSliderRangeControl(field.secondaryField, secondaryFieldConfig, secondaryValue, secondaryLabel || fieldLabel);
+    const numberPairSliderClassName = primarySliderMarkup || secondarySliderMarkup ? " field-control-cluster--slider-pair" : "";
 
     return `
       <div class="field field--number-pair${numberPairIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
@@ -4271,9 +4630,10 @@ function renderField(field, options = {}) {
           <span class="field-label">${fieldLabel}</span>
           <span class="field-hint">${fieldHint}</span>
         </span>
-        <span class="field-control-cluster field-control-cluster--pair">
-          <label class="field-mini-control">
+        <span class="field-control-cluster field-control-cluster--pair${numberPairSliderClassName}">
+          <span class="field-mini-control">
             <span class="field-mini-control__label">${primaryMiniLabel}</span>
+            ${primarySliderMarkup}
             <span class="field-control">
               <input
                 type="number"
@@ -4282,12 +4642,14 @@ function renderField(field, options = {}) {
                 ${fieldMin != null ? `min="${fieldMin}"` : ""}
                 ${fieldMax != null ? `max="${fieldMax}"` : ""}
                 ${fieldStep != null ? `step="${fieldStep}"` : ""}
+                aria-label="${escapeHtml(primaryMiniLabel || fieldLabel)}"
               />
               ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
             </span>
-          </label>
-          <label class="field-mini-control">
+          </span>
+          <span class="field-mini-control">
             <span class="field-mini-control__label">${secondaryLabel}</span>
+            ${secondarySliderMarkup}
             <span class="field-control">
               <input
                 type="number"
@@ -4296,10 +4658,11 @@ function renderField(field, options = {}) {
                 ${secondaryMinValue != null ? `min="${secondaryMinValue}"` : ""}
                 ${secondaryMaxValue != null ? `max="${secondaryMaxValue}"` : ""}
                 ${secondaryStepValue != null ? `step="${secondaryStepValue}"` : ""}
+                aria-label="${escapeHtml(secondaryLabel || fieldLabel)}"
               />
               ${field.secondaryUnit ? `<span class="field-unit">${field.secondaryUnit}</span>` : ""}
             </span>
-          </label>
+          </span>
         </span>
       </div>
     `;
@@ -4307,6 +4670,36 @@ function renderField(field, options = {}) {
 
   if (dependentFields.length > 0) {
     const inputId = `field-control-${field.key}`;
+    const dependentSliderMarkup = renderSliderRangeControl(field.key, field, value, fieldLabel);
+
+    if (dependentSliderMarkup) {
+      return `
+        <div class="field field--slider-number${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+          <span class="field-copy">
+            <span class="field-label">${fieldLabel}</span>
+            <span class="field-hint">${fieldHint}</span>
+          </span>
+          <span class="field-range-control" data-field-slider="${field.key}">
+            ${dependentSliderMarkup}
+            <span class="field-control field-range-control__number">
+              <input
+                id="${inputId}"
+                type="number"
+                data-field="${field.key}"
+                data-field-control="number"
+                value="${formatNumericFieldValue(field.key, value)}"
+                ${fieldMin != null ? `min="${fieldMin}"` : ""}
+                ${fieldMax != null ? `max="${fieldMax}"` : ""}
+                ${fieldStep != null ? `step="${fieldStep}"` : ""}
+                aria-label="${escapeHtml(fieldLabel)}"
+              />
+              ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
+            </span>
+          </span>
+          ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
+        </div>
+      `;
+    }
 
     return `
       <div class="field${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
@@ -4339,6 +4732,34 @@ function renderField(field, options = {}) {
         ? renderKeyTopTaperIcon()
         : "";
   const numberIconClassName = leadingIcon ? `${getLeadingIconFieldClassName(leadingIcon)} field--single-number` : "";
+
+  if (canRenderFieldSlider(sliderAttributes)) {
+    return `
+      <div class="field field--slider-number${numberIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${leadingIcon}
+        <span class="field-copy">
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
+        </span>
+        <span class="field-range-control" data-field-slider="${field.key}">
+          ${renderSliderRangeControl(field.key, field, value, fieldLabel)}
+          <span class="field-control field-range-control__number">
+            <input
+              type="number"
+              data-field="${field.key}"
+              data-field-control="number"
+              value="${formatNumericFieldValue(field.key, value)}"
+              ${fieldMin != null ? `min="${fieldMin}"` : ""}
+              ${fieldMax != null ? `max="${fieldMax}"` : ""}
+              ${fieldStep != null ? `step="${fieldStep}"` : ""}
+              aria-label="${escapeHtml(fieldLabel)}"
+            />
+            ${field.unit ? `<span class="field-unit">${field.unit}</span>` : ""}
+          </span>
+        </span>
+      </div>
+    `;
+  }
 
   return `
     <label class="field${numberIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
@@ -4801,6 +5222,66 @@ function handleInspectorCardInput(event) {
     currentTarget: input,
     deferPreview: typeof InputEvent !== "undefined" && event instanceof InputEvent && event.isComposing,
   });
+}
+
+function getWheelSliderDelta(event) {
+  if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+    return event.deltaX;
+  }
+
+  return event.shiftKey ? event.deltaY : 0;
+}
+
+function getWheelSliderStep(input, fieldConfig) {
+  const inputStep = Number(input.step);
+  if (Number.isFinite(inputStep) && inputStep > 0) {
+    return inputStep;
+  }
+
+  const fieldStep = Number(resolveFieldAttribute(fieldConfig?.step));
+  return Number.isFinite(fieldStep) && fieldStep > 0 ? fieldStep : 1;
+}
+
+function formatWheelSliderValue(value, step) {
+  const digits = Math.min(Math.max(countStepDigits(step) + 1, 0), 6);
+  return `${Number(value.toFixed(digits))}`;
+}
+
+function handleInspectorCardWheel(event) {
+  const input = getClosestFromEventTarget(event, 'input[type="range"][data-field], input[type="range"][data-key-unit-mm]');
+  const field = input?.dataset.field ?? (input?.hasAttribute("data-key-unit-mm") ? KEY_UNIT_FIELD_KEY : null);
+  const fieldConfig = getFieldConfig(field);
+  if (!input || !field || input.disabled) {
+    return;
+  }
+
+  const delta = getWheelSliderDelta(event);
+  if (Math.abs(delta) < 0.01) {
+    return;
+  }
+
+  const direction = delta > 0 ? 1 : -1;
+  const step = getWheelSliderStep(input, fieldConfig);
+  const minimum = Number(input.min);
+  const maximum = Number(input.max);
+  const currentValue = Number(input.value);
+  if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || !Number.isFinite(currentValue)) {
+    return;
+  }
+
+  const nextValue = Math.min(Math.max(currentValue + (direction * step), minimum), maximum);
+  event.preventDefault();
+  if (Math.abs(nextValue - currentValue) < 1e-9) {
+    return;
+  }
+
+  input.value = formatWheelSliderValue(nextValue, step);
+  if (input.hasAttribute("data-key-unit-mm")) {
+    handleKeyUnitBasisInput(input);
+    return;
+  }
+
+  handleFieldChange({ currentTarget: input });
 }
 
 function handleInspectorCardChange(event) {
@@ -6254,7 +6735,9 @@ async function handleWindowDrop(event) {
 
 const TOP_LIVE_FIELD_KEYS = new Set([
   "topCenterHeight",
+  "wallThickness",
   "topThickness",
+  "topScale",
   "topPitchDeg",
   "topRollDeg",
   "topFrontHeight",
@@ -6281,7 +6764,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topHatShoulderRadius",
 ]);
 
-function syncFieldHint(fieldKey) {
+function syncFieldHint(fieldKey, options = {}) {
   const input = app.querySelector(`[data-field="${fieldKey}"]`);
   const fieldConfig = getFieldConfig(fieldKey);
   const hint = input?.closest(".field")?.querySelector(".field-hint");
@@ -6289,6 +6772,16 @@ function syncFieldHint(fieldKey) {
   if (hint && fieldConfig) {
     hint.textContent = resolveDynamicCopy(fieldConfig.hint);
   }
+
+  if (options.syncInputs !== false) {
+    syncFieldInputs(fieldKey);
+  }
+}
+
+function syncLegendFieldHintsBySuffix(suffix) {
+  [...TOP_LEGEND_CONFIGS, ...SIDE_LEGEND_CONFIGS].forEach((config) => {
+    syncFieldHint(legendParamKey(config.paramPrefix, suffix));
+  });
 }
 
 function syncFieldConstraintAttribute(input, attributeName, value) {
@@ -6306,6 +6799,65 @@ function syncNumericFieldConstraints(input, fieldConfig) {
   syncFieldConstraintAttribute(input, "step", resolveFieldAttribute(fieldConfig?.step));
 }
 
+function syncFieldInputConstraints(input, fieldConfig) {
+  if (input.type !== "range") {
+    syncNumericFieldConstraints(input, fieldConfig);
+    return;
+  }
+
+  const sliderAttributes = resolveFieldSliderAttributes(fieldConfig);
+  syncFieldConstraintAttribute(input, "min", sliderAttributes?.min);
+  syncFieldConstraintAttribute(input, "max", sliderAttributes?.max);
+  syncFieldConstraintAttribute(input, "step", sliderAttributes?.step);
+  input.disabled = Boolean(sliderAttributes && sliderAttributes.min >= sliderAttributes.max);
+}
+
+function formatFieldInputValue(input, fieldKey, value, fieldConfig) {
+  if (input.type !== "range") {
+    return formatNumericFieldValue(fieldKey, value);
+  }
+
+  const sliderAttributes = resolveFieldSliderAttributes(fieldConfig);
+  return canRenderFieldSlider(sliderAttributes)
+    ? formatSliderFieldValue(fieldKey, value, sliderAttributes)
+    : formatNumericFieldValue(fieldKey, value);
+}
+
+function syncFieldSliderVisualState(input, fieldKey, fieldConfig, sliderAttributes = resolveFieldSliderAttributes(fieldConfig)) {
+  if (input.type !== "range") {
+    return;
+  }
+
+  const sliderContainer = input.closest("[data-field-slider]");
+  if (!sliderContainer) {
+    return;
+  }
+
+  const minLabel = sliderContainer.querySelector('[data-field-slider-limit="min"]');
+  const maxLabel = sliderContainer.querySelector('[data-field-slider-limit="max"]');
+  if (minLabel && sliderAttributes?.min != null) {
+    minLabel.textContent = formatNumericFieldValue(fieldKey, sliderAttributes.min);
+  }
+  if (maxLabel && sliderAttributes?.max != null) {
+    maxLabel.textContent = formatNumericFieldValue(fieldKey, sliderAttributes.max);
+  }
+
+  const track = sliderContainer.querySelector(".field-slider-track");
+  const guide = sliderContainer.querySelector("[data-field-slider-guide]");
+  if (!track || !guide) {
+    return;
+  }
+
+  const guidePosition = sliderAttributes?.guidePosition;
+  guide.hidden = guidePosition == null;
+  if (guidePosition == null) {
+    track.style.removeProperty("--field-slider-guide-position");
+    return;
+  }
+
+  track.style.setProperty("--field-slider-guide-position", formatSliderGuidePosition(guidePosition));
+}
+
 function isInputNumericallySynced(input, value) {
   const inputValue = String(input.value ?? "").trim();
   const inputNumber = Number(inputValue);
@@ -6316,28 +6868,49 @@ function isInputNumericallySynced(input, value) {
     && Math.abs(inputNumber - stateNumber) < 1e-9;
 }
 
+function syncFieldInputs(fieldKey, activeField = null) {
+  const inputs = app.querySelectorAll(`[data-field="${fieldKey}"]`);
+  const fieldConfig = getFieldConfig(fieldKey);
+  if (inputs.length === 0 || !fieldConfig) {
+    return;
+  }
+
+  const activeInput = document.activeElement;
+  inputs.forEach((input) => {
+    const sliderAttributes = input.type === "range" ? resolveFieldSliderAttributes(fieldConfig) : null;
+    const nextInputValue = formatFieldInputValue(input, fieldKey, state.keycapParams[fieldKey], fieldConfig);
+
+    syncFieldInputConstraints(input, fieldConfig);
+    syncFieldSliderVisualState(input, fieldKey, fieldConfig, sliderAttributes);
+
+    if (
+      fieldKey !== activeField
+      || input !== activeInput
+      || !isInputNumericallySynced(input, nextInputValue)
+    ) {
+      input.value = nextInputValue;
+    }
+  });
+}
+
 function syncVisibleTopFieldState(activeField = null) {
   TOP_LIVE_FIELD_KEYS.forEach((fieldKey) => {
-    const input = app.querySelector(`[data-field="${fieldKey}"]`);
-    const fieldConfig = getFieldConfig(fieldKey);
-    if (!input) {
-      return;
-    }
-
-    syncNumericFieldConstraints(input, fieldConfig);
-
-    if (fieldKey !== activeField || !isInputNumericallySynced(input, state.keycapParams[fieldKey])) {
-      input.value = formatNumericFieldValue(fieldKey, state.keycapParams[fieldKey]);
-    }
-
-    syncFieldHint(fieldKey);
+    syncFieldInputs(fieldKey, activeField);
+    syncFieldHint(fieldKey, { syncInputs: false });
     if (Object.values(LINKED_SIZE_UNIT_FIELDS).includes(fieldKey)) {
       syncLinkedSizeInputs(fieldKey);
     }
   });
 }
 
-function getNumericFieldMinimum(fieldKey, fieldConfig) {
+function getNumericFieldMinimum(fieldKey, fieldConfig, input = null) {
+  if (input?.type === "range") {
+    const rangeMinimum = Number(input.min);
+    if (Number.isFinite(rangeMinimum)) {
+      return rangeMinimum;
+    }
+  }
+
   if (fieldKey === "keySizeUnits" || fieldKey === "keyDepthUnits") {
     return 0.5;
   }
@@ -6369,7 +6942,7 @@ function parseNumericInputValue(input, fieldKey, fieldConfig) {
     return null;
   }
 
-  const minimum = getNumericFieldMinimum(fieldKey, fieldConfig);
+  const minimum = getNumericFieldMinimum(fieldKey, fieldConfig, input);
   if (minimum != null && nextValue < minimum) {
     return null;
   }
@@ -6404,6 +6977,29 @@ function syncKeyUnitBasisCopy() {
   }
 }
 
+function syncKeyUnitBasisInputs(activeInput = null) {
+  const fieldConfig = getKeyUnitBasisFieldConfig();
+  const inputs = app.querySelectorAll("[data-key-unit-mm]");
+  inputs.forEach((input) => {
+    if (input.type === "range") {
+      const sliderAttributes = resolveFieldSliderAttributes(fieldConfig);
+      const nextInputValue = formatFieldInputValue(input, KEY_UNIT_FIELD_KEY, getKeyUnitMm(), fieldConfig);
+      syncFieldInputConstraints(input, fieldConfig);
+      syncFieldSliderVisualState(input, KEY_UNIT_FIELD_KEY, fieldConfig, sliderAttributes);
+      if (input !== activeInput || !isInputNumericallySynced(input, nextInputValue)) {
+        input.value = nextInputValue;
+      }
+      return;
+    }
+
+    syncNumericFieldConstraints(input, fieldConfig);
+    const nextInputValue = formatKeyUnitMmInputValue();
+    if (input !== activeInput || !isInputNumericallySynced(input, nextInputValue)) {
+      input.value = nextInputValue;
+    }
+  });
+}
+
 function syncUnitLinkedFieldHints() {
   syncFieldHint("keyWidth");
   syncFieldHint("keyDepth");
@@ -6434,6 +7030,7 @@ function handleKeyUnitBasisInput(input, options = {}) {
     input.value = formatKeyUnitMmInputValue();
   }
 
+  syncKeyUnitBasisInputs(input);
   syncKeyUnitBasisCopy();
   syncUnitLinkedFieldHints();
   syncAllLinkedSizeInputs();
@@ -6561,6 +7158,8 @@ function handleFieldChange(event) {
   const changedPrimaryField = LINKED_SIZE_UNIT_FIELDS[field] ?? field;
   if (field in LINKED_SIZE_UNIT_FIELDS || Object.values(LINKED_SIZE_UNIT_FIELDS).includes(field)) {
     syncLinkedSizeInputs(field);
+  } else if (input.type === "number" || input.type === "range") {
+    syncFieldInputs(field, field);
   }
 
   if (
@@ -6606,6 +7205,7 @@ function handleFieldChange(event) {
     syncFieldHint("topCornerRadius");
     syncFieldHint("keycapEdgeRadius");
     syncFieldHint("keycapShoulderRadius");
+    syncFieldHint("topOffsetX");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopWidth");
     syncFieldHint("topHatBottomWidth");
@@ -6613,6 +7213,9 @@ function handleFieldChange(event) {
     syncFieldHint("topHatTopRadius");
     syncFieldHint("topHatBottomRadius");
     syncFieldHint("topHatShoulderRadius");
+    syncFieldHint("homingBarLength");
+    syncLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.size);
+    syncLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.offsetX);
   }
 
   if (changedPrimaryField === "keyDepth") {
@@ -6621,6 +7224,7 @@ function handleFieldChange(event) {
     syncFieldHint("topCornerRadius");
     syncFieldHint("keycapEdgeRadius");
     syncFieldHint("keycapShoulderRadius");
+    syncFieldHint("topOffsetY");
     syncFieldHint("rimWidth");
     syncFieldHint("topHatTopDepth");
     syncFieldHint("topHatBottomDepth");
@@ -6628,6 +7232,13 @@ function handleFieldChange(event) {
     syncFieldHint("topHatTopRadius");
     syncFieldHint("topHatBottomRadius");
     syncFieldHint("topHatShoulderRadius");
+    syncFieldHint("homingBarOffsetY");
+    syncLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.size);
+    syncLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.offsetY);
+  }
+
+  if (field === "homingBarWidth" || field === "homingBarHeight") {
+    syncFieldHint("homingBarChamfer");
   }
 
   if (changedPrimaryField === "jisEnterNotchWidth" || changedPrimaryField === "jisEnterNotchDepth") {
@@ -6699,12 +7310,30 @@ function syncLinkedSizeInputs(changedField) {
   const changedUnitField = Object.entries(LINKED_SIZE_UNIT_FIELDS)
     .find(([, primaryField]) => primaryField === changedPrimaryField)?.[0];
   const primaryFieldConfig = getFieldConfig(changedPrimaryField);
-  const primaryInput = app.querySelector(`[data-field="${changedPrimaryField}"]`);
+  const primaryInputs = app.querySelectorAll(`[data-field="${changedPrimaryField}"]`);
   const unitInput = changedUnitField ? app.querySelector(`[data-field="${changedUnitField}"]`) : null;
+  const activeInput = document.activeElement;
 
-  if (LINKED_SIZE_UNIT_FIELDS[changedField] && primaryInput) {
-    primaryInput.value = formatNumericFieldValue(changedPrimaryField, state.keycapParams[changedPrimaryField]);
-  }
+  primaryInputs.forEach((primaryInput) => {
+    const sliderAttributes = primaryInput.type === "range" ? resolveFieldSliderAttributes(primaryFieldConfig) : null;
+    const syncedPrimaryValue = formatFieldInputValue(
+      primaryInput,
+      changedPrimaryField,
+      state.keycapParams[changedPrimaryField],
+      primaryFieldConfig,
+    );
+
+    syncFieldInputConstraints(primaryInput, primaryFieldConfig);
+    syncFieldSliderVisualState(primaryInput, changedPrimaryField, primaryFieldConfig, sliderAttributes);
+
+    if (
+      changedField !== changedPrimaryField
+      || primaryInput !== activeInput
+      || !isInputNumericallySynced(primaryInput, syncedPrimaryValue)
+    ) {
+      primaryInput.value = syncedPrimaryValue;
+    }
+  });
 
   if (!unitInput) {
     syncKeyUnitBasisCopy();
