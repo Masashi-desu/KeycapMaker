@@ -852,7 +852,7 @@ function roundUpTopScaleMinimum(value) {
 function resolveTopScaleActiveDishDepth(params = {}) {
   const dishDepth = Number(params.dishDepth ?? 0);
   const topSurfaceShape = params.topSurfaceShape ?? "flat";
-  return topSurfaceShape === "flat" || !Number.isFinite(dishDepth) ? 0 : dishDepth;
+  return topSurfaceShape === "flat" || !Number.isFinite(dishDepth) ? 0 : Math.max(dishDepth, 0);
 }
 
 function resolveTopScaleInnerMinimumForAxis(size, topCenterHeight, innerHeight, wall) {
@@ -990,7 +990,7 @@ function resolveTopEdgeHeights(params = {}) {
   const rollSlope = degTan(topRollDeg);
   const topSurfaceShape = params.topSurfaceShape ?? "flat";
   const rawDishDepth = Number(params.dishDepth ?? 0);
-  const activeDishDepth = topSurfaceShape === "flat" || !Number.isFinite(rawDishDepth) ? 0 : rawDishDepth;
+  const activeDishDepth = topSurfaceShape === "flat" || !Number.isFinite(rawDishDepth) ? 0 : Math.max(rawDishDepth, 0);
 
   return {
     topFrontHeight: geometry.topCenterHeight + geometry.topFront * pitchSlope,
@@ -1709,6 +1709,7 @@ const fieldGroupTemplates = [
         hint: (params) => getDishDepthHint(params),
         unit: "mm",
         step: 0.05,
+        min: 0,
         visibleWhen: (params) => params.topSurfaceShape !== "flat",
       },
       {

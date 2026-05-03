@@ -356,8 +356,8 @@ const en = Object.freeze({
     },
     dishDepth: {
       label: "Depth",
-      cylindricalHint: "Positive values make a one-direction recess; negative values make it raised in one direction.",
-      sphericalHint: "Positive values make a bowl-shaped recess; negative values make it raised.",
+      cylindricalHint: "Use a value of 0 or more to make a one-direction recess.",
+      sphericalHint: "Use a value of 0 or more to make a bowl-shaped recess.",
       flatHint: "This has no effect when flat is selected.",
     },
     topHatEnabled: {

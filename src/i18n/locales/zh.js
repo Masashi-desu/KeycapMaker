@@ -356,8 +356,8 @@ const zh = Object.freeze({
     },
     dishDepth: {
       label: "深度",
-      cylindricalHint: "正值会形成单方向凹陷，负值会形成单方向凸起。",
-      sphericalHint: "正值会形成碗状凹陷，负值会凸起。",
+      cylindricalHint: "使用 0 以上的值形成单方向凹陷。",
+      sphericalHint: "使用 0 以上的值形成碗状凹陷。",
       flatHint: "平面时此项不起作用。",
     },
     topHatEnabled: {

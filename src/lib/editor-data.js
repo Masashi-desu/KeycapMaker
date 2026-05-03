@@ -283,7 +283,7 @@ export function getTopSurfaceShapePreset(value, fallback = "flat") {
 
 function inferLegacyTopSurfaceShape(params = {}) {
   const dishDepth = Number(params.dishDepth ?? 0);
-  if (params.topSurfaceShape != null || !Number.isFinite(dishDepth) || Math.abs(dishDepth) <= 0.001) {
+  if (params.topSurfaceShape != null || !Number.isFinite(dishDepth) || dishDepth <= 0.001) {
     return null;
   }
 
@@ -296,7 +296,9 @@ function resolveActiveDishDepth(params = {}) {
     return 0;
   }
 
-  return resolveProfileTopSurfaceShape(params.shapeProfile, params.topSurfaceShape, "flat") === "flat" ? 0 : dishDepth;
+  return resolveProfileTopSurfaceShape(params.shapeProfile, params.topSurfaceShape, "flat") === "flat"
+    ? 0
+    : Math.max(dishDepth, 0);
 }
 
 function clampTypewriterCornerRadius(value, fallback = 0, params = {}) {
@@ -810,6 +812,7 @@ export function syncDerivedKeycapParams(params = {}) {
     params.topSurfaceShape,
     resolveProfileTopSurfaceShape(profileKey, defaults.topSurfaceShape, "flat"),
   );
+  params.dishDepth = clampNonNegativeNumber(params.dishDepth, defaults.dishDepth ?? 0);
   params.topScale = clampTopScale(params.topScale, defaults.topScale ?? 1, params);
   if ("keycapEdgeRadius" in defaults || "keycapEdgeRadius" in params) {
     params.keycapEdgeRadius = clampKeycapEdgeRadius(
@@ -983,6 +986,10 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
       value,
       resolveProfileTopSurfaceShape(profileKey, fallback, "flat"),
     );
+  }
+
+  if (fieldKey === "dishDepth") {
+    return clampNonNegativeNumber(value, fallback);
   }
 
   if (fieldKey === "topScale") {

@@ -2,6 +2,15 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-05-03 - dishDepth は凹み専用の非負値に戻す
+
+- 結論:
+  `topSurfaceShape` の `cylindrical` / `spherical` は既存の実用的な正値の凹み挙動を正とし、`dishDepth` は 0 以上だけを受ける。負値による盛り上がりは扱わず、将来の専用パラメータとして別設計にする
+- 理由:
+  負値の盛り上がりを同じ `dishDepth` に載せると、サイドウォールとキートップ上面の接点や legend / homing bar の追従が崩れ、正値側の既存挙動も壊れやすいため
+- 関連:
+  [../architecture/scad-and-export.md](../architecture/scad-and-export.md)
+
 ## 2026-04-30 - プロジェクトは ZIP 内 manifest で複数キーキャップを束ねる
 
 - 結論:
@@ -38,6 +47,8 @@
 
 - 結論:
   custom-shell のキートップ形状は `topSurfaceShape` で切り替え、`dishDepth` はプラスで凹み、マイナスで盛り上がりとして扱う。cylindrical は固定向きとし、`topPitchDeg` / `topRollDeg` を変えても dish 自体の曲率は維持したまま傾ける
+- 補足:
+  `dishDepth` のマイナス盛り上がり部分は 2026-05-03 の判断で取り下げ、盛り上がりは将来の専用パラメータとして扱う
 - 理由:
   フラットだけではキートップの触感と見た目の幅が狭く、cylindrical / spherical の一般的な差を小さな UI 拡張で表現できるため
 

@@ -138,13 +138,13 @@ top_corner_radii = top_corner_individual_enabled
 dish_radius = positive_dimension(required_param(user_dish_radius, "user_dish_radius"));
 requested_dish_depth = required_param(user_dish_depth, "user_dish_depth");
 requested_top_shape_type = is_undef(user_top_shape_type)
-    ? (abs(requested_dish_depth) > 0.001 ? "spherical" : "flat")
+    ? (requested_dish_depth > 0.001 ? "spherical" : "flat")
     : user_top_shape_type;
 top_shape_type = assert(
     supported_top_shape_type(requested_top_shape_type),
     str("unsupported user_top_shape_type: ", requested_top_shape_type)
 ) requested_top_shape_type;
-dish_depth = top_shape_type == "flat" ? 0 : requested_dish_depth;
+dish_depth = top_shape_type == "flat" ? 0 : max(requested_dish_depth, 0);
 top_pitch_deg = required_param(user_top_pitch_deg, "user_top_pitch_deg");
 top_roll_deg = required_param(user_top_roll_deg, "user_top_roll_deg");
 top_offset_x = required_param(user_top_offset_x, "user_top_offset_x");

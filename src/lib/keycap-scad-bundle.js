@@ -171,8 +171,8 @@ function roundUpTopScaleMinimum(value) {
 
 function resolveTopScaleActiveDishDepth(params = {}) {
   const dishDepth = Number(params.dishDepth ?? 0);
-  const topSurfaceShape = params.topSurfaceShape ?? (Math.abs(dishDepth) > 0.001 ? "spherical" : "flat");
-  return topSurfaceShape === "flat" || !Number.isFinite(dishDepth) ? 0 : dishDepth;
+  const topSurfaceShape = params.topSurfaceShape ?? (dishDepth > 0.001 ? "spherical" : "flat");
+  return topSurfaceShape === "flat" || !Number.isFinite(dishDepth) ? 0 : Math.max(dishDepth, 0);
 }
 
 function resolveTopScaleInnerMinimumForAxis(size, topCenterHeight, innerHeight, wall) {
@@ -799,7 +799,11 @@ function formatDefinitionValue(value) {
 
 async function createKeycapDefinitions({ params, exportTarget }) {
   const shapeGeometry = resolveShapeGeometryParameters(params);
-  const topSurfaceShape = params.topSurfaceShape ?? (Math.abs(Number(params.dishDepth ?? 0)) > 0.001 ? "spherical" : "flat");
+  const requestedDishDepth = Number(params.dishDepth ?? 0);
+  const topSurfaceShape = params.topSurfaceShape ?? (requestedDishDepth > 0.001 ? "spherical" : "flat");
+  const dishDepth = topSurfaceShape === "flat" || !Number.isFinite(requestedDishDepth)
+    ? 0
+    : Math.max(requestedDishDepth, 0);
   const topHatTopRadius = Math.max(numberOr(params.topHatTopRadius, 1.8), 0);
   const topHatTopRadiusIndividualEnabled = Boolean(params.topHatTopRadiusIndividualEnabled);
   const topHatTopRadii = topHatTopRadiusIndividualEnabled
@@ -870,7 +874,7 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_corner_radii: shapeGeometry.topCornerRadii,
     user_top_shape_type: topSurfaceShape,
     user_dish_radius: params.dishRadius,
-    user_dish_depth: params.dishDepth,
+    user_dish_depth: dishDepth,
     user_top_pitch_deg: params.topPitchDeg,
     user_top_roll_deg: params.topRollDeg,
     user_top_offset_x: numberOr(params.topOffsetX, 0),

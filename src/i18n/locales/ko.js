@@ -356,8 +356,8 @@ const ko = Object.freeze({
     },
     dishDepth: {
       label: "깊이",
-      cylindricalHint: "양수이면 한 방향으로 오목해지고, 음수이면 한 방향으로 솟아오릅니다.",
-      sphericalHint: "양수이면 그릇 모양으로 오목해지고, 음수이면 솟아오릅니다.",
+      cylindricalHint: "0 이상의 값으로 한 방향의 오목함을 만듭니다.",
+      sphericalHint: "0 이상의 값으로 그릇 모양의 오목함을 만듭니다.",
       flatHint: "평면에서는 적용되지 않습니다.",
     },
     topHatEnabled: {

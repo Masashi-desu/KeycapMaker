@@ -229,7 +229,7 @@ test("旧 dish 指定だけの入力は spherical として解釈する", () => 
   assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight - 0.8);
 });
 
-test("負の深さは盛り上がりとして中央表面を上げる", () => {
+test("負の深さは 0 に丸めて盛り上がりとして扱わない", () => {
   const parsed = parseEditorDataPayload({
     shapeProfile: "custom-shell",
     topSurfaceShape: "cylindrical",
@@ -237,7 +237,19 @@ test("負の深さは盛り上がりとして中央表面を上げる", () => {
   });
 
   assert.equal(parsed.topSurfaceShape, "cylindrical");
-  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight + 0.6);
+  assert.equal(parsed.dishDepth, 0);
+  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight);
+});
+
+test("旧 dish 指定だけの負値は top shape を推測しない", () => {
+  const parsed = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    dishDepth: -0.6,
+  });
+
+  assert.equal(parsed.topSurfaceShape, "flat");
+  assert.equal(parsed.dishDepth, 0);
+  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight);
 });
 
 test("typewriter は spherical top を受ける", () => {

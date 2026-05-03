@@ -200,6 +200,50 @@ test("ステム開始位置補正の負値を SCAD wrapper と base で保持す
   }
 });
 
+test("dishDepth の負値は SCAD wrapper と base で 0 に丸める", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 50,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topSurfaceShape: "spherical",
+        dishDepth: -1.2,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const baseScad = files.find((file) => file.path === bundle.KEYCAP_ENTRY_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.ok(baseScad, "keycap base SCAD should be included");
+    assert.equal(readRawScadDefinition(jobScad, "user_top_shape_type"), "\"spherical\"");
+    assert.equal(readScadDefinition(jobScad, "user_dish_depth"), 0);
+    assert.match(baseScad, /dish_depth = top_shape_type == "flat" \? 0 : max\(requested_dish_depth, 0\);/);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("サイドウォール印字パラメータを SCAD wrapper へ渡す", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 160,
