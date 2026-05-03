@@ -811,6 +811,10 @@ module keycap_jis_enter_apply_top_surface(
                 surface_z_shift = surface_z_shift,
                 dish_plan_width = width,
                 dish_plan_depth = depth,
+                dish_start_left = top_left,
+                dish_start_right = top_right,
+                dish_start_front = top_front,
+                dish_start_back = top_back,
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y

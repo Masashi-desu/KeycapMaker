@@ -83,6 +83,7 @@ const TOP_SCALE_MAX = 1;
 const TOP_SCALE_STEP = 0.01;
 const TOP_SCALE_MIN_FACE_SIZE = 0.2;
 const DISH_DEPTH_STEP = 0.05;
+const DISH_REFERENCE_UNIT = 18;
 const TOP_THICKNESS_MIN = 0.05;
 const TOP_HAT_MIN_SIZE = 0.2;
 const TOP_HAT_MIN_HEIGHT = 0.05;
@@ -285,13 +286,19 @@ function resolveDishLimitTopFootprint(params = {}) {
     right: topWidth / 2,
     front: -topDepth / 2,
     back: topDepth / 2,
+    dishPlanWidth: keyWidth,
+    dishPlanDepth: keyDepth,
   };
 }
 
-function dishSagAtDistance(distance, dishRadius) {
+function dishAxisScale(size) {
+  return Math.max(Number(size) / DISH_REFERENCE_UNIT, 0.001);
+}
+
+function dishSagFromRadialSq(radialSq, dishRadius) {
   const safeRadius = Math.max(Number(dishRadius ?? 45), 0.1);
-  const safeDistance = Math.min(Math.max(Number(distance) || 0, 0), safeRadius);
-  return safeRadius - Math.sqrt(Math.max((safeRadius * safeRadius) - (safeDistance * safeDistance), 0));
+  const safeRadialSq = Math.min(Math.max(Number(radialSq) || 0, 0), safeRadius * safeRadius);
+  return safeRadius - Math.sqrt(Math.max((safeRadius * safeRadius) - safeRadialSq, 0));
 }
 
 export function getDishDepthMax(params = {}) {
@@ -301,12 +308,12 @@ export function getDishDepthMax(params = {}) {
   }
 
   const footprint = resolveDishLimitTopFootprint(params);
-  const xRadius = Math.max(Math.abs(footprint.left), Math.abs(footprint.right));
-  const yRadius = Math.max(Math.abs(footprint.front), Math.abs(footprint.back));
-  const dishDistance = topSurfaceShape === "cylindrical"
-    ? xRadius
-    : Math.sqrt((xRadius * xRadius) + (yRadius * yRadius));
-  return floorToNumericStep(dishSagAtDistance(dishDistance, params.dishRadius), DISH_DEPTH_STEP, 0);
+  const xRadius = Math.max(Math.abs(footprint.left), Math.abs(footprint.right)) / dishAxisScale(footprint.dishPlanWidth);
+  const yRadius = Math.max(Math.abs(footprint.front), Math.abs(footprint.back)) / dishAxisScale(footprint.dishPlanDepth);
+  const radialSq = topSurfaceShape === "cylindrical"
+    ? xRadius * xRadius
+    : (xRadius * xRadius) + (yRadius * yRadius);
+  return floorToNumericStep(dishSagFromRadialSq(radialSq, params.dishRadius), DISH_DEPTH_STEP, 0);
 }
 
 function clampDishDepth(value, params = {}, fallback = 0) {

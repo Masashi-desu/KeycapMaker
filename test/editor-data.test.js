@@ -252,9 +252,17 @@ test("深さはキートップ最高点を下げない範囲へ丸める", () =>
     topSurfaceShape: "spherical",
     dishDepth: 1.45,
   });
+  const wideSpherical = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    keyWidth: 36,
+    keyDepth: 18,
+    topSurfaceShape: "spherical",
+    dishDepth: 1.45,
+  });
 
   assert.equal(cylindrical.dishDepth, 0.5);
   assert.equal(spherical.dishDepth, 1.0);
+  assert.equal(wideSpherical.dishDepth, 1.0);
 });
 
 test("旧 dish 指定だけの負値は top shape を推測しない", () => {

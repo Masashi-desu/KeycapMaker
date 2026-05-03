@@ -165,7 +165,9 @@ dish_depth = top_shape_type == "flat"
         dish_limit_top_left,
         dish_limit_top_right,
         dish_limit_top_front,
-        dish_limit_top_back
+        dish_limit_top_back,
+        key_width,
+        key_depth
     );
 top_pitch_deg = required_param(user_top_pitch_deg, "user_top_pitch_deg");
 top_roll_deg = required_param(user_top_roll_deg, "user_top_roll_deg");
@@ -519,7 +521,11 @@ homing_bar_anchor_surface_z = keycap_surface_z(
     top_pitch_deg,
     top_roll_deg,
     key_width,
-    key_depth
+    key_depth,
+    dish_limit_top_left,
+    dish_limit_top_right,
+    dish_limit_top_front,
+    dish_limit_top_back
 );
 homing_bar_anchor_plane_z = keycap_top_plane_height(
     0,
@@ -637,6 +643,10 @@ module keycap_top_legend_surface_volume(
                 top_extra_z = surface_height + top_overlap,
                 dish_plan_width = key_width,
                 dish_plan_depth = key_depth,
+                dish_start_left = dish_limit_top_left,
+                dish_start_right = dish_limit_top_right,
+                dish_start_front = dish_limit_top_front,
+                dish_start_back = dish_limit_top_back,
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y

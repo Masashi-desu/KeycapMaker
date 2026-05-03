@@ -201,6 +201,34 @@ function keycap_dish_radial_sq(
         : pow(keycap_dish_scaled_x(x, dish_plan_width), 2)
             + pow(keycap_dish_scaled_y(y, dish_plan_depth), 2);
 
+function keycap_dish_sag_from_radial_sq(radial_sq, dish_radius) =
+    let(
+        safe_dish_radius = max(dish_radius, 0.1),
+        radius_sq = safe_dish_radius * safe_dish_radius
+    )
+    safe_dish_radius - sqrt(max(radius_sq - min(max(radial_sq, 0), radius_sq), 0));
+
+function keycap_dish_start_radial_sq(
+    dish_type,
+    dish_plan_width = 18,
+    dish_plan_depth = 18,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef
+) =
+    let(
+        resolved_left = is_undef(dish_start_left) ? -dish_plan_width / 2 : dish_start_left,
+        resolved_right = is_undef(dish_start_right) ? dish_plan_width / 2 : dish_start_right,
+        resolved_front = is_undef(dish_start_front) ? -dish_plan_depth / 2 : dish_start_front,
+        resolved_back = is_undef(dish_start_back) ? dish_plan_depth / 2 : dish_start_back,
+        x_radius = max(abs(resolved_left), abs(resolved_right)) / keycap_dish_axis_scale(dish_plan_width),
+        y_radius = max(abs(resolved_front), abs(resolved_back)) / keycap_dish_axis_scale(dish_plan_depth)
+    )
+    dish_type == "cylindrical"
+        ? pow(x_radius, 2)
+        : pow(x_radius, 2) + pow(y_radius, 2);
+
 function keycap_dish_surface_offset(
     x,
     y,
@@ -208,17 +236,30 @@ function keycap_dish_surface_offset(
     dish_depth,
     dish_radius,
     dish_plan_width = 18,
-    dish_plan_depth = 18
+    dish_plan_depth = 18,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef
 ) =
     let(
-        safe_dish_radius = max(dish_radius, 0.1),
         radial_sq = keycap_dish_radial_sq(x, y, dish_type, dish_plan_width, dish_plan_depth),
-        radius_sq = safe_dish_radius * safe_dish_radius,
+        start_radial_sq = keycap_dish_start_radial_sq(
+            dish_type,
+            dish_plan_width,
+            dish_plan_depth,
+            dish_start_left,
+            dish_start_right,
+            dish_start_front,
+            dish_start_back
+        ),
+        current_sag = keycap_dish_sag_from_radial_sq(radial_sq, dish_radius),
+        start_sag = max(keycap_dish_sag_from_radial_sq(start_radial_sq, dish_radius), 0.001),
         surface_offset = dish_depth >= 0
-            ? safe_dish_radius - dish_depth - sqrt(max(radius_sq - radial_sq, 0))
-            : -dish_depth - safe_dish_radius + sqrt(max(radius_sq - radial_sq, 0))
+            ? dish_depth * (current_sag / start_sag - 1)
+            : -dish_depth * (1 - current_sag / start_sag)
     )
-    !keycap_dish_is_active(dish_type, dish_depth) || radial_sq >= radius_sq
+    !keycap_dish_is_active(dish_type, dish_depth)
         ? 0
         : dish_depth >= 0
             ? min(0, surface_offset)
@@ -234,24 +275,56 @@ function keycap_dish_sag_at_distance(distance, dish_radius) =
         safe_dish_radius = max(dish_radius, 0.1),
         safe_distance = min(max(distance, 0), safe_dish_radius)
     )
-    safe_dish_radius - sqrt(max(pow(safe_dish_radius, 2) - pow(safe_distance, 2), 0));
+    keycap_dish_sag_from_radial_sq(pow(safe_distance, 2), safe_dish_radius);
 
-function keycap_dish_depth_limit(dish_type, dish_radius, top_left, top_right, top_front, top_back) =
+function keycap_dish_depth_limit(
+    dish_type,
+    dish_radius,
+    top_left,
+    top_right,
+    top_front,
+    top_back,
+    dish_plan_width = 18,
+    dish_plan_depth = 18
+) =
     dish_type == "flat"
         ? 0
-        : let(
-            x_radius = max(abs(top_left), abs(top_right)),
-            y_radius = max(abs(top_front), abs(top_back)),
-            dish_distance = dish_type == "cylindrical"
-                ? x_radius
-                : sqrt(pow(x_radius, 2) + pow(y_radius, 2))
-        )
-        keycap_dish_sag_at_distance(dish_distance, dish_radius);
+        : keycap_dish_sag_from_radial_sq(
+            keycap_dish_start_radial_sq(
+                dish_type,
+                dish_plan_width,
+                dish_plan_depth,
+                top_left,
+                top_right,
+                top_front,
+                top_back
+            ),
+            dish_radius
+        );
 
-function keycap_clamp_dish_depth(dish_type, dish_depth, dish_radius, top_left, top_right, top_front, top_back) =
+function keycap_clamp_dish_depth(
+    dish_type,
+    dish_depth,
+    dish_radius,
+    top_left,
+    top_right,
+    top_front,
+    top_back,
+    dish_plan_width = 18,
+    dish_plan_depth = 18
+) =
     min(
         max(dish_depth, 0),
-        keycap_dish_depth_limit(dish_type, dish_radius, top_left, top_right, top_front, top_back)
+        keycap_dish_depth_limit(
+            dish_type,
+            dish_radius,
+            top_left,
+            top_right,
+            top_front,
+            top_back,
+            dish_plan_width,
+            dish_plan_depth
+        )
     );
 
 function keycap_surface_z(
@@ -264,7 +337,11 @@ function keycap_surface_z(
     pitch_deg = 0,
     roll_deg = 0,
     dish_plan_width = 18,
-    dish_plan_depth = 18
+    dish_plan_depth = 18,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef
 ) =
     let(
         plane_z = keycap_top_plane_height(x, y, top_center_height, pitch_deg, roll_deg),
@@ -275,7 +352,11 @@ function keycap_surface_z(
             dish_depth,
             dish_radius,
             dish_plan_width,
-            dish_plan_depth
+            dish_plan_depth,
+            dish_start_left,
+            dish_start_right,
+            dish_start_front,
+            dish_start_back
         )
     )
     plane_z + dish_offset;
@@ -839,6 +920,10 @@ module keycap_dish_volume(
     z_shift = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef,
     top_offset_x = 0,
     top_offset_y = 0
 ) {
@@ -847,12 +932,23 @@ module keycap_dish_volume(
     resolved_dish_plan_depth = is_undef(dish_plan_depth) ? depth : dish_plan_depth;
     dish_width_scale = keycap_dish_axis_scale(resolved_dish_plan_width);
     dish_depth_scale = keycap_dish_axis_scale(resolved_dish_plan_depth);
+    start_radial_sq = keycap_dish_start_radial_sq(
+        dish_type,
+        resolved_dish_plan_width,
+        resolved_dish_plan_depth,
+        dish_start_left,
+        dish_start_right,
+        dish_start_front,
+        dish_start_back
+    );
+    start_sag = max(keycap_dish_sag_from_radial_sq(start_radial_sq, safe_radius), 0.001);
+    dish_z_scale = max(abs(dish_depth), 0.001) / start_sag;
     dish_curve_radius = dish_type == "cylindrical"
         ? safe_radius * dish_width_scale
         : safe_radius * max(dish_width_scale, dish_depth_scale);
     dish_center_local_z = dish_depth >= 0
-        ? safe_radius - dish_depth + z_shift
-        : -safe_radius - dish_depth + z_shift;
+        ? dish_z_scale * safe_radius - dish_depth + z_shift
+        : -dish_z_scale * safe_radius - dish_depth + z_shift;
     dish_length = sqrt(
         pow(max(width, resolved_dish_plan_width), 2)
         + pow(max(depth, resolved_dish_plan_depth), 2)
@@ -872,13 +968,13 @@ module keycap_dish_volume(
     // Keep dish curvature in the same local top-plane coordinates as the shell tilt.
     keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
         if (dish_type == "cylindrical") {
-            scale([dish_width_scale, 1, 1])
-                translate([0, 0, dish_center_local_z])
+            translate([0, 0, dish_center_local_z])
+                scale([dish_width_scale, 1, dish_z_scale])
                     rotate([90, 0, 0])
                         cylinder(h = dish_length, r = safe_radius, center = true, $fn = dish_steps);
         } else if (dish_type == "spherical") {
-            scale([dish_width_scale, dish_depth_scale, 1])
-                translate([0, 0, dish_center_local_z])
+            translate([0, 0, dish_center_local_z])
+                scale([dish_width_scale, dish_depth_scale, dish_z_scale])
                     sphere(r = safe_radius, $fn = dish_steps);
         }
 }
@@ -895,6 +991,10 @@ module keycap_dish_cut(
     surface_z_shift = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef,
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
@@ -913,6 +1013,10 @@ module keycap_dish_cut(
             z_shift = surface_z_shift,
             dish_plan_width = dish_plan_width,
             dish_plan_depth = dish_plan_depth,
+            dish_start_left = dish_start_left,
+            dish_start_right = dish_start_right,
+            dish_start_front = dish_start_front,
+            dish_start_back = dish_start_back,
             quality = quality,
             top_offset_x = top_offset_x,
             top_offset_y = top_offset_y
@@ -937,6 +1041,10 @@ module keycap_dish_bump(
     surface_z_shift = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef,
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
@@ -958,6 +1066,10 @@ module keycap_dish_bump(
                 z_shift = surface_z_shift,
                 dish_plan_width = dish_plan_width,
                 dish_plan_depth = dish_plan_depth,
+                dish_start_left = dish_start_left,
+                dish_start_right = dish_start_right,
+                dish_start_front = dish_start_front,
+                dish_start_back = dish_start_back,
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y
@@ -999,11 +1111,20 @@ module keycap_apply_top_surface(
     surface_z_shift = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef,
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
     top_corner_radii = undef
 ) {
+    resolved_dish_start_left = is_undef(dish_start_left) ? top_left : dish_start_left;
+    resolved_dish_start_right = is_undef(dish_start_right) ? top_right : dish_start_right;
+    resolved_dish_start_front = is_undef(dish_start_front) ? top_front : dish_start_front;
+    resolved_dish_start_back = is_undef(dish_start_back) ? top_back : dish_start_back;
+
     if (!keycap_dish_is_active(dish_type, dish_depth)) {
         children();
     } else if (dish_depth > 0) {
@@ -1021,6 +1142,10 @@ module keycap_apply_top_surface(
                 surface_z_shift = surface_z_shift,
                 dish_plan_width = dish_plan_width,
                 dish_plan_depth = dish_plan_depth,
+                dish_start_left = resolved_dish_start_left,
+                dish_start_right = resolved_dish_start_right,
+                dish_start_front = resolved_dish_start_front,
+                dish_start_back = resolved_dish_start_back,
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y
@@ -1046,6 +1171,10 @@ module keycap_apply_top_surface(
                 surface_z_shift = surface_z_shift,
                 dish_plan_width = dish_plan_width,
                 dish_plan_depth = dish_plan_depth,
+                dish_start_left = resolved_dish_start_left,
+                dish_start_right = resolved_dish_start_right,
+                dish_start_front = resolved_dish_start_front,
+                dish_start_back = resolved_dish_start_back,
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y,
@@ -1071,6 +1200,10 @@ module keycap_top_surface_region(
     top_extra_z = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef,
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
@@ -1097,6 +1230,10 @@ module keycap_top_surface_region(
         surface_z_shift = top_extra_z,
         dish_plan_width = dish_plan_width,
         dish_plan_depth = dish_plan_depth,
+        dish_start_left = dish_start_left,
+        dish_start_right = dish_start_right,
+        dish_start_front = dish_start_front,
+        dish_start_back = dish_start_back,
         quality = quality,
         top_offset_x = top_offset_x,
         top_offset_y = top_offset_y,
@@ -1136,6 +1273,10 @@ module keycap_top_surface_band(
     top_extra_z = 0,
     dish_plan_width = undef,
     dish_plan_depth = undef,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef,
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
@@ -1162,6 +1303,10 @@ module keycap_top_surface_band(
             top_extra_z = top_extra_z,
             dish_plan_width = dish_plan_width,
             dish_plan_depth = dish_plan_depth,
+            dish_start_left = dish_start_left,
+            dish_start_right = dish_start_right,
+            dish_start_front = dish_start_front,
+            dish_start_back = dish_start_back,
             quality = quality,
             top_offset_x = top_offset_x,
             top_offset_y = top_offset_y,
@@ -1184,6 +1329,10 @@ module keycap_top_surface_band(
             top_extra_z = lower_extra_z,
             dish_plan_width = dish_plan_width,
             dish_plan_depth = dish_plan_depth,
+            dish_start_left = dish_start_left,
+            dish_start_right = dish_start_right,
+            dish_start_front = dish_start_front,
+            dish_start_back = dish_start_back,
             quality = quality,
             top_offset_x = top_offset_x,
             top_offset_y = top_offset_y,
