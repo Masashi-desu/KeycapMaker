@@ -224,6 +224,36 @@ function keycap_dish_surface_offset(
             ? min(0, surface_offset)
             : max(0, surface_offset);
 
+function keycap_dish_max_drop(dish_type, dish_depth) =
+    keycap_dish_is_active(dish_type, dish_depth) && dish_depth > 0
+        ? dish_depth
+        : 0;
+
+function keycap_dish_sag_at_distance(distance, dish_radius) =
+    let(
+        safe_dish_radius = max(dish_radius, 0.1),
+        safe_distance = min(max(distance, 0), safe_dish_radius)
+    )
+    safe_dish_radius - sqrt(max(pow(safe_dish_radius, 2) - pow(safe_distance, 2), 0));
+
+function keycap_dish_depth_limit(dish_type, dish_radius, top_left, top_right, top_front, top_back) =
+    dish_type == "flat"
+        ? 0
+        : let(
+            x_radius = max(abs(top_left), abs(top_right)),
+            y_radius = max(abs(top_front), abs(top_back)),
+            dish_distance = dish_type == "cylindrical"
+                ? x_radius
+                : sqrt(pow(x_radius, 2) + pow(y_radius, 2))
+        )
+        keycap_dish_sag_at_distance(dish_distance, dish_radius);
+
+function keycap_clamp_dish_depth(dish_type, dish_depth, dish_radius, top_left, top_right, top_front, top_back) =
+    min(
+        max(dish_depth, 0),
+        keycap_dish_depth_limit(dish_type, dish_radius, top_left, top_right, top_front, top_back)
+    );
+
 function keycap_surface_z(
     x,
     y,
@@ -1088,6 +1118,78 @@ module keycap_top_surface_region(
             top_offset_y = top_offset_y,
             corner_radii = top_corner_radii
         );
+}
+
+module keycap_top_surface_band(
+    left,
+    right,
+    front,
+    back,
+    radius,
+    top_center_height,
+    dish_type = "spherical",
+    dish_depth = 0,
+    dish_radius = 45,
+    pitch_deg = 0,
+    roll_deg = 0,
+    bottom_extra_z = 0,
+    top_extra_z = 0,
+    dish_plan_width = undef,
+    dish_plan_depth = undef,
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0,
+    top_corner_radii = undef
+) {
+    fit_overlap = 0.05;
+    lower_extra_z = min(bottom_extra_z, top_extra_z - 0.01);
+    deep_base_z = lower_extra_z - keycap_dish_max_drop(dish_type, dish_depth) - fit_overlap;
+
+    difference() {
+        keycap_top_surface_region(
+            left = left,
+            right = right,
+            front = front,
+            back = back,
+            radius = radius,
+            top_center_height = top_center_height,
+            dish_type = dish_type,
+            dish_depth = dish_depth,
+            dish_radius = dish_radius,
+            pitch_deg = pitch_deg,
+            roll_deg = roll_deg,
+            base_z = deep_base_z,
+            top_extra_z = top_extra_z,
+            dish_plan_width = dish_plan_width,
+            dish_plan_depth = dish_plan_depth,
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y,
+            top_corner_radii = top_corner_radii
+        );
+
+        keycap_top_surface_region(
+            left = left,
+            right = right,
+            front = front,
+            back = back,
+            radius = radius,
+            top_center_height = top_center_height,
+            dish_type = dish_type,
+            dish_depth = dish_depth,
+            dish_radius = dish_radius,
+            pitch_deg = pitch_deg,
+            roll_deg = roll_deg,
+            base_z = deep_base_z - fit_overlap,
+            top_extra_z = lower_extra_z,
+            dish_plan_width = dish_plan_width,
+            dish_plan_depth = dish_plan_depth,
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y,
+            top_corner_radii = top_corner_radii
+        );
+    }
 }
 
 module keycap_top_hat_section(

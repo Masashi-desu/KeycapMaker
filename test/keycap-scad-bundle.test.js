@@ -237,7 +237,105 @@ test("dishDepth の負値は SCAD wrapper と base で 0 に丸める", async ()
     assert.ok(baseScad, "keycap base SCAD should be included");
     assert.equal(readRawScadDefinition(jobScad, "user_top_shape_type"), "\"spherical\"");
     assert.equal(readScadDefinition(jobScad, "user_dish_depth"), 0);
-    assert.match(baseScad, /dish_depth = top_shape_type == "flat" \? 0 : max\(requested_dish_depth, 0\);/);
+    assert.match(baseScad, /keycap_clamp_dish_depth\(/);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
+test("過大な dishDepth は SCAD wrapper でキートップ最高点を下げない範囲へ丸める", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 50,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const cylindricalFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topSurfaceShape: "cylindrical",
+        dishDepth: 1.4,
+      },
+    });
+    const sphericalFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topSurfaceShape: "spherical",
+        dishDepth: 1.45,
+      },
+    });
+    const cylindricalJobScad = cylindricalFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const sphericalJobScad = sphericalFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(cylindricalJobScad, "cylindrical keycap job SCAD should be generated");
+    assert.ok(sphericalJobScad, "spherical keycap job SCAD should be generated");
+    assert.equal(readScadDefinition(cylindricalJobScad, "user_dish_depth"), 0.5);
+    assert.equal(readScadDefinition(sphericalJobScad, "user_dish_depth"), 1.0);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
+test("深い dish でもキートップ印字の曲面追従領域を確保する", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 50,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "legend",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topSurfaceShape: "spherical",
+        dishDepth: 1.45,
+      },
+    });
+    const baseScad = files.find((file) => file.path === bundle.KEYCAP_ENTRY_PATH)?.content;
+    const shellScad = files.find((file) => file.path === "/scad/modules/keycap_shell.scad")?.content;
+
+    assert.ok(baseScad, "keycap base SCAD should be included");
+    assert.ok(shellScad, "keycap shell module should be included");
+    assert.match(shellScad, /function keycap_dish_max_drop\(dish_type, dish_depth\)/);
+    assert.match(shellScad, /module keycap_top_surface_band/);
+    assert.match(baseScad, /surface_fit_depth = keycap_dish_max_drop\(active_top_shape_type, active_dish_depth\) \+ 0\.05;/);
+    assert.match(baseScad, /height = total_height \+ top_overlap \+ surface_fit_depth/);
+    assert.match(baseScad, /below_surface = below_surface \+ surface_fit_depth/);
+    assert.match(baseScad, /keycap_top_surface_band\(/);
   } finally {
     await server.close();
     restoreBrowserMocks();

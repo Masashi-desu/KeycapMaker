@@ -241,6 +241,22 @@ test("負の深さは 0 に丸めて盛り上がりとして扱わない", () =>
   assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight);
 });
 
+test("深さはキートップ最高点を下げない範囲へ丸める", () => {
+  const cylindrical = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topSurfaceShape: "cylindrical",
+    dishDepth: 1.4,
+  });
+  const spherical = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topSurfaceShape: "spherical",
+    dishDepth: 1.45,
+  });
+
+  assert.equal(cylindrical.dishDepth, 0.5);
+  assert.equal(spherical.dishDepth, 1.0);
+});
+
 test("旧 dish 指定だけの負値は top shape を推測しない", () => {
   const parsed = parseEditorDataPayload({
     shapeProfile: "custom-shell",
@@ -334,7 +350,7 @@ test("キートップ形状ごとの代表プリセットを返す", () => {
     dishDepth: 0,
   });
   assert.deepEqual(getTopSurfaceShapePreset("cylindrical"), {
-    dishDepth: 0.7,
+    dishDepth: 0.5,
   });
   assert.deepEqual(getTopSurfaceShapePreset("spherical"), {
     dishDepth: 1.0,

@@ -144,7 +144,29 @@ top_shape_type = assert(
     supported_top_shape_type(requested_top_shape_type),
     str("unsupported user_top_shape_type: ", requested_top_shape_type)
 ) requested_top_shape_type;
-dish_depth = top_shape_type == "flat" ? 0 : max(requested_dish_depth, 0);
+dish_limit_base_left = jis_enter_shape_geometry_type(shape_geometry_type)
+    ? jis_enter_plan_left(key_width, jis_enter_notch_width)
+    : -key_width / 2;
+dish_limit_base_right = jis_enter_shape_geometry_type(shape_geometry_type)
+    ? jis_enter_plan_right(key_width, jis_enter_notch_width)
+    : key_width / 2;
+dish_limit_base_front = -key_depth / 2;
+dish_limit_base_back = key_depth / 2;
+dish_limit_top_left = dish_limit_base_left + top_center_height * tan(profile_left_angle);
+dish_limit_top_right = dish_limit_base_right - top_center_height * tan(profile_right_angle);
+dish_limit_top_front = dish_limit_base_front + top_center_height * tan(profile_front_angle);
+dish_limit_top_back = dish_limit_base_back - top_center_height * tan(profile_back_angle);
+dish_depth = top_shape_type == "flat"
+    ? 0
+    : keycap_clamp_dish_depth(
+        top_shape_type,
+        requested_dish_depth,
+        dish_radius,
+        dish_limit_top_left,
+        dish_limit_top_right,
+        dish_limit_top_front,
+        dish_limit_top_back
+    );
 top_pitch_deg = required_param(user_top_pitch_deg, "user_top_pitch_deg");
 top_roll_deg = required_param(user_top_roll_deg, "user_top_roll_deg");
 top_offset_x = required_param(user_top_offset_x, "user_top_offset_x");
@@ -575,6 +597,7 @@ module keycap_top_legend_surface_volume(
     if (enabled && len(label) > 0 && total_height > 0) {
         center_x = anchor_x + offset_x;
         center_y = anchor_y + offset_y;
+        surface_fit_depth = keycap_dish_max_drop(active_top_shape_type, active_dish_depth) + 0.05;
 
         intersection() {
             keycap_top_legend_flat_block(
@@ -582,12 +605,12 @@ module keycap_top_legend_surface_volume(
                 label = label,
                 width = width,
                 depth = depth,
-                height = total_height + top_overlap,
+                height = total_height + top_overlap + surface_fit_depth,
                 anchor_x = anchor_x,
                 anchor_y = anchor_y,
                 offset_x = offset_x,
                 offset_y = offset_y,
-                below_surface = below_surface,
+                below_surface = below_surface + surface_fit_depth,
                 font_name = font_name,
                 underline_enabled = underline_enabled,
                 underline_width = underline_width,
@@ -598,7 +621,7 @@ module keycap_top_legend_surface_volume(
                 quality = quality
             );
 
-            keycap_top_surface_region(
+            keycap_top_surface_band(
                 left = center_x - width / 2,
                 right = center_x + width / 2,
                 front = center_y - depth / 2,
@@ -610,7 +633,7 @@ module keycap_top_legend_surface_volume(
                 dish_radius = dish_radius,
                 pitch_deg = top_pitch_deg,
                 roll_deg = top_roll_deg,
-                base_z = -below_surface,
+                bottom_extra_z = -below_surface,
                 top_extra_z = surface_height + top_overlap,
                 dish_plan_width = key_width,
                 dish_plan_depth = key_depth,

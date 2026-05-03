@@ -356,8 +356,8 @@ const zh = Object.freeze({
     },
     dishDepth: {
       label: "深度",
-      cylindricalHint: "使用 0 以上的值形成单方向凹陷。",
-      sphericalHint: "使用 0 以上的值形成碗状凹陷。",
+      cylindricalHint: "使用 0 到当前最大值 {maxDepth} 的值形成单方向凹陷。",
+      sphericalHint: "使用 0 到当前最大值 {maxDepth} 的值形成碗状凹陷。",
       flatHint: "平面时此项不起作用。",
     },
     topHatEnabled: {

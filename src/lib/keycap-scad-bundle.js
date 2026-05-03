@@ -102,6 +102,7 @@ const TOP_SCALE_MIN = 0.02;
 const TOP_SCALE_MAX = 1;
 const TOP_SCALE_STEP = 0.01;
 const TOP_SCALE_MIN_FACE_SIZE = 0.2;
+const DISH_DEPTH_STEP = 0.05;
 const TOP_THICKNESS_MIN = 0.05;
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
 const fontBinaryPromises = new Map();
@@ -169,6 +170,29 @@ function roundUpTopScaleMinimum(value) {
   return Math.ceil((value - 1e-9) / TOP_SCALE_STEP) * TOP_SCALE_STEP;
 }
 
+function floorToNumericStep(value, step, base = 0) {
+  const numericValue = Number(value);
+  const numericStep = Number(step);
+  const numericBase = Number(base);
+  if (!Number.isFinite(numericValue) || !Number.isFinite(numericStep) || numericStep <= 0 || !Number.isFinite(numericBase)) {
+    return numericValue;
+  }
+
+  const digits = Math.min(Math.max(String(numericStep).split(".")[1]?.length ?? 0, 0), 6);
+  const scale = 10 ** digits;
+  const stepCount = Math.floor((((numericValue - numericBase) * scale) + Number.EPSILON) / (numericStep * scale));
+  return Math.max(numericBase, Number((numericBase + (stepCount * numericStep)).toFixed(digits)));
+}
+
+function clampBasicTopScale(value, fallback = 1) {
+  const nextValue = Number(value);
+  const fallbackValue = Number(fallback);
+  const resolvedFallback = Number.isFinite(fallbackValue)
+    ? Math.min(Math.max(fallbackValue, TOP_SCALE_MIN), TOP_SCALE_MAX)
+    : TOP_SCALE_MAX;
+  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : resolvedFallback, TOP_SCALE_MIN), TOP_SCALE_MAX);
+}
+
 function resolveTopScaleActiveDishDepth(params = {}) {
   const dishDepth = Number(params.dishDepth ?? 0);
   const topSurfaceShape = params.topSurfaceShape ?? (dishDepth > 0.001 ? "spherical" : "flat");
@@ -225,6 +249,52 @@ function clampTopScale(value, fallback = 1, params = {}) {
 function resolveTopScaleAngle(size, topCenterHeight, topScale) {
   const inset = Math.max(Number(size) * (1 - topScale) / 2, 0);
   return atanDeg(inset / Math.max(topCenterHeight, 0.1));
+}
+
+function resolveDishLimitTopFootprint(params = {}) {
+  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const defaults = createDefaultKeycapParams(profileKey);
+  const geometryType = resolveShapeGeometryType(profileKey);
+  const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
+  const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
+  const topScale = isTypewriterGeometryType(geometryType)
+    ? 1
+    : clampBasicTopScale(params.topScale, defaults.topScale ?? 1);
+  const topWidth = isTypewriterGeometryType(geometryType) ? keyWidth : keyWidth * topScale;
+  const topDepth = isTypewriterGeometryType(geometryType) ? keyDepth : keyDepth * topScale;
+
+  return {
+    left: -topWidth / 2,
+    right: topWidth / 2,
+    front: -topDepth / 2,
+    back: topDepth / 2,
+  };
+}
+
+function dishSagAtDistance(distance, dishRadius) {
+  const safeRadius = Math.max(Number(dishRadius ?? 45), 0.1);
+  const safeDistance = Math.min(Math.max(Number(distance) || 0, 0), safeRadius);
+  return safeRadius - Math.sqrt(Math.max((safeRadius * safeRadius) - (safeDistance * safeDistance), 0));
+}
+
+function getDishDepthMax(params = {}, topSurfaceShape = params.topSurfaceShape ?? "flat") {
+  if (topSurfaceShape === "flat") {
+    return 0;
+  }
+
+  const footprint = resolveDishLimitTopFootprint(params);
+  const xRadius = Math.max(Math.abs(footprint.left), Math.abs(footprint.right));
+  const yRadius = Math.max(Math.abs(footprint.front), Math.abs(footprint.back));
+  const dishDistance = topSurfaceShape === "cylindrical"
+    ? xRadius
+    : Math.sqrt((xRadius * xRadius) + (yRadius * yRadius));
+  return floorToNumericStep(dishSagAtDistance(dishDistance, params.dishRadius), DISH_DEPTH_STEP, 0);
+}
+
+function clampDishDepth(value, params = {}, topSurfaceShape = params.topSurfaceShape ?? "flat") {
+  const nextValue = Number(value);
+  const maximum = getDishDepthMax(params, topSurfaceShape);
+  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : 0, 0), maximum);
 }
 
 function getKeycapShoulderRadiusMax({ geometryType, keyWidth, keyDepth, topCenterHeight, topScale }) {
@@ -798,12 +868,12 @@ function formatDefinitionValue(value) {
 }
 
 async function createKeycapDefinitions({ params, exportTarget }) {
-  const shapeGeometry = resolveShapeGeometryParameters(params);
   const requestedDishDepth = Number(params.dishDepth ?? 0);
   const topSurfaceShape = params.topSurfaceShape ?? (requestedDishDepth > 0.001 ? "spherical" : "flat");
   const dishDepth = topSurfaceShape === "flat" || !Number.isFinite(requestedDishDepth)
     ? 0
-    : Math.max(requestedDishDepth, 0);
+    : clampDishDepth(requestedDishDepth, params, topSurfaceShape);
+  const shapeGeometry = resolveShapeGeometryParameters({ ...params, dishDepth });
   const topHatTopRadius = Math.max(numberOr(params.topHatTopRadius, 1.8), 0);
   const topHatTopRadiusIndividualEnabled = Boolean(params.topHatTopRadiusIndividualEnabled);
   const topHatTopRadii = topHatTopRadiusIndividualEnabled

@@ -356,8 +356,8 @@ const en = Object.freeze({
     },
     dishDepth: {
       label: "Depth",
-      cylindricalHint: "Use a value of 0 or more to make a one-direction recess.",
-      sphericalHint: "Use a value of 0 or more to make a bowl-shaped recess.",
+      cylindricalHint: "Use 0 through the current maximum {maxDepth} for a one-direction recess.",
+      sphericalHint: "Use 0 through the current maximum {maxDepth} for a bowl-shaped recess.",
       flatHint: "This has no effect when flat is selected.",
     },
     topHatEnabled: {

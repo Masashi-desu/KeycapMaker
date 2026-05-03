@@ -23,6 +23,7 @@ import {
   createEditorDataPayload,
   deleteEditorDataPayloadPath,
   createInitialKeycapParams,
+  getDishDepthMax,
   getTopSurfaceShapePreset,
   listEditableParamKeys,
   mergeEditorDataPayloadParams,
@@ -1120,12 +1121,13 @@ function getKeycapShoulderRadiusHint(params) {
 }
 
 function getDishDepthHint(params) {
+  const values = { maxDepth: formatMillimeter(getDishDepthMax(params)) };
   if (params.topSurfaceShape === "cylindrical") {
-    return t("fields.dishDepth.cylindricalHint");
+    return t("fields.dishDepth.cylindricalHint", values);
   }
 
   if (params.topSurfaceShape === "spherical") {
-    return t("fields.dishDepth.sphericalHint");
+    return t("fields.dishDepth.sphericalHint", values);
   }
 
   return t("fields.dishDepth.flatHint");
@@ -1710,6 +1712,7 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.05,
         min: 0,
+        max: (params) => getDishDepthMax(params),
         visibleWhen: (params) => params.topSurfaceShape !== "flat",
       },
       {
@@ -6258,6 +6261,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "topBackHeight",
   "topLeftHeight",
   "topRightHeight",
+  "dishDepth",
   "topCornerRadius",
   ...TOP_CORNER_RADIUS_FIELD_KEYS,
   "keycapEdgeRadius",

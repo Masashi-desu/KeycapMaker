@@ -356,8 +356,8 @@ const ja = Object.freeze({
     },
     dishDepth: {
       label: "深さ",
-      cylindricalHint: "0 以上の値で一方向に凹ませます",
-      sphericalHint: "0 以上の値で椀形に凹ませます",
+      cylindricalHint: "0 以上、現在の最大 {maxDepth} までの値で一方向に凹ませます",
+      sphericalHint: "0 以上、現在の最大 {maxDepth} までの値で椀形に凹ませます",
       flatHint: "フラットでは効きません",
     },
     topHatEnabled: {
