@@ -276,6 +276,10 @@ let pendingLegendFontPickerFocus = false;
 const textDecoder = new TextDecoder();
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
 const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+const FIELD_GROUP_COLLAPSE_ANIMATION_ID = "field-group-collapse";
+const FIELD_GROUP_COLLAPSE_GAP_ANIMATION_ID = "field-group-collapse-gap";
+const FIELD_GROUP_COLLAPSE_ANIMATION_DURATION_MS = 220;
+const FIELD_GROUP_COLLAPSE_ANIMATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 const PROJECT_KEYCAP_REORDER_ANIMATION_ID = "project-keycap-reorder";
 const PROJECT_KEYCAP_REORDER_ANIMATION_DURATION_MS = 180;
 const PROJECT_KEYCAP_REORDER_ANIMATION_EASING = "cubic-bezier(0.2, 0, 0, 1)";
@@ -4210,6 +4214,21 @@ function renderCornerRadiusNumberControl(fieldKey, corner = "all") {
   `;
 }
 
+function renderCornerRadiusControls(fieldSet, controlOrder, individualEnabled) {
+  const controlsClassName = individualEnabled
+    ? "corner-radius-grid corner-radius-grid--individual"
+    : "corner-radius-grid corner-radius-grid--shared";
+  const controlsMarkup = individualEnabled
+    ? controlOrder.map(({ key, corner }) => renderCornerRadiusNumberControl(key, corner)).join("")
+    : renderCornerRadiusNumberControl(fieldSet.sharedFieldKey, "all");
+
+  return `
+    <span class="${controlsClassName}" data-corner-radius-controls="${escapeHtml(fieldSet.individualFieldKey)}">
+      ${controlsMarkup}
+    </span>
+  `;
+}
+
 function renderCornerRadiusField(field, fieldClassName = "") {
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
   const fieldLabel = resolveDynamicCopy(field.label);
@@ -4221,17 +4240,7 @@ function renderCornerRadiusField(field, fieldClassName = "") {
   const toggleConfig = getFieldConfig(individualFieldKey);
   const toggleLabel = resolveDynamicCopy(toggleConfig?.label);
   const toggleHint = resolveDynamicCopy(toggleConfig?.hint);
-  const controls = individualEnabled
-    ? `
-      <span class="corner-radius-grid corner-radius-grid--individual">
-        ${controlOrder.map(({ key, corner }) => renderCornerRadiusNumberControl(key, corner)).join("")}
-      </span>
-    `
-    : `
-      <span class="corner-radius-grid corner-radius-grid--shared">
-        ${renderCornerRadiusNumberControl(field.key, "all")}
-      </span>
-    `;
+  const controls = renderCornerRadiusControls(fieldSet, controlOrder, individualEnabled);
 
   return `
     <div class="field field--corner-radius${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
@@ -4239,10 +4248,10 @@ function renderCornerRadiusField(field, fieldClassName = "") {
         <span class="field-label">${fieldLabel}</span>
         <span class="field-hint">${fieldHint}</span>
       </span>
-      <span class="corner-radius-panel">
+      <span class="corner-radius-panel" data-corner-radius-panel="${escapeHtml(individualFieldKey)}">
         ${controls}
         <label class="checkbox-pill corner-radius-toggle" title="${escapeHtml(toggleHint)}">
-          <input type="checkbox" data-field="${individualFieldKey}" ${individualEnabled ? "checked" : ""} />
+          <input type="checkbox" data-field="${individualFieldKey}" data-corner-radius-toggle="${escapeHtml(individualFieldKey)}" ${individualEnabled ? "checked" : ""} />
           <span>${toggleLabel}</span>
         </label>
       </span>
@@ -5406,6 +5415,256 @@ function closeKeycapDesignOverlay() {
   render();
 }
 
+function getFieldGroupToggleTitle(groupId) {
+  const activeGroup = getActiveFieldGroups().find((group, index) => {
+    const resolvedGroupId = group.id ?? `group-${index}`;
+    return resolvedGroupId === groupId;
+  });
+  if (activeGroup) {
+    return activeGroup.title;
+  }
+
+  const legendCard = LEGEND_CARD_DEFINITIONS.find((card) => card.id === groupId);
+  if (legendCard) {
+    return resolveDynamicCopy(legendCard.title);
+  }
+
+  const stemCard = STEM_CARD_DEFINITIONS.find((card) => card.id === groupId);
+  if (stemCard) {
+    return resolveDynamicCopy(stemCard.title);
+  }
+
+  return "";
+}
+
+function findFieldGroupToggleButton(groupId) {
+  return Array.from(app.querySelectorAll("[data-field-group-toggle]"))
+    .find((button) => button.dataset.fieldGroupToggle === groupId);
+}
+
+function syncFieldGroupToggleButton(toggleButton, groupId, isCollapsed) {
+  const title = getFieldGroupToggleTitle(groupId);
+  const toggleLabel = title
+    ? (isCollapsed
+        ? t("fieldGroup.expand", { title })
+        : t("fieldGroup.collapse", { title }))
+    : "";
+  const iconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
+
+  toggleButton.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+  if (toggleLabel) {
+    toggleButton.setAttribute("aria-label", toggleLabel);
+  }
+
+  const icon = toggleButton.querySelector(".field-group-toggle__icon");
+  if (icon instanceof HTMLImageElement) {
+    icon.src = iconUrl;
+  }
+}
+
+function isFieldGroupCollapseAnimationEnabled() {
+  return !reduceMotionQuery?.matches && typeof Element !== "undefined" && typeof Element.prototype.animate === "function";
+}
+
+function cancelFieldGroupBodyAnimations(body) {
+  if (typeof body.getAnimations !== "function") {
+    return;
+  }
+
+  body.getAnimations()
+    .filter((animation) => animation.id === FIELD_GROUP_COLLAPSE_ANIMATION_ID)
+    .forEach((animation) => animation.cancel());
+}
+
+function cancelFieldGroupContainerAnimations(container) {
+  if (!container || typeof container.getAnimations !== "function") {
+    return;
+  }
+
+  container.getAnimations()
+    .filter((animation) => animation.id === FIELD_GROUP_COLLAPSE_GAP_ANIMATION_ID)
+    .forEach((animation) => animation.cancel());
+}
+
+function resetFieldGroupBodyAnimationStyles(body) {
+  body.style.height = "";
+  body.style.overflow = "";
+  body.style.opacity = "";
+}
+
+function resetFieldGroupContainerAnimationStyles(container) {
+  if (container) {
+    container.style.rowGap = "";
+  }
+}
+
+function getFieldGroupBodyContainer(body) {
+  return body.parentElement instanceof HTMLElement ? body.parentElement : null;
+}
+
+function getElementRowGap(element) {
+  if (!element) {
+    return 0;
+  }
+
+  const rowGap = Number.parseFloat(window.getComputedStyle(element).rowGap);
+  return Number.isFinite(rowGap) ? rowGap : 0;
+}
+
+function getExpandedFieldGroupRowGap(container) {
+  if (!container) {
+    return 0;
+  }
+
+  const storedGap = Number(container.dataset.fieldGroupExpandedRowGap);
+  if (Number.isFinite(storedGap)) {
+    return storedGap;
+  }
+
+  const rowGap = getElementRowGap(container);
+  container.dataset.fieldGroupExpandedRowGap = `${rowGap}`;
+  return rowGap;
+}
+
+function setFieldGroupBodyCollapsed(body, isCollapsed) {
+  resetFieldGroupBodyAnimationStyles(body);
+  resetFieldGroupContainerAnimationStyles(getFieldGroupBodyContainer(body));
+  body.hidden = isCollapsed;
+}
+
+function animateFieldGroupContainerGap(container, currentGap, targetGap) {
+  if (!container || Math.abs(currentGap - targetGap) < 0.5) {
+    resetFieldGroupContainerAnimationStyles(container);
+    return null;
+  }
+
+  container.style.rowGap = `${currentGap}px`;
+  const animation = container.animate([
+    { rowGap: `${currentGap}px` },
+    { rowGap: `${targetGap}px` },
+  ], {
+    duration: FIELD_GROUP_COLLAPSE_ANIMATION_DURATION_MS,
+    easing: FIELD_GROUP_COLLAPSE_ANIMATION_EASING,
+    fill: "both",
+  });
+  animation.id = FIELD_GROUP_COLLAPSE_GAP_ANIMATION_ID;
+  return animation;
+}
+
+function scheduleFieldGroupAnimationFinish(animation, finish) {
+  let hasFinished = false;
+  const complete = () => {
+    if (hasFinished) {
+      return;
+    }
+
+    hasFinished = true;
+    finish();
+  };
+
+  animation.finished.then(complete).catch(() => {});
+  window.setTimeout(complete, FIELD_GROUP_COLLAPSE_ANIMATION_DURATION_MS + 80);
+}
+
+function animateFieldGroupBodyCollapse(body, groupId, isCollapsed) {
+  if (!isFieldGroupCollapseAnimationEnabled()) {
+    setFieldGroupBodyCollapsed(body, isCollapsed);
+    return;
+  }
+
+  const bodyWasHidden = body.hidden;
+  const container = getFieldGroupBodyContainer(body);
+  const expandedGap = getExpandedFieldGroupRowGap(container);
+  const currentHeight = body.hidden ? 0 : body.getBoundingClientRect().height;
+  const currentGap = bodyWasHidden ? 0 : getElementRowGap(container);
+  cancelFieldGroupBodyAnimations(body);
+  cancelFieldGroupContainerAnimations(container);
+  body.hidden = false;
+  resetFieldGroupBodyAnimationStyles(body);
+
+  if (isCollapsed) {
+    if (currentHeight <= 0) {
+      setFieldGroupBodyCollapsed(body, true);
+      return;
+    }
+
+    body.style.height = `${currentHeight}px`;
+    body.style.overflow = "hidden";
+    const gapAnimation = animateFieldGroupContainerGap(container, currentGap, 0);
+    const animation = body.animate([
+      { height: `${currentHeight}px`, opacity: 1 },
+      { height: "0px", opacity: 0 },
+    ], {
+      duration: FIELD_GROUP_COLLAPSE_ANIMATION_DURATION_MS,
+      easing: FIELD_GROUP_COLLAPSE_ANIMATION_EASING,
+      fill: "both",
+    });
+    animation.id = FIELD_GROUP_COLLAPSE_ANIMATION_ID;
+    scheduleFieldGroupAnimationFinish(animation, () => {
+      if (state.collapsedFieldGroups[groupId] !== true) {
+        return;
+      }
+
+      body.hidden = true;
+      animation.cancel();
+      gapAnimation?.cancel();
+      setFieldGroupBodyCollapsed(body, true);
+    });
+    gapAnimation?.finished.catch(() => {});
+    return;
+  }
+
+  const targetHeight = body.scrollHeight;
+  if (targetHeight <= 0) {
+    setFieldGroupBodyCollapsed(body, false);
+    return;
+  }
+
+  body.style.height = `${currentHeight}px`;
+  body.style.overflow = "hidden";
+  const gapAnimation = animateFieldGroupContainerGap(container, currentGap, expandedGap);
+  const animation = body.animate([
+    { height: `${currentHeight}px`, opacity: currentHeight > 0 ? 1 : 0 },
+    { height: `${targetHeight}px`, opacity: 1 },
+  ], {
+    duration: FIELD_GROUP_COLLAPSE_ANIMATION_DURATION_MS,
+    easing: FIELD_GROUP_COLLAPSE_ANIMATION_EASING,
+    fill: "both",
+  });
+  animation.id = FIELD_GROUP_COLLAPSE_ANIMATION_ID;
+  scheduleFieldGroupAnimationFinish(animation, () => {
+    if (state.collapsedFieldGroups[groupId] === true) {
+      return;
+    }
+
+    animation.cancel();
+    gapAnimation?.cancel();
+    setFieldGroupBodyCollapsed(body, false);
+  });
+  gapAnimation?.finished.catch(() => {});
+}
+
+function syncFieldGroupCollapseDom(groupId, options = {}) {
+  const { animate = false } = options;
+  const toggleButton = findFieldGroupToggleButton(groupId);
+  if (!(toggleButton instanceof HTMLButtonElement)) {
+    return false;
+  }
+
+  const isCollapsed = state.collapsedFieldGroups[groupId] === true;
+  const bodyId = toggleButton.getAttribute("aria-controls");
+  const body = bodyId ? document.getElementById(bodyId) : null;
+  if (body instanceof HTMLElement) {
+    if (animate) {
+      animateFieldGroupBodyCollapse(body, groupId, isCollapsed);
+    } else {
+      setFieldGroupBodyCollapsed(body, isCollapsed);
+    }
+  }
+  syncFieldGroupToggleButton(toggleButton, groupId, isCollapsed);
+  return true;
+}
+
 async function executeKeycapOverlayExport(format) {
   const entry = getKeycapExportOverlayEntry();
   if (!entry) {
@@ -5461,7 +5720,9 @@ function toggleFieldGroup(groupId) {
   }
 
   state.collapsedFieldGroups[groupId] = !state.collapsedFieldGroups[groupId];
-  render({ animateInspector: true });
+  if (!syncFieldGroupCollapseDom(groupId, { animate: true })) {
+    render();
+  }
 }
 
 function handleViewportResize() {
@@ -7080,6 +7341,44 @@ function findCornerRadiusFieldSetBySharedField(fieldKey) {
   return CORNER_RADIUS_FIELD_SETS.find((fieldSet) => fieldSet.sharedFieldKey === fieldKey);
 }
 
+function getCornerRadiusRenderContextByIndividualField(fieldKey) {
+  const fieldSet = findCornerRadiusFieldSetByIndividualField(fieldKey);
+  if (!fieldSet) {
+    return null;
+  }
+
+  const sharedFieldConfig = getFieldConfig(fieldSet.sharedFieldKey);
+  return {
+    fieldSet,
+    controlOrder: sharedFieldConfig?.controlOrder ?? fieldSet.controlOrder,
+    individualEnabled: Boolean(state.keycapParams[fieldSet.individualFieldKey]),
+    toggleLabel: resolveDynamicCopy(getFieldConfig(fieldSet.individualFieldKey)?.label),
+  };
+}
+
+function syncCornerRadiusFieldDom(fieldKey) {
+  const context = getCornerRadiusRenderContextByIndividualField(fieldKey);
+  if (!context) {
+    return false;
+  }
+
+  const panel = app.querySelector(`[data-corner-radius-panel="${escapeCssIdentifier(context.fieldSet.individualFieldKey)}"]`);
+  const controls = panel?.querySelector(`[data-corner-radius-controls="${escapeCssIdentifier(context.fieldSet.individualFieldKey)}"]`);
+  const input = panel?.querySelector(`[data-field="${escapeCssIdentifier(context.fieldSet.individualFieldKey)}"]`);
+  if (!(panel instanceof HTMLElement) || !(controls instanceof HTMLElement) || !(input instanceof HTMLInputElement)) {
+    return false;
+  }
+
+  controls.outerHTML = renderCornerRadiusControls(
+    context.fieldSet,
+    context.controlOrder,
+    context.individualEnabled,
+  );
+  input.checked = context.individualEnabled;
+  input.parentElement?.querySelector("span:last-child")?.replaceChildren(context.toggleLabel);
+  return true;
+}
+
 function syncCornerRadiusFieldsToSharedValue(fieldSet) {
   const sharedRadius = Number(state.keycapParams[fieldSet.sharedFieldKey] ?? 0);
   fieldSet.fieldKeys.forEach((fieldKey) => {
@@ -7174,24 +7473,27 @@ function handleFieldChange(event) {
     syncVisibleTopFieldState(field);
   }
 
-  if (input.type === "checkbox") {
+  if (input.type === "checkbox" && !CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS.has(field)) {
     input.parentElement?.querySelector("span:last-child")?.replaceChildren(input.checked ? t("actions.on") : t("actions.off"));
   }
 
   state.editorStatus = "dirty";
   state.editorSummary = t("status.dirty");
 
-  if (
-    TOP_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
+  const shouldRenderInspector = TOP_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
     || SIDE_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
     || field === "homingBarEnabled"
     || field === "rimEnabled"
     || field === "topHatEnabled"
-    || CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS.has(field)
     || field === "topSurfaceShape"
     || field === "topSlopeInputMode"
-    || EDITOR_SELECTOR_KEYS.includes(field)
-  ) {
+    || EDITOR_SELECTOR_KEYS.includes(field);
+
+  if (CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS.has(field)) {
+    if (!syncCornerRadiusFieldDom(field)) {
+      render({ animateInspector: true });
+    }
+  } else if (shouldRenderInspector) {
     render({ animateInspector: true });
   }
 
