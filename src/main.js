@@ -272,7 +272,15 @@ let projectKeycapDragDidMove = false;
 let projectKeycapDragOrderLabels = new Map();
 let fontAttributionCopyResetTimer = 0;
 const legendFontPreviewPromises = new Map();
+const pendingCheckboxFieldChanges = new Map();
+const pendingFieldHintSyncs = new Map();
+const pendingFieldInputSyncs = new Map();
+const pendingLinkedSizeInputSyncs = new Set();
 let pendingLegendFontPickerFocus = false;
+let pendingActiveProjectSyncTimer = 0;
+let pendingFieldUiSyncTimer = 0;
+let hasPendingVisibleTopFieldSync = false;
+let pendingVisibleTopFieldActiveField = null;
 const textDecoder = new TextDecoder();
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
 const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -280,6 +288,9 @@ const FIELD_GROUP_COLLAPSE_ANIMATION_ID = "field-group-collapse";
 const FIELD_GROUP_COLLAPSE_GAP_ANIMATION_ID = "field-group-collapse-gap";
 const FIELD_GROUP_COLLAPSE_ANIMATION_DURATION_MS = 220;
 const FIELD_GROUP_COLLAPSE_ANIMATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+const CHECKBOX_TOGGLE_COMMIT_DELAY_MS = 190;
+const FIELD_UI_SYNC_DELAY_MS = 80;
+const ACTIVE_PROJECT_SYNC_DELAY_MS = 900;
 const PROJECT_KEYCAP_REORDER_ANIMATION_ID = "project-keycap-reorder";
 const PROJECT_KEYCAP_REORDER_ANIMATION_DURATION_MS = 180;
 const PROJECT_KEYCAP_REORDER_ANIMATION_EASING = "cubic-bezier(0.2, 0, 0, 1)";
@@ -4341,6 +4352,23 @@ function getCheckboxAriaLabel(fieldKey, checked) {
   return fieldLabel ? `${fieldLabel}: ${statusLabel}` : statusLabel;
 }
 
+function syncCheckboxToggleDom(input) {
+  const fieldKey = input?.dataset?.field;
+  if (!fieldKey || input?.type !== "checkbox") {
+    return;
+  }
+
+  if (CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS.has(fieldKey)) {
+    const toggleLabel = resolveDynamicCopy(getFieldConfig(fieldKey)?.label);
+    input.setAttribute("aria-label", toggleLabel);
+    input.parentElement?.querySelector(".corner-radius-toggle__label")?.replaceChildren(toggleLabel);
+    return;
+  }
+
+  input.setAttribute("aria-label", getCheckboxAriaLabel(fieldKey, input.checked));
+  input.parentElement?.querySelector(".checkbox-toggle__label")?.replaceChildren(getCheckboxStatusLabel(input.checked));
+}
+
 function renderField(field, options = {}) {
   const value = state.keycapParams[field.key];
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
@@ -5241,10 +5269,50 @@ function handleInspectorCardInput(event) {
     return;
   }
 
+  const shouldDeferContinuousSync = input.type === "number" || input.type === "range";
   handleFieldChange({
     currentTarget: input,
+    deferContinuousSync: shouldDeferContinuousSync,
     deferPreview: typeof InputEvent !== "undefined" && event instanceof InputEvent && event.isComposing,
   });
+}
+
+function clearPendingCheckboxFieldChange(fieldKey) {
+  const pending = pendingCheckboxFieldChanges.get(fieldKey);
+  if (!pending) {
+    return;
+  }
+
+  window.cancelAnimationFrame(pending.frameId);
+  window.clearTimeout(pending.timerId);
+  pendingCheckboxFieldChanges.delete(fieldKey);
+}
+
+function scheduleCheckboxFieldChange(input) {
+  const fieldKey = input?.dataset?.field;
+  if (!fieldKey || input?.type !== "checkbox") {
+    return;
+  }
+
+  clearPendingCheckboxFieldChange(fieldKey);
+
+  const pending = { frameId: 0, timerId: 0 };
+  pending.frameId = window.requestAnimationFrame(() => {
+    pending.timerId = window.setTimeout(() => {
+      pendingCheckboxFieldChanges.delete(fieldKey);
+      if (input.isConnected) {
+        handleFieldChange({ currentTarget: input });
+        return;
+      }
+
+      const currentInput = app.querySelector(`[data-field="${escapeCssIdentifier(fieldKey)}"]`);
+      if (currentInput instanceof HTMLInputElement && currentInput.type === "checkbox") {
+        handleFieldChange({ currentTarget: currentInput });
+      }
+    }, CHECKBOX_TOGGLE_COMMIT_DELAY_MS);
+  });
+
+  pendingCheckboxFieldChanges.set(fieldKey, pending);
 }
 
 function getWheelSliderDelta(event) {
@@ -5304,7 +5372,7 @@ function handleInspectorCardWheel(event) {
     return;
   }
 
-  handleFieldChange({ currentTarget: input });
+  handleFieldChange({ currentTarget: input, deferContinuousSync: true });
 }
 
 function handleInspectorCardChange(event) {
@@ -5316,6 +5384,12 @@ function handleInspectorCardChange(event) {
 
   const input = getClosestFromEventTarget(event, "[data-field]");
   if (!input || (input.type !== "checkbox" && input.tagName !== "SELECT")) {
+    return;
+  }
+
+  if (input.type === "checkbox") {
+    syncCheckboxToggleDom(input);
+    scheduleCheckboxFieldChange(input);
     return;
   }
 
@@ -6043,6 +6117,32 @@ function createProjectEntryFromCurrentKeycap(options = {}) {
   return createProjectKeycapEntry(state.keycapParams, options);
 }
 
+function clearPendingActiveProjectKeycapSync() {
+  window.clearTimeout(pendingActiveProjectSyncTimer);
+  pendingActiveProjectSyncTimer = 0;
+}
+
+function scheduleActiveProjectKeycapSync() {
+  if (!state.project.activeKeycapId) {
+    return;
+  }
+
+  window.clearTimeout(pendingActiveProjectSyncTimer);
+  pendingActiveProjectSyncTimer = window.setTimeout(() => {
+    pendingActiveProjectSyncTimer = 0;
+    syncActiveProjectKeycapFromCurrent();
+  }, ACTIVE_PROJECT_SYNC_DELAY_MS);
+}
+
+function flushPendingActiveProjectKeycapSync() {
+  if (!pendingActiveProjectSyncTimer) {
+    return;
+  }
+
+  clearPendingActiveProjectKeycapSync();
+  syncActiveProjectKeycapFromCurrent();
+}
+
 function captureCurrentPreviewViewState() {
   return clonePreviewViewState(disposePreviewScene?.captureViewState?.() ?? previewViewState);
 }
@@ -6075,6 +6175,8 @@ function captureCurrentProjectPreview(options = {}) {
 }
 
 function syncActiveProjectKeycapFromCurrent(options = {}) {
+  clearPendingActiveProjectKeycapSync();
+
   if (!state.project.activeKeycapId) {
     return;
   }
@@ -6235,6 +6337,8 @@ async function addCurrentKeycapToProject() {
 }
 
 async function applyProjectKeycapSelection(entryId) {
+  flushPendingActiveProjectKeycapSync();
+
   const entry = state.project.keycaps.find((item) => item.id === entryId);
   if (!entry) {
     return;
@@ -6347,6 +6451,8 @@ async function create3mfExportBlob(params = state.keycapParams) {
 }
 
 function prepareProjectForSave() {
+  flushPendingActiveProjectKeycapSync();
+
   if (state.project.activeKeycapId) {
     refreshActiveProjectKeycapPreviewFromCurrent();
   }
@@ -7053,10 +7159,97 @@ function syncFieldHint(fieldKey, options = {}) {
   }
 }
 
+function schedulePendingFieldUiSync() {
+  window.clearTimeout(pendingFieldUiSyncTimer);
+  pendingFieldUiSyncTimer = window.setTimeout(flushPendingFieldUiSync, FIELD_UI_SYNC_DELAY_MS);
+}
+
+function queueFieldHintSync(fieldKey, options = {}) {
+  const currentOptions = pendingFieldHintSyncs.get(fieldKey);
+  const shouldSyncInputs = (currentOptions?.syncInputs !== false) || (options.syncInputs !== false);
+  pendingFieldHintSyncs.set(fieldKey, { syncInputs: shouldSyncInputs });
+  schedulePendingFieldUiSync();
+}
+
+function queueFieldInputSync(fieldKey, activeField = null) {
+  const currentActiveField = pendingFieldInputSyncs.get(fieldKey);
+  pendingFieldInputSyncs.set(
+    fieldKey,
+    currentActiveField === undefined || currentActiveField === activeField ? activeField : null,
+  );
+  schedulePendingFieldUiSync();
+}
+
+function queueLinkedSizeInputSync(fieldKey) {
+  pendingLinkedSizeInputSyncs.add(fieldKey);
+  schedulePendingFieldUiSync();
+}
+
+function queueVisibleTopFieldStateSync(activeField = null) {
+  hasPendingVisibleTopFieldSync = true;
+  pendingVisibleTopFieldActiveField = pendingVisibleTopFieldActiveField === null
+    ? activeField
+    : pendingVisibleTopFieldActiveField;
+  schedulePendingFieldUiSync();
+}
+
+function flushPendingFieldUiSync() {
+  window.clearTimeout(pendingFieldUiSyncTimer);
+  pendingFieldUiSyncTimer = 0;
+
+  const shouldSyncVisibleTopFields = hasPendingVisibleTopFieldSync;
+  const visibleTopFieldActiveField = pendingVisibleTopFieldActiveField;
+  const linkedSizeFieldKeys = [...pendingLinkedSizeInputSyncs];
+  const fieldInputSyncs = [...pendingFieldInputSyncs.entries()];
+  const fieldHintSyncs = [...pendingFieldHintSyncs.entries()];
+
+  hasPendingVisibleTopFieldSync = false;
+  pendingVisibleTopFieldActiveField = null;
+  pendingLinkedSizeInputSyncs.clear();
+  pendingFieldInputSyncs.clear();
+  pendingFieldHintSyncs.clear();
+
+  if (shouldSyncVisibleTopFields) {
+    syncVisibleTopFieldState(visibleTopFieldActiveField);
+  }
+
+  linkedSizeFieldKeys.forEach((fieldKey) => {
+    syncLinkedSizeInputs(fieldKey);
+  });
+
+  fieldInputSyncs.forEach(([fieldKey, activeField]) => {
+    syncFieldInputs(fieldKey, activeField);
+  });
+
+  fieldHintSyncs.forEach(([fieldKey, options]) => {
+    syncFieldHint(fieldKey, options);
+  });
+}
+
+function syncOrQueueFieldHint(fieldKey, options = {}, defer = false) {
+  if (defer) {
+    queueFieldHintSync(fieldKey, options);
+    return;
+  }
+
+  syncFieldHint(fieldKey, options);
+}
+
 function syncLegendFieldHintsBySuffix(suffix) {
   [...TOP_LEGEND_CONFIGS, ...SIDE_LEGEND_CONFIGS].forEach((config) => {
     syncFieldHint(legendParamKey(config.paramPrefix, suffix));
   });
+}
+
+function syncOrQueueLegendFieldHintsBySuffix(suffix, defer = false) {
+  if (defer) {
+    [...TOP_LEGEND_CONFIGS, ...SIDE_LEGEND_CONFIGS].forEach((config) => {
+      queueFieldHintSync(legendParamKey(config.paramPrefix, suffix));
+    });
+    return;
+  }
+
+  syncLegendFieldHintsBySuffix(suffix);
 }
 
 function syncFieldConstraintAttribute(input, attributeName, value) {
@@ -7280,9 +7473,20 @@ function syncUnitLinkedFieldHints() {
   syncFieldHint("keyDepth");
 }
 
+function queueUnitLinkedFieldHints() {
+  queueFieldHintSync("keyWidth");
+  queueFieldHintSync("keyDepth");
+}
+
 function syncAllLinkedSizeInputs() {
   Object.values(LINKED_SIZE_UNIT_FIELDS).forEach((primaryField) => {
     syncLinkedSizeInputs(primaryField);
+  });
+}
+
+function queueAllLinkedSizeInputs() {
+  Object.values(LINKED_SIZE_UNIT_FIELDS).forEach((primaryField) => {
+    queueLinkedSizeInputSync(primaryField);
   });
 }
 
@@ -7307,8 +7511,15 @@ function handleKeyUnitBasisInput(input, options = {}) {
 
   syncKeyUnitBasisInputs(input);
   syncKeyUnitBasisCopy();
-  syncUnitLinkedFieldHints();
-  syncAllLinkedSizeInputs();
+  if (commit) {
+    flushPendingFieldUiSync();
+    syncUnitLinkedFieldHints();
+    syncAllLinkedSizeInputs();
+    return;
+  }
+
+  queueUnitLinkedFieldHints();
+  queueAllLinkedSizeInputs();
 }
 
 function isTopEdgeHeightField(field) {
@@ -7405,6 +7616,7 @@ function handleFieldChange(event) {
   const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
   const deferPreview = event.deferPreview === true;
+  const deferContinuousSync = event.deferContinuousSync === true && (input.type === "number" || input.type === "range");
   const fieldConfig = getFieldConfig(field);
   if (!field || !input) {
     return;
@@ -7417,7 +7629,11 @@ function handleFieldChange(event) {
     }
 
     state.keycapParams[LINKED_SIZE_UNIT_FIELDS[field]] = nextValue * getKeyUnitMm();
-    syncLinkedSizeInputs(field);
+    if (deferContinuousSync) {
+      queueLinkedSizeInputSync(field);
+    } else {
+      syncLinkedSizeInputs(field);
+    }
   } else if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
     const cornerRadiusFieldSet = findCornerRadiusFieldSetByIndividualField(field);
@@ -7463,17 +7679,33 @@ function handleFieldChange(event) {
     }
 
     if (Object.values(LINKED_SIZE_UNIT_FIELDS).includes(field)) {
-      syncLinkedSizeInputs(field);
+      if (deferContinuousSync) {
+        queueLinkedSizeInputSync(field);
+      } else {
+        syncLinkedSizeInputs(field);
+      }
     }
   }
 
   syncDerivedKeycapParams(state.keycapParams);
-  syncActiveProjectKeycapFromCurrent();
+  if (deferContinuousSync) {
+    scheduleActiveProjectKeycapSync();
+  } else {
+    syncActiveProjectKeycapFromCurrent();
+  }
   const changedPrimaryField = LINKED_SIZE_UNIT_FIELDS[field] ?? field;
   if (field in LINKED_SIZE_UNIT_FIELDS || Object.values(LINKED_SIZE_UNIT_FIELDS).includes(field)) {
-    syncLinkedSizeInputs(field);
+    if (deferContinuousSync) {
+      queueLinkedSizeInputSync(field);
+    } else {
+      syncLinkedSizeInputs(field);
+    }
   } else if (input.type === "number" || input.type === "range") {
-    syncFieldInputs(field, field);
+    if (deferContinuousSync) {
+      queueFieldInputSync(field, field);
+    } else {
+      syncFieldInputs(field, field);
+    }
   }
 
   if (
@@ -7485,12 +7717,15 @@ function handleFieldChange(event) {
     || changedPrimaryField === "jisEnterNotchWidth"
     || changedPrimaryField === "jisEnterNotchDepth"
   ) {
-    syncVisibleTopFieldState(field);
+    if (deferContinuousSync) {
+      queueVisibleTopFieldStateSync(field);
+    } else {
+      syncVisibleTopFieldState(field);
+    }
   }
 
   if (input.type === "checkbox" && !CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS.has(field)) {
-    input.setAttribute("aria-label", getCheckboxAriaLabel(field, input.checked));
-    input.parentElement?.querySelector(".checkbox-toggle__label")?.replaceChildren(getCheckboxStatusLabel(input.checked));
+    syncCheckboxToggleDom(input);
   }
 
   state.editorStatus = "dirty";
@@ -7507,66 +7742,66 @@ function handleFieldChange(event) {
 
   if (CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS.has(field)) {
     if (!syncCornerRadiusFieldDom(field)) {
-      render({ animateInspector: true });
+      render({ animateInspector: input.type !== "checkbox" });
     }
   } else if (shouldRenderInspector) {
-    render({ animateInspector: true });
+    render({ animateInspector: input.type !== "checkbox" });
   }
 
   if (field === "dishDepth") {
-    syncFieldHint("topCenterHeight");
+    syncOrQueueFieldHint("topCenterHeight", {}, deferContinuousSync);
   }
 
   if (changedPrimaryField === "keyWidth") {
-    syncFieldHint("jisEnterNotchWidth");
-    syncFieldHint("typewriterCornerRadius");
-    syncFieldHint("topCornerRadius");
-    syncFieldHint("keycapEdgeRadius");
-    syncFieldHint("keycapShoulderRadius");
-    syncFieldHint("topOffsetX");
-    syncFieldHint("rimWidth");
-    syncFieldHint("topHatTopWidth");
-    syncFieldHint("topHatBottomWidth");
-    syncFieldHint("topHatInset");
-    syncFieldHint("topHatTopRadius");
-    syncFieldHint("topHatBottomRadius");
-    syncFieldHint("topHatShoulderRadius");
-    syncFieldHint("homingBarLength");
-    syncLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.size);
-    syncLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.offsetX);
+    syncOrQueueFieldHint("jisEnterNotchWidth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("typewriterCornerRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topCornerRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("keycapEdgeRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("keycapShoulderRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topOffsetX", {}, deferContinuousSync);
+    syncOrQueueFieldHint("rimWidth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatTopWidth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatBottomWidth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatInset", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatTopRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatShoulderRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("homingBarLength", {}, deferContinuousSync);
+    syncOrQueueLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.size, deferContinuousSync);
+    syncOrQueueLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.offsetX, deferContinuousSync);
   }
 
   if (changedPrimaryField === "keyDepth") {
-    syncFieldHint("jisEnterNotchDepth");
-    syncFieldHint("typewriterCornerRadius");
-    syncFieldHint("topCornerRadius");
-    syncFieldHint("keycapEdgeRadius");
-    syncFieldHint("keycapShoulderRadius");
-    syncFieldHint("topOffsetY");
-    syncFieldHint("rimWidth");
-    syncFieldHint("topHatTopDepth");
-    syncFieldHint("topHatBottomDepth");
-    syncFieldHint("topHatInset");
-    syncFieldHint("topHatTopRadius");
-    syncFieldHint("topHatBottomRadius");
-    syncFieldHint("topHatShoulderRadius");
-    syncFieldHint("homingBarOffsetY");
-    syncLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.size);
-    syncLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.offsetY);
+    syncOrQueueFieldHint("jisEnterNotchDepth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("typewriterCornerRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topCornerRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("keycapEdgeRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("keycapShoulderRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topOffsetY", {}, deferContinuousSync);
+    syncOrQueueFieldHint("rimWidth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatTopDepth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatBottomDepth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatInset", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatTopRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatShoulderRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("homingBarOffsetY", {}, deferContinuousSync);
+    syncOrQueueLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.size, deferContinuousSync);
+    syncOrQueueLegendFieldHintsBySuffix(LEGEND_FIELD_SUFFIXES.offsetY, deferContinuousSync);
   }
 
   if (field === "homingBarWidth" || field === "homingBarHeight") {
-    syncFieldHint("homingBarChamfer");
+    syncOrQueueFieldHint("homingBarChamfer", {}, deferContinuousSync);
   }
 
   if (changedPrimaryField === "jisEnterNotchWidth" || changedPrimaryField === "jisEnterNotchDepth") {
-    syncFieldHint("typewriterCornerRadius");
-    syncFieldHint("rimWidth");
-    syncFieldHint("topHatInset");
-    syncFieldHint("topHatTopRadius");
-    syncFieldHint("topHatBottomRadius");
-    syncFieldHint("topHatHeight");
-    syncFieldHint("topHatShoulderRadius");
+    syncOrQueueFieldHint("typewriterCornerRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("rimWidth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatInset", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatTopRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatHeight", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatShoulderRadius", {}, deferContinuousSync);
   }
 
   if (
@@ -7578,23 +7813,23 @@ function handleFieldChange(event) {
     || changedPrimaryField === "topHatInset"
     || changedPrimaryField === "topHatShoulderAngle"
   ) {
-    syncFieldHint("topCornerRadius");
-    syncFieldHint("keycapEdgeRadius");
-    syncFieldHint("keycapShoulderRadius");
-    syncFieldHint("topHatTopWidth");
-    syncFieldHint("topHatTopDepth");
-    syncFieldHint("topHatBottomWidth");
-    syncFieldHint("topHatBottomDepth");
-    syncFieldHint("topHatInset");
-    syncFieldHint("topHatTopRadius");
-    syncFieldHint("topHatBottomRadius");
-    syncFieldHint("topHatHeight");
-    syncFieldHint("topHatShoulderRadius");
+    syncOrQueueFieldHint("topCornerRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("keycapEdgeRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("keycapShoulderRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatTopWidth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatTopDepth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatBottomWidth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatBottomDepth", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatInset", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatTopRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatHeight", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatShoulderRadius", {}, deferContinuousSync);
   }
 
   if (field === "topHatHeight") {
-    syncFieldHint("topHatBottomRadius");
-    syncFieldHint("topHatShoulderRadius");
+    syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatShoulderRadius", {}, deferContinuousSync);
   }
 
   if (!deferPreview && field !== "topSlopeInputMode") {
