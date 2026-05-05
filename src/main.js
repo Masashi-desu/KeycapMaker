@@ -4249,11 +4249,12 @@ function renderCornerRadiusField(field, fieldClassName = "") {
         <span class="field-hint">${fieldHint}</span>
       </span>
       <span class="corner-radius-panel" data-corner-radius-panel="${escapeHtml(individualFieldKey)}">
-        ${controls}
-        <label class="checkbox-pill corner-radius-toggle" title="${escapeHtml(toggleHint)}">
-          <input type="checkbox" data-field="${individualFieldKey}" data-corner-radius-toggle="${escapeHtml(individualFieldKey)}" ${individualEnabled ? "checked" : ""} />
-          <span>${toggleLabel}</span>
+        <label class="checkbox-pill checkbox-toggle corner-radius-toggle" title="${escapeHtml(toggleHint)}">
+          <input class="checkbox-toggle__input corner-radius-toggle__input" type="checkbox" data-field="${individualFieldKey}" data-corner-radius-toggle="${escapeHtml(individualFieldKey)}" aria-label="${escapeHtml(toggleLabel)}" ${individualEnabled ? "checked" : ""} />
+          <span class="checkbox-toggle__label corner-radius-toggle__label" aria-hidden="true">${toggleLabel}</span>
+          <span class="checkbox-toggle__switch corner-radius-toggle__switch" aria-hidden="true"></span>
         </label>
+        ${controls}
       </span>
     </div>
   `;
@@ -4330,6 +4331,16 @@ function renderLegendFontPickerOptions(fieldKey = state.legendFontPickerFieldKey
     .join("");
 }
 
+function getCheckboxStatusLabel(checked) {
+  return checked ? t("actions.on") : t("actions.off");
+}
+
+function getCheckboxAriaLabel(fieldKey, checked) {
+  const fieldLabel = resolveDynamicCopy(getFieldConfig(fieldKey)?.label);
+  const statusLabel = getCheckboxStatusLabel(checked);
+  return fieldLabel ? `${fieldLabel}: ${statusLabel}` : statusLabel;
+}
+
 function renderField(field, options = {}) {
   const value = state.keycapParams[field.key];
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
@@ -4388,6 +4399,8 @@ function renderField(field, options = {}) {
   if (field.type === "checkbox") {
     const leadingIcon = field.key === "topHatEnabled" ? renderKeyTopHatIcon() : "";
     const checkboxIconClassName = getLeadingIconFieldClassName(leadingIcon);
+    const checkboxStatusLabel = getCheckboxStatusLabel(Boolean(value));
+    const checkboxAriaLabel = getCheckboxAriaLabel(field.key, Boolean(value));
     const checkboxCopy = `
       <span class="field-copy">
         <span class="field-label">${fieldLabel}</span>
@@ -4395,9 +4408,10 @@ function renderField(field, options = {}) {
       </span>
     `;
     const checkboxControl = `
-      <label class="checkbox-pill">
-        <input type="checkbox" data-field="${field.key}" ${value ? "checked" : ""} />
-        <span>${value ? t("actions.on") : t("actions.off")}</span>
+      <label class="checkbox-pill checkbox-toggle">
+        <input class="checkbox-toggle__input" type="checkbox" data-field="${field.key}" aria-label="${escapeHtml(checkboxAriaLabel)}" ${value ? "checked" : ""} />
+        <span class="checkbox-toggle__label" aria-hidden="true">${checkboxStatusLabel}</span>
+        <span class="checkbox-toggle__switch" aria-hidden="true"></span>
       </label>
     `;
 
@@ -7375,7 +7389,8 @@ function syncCornerRadiusFieldDom(fieldKey) {
     context.individualEnabled,
   );
   input.checked = context.individualEnabled;
-  input.parentElement?.querySelector("span:last-child")?.replaceChildren(context.toggleLabel);
+  input.setAttribute("aria-label", context.toggleLabel);
+  input.parentElement?.querySelector(".corner-radius-toggle__label")?.replaceChildren(context.toggleLabel);
   return true;
 }
 
@@ -7474,7 +7489,8 @@ function handleFieldChange(event) {
   }
 
   if (input.type === "checkbox" && !CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS.has(field)) {
-    input.parentElement?.querySelector("span:last-child")?.replaceChildren(input.checked ? t("actions.on") : t("actions.off"));
+    input.setAttribute("aria-label", getCheckboxAriaLabel(field, input.checked));
+    input.parentElement?.querySelector(".checkbox-toggle__label")?.replaceChildren(getCheckboxStatusLabel(input.checked));
   }
 
   state.editorStatus = "dirty";

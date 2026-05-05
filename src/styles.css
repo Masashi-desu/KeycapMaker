@@ -934,7 +934,7 @@ pre {
 }
 
 .field > .checkbox-pill {
-  justify-self: start;
+  justify-self: end;
 }
 
 .field-label {
@@ -1218,9 +1218,80 @@ pre {
   border-bottom-left-radius: 7px;
 }
 
-.corner-radius-toggle {
-  justify-self: start;
+.checkbox-toggle {
+  position: relative;
+  justify-self: end;
+  gap: 8px;
   min-width: 0;
+  min-height: 34px;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.checkbox-toggle__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.checkbox-toggle__label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.checkbox-toggle__switch {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--solid-segment-surface);
+  box-shadow:
+    inset 0 0 0 1px var(--solid-segment-border),
+    inset 0 1px 2px rgba(45, 36, 28, 0.12);
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.checkbox-toggle__switch::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: white;
+  box-shadow:
+    0 1px 3px rgba(45, 36, 28, 0.24),
+    0 3px 8px rgba(45, 36, 28, 0.14);
+  transition: transform 0.18s ease;
+}
+
+.checkbox-toggle__input:checked ~ .checkbox-toggle__switch {
+  background: var(--solid-action);
+  box-shadow:
+    inset 0 0 0 1px var(--solid-action-border),
+    0 2px 6px rgba(45, 36, 28, 0.18);
+}
+
+.checkbox-toggle__input:checked ~ .checkbox-toggle__switch::before {
+  transform: translateX(18px);
+}
+
+.checkbox-toggle__input:focus-visible ~ .checkbox-toggle__switch {
+  outline: 2px solid rgba(123, 155, 191, 0.58);
+  outline-offset: 2px;
 }
 
 .font-picker {
@@ -1555,14 +1626,13 @@ pre {
   justify-content: space-between;
 }
 
-.field-unit,
-.checkbox-pill span:last-child {
+.field-unit {
   font-size: 12px;
   font-weight: 700;
   color: var(--muted);
 }
 
-.checkbox-pill input {
+.checkbox-pill input:not(.checkbox-toggle__input) {
   margin: 0;
   accent-color: var(--panel-dark);
 }
@@ -2659,6 +2729,10 @@ pre {
   .field-control,
   .checkbox-pill {
     justify-self: stretch;
+  }
+
+  .checkbox-toggle {
+    justify-self: end;
   }
 
   .field input[type="number"] {
