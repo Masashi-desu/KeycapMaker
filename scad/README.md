@@ -42,6 +42,7 @@
 - `samples/keycap-top-offset.scad`: stem 原点を固定したキートップ中心の XY offset 確認用サンプル
 - `samples/keycap-top-edge-rounded.scad`: custom shell のキートップ上端R確認用サンプル
 - `samples/keycap-shoulder-rounded.scad`: custom shell の本体 shoulder R 確認用サンプル
+- `samples/keycap-shoulder-rounded-hollow.scad`: custom shell の丸い shoulder と内側 hollow 追従確認用サンプル
 - `samples/keycap-shoulder-concave.scad`: custom shell のマイナス本体 shoulder R 確認用サンプル
 - `samples/keycap-top-hat.scad`: custom shell の top-hat キートップと底面R確認用サンプル
 - `samples/keycap-top-hat-top-radii.scad`: custom shell の top-hat 上面4隅R個別指定確認用サンプル

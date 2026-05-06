@@ -165,6 +165,35 @@ function keycap_shell_shoulder_z_fraction(t, shoulder_curve_amount) =
         ? t
         : keycap_top_hat_curve_fraction(t, shoulder_curve_amount);
 
+function keycap_shell_shoulder_curve_amount(height, shoulder_outset, shoulder_radius) =
+    let(
+        safe_shoulder_radius = abs(keycap_top_hat_safe_shoulder_radius(shoulder_radius)),
+        shoulder_radius_limit = max(min(height, shoulder_outset), 0)
+    )
+    shoulder_radius_limit <= 0.001
+        ? 0
+        : min(safe_shoulder_radius / shoulder_radius_limit, 1) * (shoulder_radius < 0 ? -1 : 1);
+
+function keycap_shell_shoulder_plan_fraction_for_z(
+    z_fraction,
+    shoulder_curve_amount,
+    iterations = 18,
+    low = 0,
+    high = 1
+) =
+    let(
+        target = min(max(z_fraction, 0), 1),
+        mid = (low + high) / 2,
+        mid_z = keycap_shell_shoulder_z_fraction(mid, shoulder_curve_amount)
+    )
+    abs(shoulder_curve_amount) <= 0.001
+        ? target
+        : iterations <= 0
+            ? mid
+            : mid_z < target
+                ? keycap_shell_shoulder_plan_fraction_for_z(target, shoulder_curve_amount, iterations - 1, mid, high)
+                : keycap_shell_shoulder_plan_fraction_for_z(target, shoulder_curve_amount, iterations - 1, low, mid);
+
 function keycap_top_plane_slope(angle) = tan(angle);
 
 function keycap_top_plane_height(x, y, top_center_height, pitch_deg = 0, roll_deg = 0) =
@@ -800,6 +829,142 @@ module keycap_outer_shell(
     }
 }
 
+module keycap_rect_inner_clearance_volume(
+    left,
+    right,
+    front,
+    back,
+    top_center_height,
+    inner_height,
+    front_angle,
+    back_angle,
+    left_angle,
+    right_angle,
+    bottom_corner_radius,
+    top_corner_radius,
+    pitch_deg = 0,
+    roll_deg = 0,
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0,
+    bottom_extension = 1,
+    top_corner_radii = undef,
+    shoulder_radius = 0
+) {
+    if (right - left > 0.001 && back - front > 0.001) {
+        safe_bottom_extension = max(bottom_extension, 0.01);
+        side_left_inset = top_center_height * tan(left_angle);
+        side_right_inset = top_center_height * tan(right_angle);
+        side_front_inset = top_center_height * tan(front_angle);
+        side_back_inset = top_center_height * tan(back_angle);
+        shoulder_outset = max(min(
+            max(side_left_inset, 0),
+            max(side_right_inset, 0),
+            max(side_front_inset, 0),
+            max(side_back_inset, 0)
+        ), 0);
+        shoulder_curve_amount = keycap_shell_shoulder_curve_amount(
+            top_center_height,
+            shoulder_outset,
+            shoulder_radius
+        );
+        shoulder_steps = keycap_top_hat_shoulder_curve_steps(abs(shoulder_radius), quality);
+        inner_z_fraction = top_center_height <= 0.001
+            ? 1
+            : min(max(inner_height / top_center_height, 0), 1);
+        top_plan_fraction = keycap_shell_shoulder_plan_fraction_for_z(inner_z_fraction, shoulder_curve_amount);
+        section_steps = max(ceil(shoulder_steps * max(top_plan_fraction, 0.001)), 1);
+        top_left = left + inner_height * tan(left_angle);
+        top_right = right - inner_height * tan(right_angle);
+        top_front = front + inner_height * tan(front_angle);
+        top_back = back - inner_height * tan(back_angle);
+        base_corner_radii = is_undef(top_corner_radii)
+            ? undef
+            : keycap_corner_radius_list(bottom_corner_radius);
+
+        if (abs(shoulder_curve_amount) <= 0.001) {
+            hull() {
+                translate([0, 0, -safe_bottom_extension])
+                    keycap_base_face(
+                        left,
+                        right,
+                        front,
+                        back,
+                        bottom_corner_radius,
+                        quality
+                    );
+
+                keycap_top_face(
+                    top_left,
+                    top_right,
+                    top_front,
+                    top_back,
+                    top_corner_radius,
+                    inner_height,
+                    pitch_deg,
+                    roll_deg,
+                    quality,
+                    top_offset_x = top_offset_x,
+                    top_offset_y = top_offset_y,
+                    corner_radii = top_corner_radii
+                );
+            }
+        } else {
+            union() {
+                hull() {
+                    translate([0, 0, -safe_bottom_extension])
+                        keycap_base_face(
+                            left,
+                            right,
+                            front,
+                            back,
+                            bottom_corner_radius,
+                            quality
+                        );
+
+                    keycap_shell_section_face(
+                        left = left,
+                        right = right,
+                        front = front,
+                        back = back,
+                        radius = bottom_corner_radius,
+                        z = 0,
+                        pitch_deg = pitch_deg,
+                        roll_deg = roll_deg,
+                        quality = quality,
+                        corner_radii = base_corner_radii
+                    );
+                }
+
+                for (step = [0 : section_steps - 1]) {
+                    hull() {
+                        for (j = [step : step + 1]) {
+                            local_t = j / section_steps;
+                            plan_fraction = top_plan_fraction * local_t;
+                            z_fraction = keycap_shell_shoulder_z_fraction(plan_fraction, shoulder_curve_amount);
+                            keycap_shell_section_face(
+                                left = left + side_left_inset * plan_fraction,
+                                right = right - side_right_inset * plan_fraction,
+                                front = front + side_front_inset * plan_fraction,
+                                back = back - side_back_inset * plan_fraction,
+                                radius = bottom_corner_radius + (top_corner_radius - bottom_corner_radius) * local_t,
+                                z = top_center_height * z_fraction,
+                                pitch_deg = pitch_deg,
+                                roll_deg = roll_deg,
+                                quality = quality,
+                                top_offset_x = top_offset_x * local_t,
+                                top_offset_y = top_offset_y * local_t,
+                                tilt_amount = local_t,
+                                corner_radii = keycap_corner_radii_lerp(base_corner_radii, top_corner_radii, local_t)
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 module keycap_inner_clearance_volume(
     width,
     depth,
@@ -819,10 +984,10 @@ module keycap_inner_clearance_volume(
     top_offset_x = 0,
     top_offset_y = 0,
     bottom_extension = 1,
-    top_corner_radii = undef
+    top_corner_radii = undef,
+    shoulder_radius = 0
 ) {
     inner_height = keycap_inner_height(top_center_height, dish_depth, top_thickness);
-    safe_bottom_extension = max(bottom_extension, 0.01);
     inner_top_corner_radii = is_undef(top_corner_radii)
         ? undef
         : keycap_inner_corner_radii(top_corner_radii, wall);
@@ -832,37 +997,28 @@ module keycap_inner_clearance_volume(
     base_front = -depth / 2 + wall;
     base_back = depth / 2 - wall;
 
-    top_left = base_left + inner_height * tan(left_angle);
-    top_right = base_right - inner_height * tan(right_angle);
-    top_front = base_front + inner_height * tan(front_angle);
-    top_back = base_back - inner_height * tan(back_angle);
-
-    hull() {
-        translate([0, 0, -safe_bottom_extension])
-            keycap_base_face(
-                base_left,
-                base_right,
-                base_front,
-                base_back,
-                keycap_inner_corner_radius(bottom_corner_radius, wall),
-                quality
-            );
-
-        keycap_top_face(
-            top_left,
-            top_right,
-            top_front,
-            top_back,
-            keycap_inner_corner_radius(top_corner_radius, wall),
-            inner_height,
-            pitch_deg,
-            roll_deg,
-            quality,
-            top_offset_x = top_offset_x,
-            top_offset_y = top_offset_y,
-            corner_radii = inner_top_corner_radii
-        );
-    }
+    keycap_rect_inner_clearance_volume(
+        left = base_left,
+        right = base_right,
+        front = base_front,
+        back = base_back,
+        top_center_height = top_center_height,
+        inner_height = inner_height,
+        front_angle = front_angle,
+        back_angle = back_angle,
+        left_angle = left_angle,
+        right_angle = right_angle,
+        bottom_corner_radius = keycap_inner_corner_radius(bottom_corner_radius, wall),
+        top_corner_radius = keycap_inner_corner_radius(top_corner_radius, wall),
+        pitch_deg = pitch_deg,
+        roll_deg = roll_deg,
+        quality = quality,
+        top_offset_x = top_offset_x,
+        top_offset_y = top_offset_y,
+        bottom_extension = bottom_extension,
+        top_corner_radii = inner_top_corner_radii,
+        shoulder_radius = shoulder_radius
+    );
 }
 
 module keycap_inner_hollow(
@@ -883,7 +1039,8 @@ module keycap_inner_hollow(
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
-    top_corner_radii = undef
+    top_corner_radii = undef,
+    shoulder_radius = 0
 ) {
     keycap_inner_clearance_volume(
         width = width,
@@ -903,7 +1060,8 @@ module keycap_inner_hollow(
         quality = quality,
         top_offset_x = top_offset_x,
         top_offset_y = top_offset_y,
-        top_corner_radii = top_corner_radii
+        top_corner_radii = top_corner_radii,
+        shoulder_radius = shoulder_radius
     );
 }
 
@@ -1620,7 +1778,8 @@ module keycap_shell(
             quality = quality,
             top_offset_x = top_offset_x,
             top_offset_y = top_offset_y,
-            top_corner_radii = resolved_top_corner_radii
+            top_corner_radii = resolved_top_corner_radii,
+            shoulder_radius = keycap_shoulder_radius
         );
 
         if (top_hat_enabled && top_hat_height < 0) {

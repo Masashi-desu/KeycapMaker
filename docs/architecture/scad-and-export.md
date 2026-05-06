@@ -153,6 +153,8 @@ flowchart TD
   custom shell のキートップ上端R確認用
 - `scad/samples/keycap-shoulder-rounded.scad`
   custom shell の本体 shoulder R 確認用
+- `scad/samples/keycap-shoulder-rounded-hollow.scad`
+  custom shell の丸い shoulder と内側 hollow 追従確認用
 - `scad/samples/keycap-shoulder-concave.scad`
   custom shell のマイナス本体 shoulder R 確認用
 - `scad/samples/keycap-top-hat.scad`

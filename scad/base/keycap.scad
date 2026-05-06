@@ -1305,7 +1305,8 @@ module keycap_stem_clip_volume(quality = "export") {
                     quality = quality,
                     top_offset_x = top_offset_x,
                     top_offset_y = top_offset_y,
-                    bottom_extension = stem_clip_bottom_extension
+                    bottom_extension = stem_clip_bottom_extension,
+                    shoulder_radius = keycap_shoulder_radius
                 );
             } else {
                 keycap_inner_clearance_volume(
@@ -1327,7 +1328,8 @@ module keycap_stem_clip_volume(quality = "export") {
                     top_offset_x = top_offset_x,
                     top_offset_y = top_offset_y,
                     bottom_extension = stem_clip_bottom_extension,
-                    top_corner_radii = top_corner_radii
+                    top_corner_radii = top_corner_radii,
+                    shoulder_radius = keycap_shoulder_radius
                 );
             }
     }

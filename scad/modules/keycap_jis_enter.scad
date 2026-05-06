@@ -854,6 +854,7 @@ module keycap_jis_enter_rect_inner_clearance_volume(
     front,
     back,
     inner_height,
+    top_center_height,
     front_angle,
     back_angle,
     left_angle,
@@ -865,40 +866,31 @@ module keycap_jis_enter_rect_inner_clearance_volume(
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
-    bottom_extension = 1
+    bottom_extension = 1,
+    shoulder_radius = 0
 ) {
     if (right - left > 0.001 && back - front > 0.001) {
-        safe_bottom_extension = max(bottom_extension, 0.01);
-        top_left = left + inner_height * tan(left_angle);
-        top_right = right - inner_height * tan(right_angle);
-        top_front = front + inner_height * tan(front_angle);
-        top_back = back - inner_height * tan(back_angle);
-
-        hull() {
-            translate([0, 0, -safe_bottom_extension])
-                keycap_base_face(
-                    left,
-                    right,
-                    front,
-                    back,
-                    bottom_corner_radius,
-                    quality
-                );
-
-            keycap_top_face(
-                top_left,
-                top_right,
-                top_front,
-                top_back,
-                top_corner_radius,
-                inner_height,
-                pitch_deg,
-                roll_deg,
-                quality,
-                top_offset_x = top_offset_x,
-                top_offset_y = top_offset_y
-            );
-        }
+        keycap_rect_inner_clearance_volume(
+            left = left,
+            right = right,
+            front = front,
+            back = back,
+            top_center_height = top_center_height,
+            inner_height = inner_height,
+            front_angle = front_angle,
+            back_angle = back_angle,
+            left_angle = left_angle,
+            right_angle = right_angle,
+            bottom_corner_radius = bottom_corner_radius,
+            top_corner_radius = top_corner_radius,
+            pitch_deg = pitch_deg,
+            roll_deg = roll_deg,
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y,
+            bottom_extension = bottom_extension,
+            shoulder_radius = shoulder_radius
+        );
     }
 }
 
@@ -922,7 +914,8 @@ module keycap_jis_enter_inner_clearance_volume(
     quality = "export",
     top_offset_x = 0,
     top_offset_y = 0,
-    bottom_extension = 1
+    bottom_extension = 1,
+    shoulder_radius = 0
 ) {
     safe_width = max(width, 0.2);
     safe_depth = max(depth, 0.2);
@@ -955,6 +948,7 @@ module keycap_jis_enter_inner_clearance_volume(
                     front = inner_notch_y,
                     back = inner_back,
                     inner_height = inner_height,
+                    top_center_height = top_center_height,
                     front_angle = front_angle,
                     back_angle = back_angle,
                     left_angle = left_angle,
@@ -966,7 +960,8 @@ module keycap_jis_enter_inner_clearance_volume(
                     quality = quality,
                     top_offset_x = top_offset_x,
                     top_offset_y = top_offset_y,
-                    bottom_extension = bottom_extension
+                    bottom_extension = bottom_extension,
+                    shoulder_radius = shoulder_radius
                 );
 
                 keycap_jis_enter_rect_inner_clearance_volume(
@@ -975,6 +970,7 @@ module keycap_jis_enter_inner_clearance_volume(
                     front = inner_front,
                     back = inner_back,
                     inner_height = inner_height,
+                    top_center_height = top_center_height,
                     front_angle = front_angle,
                     back_angle = back_angle,
                     left_angle = left_angle,
@@ -986,7 +982,8 @@ module keycap_jis_enter_inner_clearance_volume(
                     quality = quality,
                     top_offset_x = top_offset_x,
                     top_offset_y = top_offset_y,
-                    bottom_extension = bottom_extension
+                    bottom_extension = bottom_extension,
+                    shoulder_radius = shoulder_radius
                 );
             }
         } else {
@@ -996,6 +993,7 @@ module keycap_jis_enter_inner_clearance_volume(
                 front = inner_front,
                 back = inner_back,
                 inner_height = inner_height,
+                top_center_height = top_center_height,
                 front_angle = front_angle,
                 back_angle = back_angle,
                 left_angle = left_angle,
@@ -1007,7 +1005,8 @@ module keycap_jis_enter_inner_clearance_volume(
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y,
-                bottom_extension = bottom_extension
+                bottom_extension = bottom_extension,
+                shoulder_radius = shoulder_radius
             );
         }
     }
@@ -1157,7 +1156,8 @@ module keycap_jis_enter_shell(
             roll_deg = roll_deg,
             quality = quality,
             top_offset_x = top_offset_x,
-            top_offset_y = top_offset_y
+            top_offset_y = top_offset_y,
+            shoulder_radius = keycap_shoulder_radius
         );
 
         if (top_hat_enabled && top_hat_height < 0) {
