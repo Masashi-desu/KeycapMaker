@@ -121,6 +121,7 @@ const zh = Object.freeze({
   parameterGroupCaptions: {
     name: "导出文件名",
     top: "上表面与倾斜",
+    topHat: "追加键顶",
     legend: "字符与位置",
   },
   unitBasis: {
@@ -156,7 +157,11 @@ const zh = Object.freeze({
         },
         top: {
           title: "键顶",
-          description: "可切换平面 / 圆柱 / 球面以及 top-hat 追加，并调整前后和左右倾斜。切换为边缘高度输入时，内部仍会规范化为 pitch / roll。",
+          description: "可切换平面 / 圆柱 / 球面，并调整前后和左右倾斜。切换为边缘高度输入时，内部仍会规范化为 pitch / roll。",
+        },
+        topHat: {
+          title: "Top Hat",
+          description: "调整在现有键顶上追加的小型上表面，包括启用状态、顶面 / 底面尺寸、R、高度和肩部角度。",
         },
         legend: {
           title: "字符",
@@ -205,6 +210,10 @@ const zh = Object.freeze({
         top: {
           title: "键顶",
           description: "与自定义外壳一样，可调整平面 / 圆柱 / 球面，以及前后和左右倾斜。",
+        },
+        topHat: {
+          title: "Top Hat",
+          description: "调整从 JIS Enter 键顶外形向内避让后追加的上表面，包括启用状态、R、高度和肩部角度。",
         },
         legend: {
           title: "字符",

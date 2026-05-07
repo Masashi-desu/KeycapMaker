@@ -495,15 +495,33 @@ test("上面中央の高さは形カードで横幅と奥行きの間に表示�
   }
 });
 
-test("トップハット寸法は上面の直後に底面を表示する", () => {
-  const topGroup = getShapeProfileFieldGroups("custom-shell").find((group) => group.id === "top");
-  const topWidthIndex = topGroup.fieldKeys.indexOf("topHatTopWidth");
+test("トップハットはキートップから独立したカードで天面の直後に底面を表示する", () => {
+  const groups = getShapeProfileFieldGroups("custom-shell");
+  const topGroup = groups.find((group) => group.id === "top");
+  const topHatGroup = groups.find((group) => group.id === "topHat");
+  const jisGroups = getShapeProfileFieldGroups("jis-enter");
+  const jisTopGroup = jisGroups.find((group) => group.id === "top");
+  const jisTopHatGroup = jisGroups.find((group) => group.id === "topHat");
 
+  assert.equal(topGroup.fieldKeys.includes("topHatEnabled"), false);
+  assert.notEqual(topHatGroup, undefined);
+  const topWidthIndex = topHatGroup.fieldKeys.indexOf("topHatTopWidth");
   assert.notEqual(topWidthIndex, -1);
   assert.deepEqual(
-    topGroup.fieldKeys.slice(topWidthIndex, topWidthIndex + 4),
+    topHatGroup.fieldKeys.slice(topWidthIndex, topWidthIndex + 4),
     ["topHatTopWidth", "topHatTopDepth", "topHatBottomWidth", "topHatBottomDepth"],
   );
+  assert.equal(jisTopGroup.fieldKeys.includes("topHatEnabled"), false);
+  assert.notEqual(jisTopHatGroup, undefined);
+  assert.deepEqual(jisTopHatGroup.fieldKeys, [
+    "topHatEnabled",
+    "topHatInset",
+    "topHatTopRadius",
+    "topHatBottomRadius",
+    "topHatHeight",
+    "topHatShoulderAngle",
+    "topHatShoulderRadius",
+  ]);
 });
 
 test("上面すぼまりは尖った形状用に下限を広げつつ内側クリアランスを守る", () => {

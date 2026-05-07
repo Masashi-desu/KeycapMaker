@@ -121,6 +121,7 @@ const ja = Object.freeze({
   parameterGroupCaptions: {
     name: "保存ファイル名",
     top: "上面の形と傾き",
+    topHat: "追加上面",
     legend: "文字と位置",
   },
   unitBasis: {
@@ -156,7 +157,11 @@ const ja = Object.freeze({
         },
         top: {
           title: "キートップ",
-          description: "フラット / シンドリカル / スフェリカルと top-hat の有無、前後左右の傾きを調整できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+          description: "フラット / シンドリカル / スフェリカルと、前後左右の傾きを調整できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+        },
+        topHat: {
+          title: "トップハット",
+          description: "既存のキートップ上へ追加する小さな上面の有無、天面 / 底面寸法、R、高さ、肩角度を調整します。",
         },
         legend: {
           title: "印字",
@@ -205,6 +210,10 @@ const ja = Object.freeze({
         top: {
           title: "キートップ",
           description: "カスタムシェルと同じく、フラット / シンドリカル / スフェリカル、前後左右の傾きを調整できます。",
+        },
+        topHat: {
+          title: "トップハット",
+          description: "JIS Enter のキートップ外形から内側へ逃がして追加する上面の有無、R、高さ、肩角度を調整します。",
         },
         legend: {
           title: "印字",

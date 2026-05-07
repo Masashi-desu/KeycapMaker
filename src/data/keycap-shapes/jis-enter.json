@@ -195,13 +195,6 @@
         "topOffsetY",
         "topSurfaceShape",
         "dishDepth",
-        "topHatEnabled",
-        "topHatInset",
-        "topHatTopRadius",
-        "topHatBottomRadius",
-        "topHatHeight",
-        "topHatShoulderAngle",
-        "topHatShoulderRadius",
         "topSlopeInputMode",
         "topPitchDeg",
         "topRollDeg",
@@ -209,6 +202,20 @@
         "topBackHeight",
         "topLeftHeight",
         "topRightHeight"
+      ]
+    },
+    {
+      "id": "topHat",
+      "title": "トップハット",
+      "description": "JIS Enter のキートップ外形から内側へ逃がして追加する上面の有無、R、高さ、肩角度を調整します。",
+      "fieldKeys": [
+        "topHatEnabled",
+        "topHatInset",
+        "topHatTopRadius",
+        "topHatBottomRadius",
+        "topHatHeight",
+        "topHatShoulderAngle",
+        "topHatShoulderRadius"
       ]
     },
     {

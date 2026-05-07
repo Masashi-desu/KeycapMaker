@@ -121,6 +121,7 @@ const en = Object.freeze({
   parameterGroupCaptions: {
     name: "Export file name",
     top: "Surface and tilt",
+    topHat: "Added keytop",
     legend: "Text and position",
   },
   unitBasis: {
@@ -156,7 +157,11 @@ const en = Object.freeze({
         },
         top: {
           title: "Keytop",
-          description: "Switch the top surface between flat, cylindrical, spherical, and a top-hat addition, and adjust front/back or left/right tilt. Edge-height input is normalized internally to pitch / roll.",
+          description: "Switch the top surface between flat, cylindrical, and spherical, and adjust front/back or left/right tilt. Edge-height input is normalized internally to pitch / roll.",
+        },
+        topHat: {
+          title: "Top Hat",
+          description: "Adjust the added keytop above the existing surface: enabled state, top / bottom dimensions, radii, height, and shoulder angle.",
         },
         legend: {
           title: "Legend",
@@ -205,6 +210,10 @@ const en = Object.freeze({
         top: {
           title: "Keytop",
           description: "Like Custom Shell, this can edit the flat / cylindrical / spherical surface and front/back or left/right tilt.",
+        },
+        topHat: {
+          title: "Top Hat",
+          description: "Adjust the added surface inset from the JIS Enter keytop outline: enabled state, radii, height, and shoulder angle.",
         },
         legend: {
           title: "Legend",

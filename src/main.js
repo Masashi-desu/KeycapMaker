@@ -238,6 +238,7 @@ const PARAMETER_GROUP_ICON_PATHS = Object.freeze({
   name: "icons/parameters/name.svg",
   shape: "icons/parameters/shape.svg",
   top: "icons/parameters/top.svg",
+  topHat: "icons/parameters/key-top-hat.svg?v=rough-c",
   legend: "icons/parameters/legend.svg",
   homing: "icons/parameters/homing.svg",
   stem: "icons/parameters/stem.svg",
@@ -254,6 +255,7 @@ const KEY_TOP_SLOPE_INPUT_MODE_ICON_PATH = "icons/parameters/key-top-slope-input
 const PARAMETER_GROUP_CAPTION_KEYS = Object.freeze({
   name: "parameterGroupCaptions.name",
   top: "parameterGroupCaptions.top",
+  topHat: "parameterGroupCaptions.topHat",
   legend: "parameterGroupCaptions.legend",
 });
 let disposePreviewScene = null;

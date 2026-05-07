@@ -194,13 +194,27 @@
     {
       "id": "top",
       "title": "キートップ",
-      "description": "フラット / シンドリカル / スフェリカルと top-hat の有無、前後左右の傾きを調整できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
+      "description": "フラット / シンドリカル / スフェリカルと、前後左右の傾きを調整できます。端の高さに切り替えた場合も内部では pitch / roll に正規化されます。",
       "fieldKeys": [
         "topOffsetX",
         "topOffsetY",
         "topSurfaceShape",
         "topCornerRadius",
         "dishDepth",
+        "topSlopeInputMode",
+        "topPitchDeg",
+        "topRollDeg",
+        "topFrontHeight",
+        "topBackHeight",
+        "topLeftHeight",
+        "topRightHeight"
+      ]
+    },
+    {
+      "id": "topHat",
+      "title": "トップハット",
+      "description": "既存のキートップ上へ追加する小さな上面の有無、天面 / 底面寸法、R、高さ、肩角度を調整します。",
+      "fieldKeys": [
         "topHatEnabled",
         "topHatTopWidth",
         "topHatTopDepth",
@@ -210,14 +224,7 @@
         "topHatBottomRadius",
         "topHatHeight",
         "topHatShoulderAngle",
-        "topHatShoulderRadius",
-        "topSlopeInputMode",
-        "topPitchDeg",
-        "topRollDeg",
-        "topFrontHeight",
-        "topBackHeight",
-        "topLeftHeight",
-        "topRightHeight"
+        "topHatShoulderRadius"
       ]
     },
     {

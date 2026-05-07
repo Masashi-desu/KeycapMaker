@@ -121,6 +121,7 @@ const ko = Object.freeze({
   parameterGroupCaptions: {
     name: "내보내기 파일명",
     top: "상면과 기울기",
+    topHat: "추가 키톱",
     legend: "문자와 위치",
   },
   unitBasis: {
@@ -156,7 +157,11 @@ const ko = Object.freeze({
         },
         top: {
           title: "키톱",
-          description: "평면 / 원통 / 구면과 top-hat 추가 여부를 전환하고 앞뒤와 좌우 기울기를 조정할 수 있습니다. 모서리 높이 입력으로 전환해도 내부에서는 pitch / roll로 정규화됩니다.",
+          description: "평면 / 원통 / 구면을 전환하고 앞뒤와 좌우 기울기를 조정할 수 있습니다. 모서리 높이 입력으로 전환해도 내부에서는 pitch / roll로 정규화됩니다.",
+        },
+        topHat: {
+          title: "Top Hat",
+          description: "기존 키톱 위에 추가하는 작은 상면의 사용 여부, 윗면 / 아랫면 치수, R, 높이, 숄더 각도를 조정합니다.",
         },
         legend: {
           title: "각인",
@@ -205,6 +210,10 @@ const ko = Object.freeze({
         top: {
           title: "키톱",
           description: "커스텀 셸처럼 평면 / 원통 / 구면, 앞뒤와 좌우 기울기를 조정할 수 있습니다.",
+        },
+        topHat: {
+          title: "Top Hat",
+          description: "JIS Enter 키톱 외형에서 안쪽으로 여유를 두고 추가하는 상면의 사용 여부, R, 높이, 숄더 각도를 조정합니다.",
         },
         legend: {
           title: "각인",
