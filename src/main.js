@@ -2565,14 +2565,14 @@ function countStepDigits(step) {
   return rawStep.split(".")[1].replace(/0+$/, "").length;
 }
 
-function formatNumericFieldValue(fieldKey, value) {
+function formatNumericFieldValue(fieldKey, value, stepOverride = null) {
   const nextValue = Number(value);
   if (!Number.isFinite(nextValue)) {
     return "";
   }
 
   const fieldConfig = getFieldConfig(fieldKey);
-  const digits = Math.min(countStepDigits(fieldConfig?.step) + 1, 3);
+  const digits = Math.min(countStepDigits(stepOverride ?? fieldConfig?.step) + 1, 3);
   return `${Number(nextValue.toFixed(digits))}`;
 }
 
@@ -3962,6 +3962,16 @@ function normalizeRangeAttribute(value) {
   return Number.isFinite(numericValue) ? numericValue : null;
 }
 
+function normalizeSliderRangeValue(fieldKey, value, step = null) {
+  const numericValue = normalizeRangeAttribute(value);
+  if (numericValue == null) {
+    return null;
+  }
+
+  const roundedValue = Number(formatNumericFieldValue(fieldKey, numericValue, step));
+  return Number.isFinite(roundedValue) ? roundedValue : numericValue;
+}
+
 function canAutoRenderSliderForField(field) {
   if (!field || field.slider === false) {
     return false;
@@ -4016,15 +4026,16 @@ function resolveFieldSliderAttributes(field, params = state.keycapParams) {
     return null;
   }
 
-  const sliderMinimum = normalizeRangeAttribute(resolveFieldAttribute(sliderConfig.min, params));
-  const sliderMaximum = normalizeRangeAttribute(resolveFieldAttribute(sliderConfig.max, params));
-  const guideValue = resolveFieldSliderGuideValue(field, sliderConfig, params);
+  const sliderStep = normalizeRangeAttribute(resolveFieldAttribute(sliderConfig.step, params));
+  const sliderMinimum = normalizeSliderRangeValue(field.key, resolveFieldAttribute(sliderConfig.min, params), sliderStep);
+  const sliderMaximum = normalizeSliderRangeValue(field.key, resolveFieldAttribute(sliderConfig.max, params), sliderStep);
+  const guideValue = normalizeSliderRangeValue(field.key, resolveFieldSliderGuideValue(field, sliderConfig, params), sliderStep);
   const guidePosition = resolveSliderGuidePosition(sliderMinimum, sliderMaximum, guideValue);
 
   return {
     min: sliderMinimum,
     max: sliderMaximum,
-    step: normalizeRangeAttribute(resolveFieldAttribute(sliderConfig.step, params)),
+    step: sliderStep,
     guide: guideValue,
     guidePosition,
   };
@@ -4047,7 +4058,7 @@ function clampSliderValue(value, sliderAttributes) {
 }
 
 function formatSliderFieldValue(fieldKey, value, sliderAttributes) {
-  return formatNumericFieldValue(fieldKey, clampSliderValue(value, sliderAttributes));
+  return formatNumericFieldValue(fieldKey, clampSliderValue(value, sliderAttributes), sliderAttributes?.step);
 }
 
 function resolveStandardFieldSliderGuideValue(fieldKey, params = state.keycapParams) {
@@ -4289,7 +4300,7 @@ function renderSliderRangeControl(fieldKey, fieldConfig, value, label, options =
   return `
     <span class="field-range-slider" data-field-slider="${fieldKey}">
       <span class="field-slider-row">
-        <span class="field-slider-limit" data-field-slider-limit="min">${formatNumericFieldValue(fieldKey, sliderAttributes.min)}</span>
+        <span class="field-slider-limit" data-field-slider-limit="min">${formatNumericFieldValue(fieldKey, sliderAttributes.min, sliderAttributes.step)}</span>
         <span class="field-slider-track"${sliderGuideStyle}>
           <input
             type="range"
@@ -4309,7 +4320,7 @@ function renderSliderRangeControl(fieldKey, fieldConfig, value, label, options =
             ></span>
           </span>
         </span>
-        <span class="field-slider-limit" data-field-slider-limit="max">${formatNumericFieldValue(fieldKey, sliderAttributes.max)}</span>
+        <span class="field-slider-limit" data-field-slider-limit="max">${formatNumericFieldValue(fieldKey, sliderAttributes.max, sliderAttributes.step)}</span>
       </span>
     </span>
   `;
@@ -7306,10 +7317,10 @@ function syncFieldSliderVisualState(input, fieldKey, fieldConfig, sliderAttribut
   const minLabel = sliderContainer.querySelector('[data-field-slider-limit="min"]');
   const maxLabel = sliderContainer.querySelector('[data-field-slider-limit="max"]');
   if (minLabel && sliderAttributes?.min != null) {
-    minLabel.textContent = formatNumericFieldValue(fieldKey, sliderAttributes.min);
+    minLabel.textContent = formatNumericFieldValue(fieldKey, sliderAttributes.min, sliderAttributes.step);
   }
   if (maxLabel && sliderAttributes?.max != null) {
-    maxLabel.textContent = formatNumericFieldValue(fieldKey, sliderAttributes.max);
+    maxLabel.textContent = formatNumericFieldValue(fieldKey, sliderAttributes.max, sliderAttributes.step);
   }
 
   const track = sliderContainer.querySelector(".field-slider-track");
