@@ -1037,7 +1037,6 @@
             "thickness": 1,
             "fill": "#D8CCB88F"
           },
-          "layout": "horizontal",
           "gap": 6,
           "padding": 6,
           "children": [
@@ -1147,7 +1146,6 @@
               "id": "SEZcB",
               "name": "warningHeader",
               "width": "fill_container",
-              "layout": "horizontal",
               "gap": 11,
               "alignItems": "center",
               "children": [
@@ -1201,7 +1199,6 @@
                   "width": "fill_container",
                   "fill": "#FFFFFF6B",
                   "cornerRadius": 12,
-                  "layout": "horizontal",
                   "gap": 10,
                   "padding": [
                     6,
@@ -1239,7 +1236,6 @@
                   "width": "fill_container",
                   "fill": "#FFFFFF6B",
                   "cornerRadius": 12,
-                  "layout": "horizontal",
                   "gap": 10,
                   "padding": [
                     6,
@@ -1277,7 +1273,6 @@
                   "width": "fill_container",
                   "fill": "#FFFFFF6B",
                   "cornerRadius": 12,
-                  "layout": "horizontal",
                   "gap": 10,
                   "padding": [
                     6,
@@ -1315,7 +1310,6 @@
                   "width": "fill_container",
                   "fill": "#FFFFFF6B",
                   "cornerRadius": 12,
-                  "layout": "horizontal",
                   "gap": 10,
                   "padding": [
                     6,
@@ -1591,14 +1585,12 @@
                   "children": [
                     {
                       "type": "rectangle",
+                      "cornerRadius": 11,
                       "id": "dropPreviewHoming",
                       "name": "previewHomingBar",
-                      "x": 190,
-                      "y": 275,
-                      "width": 90,
-                      "height": 22,
                       "fill": "#C56216",
-                      "cornerRadius": 11
+                      "width": 90,
+                      "height": 22
                     }
                   ]
                 }
@@ -1607,10 +1599,10 @@
             {
               "type": "frame",
               "id": "2n9Qr",
-              "name": "languageControlLayer",
               "layoutPosition": "absolute",
               "x": 0,
               "y": 0,
+              "name": "languageControlLayer",
               "width": 1392,
               "height": 40,
               "justifyContent": "end",
@@ -1654,10 +1646,10 @@
         {
           "type": "frame",
           "id": "FwUE0",
-          "name": "Drop Overlay",
           "layoutPosition": "absolute",
           "x": 0,
           "y": 0,
+          "name": "Drop Overlay",
           "width": 1440,
           "height": 980,
           "fill": "#2D241C2E",
@@ -1677,7 +1669,6 @@
                 "thickness": 1,
                 "fill": "#D8CCB8"
               },
-              "layout": "horizontal",
               "gap": 14,
               "padding": [
                 22,
