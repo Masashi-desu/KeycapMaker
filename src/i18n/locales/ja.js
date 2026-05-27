@@ -10,6 +10,13 @@ const ja = Object.freeze({
       ko: "한국어",
     },
   },
+  theme: {
+    ariaLabel: "表示モードを選択",
+    options: {
+      light: "ライトモード",
+      dark: "ダークモード",
+    },
+  },
   navigation: {
     label: "作業セクション",
     project: "プロジェクト",

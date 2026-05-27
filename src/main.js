@@ -168,6 +168,24 @@ const GLOBE_ICON_MARKUP = `
     <path d="M12 3a13.5 13.5 0 0 0 0 18" />
   </svg>
 `;
+const SUN_ICON_MARKUP = `
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2" />
+    <path d="M12 20v2" />
+    <path d="m4.93 4.93 1.41 1.41" />
+    <path d="m17.66 17.66 1.41 1.41" />
+    <path d="M2 12h2" />
+    <path d="M20 12h2" />
+    <path d="m6.34 17.66-1.41 1.41" />
+    <path d="m19.07 4.93-1.41 1.41" />
+  </svg>
+`;
+const MOON_ICON_MARKUP = `
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M20.99 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.78 9.79Z" />
+  </svg>
+`;
 const EXPORT_ICON_MARKUP = Object.freeze({
   file: `
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -286,6 +304,7 @@ let pendingVisibleTopFieldActiveField = null;
 const textDecoder = new TextDecoder();
 const supportsUiViewTransitions = typeof document.startViewTransition === "function";
 const reduceMotionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+const themePreferenceQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
 const FIELD_GROUP_COLLAPSE_ANIMATION_ID = "field-group-collapse";
 const FIELD_GROUP_COLLAPSE_GAP_ANIMATION_ID = "field-group-collapse-gap";
 const FIELD_GROUP_COLLAPSE_ANIMATION_DURATION_MS = 220;
@@ -293,6 +312,7 @@ const FIELD_GROUP_COLLAPSE_ANIMATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 const CHECKBOX_TOGGLE_COMMIT_DELAY_MS = 190;
 const FIELD_UI_SYNC_DELAY_MS = 80;
 const ACTIVE_PROJECT_SYNC_DELAY_MS = 900;
+const THEME_SWITCH_ANIMATION_DURATION_MS = 260;
 const PROJECT_KEYCAP_REORDER_ANIMATION_ID = "project-keycap-reorder";
 const PROJECT_KEYCAP_REORDER_ANIMATION_DURATION_MS = 180;
 const PROJECT_KEYCAP_REORDER_ANIMATION_EASING = "cubic-bezier(0.2, 0, 0, 1)";
@@ -301,6 +321,8 @@ const DEFAULT_KEY_UNIT_MM = 18;
 const KEY_UNIT_MIN_MM = 1;
 const KEY_UNIT_STORAGE_KEY = "keycap-maker:key-unit-mm";
 const KEY_UNIT_FIELD_KEY = "keyUnitMm";
+const THEME_STORAGE_KEY = "keycap-maker:theme";
+const THEME_OPTIONS = Object.freeze(["light", "dark"]);
 const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
@@ -470,6 +492,41 @@ function saveKeyUnitMmPreference(value) {
   try {
     window.localStorage?.setItem(KEY_UNIT_STORAGE_KEY, `${sanitizeKeyUnitMm(value)}`);
   } catch {}
+}
+
+function normalizeTheme(value) {
+  return THEME_OPTIONS.includes(value) ? value : null;
+}
+
+function getSystemTheme() {
+  return themePreferenceQuery?.matches ? "dark" : "light";
+}
+
+function readThemePreference() {
+  try {
+    return normalizeTheme(window.localStorage?.getItem(THEME_STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function getInitialTheme() {
+  return readThemePreference() ?? getSystemTheme();
+}
+
+function setThemePreference(theme) {
+  const nextTheme = normalizeTheme(theme) ?? getSystemTheme();
+  try {
+    window.localStorage?.setItem(THEME_STORAGE_KEY, nextTheme);
+  } catch {}
+
+  return nextTheme;
+}
+
+function applyTheme(theme) {
+  const nextTheme = normalizeTheme(theme) ?? getSystemTheme();
+  document.documentElement.dataset.theme = nextTheme;
+  document.documentElement.style.colorScheme = nextTheme;
 }
 
 function getKeyUnitMm() {
@@ -2463,9 +2520,11 @@ function getShapeProfileVisibleFieldKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY)
 }
 
 const initialLocale = getInitialLocale();
+const initialTheme = getInitialTheme();
 
 const state = {
   locale: initialLocale,
+  theme: initialTheme,
   isLanguageMenuOpen: false,
   exportsStatus: "idle",
   exportsSummary: translate(initialLocale, "status.notGenerated"),
@@ -2494,6 +2553,7 @@ const state = {
 };
 
 syncDerivedKeycapParams(state.keycapParams);
+applyTheme(state.theme);
 
 if (!app) {
   throw new Error(t("errors.appRootMissing"));
@@ -2731,7 +2791,7 @@ function configureColoris() {
     alpha: false,
     format: "hex",
     theme: "pill",
-    themeMode: "light",
+    themeMode: state.theme,
     wrap: false,
     margin: 8,
     closeButton: true,
@@ -2825,7 +2885,10 @@ function renderShell() {
         </div>
       </div>
       <div data-keycap-export-overlay-root></div>
-      <div class="language-control" data-language-control></div>
+      <div class="app-top-controls">
+        <div class="theme-control" data-theme-control></div>
+        <div class="language-control" data-language-control></div>
+      </div>
       <section class="editor-screen">
         <aside class="left-column">
           <div class="mobile-inspector-shell">
@@ -2877,6 +2940,7 @@ function renderShell() {
 
   app.querySelector("[data-keycap-export-overlay-root]")?.addEventListener("click", handleKeycapExportOverlayClick);
   app.querySelector("[data-segment-control]")?.addEventListener("click", handleSegmentControlClick);
+  app.querySelector("[data-theme-control]")?.addEventListener("click", handleThemeControlClick);
   app.querySelector("[data-language-control]")?.addEventListener("click", handleLanguageControlClick);
   app.querySelector("[data-mobile-inspector-toggle]")?.addEventListener("click", handleMobileInspectorToggleClick);
   app.querySelector(".inspector-card")?.addEventListener("click", handleInspectorCardClick);
@@ -2891,6 +2955,7 @@ function renderShell() {
   app.querySelector(".inspector-card")?.addEventListener("dragend", handleInspectorCardDragEnd);
   attachEditorDataDropListeners();
   renderPersistentShellCopy();
+  renderThemeControl();
   renderLanguageControl();
   syncImportDropOverlay();
   renderPreviewViewer();
@@ -2930,6 +2995,81 @@ function renderPersistentShellCopy() {
 
   app.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
     element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+  });
+}
+
+function renderThemeControl() {
+  const container = app.querySelector("[data-theme-control]");
+  if (!container) {
+    return;
+  }
+
+  const activeThemeIndex = Math.max(THEME_OPTIONS.indexOf(state.theme), 0);
+  const buttons = THEME_OPTIONS.map((theme) => {
+    const isSelected = theme === state.theme;
+    const iconMarkup = theme === "light" ? SUN_ICON_MARKUP : MOON_ICON_MARKUP;
+    const label = t(`theme.options.${theme}`);
+
+    return `
+      <button
+        class="theme-switch__button ${isSelected ? "is-selected" : ""}"
+        type="button"
+        data-theme-option="${theme}"
+        aria-label="${escapeHtml(label)}"
+        aria-pressed="${isSelected ? "true" : "false"}"
+        title="${escapeHtml(label)}"
+      >
+        <span class="theme-switch__icon" aria-hidden="true">${iconMarkup}</span>
+      </button>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <div
+      class="theme-switch"
+      role="group"
+      aria-label="${escapeHtml(t("theme.ariaLabel"))}"
+      style="--theme-index: ${activeThemeIndex};"
+    >
+      <span class="theme-switch__indicator" aria-hidden="true"></span>
+      ${buttons}
+    </div>
+  `;
+}
+
+function syncThemeControl({ animate = false } = {}) {
+  const themeSwitch = app.querySelector(".theme-switch");
+  if (!themeSwitch) {
+    renderThemeControl();
+    return;
+  }
+
+  const activeThemeIndex = Math.max(THEME_OPTIONS.indexOf(state.theme), 0);
+  themeSwitch.style.setProperty("--theme-index", `${activeThemeIndex}`);
+  themeSwitch.setAttribute("aria-label", t("theme.ariaLabel"));
+
+  if (animate && !reduceMotionQuery?.matches) {
+    themeSwitch.classList.remove("is-switching");
+    void themeSwitch.offsetWidth;
+    themeSwitch.classList.add("is-switching");
+    window.setTimeout(() => {
+      themeSwitch.classList.remove("is-switching");
+      themeSwitch
+        .querySelectorAll(".theme-switch__button.is-activating")
+        .forEach((button) => button.classList.remove("is-activating"));
+    }, THEME_SWITCH_ANIMATION_DURATION_MS);
+  }
+
+  themeSwitch.querySelectorAll("[data-theme-option]").forEach((button) => {
+    const theme = button.dataset.themeOption;
+    const isSelected = theme === state.theme;
+    const label = t(`theme.options.${theme}`);
+
+    button.classList.toggle("is-selected", isSelected);
+    button.classList.toggle("is-activating", animate && isSelected && !reduceMotionQuery?.matches);
+    button.setAttribute("aria-label", label);
+    button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    button.setAttribute("title", label);
   });
 }
 
@@ -3007,8 +3147,10 @@ function render(options = {}) {
   renderShell();
 
   const applyUpdate = () => {
+    applyTheme(state.theme);
     renderLayout();
     renderPersistentShellCopy();
+    renderThemeControl();
     renderLanguageControl();
     renderSegmentControl();
     renderInspectorPanel();
@@ -4893,6 +5035,23 @@ function handleLanguageControlClick(event) {
   render();
 }
 
+function handleThemeControlClick(event) {
+  const optionButton = getClosestFromEventTarget(event, "[data-theme-option]");
+  if (!optionButton) {
+    return;
+  }
+
+  const nextTheme = normalizeTheme(optionButton.dataset.themeOption);
+  if (!nextTheme || nextTheme === state.theme) {
+    return;
+  }
+
+  state.theme = setThemePreference(nextTheme);
+  applyTheme(state.theme);
+  syncThemeControl({ animate: true });
+  configureColoris();
+}
+
 function handleSegmentControlClick(event) {
   const button = getClosestFromEventTarget(event, "[data-sidebar-tab]");
   if (!button) {
@@ -5840,6 +5999,22 @@ function handleViewportResize() {
       window.Coloris.updatePosition();
     } catch (error) {}
   }
+}
+
+function handleSystemThemeChange() {
+  if (readThemePreference()) {
+    return;
+  }
+
+  const nextTheme = getSystemTheme();
+  if (nextTheme === state.theme) {
+    return;
+  }
+
+  state.theme = nextTheme;
+  applyTheme(state.theme);
+  syncThemeControl({ animate: true });
+  configureColoris();
 }
 
 function escapeHtml(value) {
@@ -8213,6 +8388,12 @@ window.visualViewport?.addEventListener("resize", handleViewportResize);
 window.visualViewport?.addEventListener("scroll", handleViewportResize, { passive: true });
 window.addEventListener("pointerdown", handleWindowPointerDown, true);
 window.addEventListener("keydown", handleWindowKeydown);
+
+if (typeof themePreferenceQuery?.addEventListener === "function") {
+  themePreferenceQuery.addEventListener("change", handleSystemThemeChange);
+} else if (typeof themePreferenceQuery?.addListener === "function") {
+  themePreferenceQuery.addListener(handleSystemThemeChange);
+}
 
 executeKeycapPreview({ silent: true });
 

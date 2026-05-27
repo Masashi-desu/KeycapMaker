@@ -10,6 +10,13 @@ const ko = Object.freeze({
       ko: "한국어",
     },
   },
+  theme: {
+    ariaLabel: "표시 모드 선택",
+    options: {
+      light: "라이트 모드",
+      dark: "다크 모드",
+    },
+  },
   navigation: {
     label: "작업 섹션",
     project: "프로젝트",
