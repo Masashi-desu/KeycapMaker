@@ -10,6 +10,13 @@ const zh = Object.freeze({
       ko: "한국어",
     },
   },
+  theme: {
+    ariaLabel: "选择显示模式",
+    options: {
+      light: "浅色模式",
+      dark: "深色模式",
+    },
+  },
   navigation: {
     label: "工作区部分",
     project: "项目",
