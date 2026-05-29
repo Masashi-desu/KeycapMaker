@@ -266,6 +266,7 @@ const KEY_DEPTH_BASIS_ICON_PATH = "icons/parameters/key-depth-basis.svg?v=rough-
 const KEY_WALL_THICKNESS_ICON_PATH = "icons/parameters/key-wall-thickness.svg?v=rough-a";
 const KEY_TOP_TAPER_ICON_PATH = "icons/parameters/key-top-taper.svg?v=rough-a";
 const KEYCAP_EDGE_RADIUS_ICON_PATH = "icons/parameters/keycap-edge-radius.svg?v=vtracer-f";
+const KEYCAP_SHOULDER_RADIUS_ICON_PATH = "icons/parameters/keycap-shoulder-radius.svg?v=vtracer-a";
 const KEY_TOP_CENTER_HEIGHT_ICON_PATH = "icons/parameters/key-top-center-height.svg?v=rough-a";
 const KEY_TOP_OFFSET_ICON_PATH = "icons/parameters/key-top-offset.svg?v=rough-e";
 const KEY_TOP_SURFACE_SHAPE_ICON_PATH = "icons/parameters/key-top-surface-shape.svg?v=rough-c";
@@ -2708,6 +2709,10 @@ function renderKeycapEdgeRadiusIcon() {
   return renderFieldLeadingIcon(KEYCAP_EDGE_RADIUS_ICON_PATH);
 }
 
+function renderKeycapShoulderRadiusIcon() {
+  return renderFieldLeadingIcon(KEYCAP_SHOULDER_RADIUS_ICON_PATH);
+}
+
 function renderKeyTopCenterHeightIcon() {
   return renderFieldLeadingIcon(KEY_TOP_CENTER_HEIGHT_ICON_PATH);
 }
@@ -4943,7 +4948,9 @@ function renderField(field, options = {}) {
         ? renderKeyTopTaperIcon()
         : field.key === "keycapEdgeRadius"
           ? renderKeycapEdgeRadiusIcon()
-          : "";
+          : field.key === "keycapShoulderRadius"
+            ? renderKeycapShoulderRadiusIcon()
+            : "";
   const numberIconClassName = leadingIcon ? `${getLeadingIconFieldClassName(leadingIcon)} field--single-number` : "";
 
   if (canRenderFieldSlider(sliderAttributes)) {
