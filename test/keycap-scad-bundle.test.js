@@ -919,6 +919,8 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
         topHatHeight: 1.1,
         topHatShoulderAngle: 50,
         topHatShoulderRadius: 0.7,
+        topHatSurfaceShape: "cylindrical",
+        topHatDishDepth: 0.5,
       },
     });
     const recessedFiles = await bundle.createKeycapFiles({
@@ -941,6 +943,8 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
         topHatHeight: 1.2,
         topHatShoulderAngle: 55,
         topHatShoulderRadius: 0.5,
+        topHatSurfaceShape: "spherical",
+        topHatDishDepth: 0.8,
       },
     });
     const customJobScad = customFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
@@ -965,8 +969,12 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_height"), 1.1);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_shoulder_angle"), 50);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_shoulder_radius"), 0.7);
+    assert.equal(readRawScadDefinition(customJobScad, "user_top_hat_shape_type"), "\"cylindrical\"");
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_dish_depth"), 0.5);
     assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_height"), -0.8);
     assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_shoulder_radius"), -0.4);
+    assert.equal(readRawScadDefinition(recessedJobScad, "user_top_hat_shape_type"), "\"flat\"");
+    assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_dish_depth"), 0);
     assert.match(jisJobScad, /^user_shape_geometry_type = "jis_enter";/m);
     assert.match(jisJobScad, /^user_top_hat_enabled = true;/m);
     assert.equal(readScadDefinition(jisJobScad, "user_top_hat_inset"), 2.2);
@@ -979,6 +987,8 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
     assert.equal(readScadDefinition(jisJobScad, "user_top_hat_height"), 1.2);
     assert.equal(readScadDefinition(jisJobScad, "user_top_hat_shoulder_angle"), 55);
     assert.equal(readScadDefinition(jisJobScad, "user_top_hat_shoulder_radius"), 0.5);
+    assert.equal(readRawScadDefinition(jisJobScad, "user_top_hat_shape_type"), "\"spherical\"");
+    assert.equal(readScadDefinition(jisJobScad, "user_top_hat_dish_depth"), 0.8);
   } finally {
     await server.close();
     restoreBrowserMocks();

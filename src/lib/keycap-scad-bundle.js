@@ -105,6 +105,8 @@ const TOP_SCALE_MIN_FACE_SIZE = 0.2;
 const DISH_DEPTH_STEP = 0.05;
 const DISH_REFERENCE_UNIT = 18;
 const TOP_THICKNESS_MIN = 0.05;
+const TOP_HAT_MIN_SIZE = 0.2;
+const TOP_SURFACE_SHAPE_VALUES = new Set(["flat", "cylindrical", "spherical"]);
 const LEGEND_FONT_MEASURE_CANVAS = typeof document === "undefined" ? null : document.createElement("canvas");
 const fontBinaryPromises = new Map();
 const fontMetadataPromises = new Map();
@@ -301,6 +303,55 @@ function getDishDepthMax(params = {}, topSurfaceShape = params.topSurfaceShape ?
 function clampDishDepth(value, params = {}, topSurfaceShape = params.topSurfaceShape ?? "flat") {
   const nextValue = Number(value);
   const maximum = getDishDepthMax(params, topSurfaceShape);
+  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : 0, 0), maximum);
+}
+
+function resolveTopSurfaceShape(value, fallback = "flat") {
+  if (TOP_SURFACE_SHAPE_VALUES.has(value)) {
+    return value;
+  }
+
+  return TOP_SURFACE_SHAPE_VALUES.has(fallback) ? fallback : "flat";
+}
+
+function resolveTopHatSurfaceFootprint(params = {}) {
+  const footprint = resolveDishLimitTopFootprint(params);
+  const width = Math.max(footprint.right - footprint.left, TOP_HAT_MIN_SIZE);
+  const depth = Math.max(footprint.back - footprint.front, TOP_HAT_MIN_SIZE);
+  const geometryType = resolveShapeGeometryType(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
+
+  if (geometryType === "jis_enter") {
+    const inset = Math.min(Math.max(numberOr(params.topHatInset, 2.0), 0), Math.max(Math.min(width, depth) / 2, 0));
+    return {
+      width: Math.max(width - inset * 2, TOP_HAT_MIN_SIZE),
+      depth: Math.max(depth - inset * 2, TOP_HAT_MIN_SIZE),
+    };
+  }
+
+  return {
+    width: Math.min(Math.max(numberOr(params.topHatTopWidth, 10.5), TOP_HAT_MIN_SIZE), width),
+    depth: Math.min(Math.max(numberOr(params.topHatTopDepth, 9.5), TOP_HAT_MIN_SIZE), depth),
+  };
+}
+
+function getTopHatDishDepthMax(params = {}, topHatSurfaceShape = params.topHatSurfaceShape ?? "flat") {
+  const resolvedShape = resolveTopSurfaceShape(topHatSurfaceShape, "flat");
+  if (resolvedShape === "flat") {
+    return 0;
+  }
+
+  const footprint = resolveTopHatSurfaceFootprint(params);
+  const xRadius = (footprint.width / 2) / dishAxisScale(footprint.width);
+  const yRadius = (footprint.depth / 2) / dishAxisScale(footprint.depth);
+  const radialSq = resolvedShape === "cylindrical"
+    ? xRadius * xRadius
+    : (xRadius * xRadius) + (yRadius * yRadius);
+  return floorToNumericStep(dishSagFromRadialSq(radialSq, params.dishRadius), DISH_DEPTH_STEP, 0);
+}
+
+function clampTopHatDishDepth(value, params = {}, topHatSurfaceShape = params.topHatSurfaceShape ?? "flat") {
+  const nextValue = Number(value);
+  const maximum = getTopHatDishDepthMax(params, topHatSurfaceShape);
   return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : 0, 0), maximum);
 }
 
@@ -880,6 +931,11 @@ async function createKeycapDefinitions({ params, exportTarget }) {
   const dishDepth = topSurfaceShape === "flat" || !Number.isFinite(requestedDishDepth)
     ? 0
     : clampDishDepth(requestedDishDepth, params, topSurfaceShape);
+  const topHatSurfaceShape = resolveTopSurfaceShape(params.topHatSurfaceShape, "flat");
+  const requestedTopHatDishDepth = Number(params.topHatDishDepth ?? 0);
+  const topHatDishDepth = topHatSurfaceShape === "flat" || !Number.isFinite(requestedTopHatDishDepth)
+    ? 0
+    : clampTopHatDishDepth(requestedTopHatDishDepth, params, topHatSurfaceShape);
   const shapeGeometry = resolveShapeGeometryParameters({ ...params, dishDepth });
   const topHatTopRadius = Math.max(numberOr(params.topHatTopRadius, 1.8), 0);
   const topHatTopRadiusIndividualEnabled = Boolean(params.topHatTopRadiusIndividualEnabled);
@@ -971,6 +1027,9 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_hat_height: numberOr(params.topHatHeight, 1.4),
     user_top_hat_shoulder_angle: Math.min(Math.max(numberOr(params.topHatShoulderAngle, 45), 5), 85),
     user_top_hat_shoulder_radius: numberOr(params.topHatShoulderRadius, 0),
+    user_top_hat_shape_type: topHatSurfaceShape,
+    user_top_hat_dish_radius: params.dishRadius,
+    user_top_hat_dish_depth: topHatDishDepth,
     user_rim_enabled: Boolean(params.rimEnabled),
     user_rim_width: Math.max(Number(params.rimWidth ?? 0), 0),
     user_rim_height_up: Math.max(Number(params.rimHeightUp ?? 0), 0),

@@ -380,6 +380,16 @@ const en = Object.freeze({
       label: "Add Top Hat",
       hint: "Add a smaller independently shaped keytop above the existing keytop.",
     },
+    topHatSurfaceShape: {
+      label: "Top Hat Surface",
+      hint: "Shape only for the top-hat surface, independent from the main keytop surface.",
+    },
+    topHatDishDepth: {
+      label: "Top Hat Depth",
+      cylindricalHint: "Use 0 through the current maximum {maxDepth} for a one-direction recess on the top hat.",
+      sphericalHint: "Use 0 through the current maximum {maxDepth} for a bowl-shaped recess on the top hat.",
+      flatHint: "This has no effect when flat is selected.",
+    },
     topHatTopWidth: {
       label: "Top Width",
       hint: "Width of the added keytop's top surface. Current maximum: {maxWidth}.",

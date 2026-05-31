@@ -380,6 +380,16 @@ const ko = Object.freeze({
       label: "탑햇 추가",
       hint: "기존 키톱 위에 별도 형상의 작은 키톱을 추가합니다.",
     },
+    topHatSurfaceShape: {
+      label: "탑햇 형상",
+      hint: "일반 키톱 형상과 별도로 설정하는 탑햇 상면 형상입니다.",
+    },
+    topHatDishDepth: {
+      label: "탑햇 깊이",
+      cylindricalHint: "0 이상 현재 최댓값 {maxDepth} 이하로 탑햇 상면에 한 방향의 오목함을 만듭니다.",
+      sphericalHint: "0 이상 현재 최댓값 {maxDepth} 이하로 탑햇 상면에 그릇 모양의 오목함을 만듭니다.",
+      flatHint: "평면에서는 적용되지 않습니다.",
+    },
     topHatTopWidth: {
       label: "상면 가로폭",
       hint: "추가 키톱 상면의 가로폭입니다. 현재 최대값은 {maxWidth}입니다.",

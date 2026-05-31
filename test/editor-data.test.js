@@ -515,6 +515,8 @@ test("トップハットはキートップから独立したカードで天面�
   assert.notEqual(jisTopHatGroup, undefined);
   assert.deepEqual(jisTopHatGroup.fieldKeys, [
     "topHatEnabled",
+    "topHatSurfaceShape",
+    "topHatDishDepth",
     "topHatInset",
     "topHatTopRadius",
     "topHatBottomRadius",
@@ -749,6 +751,13 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
     topHatHeight: 20,
     topHatShoulderRadius: 99,
   });
+  const curvedTopHat = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topSurfaceShape: "flat",
+    topHatEnabled: true,
+    topHatSurfaceShape: "spherical",
+    topHatDishDepth: 0.8,
+  });
   const jisEnterDefaults = createDefaultKeycapParams("jis-enter");
 
   assert.equal(wideTopHat.topHatEnabled, true);
@@ -789,6 +798,11 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
   assert.equal(jisTopHat.topHatTopRadiusLeftTop, jisTopHat.topHatTopRadius);
   assert.ok(jisTopHat.topHatHeight < 20);
   assert.ok(jisTopHat.topHatShoulderRadius <= jisTopHat.topHatInset);
+  assert.equal(curvedTopHat.topSurfaceShape, "flat");
+  assert.equal(curvedTopHat.topHatSurfaceShape, "spherical");
+  assert.equal(curvedTopHat.topHatDishDepth, 0.8);
+  assert.equal(jisEnterDefaults.topHatSurfaceShape, "flat");
+  assert.equal(jisEnterDefaults.topHatDishDepth, 0);
   assert.equal(jisEnterDefaults.topHatEnabled, false);
 });
 

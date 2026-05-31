@@ -380,6 +380,16 @@ const zh = Object.freeze({
       label: "添加 Top Hat",
       hint: "在现有键顶上添加一个可独立设置形状的小键顶。",
     },
+    topHatSurfaceShape: {
+      label: "Top Hat 形状",
+      hint: "仅用于 top hat 上表面的形状，与普通键顶形状独立设置。",
+    },
+    topHatDishDepth: {
+      label: "Top Hat 深度",
+      cylindricalHint: "使用 0 到当前最大值 {maxDepth} 的值，让 top hat 上表面形成单方向凹陷。",
+      sphericalHint: "使用 0 到当前最大值 {maxDepth} 的值，让 top hat 上表面形成碗状凹陷。",
+      flatHint: "平面时此项不起作用。",
+    },
     topHatTopWidth: {
       label: "上面宽度",
       hint: "追加键顶上表面的宽度。当前最大值为 {maxWidth}。",

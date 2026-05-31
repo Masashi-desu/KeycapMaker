@@ -24,6 +24,7 @@ import {
   deleteEditorDataPayloadPath,
   createInitialKeycapParams,
   getDishDepthMax,
+  getTopHatDishDepthMax,
   getTopSurfaceShapePreset,
   listEditableParamKeys,
   mergeEditorDataPayloadParams,
@@ -914,6 +915,8 @@ const GEOMETRY_TYPE_RESET_FIELDS = new Set([
   "topSurfaceShape",
   "dishRadius",
   "dishDepth",
+  "topHatSurfaceShape",
+  "topHatDishDepth",
   "typewriterCornerRadius",
   "typewriterMountHeight",
 ]);
@@ -1256,6 +1259,10 @@ function getTopSurfaceShapeHint() {
   return t("fields.topSurfaceShape.hint");
 }
 
+function getTopHatSurfaceShapeHint() {
+  return t("fields.topHatSurfaceShape.hint");
+}
+
 function floorToNumericStep(value, step, base = 0) {
   const numericValue = Number(value);
   const numericStep = Number(step);
@@ -1343,6 +1350,19 @@ function getDishDepthHint(params) {
   }
 
   return t("fields.dishDepth.flatHint");
+}
+
+function getTopHatDishDepthHint(params) {
+  const values = { maxDepth: formatMillimeter(getTopHatDishDepthMax(params)) };
+  if (params.topHatSurfaceShape === "cylindrical") {
+    return t("fields.topHatDishDepth.cylindricalHint", values);
+  }
+
+  if (params.topHatSurfaceShape === "spherical") {
+    return t("fields.topHatDishDepth.sphericalHint", values);
+  }
+
+  return t("fields.topHatDishDepth.flatHint");
 }
 
 function getTopHatFootprintLimits(params = state.keycapParams) {
@@ -1953,6 +1973,8 @@ const fieldGroupTemplates = [
         hint: () => t("fields.topHatEnabled.hint"),
         type: "checkbox",
         dependentFieldKeys: [
+          "topHatSurfaceShape",
+          "topHatDishDepth",
           "topHatTopWidth",
           "topHatTopDepth",
           "topHatBottomWidth",
@@ -1964,6 +1986,24 @@ const fieldGroupTemplates = [
           "topHatShoulderAngle",
           "topHatShoulderRadius",
         ],
+      },
+      {
+        key: "topHatSurfaceShape",
+        label: () => t("fields.topHatSurfaceShape.label"),
+        hint: () => getTopHatSurfaceShapeHint(),
+        type: "select",
+        options: TOP_SURFACE_SHAPE_OPTIONS,
+        visibleWhen: (params) => params.topHatEnabled,
+      },
+      {
+        key: "topHatDishDepth",
+        label: () => t("fields.topHatDishDepth.label"),
+        hint: (params) => getTopHatDishDepthHint(params),
+        unit: "mm",
+        step: 0.05,
+        min: 0,
+        max: (params) => getTopHatDishDepthMax(params),
+        visibleWhen: (params) => params.topHatEnabled && params.topHatSurfaceShape !== "flat",
       },
       {
         key: "topHatTopWidth",
@@ -4063,7 +4103,7 @@ function renderFieldWithDependentFields(field, dependentFields, fieldByKey = nul
   const fieldOptions = resolveFieldOptions(field);
   const isDisabled = isFieldDisabled(field);
   const inputId = `field-control-${field.key}`;
-  const leadingIcon = field.key === "topSurfaceShape"
+  const leadingIcon = field.key === "topSurfaceShape" || field.key === "topHatSurfaceShape"
     ? renderKeyTopSurfaceShapeIcon()
     : field.key === "topSlopeInputMode"
       ? renderKeyTopSlopeInputModeIcon()
@@ -4216,6 +4256,10 @@ function formatSliderFieldValue(fieldKey, value, sliderAttributes) {
 function resolveStandardFieldSliderGuideValue(fieldKey, params = state.keycapParams) {
   if (fieldKey === "dishDepth") {
     return getTopSurfaceShapePreset(params.topSurfaceShape ?? "flat").dishDepth;
+  }
+
+  if (fieldKey === "topHatDishDepth") {
+    return getTopSurfaceShapePreset(params.topHatSurfaceShape ?? "flat").dishDepth;
   }
 
   if (isTopEdgeHeightField(fieldKey)) {
@@ -7333,6 +7377,7 @@ const TOP_LIVE_FIELD_KEYS = new Set([
   "keycapEdgeRadius",
   "keycapShoulderRadius",
   "typewriterMountHeight",
+  "topHatDishDepth",
   "topHatTopWidth",
   "topHatTopDepth",
   "topHatBottomWidth",
@@ -7760,6 +7805,11 @@ function applyTopSurfaceShapePreset(surfaceShape) {
   state.keycapParams.dishDepth = preset.dishDepth;
 }
 
+function applyTopHatSurfaceShapePreset(surfaceShape) {
+  const preset = getTopSurfaceShapePreset(surfaceShape);
+  state.keycapParams.topHatDishDepth = preset.dishDepth;
+}
+
 function findCornerRadiusFieldSetByIndividualField(fieldKey) {
   return CORNER_RADIUS_FIELD_SETS.find((fieldSet) => fieldSet.individualFieldKey === fieldKey);
 }
@@ -7849,6 +7899,8 @@ function handleFieldChange(event) {
       state.keycapParams[field] = input.value;
       if (field === "topSurfaceShape") {
         applyTopSurfaceShapePreset(input.value);
+      } else if (field === "topHatSurfaceShape") {
+        applyTopHatSurfaceShapePreset(input.value);
       }
     }
   } else if (fieldConfig?.type === "color") {
@@ -7939,6 +7991,7 @@ function handleFieldChange(event) {
     || field === "rimEnabled"
     || field === "topHatEnabled"
     || field === "topSurfaceShape"
+    || field === "topHatSurfaceShape"
     || field === "topSlopeInputMode"
     || EDITOR_SELECTOR_KEYS.includes(field);
 
@@ -7965,6 +8018,7 @@ function handleFieldChange(event) {
     syncOrQueueFieldHint("topHatTopWidth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatBottomWidth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatInset", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatDishDepth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatTopRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatShoulderRadius", {}, deferContinuousSync);
@@ -7984,6 +8038,7 @@ function handleFieldChange(event) {
     syncOrQueueFieldHint("topHatTopDepth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatBottomDepth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatInset", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatDishDepth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatTopRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatShoulderRadius", {}, deferContinuousSync);
@@ -8000,6 +8055,7 @@ function handleFieldChange(event) {
     syncOrQueueFieldHint("typewriterCornerRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("rimWidth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatInset", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatDishDepth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatTopRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatHeight", {}, deferContinuousSync);
@@ -8023,6 +8079,7 @@ function handleFieldChange(event) {
     syncOrQueueFieldHint("topHatBottomWidth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatBottomDepth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatInset", {}, deferContinuousSync);
+    syncOrQueueFieldHint("topHatDishDepth", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatTopRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatHeight", {}, deferContinuousSync);
@@ -8032,6 +8089,10 @@ function handleFieldChange(event) {
   if (field === "topHatHeight") {
     syncOrQueueFieldHint("topHatBottomRadius", {}, deferContinuousSync);
     syncOrQueueFieldHint("topHatShoulderRadius", {}, deferContinuousSync);
+  }
+
+  if (field === "topHatSurfaceShape") {
+    syncOrQueueFieldHint("topHatDishDepth", {}, deferContinuousSync);
   }
 
   if (!deferPreview && field !== "topSlopeInputMode") {

@@ -463,6 +463,41 @@ function getTopHatUsableFootprintLimits(params = {}) {
   };
 }
 
+function getTopHatSurfaceFootprint(params = {}) {
+  if (isJisEnterTopHatGeometry(params) && ("topHatInset" in params)) {
+    const limits = getTopHatFootprintLimits(params);
+    const inset = clampTopHatInset(params.topHatInset, params, params.topHatInset);
+    return {
+      width: Math.max(limits.width - inset * 2, TOP_HAT_MIN_SIZE),
+      depth: Math.max(limits.depth - inset * 2, TOP_HAT_MIN_SIZE),
+    };
+  }
+
+  return {
+    width: clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth),
+    depth: clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth),
+  };
+}
+
+export function getTopHatDishDepthMax(params = {}, topHatSurfaceShape = params.topHatSurfaceShape ?? "flat") {
+  const resolvedShape = resolveTopSurfaceShape(topHatSurfaceShape, "flat");
+  if (resolvedShape === "flat") {
+    return 0;
+  }
+
+  const footprint = getTopHatSurfaceFootprint(params);
+  const xRadius = (footprint.width / 2) / dishAxisScale(footprint.width);
+  const yRadius = (footprint.depth / 2) / dishAxisScale(footprint.depth);
+  const radialSq = resolvedShape === "cylindrical"
+    ? xRadius * xRadius
+    : (xRadius * xRadius) + (yRadius * yRadius);
+  return floorToNumericStep(dishSagFromRadialSq(radialSq, params.dishRadius), DISH_DEPTH_STEP, 0);
+}
+
+function clampTopHatDishDepth(value, params = {}, fallback = 0) {
+  return clampNumberRange(value, fallback, 0, getTopHatDishDepthMax(params));
+}
+
 function getJisEnterTopHatInsetMax(params = {}) {
   const limits = getTopHatFootprintLimits(params);
   const notchWidth = Math.min(Math.max(Number(params.jisEnterNotchWidth ?? 0), 0), Math.max(limits.width - TOP_HAT_MIN_SIZE, 0));
@@ -964,6 +999,13 @@ export function syncDerivedKeycapParams(params = {}) {
     if ("topHatBottomDepth" in defaults || "topHatBottomDepth" in params) {
       params.topHatBottomDepth = clampTopHatBottomDepth(params.topHatBottomDepth, params, defaults.topHatBottomDepth ?? params.topHatTopDepth);
     }
+    params.topHatSurfaceShape = resolveTopSurfaceShape(
+      params.topHatSurfaceShape,
+      resolveTopSurfaceShape(defaults.topHatSurfaceShape, "flat"),
+    );
+    params.topHatDishDepth = params.topHatSurfaceShape === "flat"
+      ? 0
+      : clampTopHatDishDepth(params.topHatDishDepth, params, defaults.topHatDishDepth ?? 0);
     params.topHatHeight = clampTopHatHeight(params.topHatHeight, params, defaults.topHatHeight ?? 1.4);
     params.topHatShoulderRadius = clampTopHatShoulderRadius(params.topHatShoulderRadius, params, defaults.topHatShoulderRadius ?? 0);
     params.topHatTopRadius = clampTopHatTopRadius(params.topHatTopRadius, params, defaults.topHatTopRadius ?? 0);
@@ -1130,6 +1172,14 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "topHatBottomDepth") {
     return clampTopHatBottomDepth(value, paramsContext, fallback);
+  }
+
+  if (fieldKey === "topHatSurfaceShape") {
+    return resolveTopSurfaceShape(value, resolveTopSurfaceShape(fallback, "flat"));
+  }
+
+  if (fieldKey === "topHatDishDepth") {
+    return clampTopHatDishDepth(value, paramsContext, fallback);
   }
 
   if (fieldKey === "topHatTopRadius" || TOP_HAT_TOP_RADIUS_FIELD_KEYS.includes(fieldKey)) {

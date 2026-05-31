@@ -45,6 +45,7 @@
 - `samples/keycap-shoulder-rounded-hollow.scad`: custom shell の丸い shoulder と内側 hollow 追従確認用サンプル
 - `samples/keycap-shoulder-concave.scad`: custom shell のマイナス本体 shoulder R 確認用サンプル
 - `samples/keycap-top-hat.scad`: custom shell の top-hat キートップと底面R確認用サンプル
+- `samples/keycap-top-hat-spherical.scad`: custom shell の spherical top-hat 上面確認用サンプル
 - `samples/keycap-top-hat-top-radii.scad`: custom shell の top-hat 上面4隅R個別指定確認用サンプル
 - `samples/keycap-top-hat-recess.scad`: custom shell のマイナス高さ top-hat 凹み確認用サンプル
 - `samples/keycap-top-hat-rounded-shoulder.scad`: custom shell の top-hat shoulder R 確認用サンプル

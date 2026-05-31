@@ -380,6 +380,16 @@ const ja = Object.freeze({
       label: "トップハットを付ける",
       hint: "既存のキートップ上に、別形状の小さいキートップを追加します",
     },
+    topHatSurfaceShape: {
+      label: "トップハット形状",
+      hint: "トップハット上面だけの形状です。通常のキートップ形状とは別に設定します",
+    },
+    topHatDishDepth: {
+      label: "トップハットの深さ",
+      cylindricalHint: "0 以上、現在の最大 {maxDepth} までの値でトップハット上面を一方向に凹ませます",
+      sphericalHint: "0 以上、現在の最大 {maxDepth} までの値でトップハット上面を椀形に凹ませます",
+      flatHint: "フラットでは効きません",
+    },
     topHatTopWidth: {
       label: "上面の横幅",
       hint: "追加するキートップ上面の横幅です。現在の最大は {maxWidth} です",

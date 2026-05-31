@@ -206,6 +206,15 @@ top_hat_height = requested_top_hat_height < 0
     : requested_top_hat_height;
 top_hat_shoulder_angle = keycap_top_hat_safe_shoulder_angle(required_param(user_top_hat_shoulder_angle, "user_top_hat_shoulder_angle"));
 top_hat_shoulder_radius = keycap_top_hat_safe_shoulder_radius(required_param(user_top_hat_shoulder_radius, "user_top_hat_shoulder_radius"));
+requested_top_hat_shape_type = is_undef(user_top_hat_shape_type)
+    ? "flat"
+    : user_top_hat_shape_type;
+top_hat_shape_type = assert(
+    supported_top_shape_type(requested_top_hat_shape_type),
+    str("unsupported user_top_hat_shape_type: ", requested_top_hat_shape_type)
+) requested_top_hat_shape_type;
+requested_top_hat_dish_depth = is_undef(user_top_hat_dish_depth) ? 0 : user_top_hat_dish_depth;
+top_hat_dish_radius = positive_dimension(is_undef(user_top_hat_dish_radius) ? dish_radius : user_top_hat_dish_radius);
 top_hat_enabled = (shape_geometry_type == "shell" || shape_geometry_type == "jis_enter")
     && requested_top_hat_enabled
     && abs(top_hat_height) > 0.001;
@@ -220,11 +229,45 @@ top_hat_surface_z_shift = top_hat_enabled
         key_depth
     )
     : 0;
+top_hat_reference_left = shape_geometry_type == "jis_enter"
+    ? dish_limit_top_left + top_hat_inset
+    : -min(top_hat_top_width, dish_limit_top_right - dish_limit_top_left) / 2;
+top_hat_reference_right = shape_geometry_type == "jis_enter"
+    ? dish_limit_top_right - top_hat_inset
+    : min(top_hat_top_width, dish_limit_top_right - dish_limit_top_left) / 2;
+top_hat_reference_front = shape_geometry_type == "jis_enter"
+    ? dish_limit_top_front + top_hat_inset
+    : -min(top_hat_top_depth, dish_limit_top_back - dish_limit_top_front) / 2;
+top_hat_reference_back = shape_geometry_type == "jis_enter"
+    ? dish_limit_top_back - top_hat_inset
+    : min(top_hat_top_depth, dish_limit_top_back - dish_limit_top_front) / 2;
+top_hat_reference_width = positive_dimension(top_hat_reference_right - top_hat_reference_left, 0.2);
+top_hat_reference_depth = positive_dimension(top_hat_reference_back - top_hat_reference_front, 0.2);
+top_hat_dish_depth = top_hat_shape_type == "flat"
+    ? 0
+    : keycap_clamp_dish_depth(
+        top_hat_shape_type,
+        requested_top_hat_dish_depth,
+        top_hat_dish_radius,
+        top_hat_reference_left,
+        top_hat_reference_right,
+        top_hat_reference_front,
+        top_hat_reference_back,
+        top_hat_reference_width,
+        top_hat_reference_depth
+    );
 active_top_center_height = top_hat_enabled
     ? top_center_height + top_hat_surface_z_shift + top_hat_height
     : top_center_height;
-active_top_shape_type = top_hat_enabled ? "flat" : top_shape_type;
-active_dish_depth = top_hat_enabled ? 0 : dish_depth;
+active_top_shape_type = top_hat_enabled ? top_hat_shape_type : top_shape_type;
+active_dish_depth = top_hat_enabled ? top_hat_dish_depth : dish_depth;
+active_dish_radius = top_hat_enabled ? top_hat_dish_radius : dish_radius;
+active_dish_plan_width = top_hat_enabled ? top_hat_reference_width : key_width;
+active_dish_plan_depth = top_hat_enabled ? top_hat_reference_depth : key_depth;
+active_dish_start_left = top_hat_enabled ? top_hat_reference_left : dish_limit_top_left;
+active_dish_start_right = top_hat_enabled ? top_hat_reference_right : dish_limit_top_right;
+active_dish_start_front = top_hat_enabled ? top_hat_reference_front : dish_limit_top_front;
+active_dish_start_back = top_hat_enabled ? top_hat_reference_back : dish_limit_top_back;
 requested_rim_enabled = required_param(user_rim_enabled, "user_rim_enabled");
 rim_width = max(required_param(user_rim_width, "user_rim_width"), 0);
 rim_height_up = max(required_param(user_rim_height_up, "user_rim_height_up"), 0);
@@ -273,8 +316,8 @@ legend_below_surface = legend_surface_height == 0
     ? max(legend_embed, max(top_thickness - legend_bottom_skin, 0))
     : legend_embed;
 legend_total_height = max(legend_below_surface + legend_surface_height, 0);
-top_legend_anchor_width = top_hat_enabled ? top_hat_top_width : key_width;
-top_legend_anchor_depth = top_hat_enabled ? top_hat_top_depth : key_depth;
+top_legend_anchor_width = top_hat_enabled ? active_dish_plan_width : key_width;
+top_legend_anchor_depth = top_hat_enabled ? active_dish_plan_depth : key_depth;
 // Keep corner legend anchors on the outer reference; defaults can offset inward from here.
 top_legend_anchor_offset_ratio = 0.25;
 function top_legend_anchor_x(anchor) =
@@ -517,15 +560,15 @@ homing_bar_anchor_surface_z = keycap_surface_z(
     active_top_center_height,
     active_top_shape_type,
     active_dish_depth,
-    dish_radius,
+    active_dish_radius,
     top_pitch_deg,
     top_roll_deg,
-    key_width,
-    key_depth,
-    dish_limit_top_left,
-    dish_limit_top_right,
-    dish_limit_top_front,
-    dish_limit_top_back
+    active_dish_plan_width,
+    active_dish_plan_depth,
+    active_dish_start_left,
+    active_dish_start_right,
+    active_dish_start_front,
+    active_dish_start_back
 );
 homing_bar_anchor_plane_z = keycap_top_plane_height(
     0,
@@ -636,17 +679,17 @@ module keycap_top_legend_surface_volume(
                 top_center_height = active_top_center_height,
                 dish_type = active_top_shape_type,
                 dish_depth = active_dish_depth,
-                dish_radius = dish_radius,
+                dish_radius = active_dish_radius,
                 pitch_deg = top_pitch_deg,
                 roll_deg = top_roll_deg,
                 bottom_extra_z = -below_surface,
                 top_extra_z = surface_height + top_overlap,
-                dish_plan_width = key_width,
-                dish_plan_depth = key_depth,
-                dish_start_left = dish_limit_top_left,
-                dish_start_right = dish_limit_top_right,
-                dish_start_front = dish_limit_top_front,
-                dish_start_back = dish_limit_top_back,
+                dish_plan_width = active_dish_plan_width,
+                dish_plan_depth = active_dish_plan_depth,
+                dish_start_left = active_dish_start_left,
+                dish_start_right = active_dish_start_right,
+                dish_start_front = active_dish_start_front,
+                dish_start_back = active_dish_start_back,
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y
@@ -1112,6 +1155,9 @@ module keycap_body_shell_positive(quality = "export") {
             top_hat_height = top_hat_height,
             top_hat_shoulder_angle = top_hat_shoulder_angle,
             top_hat_shoulder_radius = top_hat_shoulder_radius,
+            top_hat_shape_type = top_hat_shape_type,
+            top_hat_dish_radius = top_hat_dish_radius,
+            top_hat_dish_depth = top_hat_dish_depth,
             pitch_deg = top_pitch_deg,
             roll_deg = top_roll_deg,
             quality = quality,
@@ -1148,6 +1194,9 @@ module keycap_body_shell_positive(quality = "export") {
             top_hat_height = top_hat_height,
             top_hat_shoulder_angle = top_hat_shoulder_angle,
             top_hat_shoulder_radius = top_hat_shoulder_radius,
+            top_hat_shape_type = top_hat_shape_type,
+            top_hat_dish_radius = top_hat_dish_radius,
+            top_hat_dish_depth = top_hat_dish_depth,
             pitch_deg = top_pitch_deg,
             roll_deg = top_roll_deg,
             quality = quality,
