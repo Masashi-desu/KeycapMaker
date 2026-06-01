@@ -191,11 +191,13 @@ pre {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  pointer-events: none;
 }
 
 .theme-control,
 .language-control {
   position: relative;
+  pointer-events: auto;
 }
 
 .theme-switch {
@@ -2723,6 +2725,20 @@ pre {
     overflow: hidden;
   }
 
+  .app-top-controls {
+    top: auto;
+    right: var(--shell-padding-right, 16px);
+    bottom: var(--shell-padding-bottom, 16px);
+    left: var(--shell-padding-left, 16px);
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .language-combobox__menu {
+    top: auto;
+    bottom: calc(100% + 8px);
+  }
+
   .editor-screen--stack .left-column,
   .editor-screen--stack .right-column {
     grid-column: 1;
@@ -2982,5 +2998,11 @@ pre {
   .preview-area,
   .preview-stage {
     min-height: 0;
+  }
+}
+
+@media (max-width: 340px) {
+  .language-combobox__label {
+    display: none;
   }
 }
