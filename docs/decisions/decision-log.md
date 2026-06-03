@@ -2,6 +2,15 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-06-03 - STEP export はブラウザ側で faceted B-rep を生成する
+
+- 結論:
+  個別書き出しに `STEP` を追加し、`single_material_shape` target の OFF メッシュからブラウザ側で STEP AP214 の `FACETED_BREP_SHAPE_REPRESENTATION` を生成する。色、legend、part 分離は保持せず、必要な場合は 3MF を使う
+- 理由:
+  同梱している OpenSCAD WASM runtime は native STEP export に対応していないが、GitHub Pages 前提とクライアントサイド完結を維持しながら CAD 交換用の `.step` を提供するため。faceted B-rep は OpenSCAD が生成したメッシュ品質に依存するが、STL より STEP を要求する製造・CAD 連携に対応できる
+- 関連:
+  [../architecture/scad-and-export.md](../architecture/scad-and-export.md)
+
 ## 2026-05-03 - dishDepth は凹み専用の非負値に戻す
 
 - 結論:

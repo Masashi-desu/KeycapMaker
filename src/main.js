@@ -35,6 +35,7 @@ import {
   syncDerivedKeycapParams,
 } from "./lib/editor-data.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
+import { createStepBlob } from "./lib/export-step.js";
 import { parseOff } from "./lib/off-parser.js";
 import {
   DEFAULT_PROJECT_NAME,
@@ -71,6 +72,7 @@ const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
+const keycapStepSourceOffPath = "/outputs/keycap-single-material-step.off";
 const keycapStlExportPath = "/outputs/keycap-single-material.stl";
 const TOP_LEGEND_CONFIGS = Object.freeze([
   {
@@ -3568,6 +3570,13 @@ function renderKeycapExportOverlay() {
             action: t("exportPanel.saveThreeMf"),
           })}
           ${renderKeycapExportOverlayOption({
+            format: "step",
+            chip: t("exportPanel.stepChip"),
+            title: t("exportPanel.stepTitle"),
+            body: t("exportPanel.stepBody"),
+            action: t("exportPanel.saveStep"),
+          })}
+          ${renderKeycapExportOverlayOption({
             format: "stl",
             chip: t("exportPanel.stlChip"),
             title: t("exportPanel.stlTitle"),
@@ -6266,6 +6275,10 @@ function buildStlFilename(params = state.keycapParams) {
   return `${sanitizeExportBaseName(params.name)}.stl`;
 }
 
+function buildStepFilename(params = state.keycapParams) {
+  return `${sanitizeExportBaseName(params.name)}.step`;
+}
+
 function recordExportHistory(entry) {
   state.exportHistory.unshift(entry);
 }
@@ -6693,6 +6706,31 @@ async function create3mfExportBlob(params = state.keycapParams) {
   return {
     blob,
     offResults,
+  };
+}
+
+async function createStepExportBlob(params = state.keycapParams) {
+  const result = await runOpenScad({
+    files: await createKeycapFiles({
+      params,
+      exportTarget: "single_material_shape",
+    }),
+    args: buildKeycapArgs({
+      outputPath: keycapStepSourceOffPath,
+      outputFormat: "off",
+    }),
+    outputPaths: [keycapStepSourceOffPath],
+  });
+  const [output] = result.outputs;
+  const mesh = parseOff(textDecoder.decode(output.bytes));
+  const blob = createStepBlob(mesh, {
+    name: sanitizeExportBaseName(params.name),
+  });
+
+  return {
+    blob,
+    result,
+    mesh,
   };
 }
 
@@ -8400,6 +8438,21 @@ async function executeExport(format, options = {}) {
           elapsedMs: Math.round(offResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0)),
           byteLength: blob.size,
           notes: t("importExport.threeMfNote", { parts: savedPartLabels }),
+        },
+      );
+    } else if (format === "step") {
+      const { blob, result, mesh } = await createStepExportBlob(params);
+      downloadBlob(blob, buildStepFilename(params));
+
+      setExportStatus(
+        "success",
+        t("importExport.savedStep", { byteLength: blob.size }),
+        {
+          format,
+          label: t("importExport.stepLabel"),
+          elapsedMs: Math.round(result.elapsedMs),
+          byteLength: blob.size,
+          notes: t("importExport.stepNote", { faceCount: mesh.faces.length }),
         },
       );
     } else if (format === "stl") {

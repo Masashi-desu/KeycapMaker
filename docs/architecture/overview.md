@@ -11,6 +11,7 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
 - Three.js によるプレビュー
 - 複数キーキャップをまとめるプロジェクト
 - 3MF の書き出し
+- CAD 交換用 STEP の書き出し
 - 単色形状用 STL の書き出し
 - 編集再開用 JSON の保存とドラッグ & ドロップ読み込み
 
@@ -68,6 +69,8 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
   Three.js による preview 表示
 - `src/lib/export-3mf.js`
   OFF メッシュ群から 3MF パッケージを生成
+- `src/lib/export-step.js`
+  単一形状の OFF メッシュから STEP AP214 faceted B-rep を生成
 
 ## データの流れ
 
@@ -75,7 +78,7 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
 2. `src/lib/keycap-scad-bundle.js` が `user_*` 定義を含む wrapper SCAD を生成する
 3. worker が bundled OpenSCAD runtime で SCAD を実行する
 4. preview では OFF を解析して Three.js 表示に渡す
-5. export では OFF を part ごとに集めて 3MF を生成するか、OpenSCAD runtime から単一 STL を生成する。編集データ JSON は state から生成する
+5. export では OFF を part ごとに集めて 3MF を生成するか、単一形状の OFF から STEP を生成するか、OpenSCAD runtime から単一 STL を生成する。編集データ JSON は state から生成する
 6. project では複数の編集データ JSON と preview 画像を `KeycapMaker.json` manifest で束ねる
 7. import ではプロジェクトディレクトリ、保存済みの編集データ JSON、または sparse な互換入力 JSON を読み込み、defaults とマージして state を復元する
 
@@ -96,6 +99,7 @@ flowchart LR
   wasm --> off["OFF meshes"]
   off --> preview["Three.js preview"]
   off --> export3mf["3MF export"]
+  off --> exportStep["single-shape STEP export"]
   wasm --> exportStl["single-material STL export"]
 ```
 
@@ -103,6 +107,8 @@ flowchart LR
 
 - `3MF`
   body / rim / homing / キートップ legend / sidewall legend の各メッシュを part object として保持し、components 親 object にまとめる
+- `STEP`
+  `single_material_shape` 由来の単一形状を STEP AP214 faceted B-rep として保存する。色、legend、part 分離は含めない
 - `STL`
   オプション扱いの単色形状出力。色と legend は含めず、単一メッシュとして保存する
 - `編集データ JSON`

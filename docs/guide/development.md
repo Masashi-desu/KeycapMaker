@@ -39,6 +39,8 @@
   Three.js preview
 - `src/lib/export-3mf.js`
   3MF 生成
+- `src/lib/export-step.js`
+  STEP AP214 faceted B-rep 生成
 
 ### 配信アセット
 
@@ -61,7 +63,7 @@
 - SCAD 変更:
   representative な形状変更が preview に反映されること
 - export 変更:
-  3MF 保存、part 数、Bambu Studio 読み込み
+  3MF 保存、STEP / STL 保存、part 数、Bambu Studio 読み込み
 - フォント変更:
   実文字表示、font 検索、native style の有効 / 無効、runtime asset 読み込み
 
@@ -87,4 +89,4 @@
 
 ## 補足
 
-- 3MF は user-facing export だが、スライサー互換性の確認は別手順で扱う
+- 3MF / STEP / STL は user-facing export だが、スライサーや CAD importer 互換性の確認は別手順で扱う

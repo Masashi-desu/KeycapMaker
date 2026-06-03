@@ -833,7 +833,8 @@ test("タイプライターJISエンターはRとリム幅をJIS footprint内に
   assert.equal(parsed.rimWidth, 9);
 });
 
-test("保存名の拡張子正規化は STL も対象にする", () => {
+test("保存名の拡張子正規化は STEP と STL も対象にする", () => {
+  assert.equal(sanitizeExportBaseName("sample.step"), "sample");
   assert.equal(sanitizeExportBaseName("sample.stl"), "sample");
   assert.equal(sanitizeExportBaseName("sample.3mf"), "sample");
   assert.equal(sanitizeExportBaseName("sample.json"), "sample");

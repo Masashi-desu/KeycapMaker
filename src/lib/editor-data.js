@@ -1046,7 +1046,7 @@ export function sanitizeExportBaseName(value, fallback = DEFAULT_EXPORT_BASE_NAM
   const fallbackValue = String(fallback ?? "").trim() || DEFAULT_EXPORT_BASE_NAME;
   const normalized = String(value ?? "")
     .trim()
-    .replace(/\.(json|3mf|stl)$/i, "")
+    .replace(/\.(json|3mf|step|stl)$/i, "")
     .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-")
     .replace(/\s+/g, " ")
     .replace(/\.+$/g, "");

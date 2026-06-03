@@ -56,7 +56,7 @@ const en = Object.freeze({
     },
     export: {
       title: "Export",
-      body: "Save 3MF / STL print data and JSON editor data for resuming edits later.",
+      body: "Save 3MF / STEP / STL print data and JSON editor data for resuming edits later.",
     },
   },
   mobileInspector: {
@@ -72,8 +72,12 @@ const en = Object.freeze({
     threeMfTitle: "Save 3MF Data",
     threeMfBody: "Save print-ready 3MF data containing the body, homing mark, and legend.",
     saveThreeMf: "Save 3MF",
+    stepChip: "CAD STEP",
+    stepTitle: "Save STEP",
+    stepBody: "Save the single shape as a STEP/AP214 faceted B-rep. Colors, legends, and part separation are not included. Use it when CAD handoff or manufacturing requirements need STEP.",
+    saveStep: "Save STEP",
     optionsTitle: "Options",
-    optionsBody: "3MF is recommended for normal print data. Use STL only when your slicer or manufacturing requirement needs it.",
+    optionsBody: "3MF is recommended for normal print data. Use STEP for CAD handoff, or STL when you only need a simple mesh.",
     optionsExpand: "Expand options",
     optionsCollapse: "Collapse options",
     stlChip: "Single-color STL",
@@ -123,7 +127,7 @@ const en = Object.freeze({
   },
   nameGroup: {
     title: "Name",
-    description: "This name is used for 3MF, STL, and editor-data JSON files, and it remains when the data is loaded again.",
+    description: "This name is used for 3MF, STEP, STL, and editor-data JSON files, and it remains when the data is loaded again.",
   },
   parameterGroupCaptions: {
     name: "Export file name",
@@ -268,7 +272,7 @@ const en = Object.freeze({
   fields: {
     name: {
       label: "Name",
-      hint: "Used as the file name for 3MF, STL, and editor-data JSON exports",
+      hint: "Used as the file name for 3MF, STEP, STL, and editor-data JSON exports",
     },
     shapeProfile: {
       label: "Base Shape",
@@ -753,6 +757,9 @@ const en = Object.freeze({
     savedThreeMf: "Saved 3MF data ({byteLength} bytes / {partCount} parts)",
     threeMfLabel: "3MF Data",
     threeMfNote: "Saved {parts} together as 3MF data",
+    savedStep: "Saved STEP ({byteLength} bytes)",
+    stepLabel: "Single-shape STEP",
+    stepNote: "Saved the single shape as STEP faceted B-rep ({faceCount} faces)",
     savedStl: "Saved STL ({byteLength} bytes)",
     stlLabel: "Single-color STL",
     stlNote: "Saved the shape as a single mesh without colors or legends",

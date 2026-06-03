@@ -56,7 +56,7 @@ const ja = Object.freeze({
     },
     export: {
       title: "書き出し",
-      body: "3MF / STL の印刷データと、あとで編集を再開するための JSON を保存できます。",
+      body: "3MF / STEP / STL の印刷データと、あとで編集を再開するための JSON を保存できます。",
     },
   },
   mobileInspector: {
@@ -72,8 +72,12 @@ const ja = Object.freeze({
     threeMfTitle: "3MFデータを保存",
     threeMfBody: "本体、目印、印字を含む印刷用データを 3MF 形式でまとめて保存します。",
     saveThreeMf: "3MF を保存",
+    stepChip: "CAD交換用 STEP",
+    stepTitle: "STEP を保存",
+    stepBody: "単一形状を STEP/AP214 の faceted B-rep として保存します。色、印字、part 分離は含めません。CAD 連携や製造要件で STEP が必要な場合に使います。",
+    saveStep: "STEP を保存",
     optionsTitle: "オプション",
-    optionsBody: "通常の印刷データは 3MF を推奨します。スライサーや製造要件で必要な場合だけ STL を使います。",
+    optionsBody: "通常の印刷データは 3MF を推奨します。CAD 連携では STEP、単純なメッシュだけ必要な場合は STL を使います。",
     optionsExpand: "オプションを展開",
     optionsCollapse: "オプションを折りたたむ",
     stlChip: "単色用 STL",
@@ -123,7 +127,7 @@ const ja = Object.freeze({
   },
   nameGroup: {
     title: "名称",
-    description: "保存するときの名前です。3MF、STL、編集データ JSON に使われ、あとで読み込んでもこの名前が残ります。",
+    description: "保存するときの名前です。3MF、STEP、STL、編集データ JSON に使われ、あとで読み込んでもこの名前が残ります。",
   },
   parameterGroupCaptions: {
     name: "保存ファイル名",
@@ -268,7 +272,7 @@ const ja = Object.freeze({
   fields: {
     name: {
       label: "名称",
-      hint: "3MF、STL、編集データ JSON の保存名に使います",
+      hint: "3MF、STEP、STL、編集データ JSON の保存名に使います",
     },
     shapeProfile: {
       label: "形のベース",
@@ -753,6 +757,9 @@ const ja = Object.freeze({
     savedThreeMf: "3MFデータを保存しました ({byteLength} bytes / {partCount} 個のパーツ)",
     threeMfLabel: "3MFデータ",
     threeMfNote: "{parts}を 3MF 形式でまとめて保存",
+    savedStep: "STEPを保存しました ({byteLength} bytes)",
+    stepLabel: "単一形状 STEP",
+    stepNote: "単一形状を STEP faceted B-rep として保存 ({faceCount} faces)",
     savedStl: "STLを保存しました ({byteLength} bytes)",
     stlLabel: "単色 STL",
     stlNote: "色と印字を含めず、単一メッシュの形状として保存",

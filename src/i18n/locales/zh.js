@@ -56,7 +56,7 @@ const zh = Object.freeze({
     },
     export: {
       title: "导出",
-      body: "可以保存用于打印的 3MF / STL 数据，以及稍后继续编辑用的 JSON。",
+      body: "可以保存用于打印的 3MF / STEP / STL 数据，以及稍后继续编辑用的 JSON。",
     },
   },
   mobileInspector: {
@@ -72,8 +72,12 @@ const zh = Object.freeze({
     threeMfTitle: "保存 3MF 数据",
     threeMfBody: "将包含本体、定位标记和字符的打印用数据汇总保存为 3MF 格式。",
     saveThreeMf: "保存 3MF",
+    stepChip: "CAD 交换用 STEP",
+    stepTitle: "保存 STEP",
+    stepBody: "将单一形状保存为 STEP/AP214 faceted B-rep。不包含颜色、字符和部件分离。需要 CAD 交接或制造要求使用 STEP 时使用。",
+    saveStep: "保存 STEP",
     optionsTitle: "选项",
-    optionsBody: "普通打印数据推荐使用 3MF。只有切片软件或制造要求需要时才使用 STL。",
+    optionsBody: "普通打印数据推荐使用 3MF。CAD 交接使用 STEP，只需要简单网格时使用 STL。",
     optionsExpand: "展开选项",
     optionsCollapse: "折叠选项",
     stlChip: "单色 STL",
@@ -123,7 +127,7 @@ const zh = Object.freeze({
   },
   nameGroup: {
     title: "名称",
-    description: "保存时使用的名称。3MF、STL 和编辑数据 JSON 都会使用它，之后读取时也会保留。",
+    description: "保存时使用的名称。3MF、STEP、STL 和编辑数据 JSON 都会使用它，之后读取时也会保留。",
   },
   parameterGroupCaptions: {
     name: "导出文件名",
@@ -268,7 +272,7 @@ const zh = Object.freeze({
   fields: {
     name: {
       label: "名称",
-      hint: "用于 3MF、STL 和编辑数据 JSON 的保存文件名",
+      hint: "用于 3MF、STEP、STL 和编辑数据 JSON 的保存文件名",
     },
     shapeProfile: {
       label: "基础形状",
@@ -753,6 +757,9 @@ const zh = Object.freeze({
     savedThreeMf: "已保存 3MF 数据 ({byteLength} bytes / {partCount} 个部件)",
     threeMfLabel: "3MF 数据",
     threeMfNote: "已将{parts}汇总保存为 3MF 格式",
+    savedStep: "已保存 STEP ({byteLength} bytes)",
+    stepLabel: "单一形状 STEP",
+    stepNote: "已将单一形状保存为 STEP faceted B-rep ({faceCount} faces)",
     savedStl: "已保存 STL ({byteLength} bytes)",
     stlLabel: "单色 STL",
     stlNote: "不包含颜色和字符，作为单一网格形状保存",
