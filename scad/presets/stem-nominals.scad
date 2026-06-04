@@ -50,7 +50,7 @@ stem_j_stem_lp01_drawing_plate_thickness = 0.80;
 stem_j_stem_lp01_drawing_post_diameter = 5.40;
 stem_j_stem_lp01_drawing_post_height = 3.78;
 
-stem_j_stem_lp01_nominal_plate_width = 12.27;
+stem_j_stem_lp01_nominal_plate_width = 12.24;
 stem_j_stem_lp01_nominal_plate_depth = stem_j_stem_lp01_drawing_top_view_height;
 stem_j_stem_lp01_nominal_hole_pitch_x = stem_j_stem_lp01_drawing_hole_pitch_x;
 stem_j_stem_lp01_nominal_hole_pitch_y = stem_j_stem_lp01_drawing_hole_pitch_y;
