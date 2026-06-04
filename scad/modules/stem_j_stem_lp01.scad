@@ -22,47 +22,70 @@ function j_stem_lp01_curve_steps(
 function j_stem_lp01_scale_point(point, hole_pitch_x = 8.11, plate_height = 12.2) =
     [point[0] * hole_pitch_x / 8.11, point[1] * plate_height / 12.2];
 
-function j_stem_lp01_plate_outline_points(hole_pitch_x = 8.11, plate_height = 12.2) =
+function j_stem_lp01_lerp(a, b, t) = a + (b - a) * t;
+
+function j_stem_lp01_lerp_point(a, b, t) = [
+    j_stem_lp01_lerp(a[0], b[0], t),
+    j_stem_lp01_lerp(a[1], b[1], t)
+];
+
+function j_stem_lp01_arc_points(center, radius, start_angle, end_angle, steps) =
+    [for (i = [0:steps])
+        let(angle = start_angle + (end_angle - start_angle) * i / max(steps, 1))
+        [center[0] + cos(angle) * radius, center[1] + sin(angle) * radius]
+    ];
+
+function j_stem_lp01_cubic_bezier_point(p0, p1, p2, p3, t) =
+    j_stem_lp01_lerp_point(
+        j_stem_lp01_lerp_point(
+            j_stem_lp01_lerp_point(p0, p1, t),
+            j_stem_lp01_lerp_point(p1, p2, t),
+            t
+        ),
+        j_stem_lp01_lerp_point(
+            j_stem_lp01_lerp_point(p1, p2, t),
+            j_stem_lp01_lerp_point(p2, p3, t),
+            t
+        ),
+        t
+    );
+
+function j_stem_lp01_cubic_bezier_points(p0, p1, p2, p3, steps) =
+    [for (i = [0:steps]) j_stem_lp01_cubic_bezier_point(p0, p1, p2, p3, i / max(steps, 1))];
+
+function j_stem_lp01_plate_outline_base_points(quality = "export") =
     let(
-        source_points = [
-            [-5.580,  6.100],
-            [ 2.964,  6.100],
-            [ 3.378,  5.962],
-            [ 3.627,  5.630],
-            [ 3.710,  5.188],
-            [ 3.710, -0.808],
-            [ 3.792, -1.140],
-            [ 4.262, -1.886],
-            [ 5.119, -2.742],
-            [ 6.003, -3.654],
-            [ 6.114, -4.539],
-            [ 6.114, -5.312],
-            [ 5.810, -5.782],
-            [ 5.285, -6.100],
-            [-3.080, -6.100],
-            [-3.340, -6.060],
-            [-3.560, -5.900],
-            [-3.690, -5.650],
-            [-3.700, -5.340],
-            [-3.700, -2.466],
-            [-3.700,  0.100],
-            [-3.850,  0.650],
-            [-3.990,  1.050],
-            [-4.230,  1.250],
-            [-4.490,  1.610],
-            [-4.720,  1.950],
-            [-4.990,  2.280],
-            [-5.220,  2.520],
-            [-5.550,  2.820],
-            [-6.080,  3.200],
-            [-6.120,  3.520],
-            [-6.120,  5.320],
-            [-6.070,  5.620],
-            [-5.910,  5.880],
-            [-5.700,  6.050]
-        ]
+        arc_steps = quality == "preview" ? 8 : 18,
+        curve_steps = quality == "preview" ? 7 : 16,
+        top_left_center = [-5.250, 5.220],
+        top_left_radius = 0.880,
+        top_right_center = [ 2.760, 5.180],
+        top_right_radius = 0.920,
+        bottom_right_center = [5.135, -5.170],
+        bottom_right_radius = 0.940,
+        bottom_left_center = [-2.820, -5.200],
+        bottom_left_radius = 0.900
     )
-    [for (point = source_points) j_stem_lp01_scale_point(point, hole_pitch_x, plate_height)];
+    concat(
+        [[top_left_center[0], top_left_center[1] + top_left_radius]],
+        [[top_right_center[0], top_right_center[1] + top_right_radius]],
+        j_stem_lp01_arc_points(top_right_center, top_right_radius, 90, 0, arc_steps),
+        [[3.680, 0.060]],
+        j_stem_lp01_cubic_bezier_points([3.680, 0.060], [3.680, -0.760], [3.960, -1.250], [4.250, -1.610], curve_steps),
+        j_stem_lp01_cubic_bezier_points([4.250, -1.610], [4.930, -2.250], [6.020, -3.220], [6.050, -3.830], curve_steps),
+        [[bottom_right_center[0] + bottom_right_radius, bottom_right_center[1]]],
+        j_stem_lp01_arc_points(bottom_right_center, bottom_right_radius, 0, -90, arc_steps),
+        [[bottom_left_center[0], bottom_left_center[1] - bottom_left_radius]],
+        j_stem_lp01_arc_points(bottom_left_center, bottom_left_radius, -90, -180, arc_steps),
+        [[-3.720, 0.060]],
+        j_stem_lp01_cubic_bezier_points([-3.720, 0.060], [-3.560, 1.080], [-5.360, 2.760], [-5.940, 3.300], curve_steps),
+        j_stem_lp01_cubic_bezier_points([-5.940, 3.300], [-6.130, 3.450], [-6.120, 3.670], [-6.120, 3.900], curve_steps),
+        [[-6.120, top_left_center[1]]],
+        j_stem_lp01_arc_points(top_left_center, top_left_radius, 180, 90, arc_steps)
+    );
+
+function j_stem_lp01_plate_outline_points(hole_pitch_x = 8.11, plate_height = 12.2, quality = "export") =
+    [for (point = j_stem_lp01_plate_outline_base_points(quality)) j_stem_lp01_scale_point(point, hole_pitch_x, plate_height)];
 
 module j_stem_lp01_plate_outline_2d(
     hole_pitch_x = 8.11,
@@ -73,7 +96,7 @@ module j_stem_lp01_plate_outline_2d(
     safe_clearance = max(clearance, -0.3);
 
     offset(delta = safe_clearance)
-        polygon(points = j_stem_lp01_plate_outline_points(hole_pitch_x, plate_height));
+        polygon(points = j_stem_lp01_plate_outline_points(hole_pitch_x, plate_height, quality));
 }
 
 module j_stem_lp01_mount_holes_2d(

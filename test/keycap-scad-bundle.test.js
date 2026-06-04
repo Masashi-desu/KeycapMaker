@@ -256,7 +256,7 @@ test("J-STEM-LP01 の受け座SCADを bundle し、stemType を wrapper へ渡�
     assert.match(receiverScad, /hole_pitch_x = 8\.11/);
     assert.match(receiverScad, /translate\(\[0, 0, -post_height\]\)/);
     assert.match(nominalsScad, /stem_j_stem_lp01_drawing_top_view_height = 12\.20;/);
-    assert.match(nominalsScad, /stem_j_stem_lp01_nominal_plate_width = 12\.24;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_nominal_plate_width = 12\.21;/);
     assert.match(nominalsScad, /stem_j_stem_lp01_drawing_hole_pitch_x = 8\.11;/);
     assert.match(nominalsScad, /stem_j_stem_lp01_drawing_hole_pitch_y = 8\.11;/);
     assert.match(nominalsScad, /stem_j_stem_lp01_drawing_cross_width_horizontal = 1\.20;/);
