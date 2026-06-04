@@ -1,6 +1,6 @@
 # scad ディレクトリ案内
 
-`scad/` にはキーキャップ形状に関する SCAD 資産を置きます。ここでは、プレビュー用と本番出力用の責務分離、および body / legend を別体積で扱える構造を維持します。stem は `MX / Choc v1 / Choc v2 / Alps` の mount 差分を `modules/` に分離して扱います。
+`scad/` にはキーキャップ形状に関する SCAD 資産を置きます。ここでは、プレビュー用と本番出力用の責務分離、および body / legend を別体積で扱える構造を維持します。stem は `MX / Choc v1 / Choc v2 / Alps` の mount 差分と、J-STEM-LP01 受け座の差し引き形状を `modules/` に分離して扱います。
 
 ## サブディレクトリの役割
 
@@ -11,13 +11,14 @@
 
 ## 現在の主要ファイル
 
-- `base/keycap.scad`: `export_target` で `preview / body / body_core / rim / homing / legend / top_legend_* / side_legend_* / single_material_shape` を切り替える基礎エントリ
+- `base/keycap.scad`: `export_target` で `preview / body / body_core / rim / homing / legend / top_legend_* / side_legend_* / single_material_shape / j_stem_lp01_reference` を切り替える基礎エントリ
 - `modules/keycap_shell.scad`: `top_center_height + pitch / roll` 基準の外形シェル、dish、内側 hollow
 - `modules/keycap_jis_enter.scad`: JIS / ISO 系の縦長 Enter footprint 用シェル、typewriter variant、内側 hollow
 - `modules/stem_mx.scad`: MX 互換 stem ボディ
 - `modules/stem_choc_v1.scad`: Kailh Choc v1 向け 2 本爪 stem
 - `modules/stem_choc_v2.scad`: Kailh Choc v2 向け MX 互換 stem
 - `modules/stem_alps.scad`: Alps / Matias 向け stem
+- `modules/stem_j_stem_lp01.scad`: J-STEM-LP01 上面を受ける裏側掘り込み形状と、半透明 preview 用の LP01 本体モデル
 - `modules/homing_bar.scad`: body 側に追加するオプションの homing bar 形状
 - `modules/legend_block.scad`: フォント非依存の legend ボリューム
 - `modules/keycap_typewriter.scad`: 薄いタイプライター風キートップ外形
@@ -36,6 +37,7 @@
 - `samples/keycap-rounded-legend.scad`: 丸みのある書体の legend 品質確認用サンプル
 - `samples/keycap-homing-bar.scad`: homing bar 単体出力の確認用サンプル
 - `samples/keycap-stem-clip.scad`: 強い左右傾斜でも stem が内側天井で止まるか確認するサンプル
+- `samples/keycap-j-stem-lp01.scad`: J-STEM-LP01 受け座の裏側掘り込み確認用サンプル
 - `samples/keycap-surface-quality.scad`: 角丸、dish、stem 外周の曲面品質をまとめて確認するサンプル
 - `samples/keycap-top-corner-radii.scad`: custom shell 上面の4隅R個別指定確認用サンプル
 - `samples/keycap-top-orientation.scad`: 上面中央高さ固定 + pitch / roll の確認用サンプル

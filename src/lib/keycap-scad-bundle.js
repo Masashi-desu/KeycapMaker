@@ -15,6 +15,7 @@ import stemMxScad from "../../scad/modules/stem_mx.scad?raw";
 import stemChocV1Scad from "../../scad/modules/stem_choc_v1.scad?raw";
 import stemChocV2Scad from "../../scad/modules/stem_choc_v2.scad?raw";
 import stemAlpsScad from "../../scad/modules/stem_alps.scad?raw";
+import stemJStemLp01Scad from "../../scad/modules/stem_j_stem_lp01.scad?raw";
 import stemNominalsScad from "../../scad/presets/stem-nominals.scad?raw";
 import {
   DEFAULT_KEYCAP_LEGEND_FONT_KEY,
@@ -123,6 +124,7 @@ const SCAD_FILES = [
   { path: "/scad/modules/stem_choc_v1.scad", content: stemChocV1Scad },
   { path: "/scad/modules/stem_choc_v2.scad", content: stemChocV2Scad },
   { path: "/scad/modules/stem_alps.scad", content: stemAlpsScad },
+  { path: "/scad/modules/stem_j_stem_lp01.scad", content: stemJStemLp01Scad },
   { path: "/scad/presets/stem-nominals.scad", content: stemNominalsScad },
 ];
 const runtimeAssetPromises = new Map();

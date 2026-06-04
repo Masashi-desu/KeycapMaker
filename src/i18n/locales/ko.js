@@ -658,6 +658,7 @@ const ko = Object.freeze({
       mxHint: "0이 표준입니다. 양수이면 십자 구멍을 넓히고, 음수이면 좁힙니다.",
       chocV1Hint: "0이 표준입니다. 양수이면 두 갈래를 가늘게 해 느슨하게, 음수이면 두껍게 해 빡빡하게 합니다.",
       alpsHint: "0이 표준입니다. 양수이면 삽입부를 가늘게 해 느슨하게, 음수이면 두껍게 해 빡빡하게 합니다.",
+      jStemLp01Hint: "0이 표준입니다. 양수이면 LP01 받침 홈 외형을 넓히고, 음수이면 좁힙니다.",
       disabledHint: "장착부를 만들지 않을 때는 사용하지 않습니다",
     },
     stemCrossChamfer: {
@@ -668,6 +669,7 @@ const ko = Object.freeze({
     stemInsetDelta: {
       label: "축 시작 위치 보정",
       hint: "0이 표준입니다. 양수이면 바닥면에서 시작 위치를 올리고, 음수이면 아래로 늘립니다.",
+      jStemLp01Hint: "0이 표준입니다. 양수이면 LP01 받침 홈을 깊게, 음수이면 얕게 만듭니다.",
       disabledHint: "장착부를 만들지 않을 때는 사용하지 않습니다",
     },
   },
@@ -678,6 +680,7 @@ const ko = Object.freeze({
       choc_v1: "Choc v1",
       choc_v2: "Choc v2",
       alps: "Alps / Matias",
+      j_stem_lp01: "J-STEM-LP01(실험적)",
     },
     topSurfaceShape: {
       flat: "평면",
@@ -695,6 +698,7 @@ const ko = Object.freeze({
     choc_v1: "Kailh Choc v1용 두 갈래 형상입니다. 슬림 키보드용 Choc v1 스위치에 맞습니다.",
     alps: "Alps / Matias 계열 삽입 형상입니다. 대응하는 Alps 계열 스위치에 맞습니다.",
     choc_v2: "Kailh Choc v2용 십자 형상입니다. Choc v2 스위치에 맞는 장착부를 만듭니다.",
+    j_stem_lp01: "J-STEM-LP01과 함께 사용할 수 있도록 키캡 뒤쪽 스템 장착면에 LP01 상면을 받는 홈을 파냅니다. 실험적 설정입니다.",
   },
   sideLabels: {
     front: "앞면",
@@ -728,6 +732,7 @@ const ko = Object.freeze({
     topLegend: "{position}",
     sideLegend: "{side} 측면 각인",
     homing: "위치 표시",
+    jStemLp01: "J-STEM-LP01",
   },
   preview: {
     placeholder: "아직 미리보기를 표시하지 않았습니다. 디자인을 변경하면 최신 형상으로 자동 업데이트됩니다.",

@@ -658,6 +658,7 @@ const zh = Object.freeze({
       mxHint: "0 为标准值。正值会扩大十字孔，负值会收紧。",
       chocV1Hint: "0 为标准值。正值会让两个爪更细更松，负值会让其更粗更紧。",
       alpsHint: "0 为标准值。正值会让插入部更细更松，负值会让其更粗更紧。",
+      jStemLp01Hint: "0 为标准值。正值会扩大 LP01 承接凹槽外形，负值会收紧。",
       disabledHint: "不生成安装部时不使用",
     },
     stemCrossChamfer: {
@@ -668,6 +669,7 @@ const zh = Object.freeze({
     stemInsetDelta: {
       label: "轴部起始位置补正",
       hint: "0 为标准值。正值会从底面抬高起始位置，负值会向下延伸。",
+      jStemLp01Hint: "0 为标准值。正值会加深 LP01 承接凹槽，负值会变浅。",
       disabledHint: "不生成安装部时不使用",
     },
   },
@@ -678,6 +680,7 @@ const zh = Object.freeze({
       choc_v1: "Choc v1",
       choc_v2: "Choc v2",
       alps: "Alps / Matias",
+      j_stem_lp01: "J-STEM-LP01（实验）",
     },
     topSurfaceShape: {
       flat: "平面",
@@ -695,6 +698,7 @@ const zh = Object.freeze({
     choc_v1: "Kailh Choc v1 用的双爪形状。适配使用 Choc v1 轴的薄型键盘。",
     alps: "Alps / Matias 系的插入形状。适配对应的 Alps 系轴体。",
     choc_v2: "Kailh Choc v2 用的十字形状。生成适配 Choc v2 轴的安装部。",
+    j_stem_lp01: "在键帽背面的轴安装面切出 LP01 顶面承接凹槽，以便与 J-STEM-LP01 组合使用。此设置为实验性。",
   },
   sideLabels: {
     front: "前面",
@@ -728,6 +732,7 @@ const zh = Object.freeze({
     topLegend: "{position}",
     sideLegend: "{side}侧面字符",
     homing: "定位标记",
+    jStemLp01: "J-STEM-LP01",
   },
   preview: {
     placeholder: "尚未显示预览。更改设计后会自动更新为最新形状。",

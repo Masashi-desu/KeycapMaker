@@ -28,3 +28,7 @@
 - 採用した判断は [decisions/decision-log.md](decisions/decision-log.md) に残す
 - 将来の拡張案や未解決事項は `backlog/` に寄せる
 - 画面デザイン変更は `design/` を正本とする
+
+## 参照資料
+
+- [reference/j-stem-lp01-dimensions.md](reference/j-stem-lp01-dimensions.md): J-STEM-LP01 図面寸法と SCAD パラメータの対応表

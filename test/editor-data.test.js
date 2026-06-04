@@ -78,6 +78,21 @@ test("kind なしの疎 JSON も top-level パラメータを bind して不足�
   assert.ok(Number.isFinite(parsed.topBackHeight));
 });
 
+test("J-STEM-LP01 の stemType は編集データで保持する", () => {
+  const defaults = createDefaultKeycapParams("custom-shell");
+  const parsed = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      stemType: "j_stem_lp01",
+    },
+  });
+
+  assert.equal(parsed.stemType, "j_stem_lp01");
+  assert.equal(parsed.stemEnabled, true);
+});
+
 test("JSON 読み込み時に bind できないパラメータを報告する", () => {
   const { params, bindingReport } = parseEditorDataPayloadWithReport({
     shapeProfile: "typewriter",

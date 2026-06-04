@@ -8,6 +8,7 @@ use <../modules/stem_mx.scad>
 use <../modules/stem_choc_v1.scad>
 use <../modules/stem_choc_v2.scad>
 use <../modules/stem_alps.scad>
+use <../modules/stem_j_stem_lp01.scad>
 use <../modules/homing_bar.scad>
 
 resolved_export_target = is_undef(export_target) ? "preview" : export_target;
@@ -33,11 +34,18 @@ function supported_stem_type(type) =
     || type == "mx"
     || type == "choc_v1"
     || type == "choc_v2"
-    || type == "alps";
+    || type == "alps"
+    || type == "j_stem_lp01";
+function receiver_recess_stem_type(type) =
+    type == "j_stem_lp01";
 function cross_compatible_stem_type(type) =
     type == "mx" || type == "choc_v2";
 function stem_nominal_outer_diameter_for_type(type) =
-    type == "mx" ? stem_mx_nominal_outer_diameter : stem_choc_v2_nominal_outer_diameter;
+    type == "mx"
+        ? stem_mx_nominal_outer_diameter
+        : type == "j_stem_lp01"
+            ? max(stem_j_stem_lp01_nominal_plate_width, stem_j_stem_lp01_nominal_plate_depth)
+            : stem_choc_v2_nominal_outer_diameter;
 function stem_nominal_inset_for_type(type) =
     type == "mx"
         ? stem_mx_nominal_inset
@@ -45,7 +53,9 @@ function stem_nominal_inset_for_type(type) =
             ? stem_choc_v1_nominal_inset
             : type == "alps"
                 ? stem_alps_nominal_inset
-                : stem_choc_v2_nominal_inset;
+                : type == "j_stem_lp01"
+                    ? 0
+                    : stem_choc_v2_nominal_inset;
 function stem_nominal_height_for_type(type) =
     type == "mx"
         ? stem_mx_nominal_height
@@ -53,7 +63,9 @@ function stem_nominal_height_for_type(type) =
             ? stem_choc_v1_nominal_height
             : type == "alps"
                 ? stem_alps_nominal_height
-                : stem_choc_v2_nominal_height;
+                : type == "j_stem_lp01"
+                    ? stem_j_stem_lp01_nominal_plate_thickness
+                    : stem_choc_v2_nominal_height;
 function stem_nominal_cross_width_horizontal_for_type(type) =
     type == "mx" ? stem_mx_nominal_cross_width_horizontal : stem_choc_v2_nominal_cross_width_horizontal;
 function stem_nominal_cross_length_horizontal_for_type(type) =
@@ -94,6 +106,11 @@ function stem_footprint_radius(type, outer_diameter, prong_width, prong_depth, p
             ? sqrt(pow(prong_spacing / 2 + prong_width / 2, 2) + pow(prong_depth / 2, 2))
             : type == "alps"
                 ? sqrt(pow(alps_length / 2, 2) + pow(alps_width / 2, 2))
+                : type == "j_stem_lp01"
+                    ? sqrt(
+                        pow(stem_j_stem_lp01_nominal_plate_width / 2, 2)
+                        + pow(stem_j_stem_lp01_nominal_plate_depth / 2, 2)
+                    )
                 : 0;
 
 key_width = positive_dimension(required_param(user_key_width, "user_key_width"));
@@ -484,6 +501,7 @@ stem_type = assert(
     str("unsupported user_stem_type: ", requested_stem_type)
 ) requested_stem_type;
 stem_enabled = required_param(user_stem_enabled, "user_stem_enabled") && stem_type != "none";
+stem_positive_enabled = stem_enabled && !receiver_recess_stem_type(stem_type);
 stem_outer_delta = required_param(user_stem_outer_delta, "user_stem_outer_delta");
 stem_cross_margin = required_param(user_stem_cross_margin, "user_stem_cross_margin");
 stem_inset_delta = required_param(user_stem_inset_delta, "user_stem_inset_delta");
@@ -546,6 +564,14 @@ requested_stem_height = is_undef(user_stem_height)
     )
     : max(user_stem_height, 0.6);
 stem_height = max(requested_stem_height, 0.6);
+stem_receiver_mount_z = keycap_inner_height(top_center_height, dish_depth, top_thickness);
+stem_receiver_recess_overlap = 0.02;
+stem_receiver_recess_depth_limit = max(top_thickness - 0.05, 0.02);
+stem_receiver_recess_depth = min(
+    max(stem_j_stem_lp01_nominal_plate_thickness + stem_inset_delta, 0.05),
+    stem_receiver_recess_depth_limit
+);
+stem_receiver_recess_height = stem_receiver_recess_depth + stem_receiver_recess_overlap * 2;
 
 homing_bar_enabled = required_param(user_homing_bar_enabled, "user_homing_bar_enabled");
 homing_bar_height = max(required_param(user_homing_bar_height, "user_homing_bar_height"), 0);
@@ -846,13 +872,17 @@ module keycap_top_corner_legends_visible_volume(quality = "export") {
 }
 
 module keycap_top_legends_volume(quality = "export") {
-    keycap_legend_volume(quality);
-    keycap_top_corner_legends_volume(quality);
+    keycap_trim_stem_receiver_recess(quality) {
+        keycap_legend_volume(quality);
+        keycap_top_corner_legends_volume(quality);
+    }
 }
 
 module keycap_top_legends_visible_volume(quality = "export") {
-    keycap_legend_visible_volume(quality);
-    keycap_top_corner_legends_visible_volume(quality);
+    keycap_trim_stem_receiver_recess(quality) {
+        keycap_legend_visible_volume(quality);
+        keycap_top_corner_legends_visible_volume(quality);
+    }
 }
 
 function keycap_sidewall_reference_z(offset_y) =
@@ -1064,33 +1094,37 @@ module keycap_side_legend_right_volume(top_overlap = 0, quality = "export", inne
 }
 
 module keycap_side_legends_volume(quality = "export") {
-    keycap_side_legend_front_volume(0, quality);
-    keycap_side_legend_back_volume(0, quality);
-    keycap_side_legend_left_volume(0, quality);
-    keycap_side_legend_right_volume(0, quality);
+    keycap_trim_stem_receiver_recess(quality) {
+        keycap_side_legend_front_volume(0, quality);
+        keycap_side_legend_back_volume(0, quality);
+        keycap_side_legend_left_volume(0, quality);
+        keycap_side_legend_right_volume(0, quality);
+    }
 }
 
 module keycap_side_legends_visible_volume(quality = "export") {
-    keycap_side_legend_front_volume(
-        top_overlap = side_legend_visible_surface_overlap,
-        quality = quality,
-        inner_overlap = side_legend_inner_cut_overlap
-    );
-    keycap_side_legend_back_volume(
-        top_overlap = side_legend_visible_surface_overlap,
-        quality = quality,
-        inner_overlap = side_legend_inner_cut_overlap
-    );
-    keycap_side_legend_left_volume(
-        top_overlap = side_legend_visible_surface_overlap,
-        quality = quality,
-        inner_overlap = side_legend_inner_cut_overlap
-    );
-    keycap_side_legend_right_volume(
-        top_overlap = side_legend_visible_surface_overlap,
-        quality = quality,
-        inner_overlap = side_legend_inner_cut_overlap
-    );
+    keycap_trim_stem_receiver_recess(quality) {
+        keycap_side_legend_front_volume(
+            top_overlap = side_legend_visible_surface_overlap,
+            quality = quality,
+            inner_overlap = side_legend_inner_cut_overlap
+        );
+        keycap_side_legend_back_volume(
+            top_overlap = side_legend_visible_surface_overlap,
+            quality = quality,
+            inner_overlap = side_legend_inner_cut_overlap
+        );
+        keycap_side_legend_left_volume(
+            top_overlap = side_legend_visible_surface_overlap,
+            quality = quality,
+            inner_overlap = side_legend_inner_cut_overlap
+        );
+        keycap_side_legend_right_volume(
+            top_overlap = side_legend_visible_surface_overlap,
+            quality = quality,
+            inner_overlap = side_legend_inner_cut_overlap
+        );
+    }
 }
 
 module keycap_body_shell_positive(quality = "export") {
@@ -1209,12 +1243,19 @@ module keycap_body_shell_positive(quality = "export") {
 
 module keycap_body_shell(quality = "export") {
     difference() {
-        keycap_body_shell_positive(quality);
+        keycap_body_shell_mount_cut(quality);
         keycap_top_legends_visible_volume(quality);
         keycap_side_legends_visible_volume(quality);
         if (rim_enabled) {
             keycap_body_rim_clearance_volume(quality);
         }
+    }
+}
+
+module keycap_body_shell_mount_cut(quality = "export") {
+    difference() {
+        keycap_body_shell_positive(quality);
+        keycap_stem_receiver_recess(quality);
     }
 }
 
@@ -1303,7 +1344,7 @@ module keycap_stem_positive(base_clearance = stem_inset, quality = "export") {
             lead_in = stem_alps_lead_in,
             quality = quality
         );
-    } else {
+    } else if (stem_type == "choc_v2") {
         stem_choc_v2(
             outer_diameter = stem_outer_diameter,
             stem_height = stem_height,
@@ -1319,7 +1360,7 @@ module keycap_stem_positive(base_clearance = stem_inset, quality = "export") {
 }
 
 module keycap_stem_nominal(quality = "export") {
-    if (stem_enabled) {
+    if (stem_positive_enabled) {
         if (typewriter_shape_geometry_type(shape_geometry_type)) {
             translate([0, 0, typewriter_stem_mount_overlap])
                 mirror([0, 0, 1])
@@ -1331,7 +1372,7 @@ module keycap_stem_nominal(quality = "export") {
 }
 
 module keycap_stem_clip_volume(quality = "export") {
-    if (stem_enabled) {
+    if (stem_positive_enabled) {
         translate([0, 0, stem_clip_overlap])
             if (shape_geometry_type == "jis_enter") {
                 keycap_jis_enter_inner_clearance_volume(
@@ -1385,7 +1426,7 @@ module keycap_stem_clip_volume(quality = "export") {
 }
 
 module keycap_stem(quality = "export") {
-    if (stem_enabled) {
+    if (stem_positive_enabled) {
         if (typewriter_shape_geometry_type(shape_geometry_type)) {
             keycap_stem_nominal(quality);
         } else {
@@ -1394,6 +1435,51 @@ module keycap_stem(quality = "export") {
                 keycap_stem_clip_volume(quality);
             }
         }
+    }
+}
+
+module keycap_stem_receiver_recess(quality = "export") {
+    if (stem_enabled && receiver_recess_stem_type(stem_type)) {
+        keycap_top_plane_transform(stem_receiver_mount_z, top_pitch_deg, top_roll_deg, top_offset_x, top_offset_y)
+            translate([0, 0, -stem_receiver_recess_overlap])
+                j_stem_lp01_receiver_recess(
+                    hole_pitch_x = stem_j_stem_lp01_nominal_hole_pitch_x,
+                    plate_height = stem_j_stem_lp01_nominal_plate_depth,
+                    hole_pitch_y = stem_j_stem_lp01_nominal_hole_pitch_y,
+                    hole_diameter = stem_j_stem_lp01_nominal_hole_diameter,
+                    height = stem_receiver_recess_height,
+                    clearance = stem_j_stem_lp01_nominal_recess_clearance + stem_cross_margin + stem_outer_delta,
+                    quality = quality
+                );
+    }
+}
+
+module keycap_trim_stem_receiver_recess(quality = "export") {
+    if (stem_enabled && receiver_recess_stem_type(stem_type)) {
+        difference() {
+            children();
+            keycap_stem_receiver_recess(quality);
+        }
+    } else {
+        children();
+    }
+}
+
+module keycap_j_stem_lp01_reference(quality = "export") {
+    if (stem_enabled && receiver_recess_stem_type(stem_type)) {
+        keycap_top_plane_transform(stem_receiver_mount_z, top_pitch_deg, top_roll_deg, top_offset_x, top_offset_y)
+            j_stem_lp01_model(
+                hole_pitch_x = stem_j_stem_lp01_nominal_hole_pitch_x,
+                plate_height = stem_j_stem_lp01_nominal_plate_depth,
+                plate_thickness = stem_j_stem_lp01_nominal_plate_thickness,
+                hole_pitch_y = stem_j_stem_lp01_nominal_hole_pitch_y,
+                hole_diameter = stem_j_stem_lp01_nominal_hole_diameter,
+                post_diameter = stem_j_stem_lp01_nominal_post_diameter,
+                post_height = stem_j_stem_lp01_nominal_post_height,
+                cross_width_horizontal = stem_j_stem_lp01_nominal_cross_width_horizontal,
+                cross_width_vertical = stem_j_stem_lp01_nominal_cross_width_vertical,
+                quality = quality
+            );
     }
 }
 
@@ -1476,7 +1562,7 @@ module keycap_body(quality = "export") {
 
 module keycap_single_material_shape(quality = "export") {
     union() {
-        keycap_body_shell_positive(quality);
+        keycap_body_shell_mount_cut(quality);
         keycap_stem(quality);
         keycap_homing_bar(quality);
         keycap_rim_positive(quality);
@@ -1484,39 +1570,48 @@ module keycap_single_material_shape(quality = "export") {
 }
 
 module keycap_legend(quality = "export") {
-    keycap_legend_volume(quality);
+    keycap_trim_stem_receiver_recess(quality)
+        keycap_legend_volume(quality);
 }
 
 module keycap_top_legend_right_top(quality = "export") {
-    keycap_top_legend_right_top_volume(0, quality);
+    keycap_trim_stem_receiver_recess(quality)
+        keycap_top_legend_right_top_volume(0, quality);
 }
 
 module keycap_top_legend_right_bottom(quality = "export") {
-    keycap_top_legend_right_bottom_volume(0, quality);
+    keycap_trim_stem_receiver_recess(quality)
+        keycap_top_legend_right_bottom_volume(0, quality);
 }
 
 module keycap_top_legend_left_top(quality = "export") {
-    keycap_top_legend_left_top_volume(0, quality);
+    keycap_trim_stem_receiver_recess(quality)
+        keycap_top_legend_left_top_volume(0, quality);
 }
 
 module keycap_top_legend_left_bottom(quality = "export") {
-    keycap_top_legend_left_bottom_volume(0, quality);
+    keycap_trim_stem_receiver_recess(quality)
+        keycap_top_legend_left_bottom_volume(0, quality);
 }
 
 module keycap_side_legend_front(quality = "export") {
-    keycap_side_legend_front_volume(0, quality);
+    keycap_trim_stem_receiver_recess(quality)
+        keycap_side_legend_front_volume(0, quality);
 }
 
 module keycap_side_legend_back(quality = "export") {
-    keycap_side_legend_back_volume(0, quality);
+    keycap_trim_stem_receiver_recess(quality)
+        keycap_side_legend_back_volume(0, quality);
 }
 
 module keycap_side_legend_left(quality = "export") {
-    keycap_side_legend_left_volume(0, quality);
+    keycap_trim_stem_receiver_recess(quality)
+        keycap_side_legend_left_volume(0, quality);
 }
 
 module keycap_side_legend_right(quality = "export") {
-    keycap_side_legend_right_volume(0, quality);
+    keycap_trim_stem_receiver_recess(quality)
+        keycap_side_legend_right_volume(0, quality);
 }
 
 module export_body() {
@@ -1575,6 +1670,10 @@ module export_single_material_shape() {
     keycap_single_material_shape("export");
 }
 
+module export_j_stem_lp01_reference() {
+    keycap_j_stem_lp01_reference("export");
+}
+
 module preview_model() {
     union() {
         keycap_body("preview");
@@ -1612,6 +1711,8 @@ if (resolved_export_target == "body") {
     export_side_legend_right();
 } else if (resolved_export_target == "single_material_shape") {
     export_single_material_shape();
+} else if (resolved_export_target == "j_stem_lp01_reference") {
+    export_j_stem_lp01_reference();
 } else {
     preview_model();
 }

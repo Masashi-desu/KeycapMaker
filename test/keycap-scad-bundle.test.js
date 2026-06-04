@@ -200,6 +200,77 @@ test("ステム開始位置補正の負値を SCAD wrapper と base で保持す
   }
 });
 
+test("J-STEM-LP01 の受け座SCADを bundle し、stemType を wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 50,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "body",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        stemType: "j_stem_lp01",
+        stemCrossMargin: 0.08,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const baseScad = files.find((file) => file.path === bundle.KEYCAP_ENTRY_PATH)?.content;
+    const receiverScad = files.find((file) => file.path === "/scad/modules/stem_j_stem_lp01.scad")?.content;
+    const nominalsScad = files.find((file) => file.path === "/scad/presets/stem-nominals.scad")?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.ok(baseScad, "keycap base SCAD should be included");
+    assert.ok(receiverScad, "J-STEM-LP01 receiver module should be bundled");
+    assert.ok(nominalsScad, "J-STEM-LP01 nominal dimensions should be bundled");
+    assert.equal(readRawScadDefinition(jobScad, "user_stem_type"), "\"j_stem_lp01\"");
+    assert.equal(readScadDefinition(jobScad, "user_stem_cross_margin"), 0.08);
+    assert.match(baseScad, /receiver_recess_stem_type\(stem_type\)/);
+    assert.match(baseScad, /module keycap_trim_stem_receiver_recess/);
+    assert.match(baseScad, /keycap_top_legends_volume\(quality = "export"\)\s*\{\s*keycap_trim_stem_receiver_recess\(quality\)/);
+    assert.match(baseScad, /module keycap_legend\(quality = "export"\)\s*\{\s*keycap_trim_stem_receiver_recess\(quality\)/);
+    assert.match(baseScad, /stem_receiver_mount_z = keycap_inner_height\(top_center_height, dish_depth, top_thickness\);/);
+    assert.match(baseScad, /keycap_top_plane_transform\(stem_receiver_mount_z, top_pitch_deg, top_roll_deg, top_offset_x, top_offset_y\)/);
+    assert.match(baseScad, /j_stem_lp01_receiver_recess/);
+    assert.match(baseScad, /hole_pitch_y = stem_j_stem_lp01_nominal_hole_pitch_y/);
+    assert.match(baseScad, /hole_diameter = stem_j_stem_lp01_nominal_hole_diameter/);
+    assert.match(baseScad, /resolved_export_target == "j_stem_lp01_reference"/);
+    assert.match(receiverScad, /module j_stem_lp01_model/);
+    assert.match(receiverScad, /module j_stem_lp01_receiver_recess[\s\S]*include_holes = true/);
+    assert.match(receiverScad, /hole_pitch_x = 8\.11/);
+    assert.match(receiverScad, /translate\(\[0, 0, -post_height\]\)/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_drawing_top_view_height = 12\.20;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_nominal_plate_width = 12\.27;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_drawing_hole_pitch_x = 8\.11;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_drawing_hole_pitch_y = 8\.11;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_drawing_cross_width_horizontal = 1\.20;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_drawing_cross_width_vertical = 1\.20;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_drawing_plate_thickness = 0\.80;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_nominal_recess_clearance = 0;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_drawing_post_diameter = 5\.40;/);
+    assert.match(nominalsScad, /stem_j_stem_lp01_drawing_post_height = 3\.78;/);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("dishDepth の負値は SCAD wrapper と base で 0 に丸める", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,

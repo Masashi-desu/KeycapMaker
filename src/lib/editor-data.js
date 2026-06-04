@@ -20,7 +20,7 @@ export const EDITOR_DATA_SCHEMA_VERSION = 5;
 export const EDITOR_DATA_COMPAT_KIND = "keycap-maker/editor-params-patch";
 export const EDITOR_DATA_COMPAT_SCHEMA_VERSION = 1;
 
-const STEM_TYPE_VALUES = new Set(["none", "mx", "choc_v1", "choc_v2", "alps"]);
+const STEM_TYPE_VALUES = new Set(["none", "mx", "choc_v1", "choc_v2", "alps", "j_stem_lp01"]);
 const TOP_SLOPE_INPUT_MODE_VALUES = new Set(["angle", "edge-height"]);
 const TOP_SURFACE_SHAPE_VALUES = new Set(["flat", "cylindrical", "spherical"]);
 const TYPEWRITER_TOP_SURFACE_SHAPE_VALUES = new Set(["flat", "spherical"]);

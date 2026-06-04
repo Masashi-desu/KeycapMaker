@@ -13,6 +13,9 @@ const OVERLAY_LAYER_NAMES = new Set([
   "legend-right",
   "homing",
 ]);
+const REFERENCE_LAYER_NAMES = new Set([
+  "j-stem-lp01",
+]);
 const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 12;
 const MIN_NORMAL_LENGTH_SQ = 1e-12;
 const DEFAULT_CAMERA_OFFSET = new THREE.Vector3(1.42, 1.18, 1.32);
@@ -298,16 +301,23 @@ export function mountPreviewScene(container, layers, options = {}) {
   const layerEntries = normalizeLayers(layers).map((layer) => {
     const geometry = createPreviewGeometry(layer.mesh);
     const isOverlayLayer = OVERLAY_LAYER_NAMES.has(layer.name);
+    const isReferenceLayer = REFERENCE_LAYER_NAMES.has(layer.name);
+    const opacity = Number.isFinite(layer.opacity) ? Math.min(Math.max(layer.opacity, 0), 1) : 1;
+    const isTransparentLayer = isReferenceLayer || opacity < 1;
     const material = new THREE.MeshStandardMaterial({
       color: layer.color ?? 0x4d8fd8,
       metalness: 0.08,
       roughness: 0.55,
+      transparent: isTransparentLayer,
+      opacity: isTransparentLayer ? opacity : 1,
+      depthWrite: !isTransparentLayer,
+      side: isTransparentLayer ? THREE.DoubleSide : THREE.FrontSide,
       polygonOffset: isOverlayLayer,
       polygonOffsetFactor: isOverlayLayer ? -1 : 0,
       polygonOffsetUnits: isOverlayLayer ? -2 : 0,
     });
     const previewMesh = new THREE.Mesh(geometry, material);
-    previewMesh.renderOrder = isOverlayLayer ? 1 : 0;
+    previewMesh.renderOrder = isReferenceLayer ? 2 : (isOverlayLayer ? 1 : 0);
     scene.add(previewMesh);
     geometry.computeBoundingBox();
     return { geometry, material, previewMesh };

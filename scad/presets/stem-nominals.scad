@@ -39,3 +39,25 @@ stem_alps_nominal_inset = 0;
 stem_alps_nominal_length = 4.45;
 stem_alps_nominal_width = 2.25;
 stem_alps_nominal_lead_in = 0.12;
+
+// J-STEM-LP01.jpeg dimensions. Keep these labels one-to-one with the drawing.
+stem_j_stem_lp01_drawing_top_view_height = 12.20;
+stem_j_stem_lp01_drawing_hole_pitch_x = 8.11;
+stem_j_stem_lp01_drawing_hole_pitch_y = 8.11;
+stem_j_stem_lp01_drawing_cross_width_horizontal = 1.20;
+stem_j_stem_lp01_drawing_cross_width_vertical = 1.20;
+stem_j_stem_lp01_drawing_plate_thickness = 0.80;
+stem_j_stem_lp01_drawing_post_diameter = 5.40;
+stem_j_stem_lp01_drawing_post_height = 3.78;
+
+stem_j_stem_lp01_nominal_plate_width = 12.27;
+stem_j_stem_lp01_nominal_plate_depth = stem_j_stem_lp01_drawing_top_view_height;
+stem_j_stem_lp01_nominal_hole_pitch_x = stem_j_stem_lp01_drawing_hole_pitch_x;
+stem_j_stem_lp01_nominal_hole_pitch_y = stem_j_stem_lp01_drawing_hole_pitch_y;
+stem_j_stem_lp01_nominal_hole_diameter = 1.70;
+stem_j_stem_lp01_nominal_cross_width_horizontal = stem_j_stem_lp01_drawing_cross_width_horizontal;
+stem_j_stem_lp01_nominal_cross_width_vertical = stem_j_stem_lp01_drawing_cross_width_vertical;
+stem_j_stem_lp01_nominal_plate_thickness = stem_j_stem_lp01_drawing_plate_thickness;
+stem_j_stem_lp01_nominal_recess_clearance = 0;
+stem_j_stem_lp01_nominal_post_diameter = stem_j_stem_lp01_drawing_post_diameter;
+stem_j_stem_lp01_nominal_post_height = stem_j_stem_lp01_drawing_post_height;

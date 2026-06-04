@@ -30,6 +30,7 @@
 - `side_legend_left`
 - `side_legend_right`
 - `single_material_shape`
+- `j_stem_lp01_reference`
 
 この構成により、preview 用表示と part 単位 export を同じ基礎形状から扱います。
 
@@ -81,7 +82,8 @@ UI の `1u` 換算基準は狭ピッチ確認用の表示・入力補助とし�
 
 typewriter shape の取り付け高さは `typewriterMountHeight` で保持し、キートップ本体の上面中央から stem 下端までの距離として扱う。SCAD 側では `user_typewriter_mount_height` と `topCenterHeight` から実際の `stem_height` へ変換するため、`topCenterHeight` はキートップ本体の厚み、`typewriterMountHeight` は装着時の高さとして独立して調整できる。
 
-stem は希望高さの nominal 形状を先に作り、最後に keycap 内部クリアランス volume と `intersection()` して止める。これにより、強い `pitch / roll` があっても stem はキートップ裏面に当たった位置で自動的に止まり、単純な高さ抑制より自然に追従する。
+stem は希望高さの nominal 形状を先に作り、最後に keycap 内部クリアランス volume と `intersection()` して止める。これにより、強い `pitch / roll` があっても stem はキートップ裏面に当たった位置で自動的に止まり、単純な高さ抑制より自然に追従する。J-STEM-LP01 は通常の正の stem ではなく、LP01 上面を受けるための差し引き用 recess として body shell / legend part / single material shape へ適用する。受け座 recess は LP01 プレートの外形だけを標準クリアランス 0 で掘り、プレート内側の丸穴位置はキーキャップ裏側を削らずに残す。legend は無効化せず別体積を維持し、受け座と重なる範囲だけ同じ recess でトリムする。LP01 本体は `j_stem_lp01_reference` として生成し、アプリ preview では半透明の位置合わせ参照として表示するが、3MF / STEP / STL には含めない。
+J-STEM-LP01 図面の長さラベルと SCAD 定数の対応は [../reference/j-stem-lp01-dimensions.md](../reference/j-stem-lp01-dimensions.md) にまとめる。
 
 ### Mermaid で見る画面 JSON SCAD WASM の流れ
 
@@ -142,6 +144,8 @@ flowchart TD
   homing bar の単体確認用
 - `scad/samples/keycap-stem-clip.scad`
   強い左右傾斜で stem の上端が内部天井に沿って止まるか確認する回帰用
+- `scad/samples/keycap-j-stem-lp01.scad`
+  J-STEM-LP01 受け座の裏側掘り込み確認用
 - `scad/samples/keycap-surface-quality.scad`
   角丸外形、dish、stem 外周の曲面品質をまとめて確認する回帰用
 - `scad/samples/keycap-top-corner-radii.scad`

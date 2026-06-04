@@ -72,6 +72,7 @@ const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
+const keycapJStemLp01ReferencePreviewPath = "/outputs/keycap-j-stem-lp01-reference-preview.off";
 const keycapStepSourceOffPath = "/outputs/keycap-single-material-step.off";
 const keycapStlExportPath = "/outputs/keycap-single-material.stl";
 const TOP_LEGEND_CONFIGS = Object.freeze([
@@ -895,6 +896,7 @@ const STEM_TYPE_OPTIONS = Object.freeze([
   { value: "choc_v1", labelKey: "options.stemType.choc_v1" },
   { value: "choc_v2", labelKey: "options.stemType.choc_v2" },
   { value: "alps", labelKey: "options.stemType.alps" },
+  { value: "j_stem_lp01", labelKey: "options.stemType.j_stem_lp01" },
 ]);
 const TOP_SURFACE_SHAPE_OPTIONS = Object.freeze([
   { value: "flat", labelKey: "options.topSurfaceShape.flat" },
@@ -945,6 +947,8 @@ function getStemGroupDescription(params) {
       return t("stemDescriptions.choc_v1");
     case "alps":
       return t("stemDescriptions.alps");
+    case "j_stem_lp01":
+      return t("stemDescriptions.j_stem_lp01");
     default:
       return t("stemDescriptions.choc_v2");
   }
@@ -965,6 +969,8 @@ function getStemFitHint(params) {
       return t("fields.stemCrossMargin.chocV1Hint");
     case "alps":
       return t("fields.stemCrossMargin.alpsHint");
+    case "j_stem_lp01":
+      return t("fields.stemCrossMargin.jStemLp01Hint");
     default:
       return t("fields.stemCrossMargin.disabledHint");
   }
@@ -977,9 +983,14 @@ function getStemChamferHint(params) {
 }
 
 function getStemInsetHint(params) {
-  return resolveStemType(params) === "none"
-    ? t("fields.stemInsetDelta.disabledHint")
-    : t("fields.stemInsetDelta.hint");
+  switch (resolveStemType(params)) {
+    case "none":
+      return t("fields.stemInsetDelta.disabledHint");
+    case "j_stem_lp01":
+      return t("fields.stemInsetDelta.jStemLp01Hint");
+    default:
+      return t("fields.stemInsetDelta.hint");
+  }
 }
 
 const TOP_SLOPE_INPUT_MODE_OPTIONS = Object.freeze([
@@ -2801,6 +2812,8 @@ function getPartLabel(partName) {
       return t("partLabels.legend");
     case "homing":
       return t("partLabels.homing");
+    case "j-stem-lp01":
+      return t("partLabels.jStemLp01");
     default:
       return t("partLabels.body");
   }
@@ -8257,7 +8270,7 @@ function createColorLayerJob({ name, exportTarget, outputPath, colorFieldKey, pa
 
 function createKeycapOffJobs(purpose, params = state.keycapParams) {
   if (purpose === "preview" || purpose === "3mf") {
-    return [
+    const colorLayerJobs = [
       createColorLayerJob({
         name: "body",
         exportTarget: "body_core",
@@ -8306,6 +8319,22 @@ function createKeycapOffJobs(purpose, params = state.keycapParams) {
           params,
         })),
     ];
+
+    if (purpose === "preview" && resolveStemType(params) === "j_stem_lp01") {
+      return [
+        ...colorLayerJobs,
+        {
+          name: "j-stem-lp01",
+          exportTarget: "j_stem_lp01_reference",
+          outputPath: keycapJStemLp01ReferencePreviewPath,
+          colorHex: "#74a9ff",
+          color: 0x74a9ff,
+          opacity: 0.36,
+        },
+      ];
+    }
+
+    return colorLayerJobs;
   }
 
   throw new Error(t("errors.unsupportedOffPurpose", { purpose }));
@@ -8375,6 +8404,7 @@ async function executeKeycapPreview(options = {}) {
     state.previewLayers = previewResults.map((entry) => ({
       name: entry.name,
       color: entry.color,
+      opacity: entry.opacity,
       mesh: entry.mesh,
     }));
   } catch (error) {

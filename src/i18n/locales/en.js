@@ -658,6 +658,7 @@ const en = Object.freeze({
       mxHint: "0 is standard. Positive values widen the cross hole; negative values tighten it.",
       chocV1Hint: "0 is standard. Positive values make the two prongs thinner and looser; negative values make them thicker and tighter.",
       alpsHint: "0 is standard. Positive values make the insert thinner and looser; negative values make it thicker and tighter.",
+      jStemLp01Hint: "0 is standard. Positive values enlarge the LP01 receiver recess; negative values tighten it.",
       disabledHint: "Unused when no mount is generated",
     },
     stemCrossChamfer: {
@@ -668,6 +669,7 @@ const en = Object.freeze({
     stemInsetDelta: {
       label: "Mount Start Offset",
       hint: "0 is standard. Positive values raise the start position from the bottom; negative values extend it downward.",
+      jStemLp01Hint: "0 is standard. Positive values deepen the LP01 receiver recess; negative values make it shallower.",
       disabledHint: "Unused when no mount is generated",
     },
   },
@@ -678,6 +680,7 @@ const en = Object.freeze({
       choc_v1: "Choc v1",
       choc_v2: "Choc v2",
       alps: "Alps / Matias",
+      j_stem_lp01: "J-STEM-LP01 (Experimental)",
     },
     topSurfaceShape: {
       flat: "Flat",
@@ -695,6 +698,7 @@ const en = Object.freeze({
     choc_v1: "A two-prong mount for Kailh Choc v1. Fits low-profile keyboards using Choc v1 switches.",
     alps: "An insert shape for Alps / Matias switches. Fits compatible Alps-family switches.",
     choc_v2: "A cross shape for Kailh Choc v2. Generates a mount that fits Choc v2 switches.",
+    j_stem_lp01: "Cuts an LP01 top-face receiver into the underside stem mounting area so the keycap can be used with J-STEM-LP01. This setting is experimental.",
   },
   sideLabels: {
     front: "Front",
@@ -728,6 +732,7 @@ const en = Object.freeze({
     topLegend: "{position}",
     sideLegend: "{side} Side Legend",
     homing: "Homing Mark",
+    jStemLp01: "J-STEM-LP01",
   },
   preview: {
     placeholder: "No preview yet. Change the design to automatically update the latest shape.",
