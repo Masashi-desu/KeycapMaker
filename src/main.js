@@ -305,6 +305,8 @@ const pendingLinkedSizeInputSyncs = new Set();
 let pendingLegendFontPickerFocus = false;
 let pendingActiveProjectSyncTimer = 0;
 let pendingFieldUiSyncTimer = 0;
+let themeFallbackFadeTimer = 0;
+let themeViewTransitionToken = 0;
 let hasPendingVisibleTopFieldSync = false;
 let pendingVisibleTopFieldActiveField = null;
 const textDecoder = new TextDecoder();
@@ -319,6 +321,9 @@ const CHECKBOX_TOGGLE_COMMIT_DELAY_MS = 190;
 const FIELD_UI_SYNC_DELAY_MS = 80;
 const ACTIVE_PROJECT_SYNC_DELAY_MS = 900;
 const THEME_SWITCH_ANIMATION_DURATION_MS = 260;
+const THEME_FADE_DURATION_MS = 320;
+const THEME_VIEW_TRANSITION_CLASS = "is-theme-transitioning";
+const THEME_FALLBACK_FADE_CLASS = "is-theme-css-fading";
 const PROJECT_KEYCAP_REORDER_ANIMATION_ID = "project-keycap-reorder";
 const PROJECT_KEYCAP_REORDER_ANIMATION_DURATION_MS = 180;
 const PROJECT_KEYCAP_REORDER_ANIMATION_EASING = "cubic-bezier(0.2, 0, 0, 1)";
@@ -529,10 +534,85 @@ function setThemePreference(theme) {
   return nextTheme;
 }
 
-function applyTheme(theme) {
+function applyThemeImmediately(theme) {
   const nextTheme = normalizeTheme(theme) ?? getSystemTheme();
   document.documentElement.dataset.theme = nextTheme;
   document.documentElement.style.colorScheme = nextTheme;
+
+  return nextTheme;
+}
+
+function setThemeFallbackFadeColors() {
+  const root = document.documentElement;
+  const rootStyle = root.style;
+  const computedStyle = window.getComputedStyle(root);
+  const pageStart = computedStyle.getPropertyValue("--page-start").trim();
+  const pageEnd = computedStyle.getPropertyValue("--page-end").trim();
+
+  if (pageStart) {
+    rootStyle.setProperty("--theme-fade-page-start", pageStart);
+  }
+  if (pageEnd) {
+    rootStyle.setProperty("--theme-fade-page-end", pageEnd);
+  }
+}
+
+function applyThemeWithFallbackFade(theme) {
+  const root = document.documentElement;
+
+  window.clearTimeout(themeFallbackFadeTimer);
+  setThemeFallbackFadeColors();
+  root.classList.remove(THEME_FALLBACK_FADE_CLASS);
+  void root.offsetWidth;
+  root.classList.add(THEME_FALLBACK_FADE_CLASS);
+  const nextTheme = applyThemeImmediately(theme);
+
+  themeFallbackFadeTimer = window.setTimeout(() => {
+    root.classList.remove(THEME_FALLBACK_FADE_CLASS);
+  }, THEME_FADE_DURATION_MS + 80);
+
+  return nextTheme;
+}
+
+function applyThemeWithViewTransition(theme) {
+  const root = document.documentElement;
+  const token = themeViewTransitionToken + 1;
+
+  themeViewTransitionToken = token;
+  root.classList.add(THEME_VIEW_TRANSITION_CLASS);
+
+  try {
+    const transition = document.startViewTransition(() => applyThemeImmediately(theme));
+    const cleanup = () => {
+      if (token === themeViewTransitionToken) {
+        root.classList.remove(THEME_VIEW_TRANSITION_CLASS);
+      }
+    };
+
+    transition.ready.catch(() => {});
+    transition.updateCallbackDone.catch(() => {});
+    transition.finished.then(cleanup, cleanup);
+  } catch {
+    root.classList.remove(THEME_VIEW_TRANSITION_CLASS);
+    return applyThemeWithFallbackFade(theme);
+  }
+
+  return normalizeTheme(theme) ?? getSystemTheme();
+}
+
+function applyTheme(theme, { animate = false } = {}) {
+  const nextTheme = normalizeTheme(theme) ?? getSystemTheme();
+  const currentTheme = normalizeTheme(document.documentElement.dataset.theme);
+
+  if (!animate || reduceMotionQuery?.matches || currentTheme === nextTheme) {
+    return applyThemeImmediately(nextTheme);
+  }
+
+  if (supportsUiViewTransitions) {
+    return applyThemeWithViewTransition(nextTheme);
+  }
+
+  return applyThemeWithFallbackFade(nextTheme);
 }
 
 function getKeyUnitMm() {
@@ -3144,22 +3224,21 @@ function renderLanguageControl() {
     return;
   }
 
-  container.innerHTML = `
-    <div class="language-combobox ${state.isLanguageMenuOpen ? "is-open" : ""}">
+  if (!container.querySelector(".language-combobox")) {
+    container.innerHTML = `
+      <div class="language-combobox">
       <button
         class="language-combobox__button"
         type="button"
         data-language-toggle
         aria-haspopup="listbox"
-        aria-expanded="${state.isLanguageMenuOpen ? "true" : "false"}"
+        aria-expanded="false"
         aria-controls="language-options"
-        aria-label="${escapeHtml(t("language.ariaLabel"))}"
       >
         <span class="language-combobox__icon" aria-hidden="true">${GLOBE_ICON_MARKUP}</span>
-        <span class="language-combobox__label">${escapeHtml(t("language.label"))}</span>
+        <span class="language-combobox__label"></span>
       </button>
-      ${state.isLanguageMenuOpen ? `
-        <div class="language-combobox__menu" id="language-options" role="listbox" aria-label="${escapeHtml(t("language.listLabel"))}">
+      <div class="language-combobox__menu" id="language-options" role="listbox" aria-hidden="true" inert>
           ${LOCALE_OPTIONS.map((option) => {
             const isSelected = option.value === state.locale;
             return `
@@ -3169,15 +3248,64 @@ function renderLanguageControl() {
                 role="option"
                 aria-selected="${isSelected ? "true" : "false"}"
                 data-language-option="${option.value}"
+                tabindex="-1"
               >
                 ${escapeHtml(t(option.labelKey))}
               </button>
             `;
           }).join("")}
         </div>
-      ` : ""}
-    </div>
-  `;
+      </div>
+    `;
+  }
+
+  syncLanguageControl();
+}
+
+function syncLanguageControl() {
+  const combobox = app.querySelector(".language-combobox");
+  if (!combobox) {
+    return;
+  }
+
+  const isOpen = state.isLanguageMenuOpen;
+  const toggleButton = combobox.querySelector("[data-language-toggle]");
+  const label = combobox.querySelector(".language-combobox__label");
+  const menu = combobox.querySelector(".language-combobox__menu");
+
+  combobox.classList.toggle("is-open", isOpen);
+
+  if (toggleButton) {
+    toggleButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    toggleButton.setAttribute("aria-label", t("language.ariaLabel"));
+  }
+
+  if (label) {
+    label.textContent = t("language.label");
+  }
+
+  if (menu) {
+    menu.setAttribute("aria-label", t("language.listLabel"));
+    menu.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    if (isOpen) {
+      menu.removeAttribute("inert");
+    } else {
+      menu.setAttribute("inert", "");
+    }
+  }
+
+  combobox.querySelectorAll("[data-language-option]").forEach((button) => {
+    const locale = button.dataset.languageOption;
+    const option = LOCALE_OPTIONS.find((entry) => entry.value === locale);
+    const isSelected = locale === state.locale;
+
+    button.classList.toggle("is-selected", isSelected);
+    button.setAttribute("aria-selected", isSelected ? "true" : "false");
+    button.setAttribute("tabindex", isOpen ? "0" : "-1");
+    if (option) {
+      button.textContent = t(option.labelKey);
+    }
+  });
 }
 
 function renderSegmentControl() {
@@ -5127,7 +5255,7 @@ function handleThemeControlClick(event) {
   }
 
   state.theme = setThemePreference(nextTheme);
-  applyTheme(state.theme);
+  applyTheme(state.theme, { animate: true });
   syncThemeControl({ animate: true });
   configureColoris();
 }
@@ -6092,7 +6220,7 @@ function handleSystemThemeChange() {
   }
 
   state.theme = nextTheme;
-  applyTheme(state.theme);
+  applyTheme(state.theme, { animate: true });
   syncThemeControl({ animate: true });
   configureColoris();
 }
