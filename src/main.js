@@ -3997,6 +3997,13 @@ function renderFieldGroup(group, groupIndex) {
     toggleLabel,
     toggleIconUrl,
   });
+  const bodyContent = isCollapsed
+    ? ""
+    : `
+        <div class="field-grid">
+          ${renderFieldGridContents(group.fields, groupFieldByKey)}
+        </div>
+      `;
 
   return `
     <section class="field-group-card" aria-labelledby="${titleId}" style="view-transition-name: ${groupViewTransitionName};">
@@ -4008,9 +4015,7 @@ function renderFieldGroup(group, groupIndex) {
         toggleButton,
       })}
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
-        <div class="field-grid">
-          ${renderFieldGridContents(group.fields, groupFieldByKey)}
-        </div>
+        ${bodyContent}
       </div>
     </section>
   `;
@@ -4037,6 +4042,16 @@ function renderStemFieldGroup(group, groupIndex) {
     toggleLabel,
     toggleIconUrl,
   });
+  const bodyContent = isCollapsed
+    ? ""
+    : `
+        <div class="field-grid">
+          ${renderFieldGridContents(mainFields, mainFieldByKey)}
+        </div>
+        <div class="parameter-subcard-list">
+          ${renderStemSubcard(STEM_CLEARANCE_CARD_DEFINITION, groupFieldByKey)}
+        </div>
+      `;
 
   return `
     <section class="field-group-card" aria-labelledby="${titleId}" style="view-transition-name: ${groupViewTransitionName};">
@@ -4048,12 +4063,7 @@ function renderStemFieldGroup(group, groupIndex) {
         toggleButton,
       })}
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
-        <div class="field-grid">
-          ${renderFieldGridContents(mainFields, mainFieldByKey)}
-        </div>
-        <div class="parameter-subcard-list">
-          ${renderStemSubcard(STEM_CLEARANCE_CARD_DEFINITION, groupFieldByKey)}
-        </div>
+        ${bodyContent}
       </div>
     </section>
   `;
@@ -4077,6 +4087,13 @@ function renderLegendFieldGroup(group, groupIndex) {
     toggleLabel,
     toggleIconUrl,
   });
+  const bodyContent = isCollapsed
+    ? ""
+    : `
+        <div class="legend-subcard-list">
+          ${LEGEND_CARD_DEFINITIONS.map((card) => renderLegendSubcard(card, groupFieldByKey)).join("")}
+        </div>
+      `;
 
   return `
     <section class="field-group-card" aria-labelledby="${titleId}" style="view-transition-name: ${groupViewTransitionName};">
@@ -4088,9 +4105,7 @@ function renderLegendFieldGroup(group, groupIndex) {
         toggleButton,
       })}
       <div class="field-group-body" id="${groupBodyId}" ${isCollapsed ? "hidden" : ""}>
-        <div class="legend-subcard-list">
-          ${LEGEND_CARD_DEFINITIONS.map((card) => renderLegendSubcard(card, groupFieldByKey)).join("")}
-        </div>
+        ${bodyContent}
       </div>
     </section>
   `;
@@ -4112,6 +4127,13 @@ function renderStemSubcard(card, groupFieldByKey) {
     : t("fieldGroup.collapse", { title: cardTitle });
   const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const cardViewTransitionName = createViewTransitionName("stem-subcard", card.id);
+  const bodyContent = isCollapsed
+    ? ""
+    : `
+        <div class="field-grid">
+          ${renderFieldGridContents(cardFields, cardFieldByKey)}
+        </div>
+      `;
 
   return `
     <section class="parameter-subcard" style="view-transition-name: ${cardViewTransitionName};">
@@ -4129,9 +4151,7 @@ function renderStemSubcard(card, groupFieldByKey) {
         </button>
       </div>
       <div class="parameter-subcard__body" id="${cardBodyId}" ${isCollapsed ? "hidden" : ""}>
-        <div class="field-grid">
-          ${renderFieldGridContents(cardFields, cardFieldByKey)}
-        </div>
+        ${bodyContent}
       </div>
     </section>
   `;
@@ -4157,6 +4177,14 @@ function renderLegendSubcard(card, groupFieldByKey) {
   const printNotice = isLegendEnabled
     ? `<p class="field-note">${escapeHtml(t("fields.legendPrintNotice"))}</p>`
     : "";
+  const bodyContent = isCollapsed
+    ? ""
+    : `
+        ${printNotice}
+        <div class="field-grid">
+          ${renderFieldGridContents(cardFields, cardFieldByKey)}
+        </div>
+      `;
 
   return `
     <section class="legend-subcard" style="view-transition-name: ${cardViewTransitionName};">
@@ -4174,10 +4202,7 @@ function renderLegendSubcard(card, groupFieldByKey) {
         </button>
       </div>
       <div class="legend-subcard__body" id="${cardBodyId}" ${isCollapsed ? "hidden" : ""}>
-        ${printNotice}
-        <div class="field-grid">
-          ${renderFieldGridContents(cardFields, cardFieldByKey)}
-        </div>
+        ${bodyContent}
       </div>
     </section>
   `;
@@ -6179,7 +6204,7 @@ function handleSidebarTabChange(event) {
   }
 
   state.sidebarTab = nextTab;
-  render({ animateInspector: true });
+  render({ animateInspector: false });
 }
 
 function toggleFieldGroup(groupId) {
@@ -6187,7 +6212,13 @@ function toggleFieldGroup(groupId) {
     return;
   }
 
+  const isExpanding = state.collapsedFieldGroups[groupId] === true;
   state.collapsedFieldGroups[groupId] = !state.collapsedFieldGroups[groupId];
+  if (isExpanding) {
+    render({ animateInspector: false });
+    return;
+  }
+
   if (!syncFieldGroupCollapseDom(groupId, { animate: true })) {
     render();
   }
