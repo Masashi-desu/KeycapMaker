@@ -563,6 +563,7 @@ pre {
 
 .editor-screen {
   --sidebar-width: clamp(320px, 34vw, 420px);
+  --inspector-card-min-width: min(380px, calc(100vw - var(--shell-padding-left) - var(--shell-padding-right)));
   --column-gap: 20px;
   --preview-size: min(calc(100vh - 48px), calc(100vw - 48px));
   display: grid;
@@ -586,6 +587,7 @@ pre {
   display: grid;
   align-content: start;
   gap: 14px;
+  min-width: var(--inspector-card-min-width);
   padding: 22px;
   border-radius: 28px;
   position: relative;
