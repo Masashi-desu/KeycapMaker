@@ -2700,6 +2700,16 @@ pre {
     isolation: isolate;
   }
 
+  html.is-theme-transitioning .inspector-panel,
+  html.is-theme-transitioning .import-binding-notice,
+  html.is-theme-transitioning .field-group-card,
+  html.is-theme-transitioning .name-field-control,
+  html.is-theme-transitioning .parameter-subcard,
+  html.is-theme-transitioning .legend-subcard,
+  html.is-theme-transitioning .field {
+    view-transition-name: none !important;
+  }
+
   html.is-theme-transitioning::view-transition-old(*),
   html.is-theme-transitioning::view-transition-new(*) {
     mix-blend-mode: normal;
@@ -2866,12 +2876,18 @@ pre {
   }
 
   .mobile-inspector-shell {
+    position: relative;
+    top: 0;
     height: 100%;
     max-height: var(--mobile-viewport-height);
     grid-template-rows: minmax(0, 1fr) var(--mobile-inspector-toggle-size);
     pointer-events: none;
-    transform: translateY(0);
-    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: top 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html.is-theme-transitioning .mobile-inspector-shell,
+  html.is-theme-css-fading .mobile-inspector-shell {
+    transition: none;
   }
 
   .inspector-card {
@@ -2911,7 +2927,7 @@ pre {
   }
 
   .editor-screen--inspector-hidden .mobile-inspector-shell {
-    transform: translateY(calc(-1 * (var(--mobile-viewport-height) - var(--mobile-inspector-toggle-size) - var(--mobile-inspector-peek))));
+    top: calc(var(--mobile-inspector-toggle-size) + var(--mobile-inspector-peek) + var(--mobile-shell-padding-top) + var(--mobile-shell-padding-bottom) - var(--visual-viewport-height));
   }
 
   .right-column {
