@@ -714,6 +714,8 @@ const en = Object.freeze({
     noResults: "No matching fonts",
     variableMeta: "Variable / named style",
     staticMeta: "Static face",
+    landingPageLinkLabel: "Open Font Page",
+    landingPageLinkAriaLabel: "Open the font page for {font} in a new tab",
     attributionTitle: "Copyright and License Notice",
     attributions: {
       "kurobara-cinderella-regular": [

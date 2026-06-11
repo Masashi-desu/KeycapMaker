@@ -17,6 +17,7 @@
   - OpenSCAD 名: `M PLUS 1`
   - 利用方針: variable font。named style は `Thin` から `Black` まで選択する
   - 出典: M+ FONTS 公式 `fonts/MPLUS1/variable/MPLUS1[wght].ttf`
+  - 閲覧用ページ: https://fonts.google.com/specimen/M%2BPLUS%2B1
   - ライセンス: `MPLUS1-OFL.txt`
   - 出典メモ: `MPLUS1-SOURCE.txt`
 
@@ -24,6 +25,7 @@
   - 表示名: `M PLUS 1p Regular`
   - OpenSCAD 名: `M PLUS 1p`
   - 出典: Google Fonts `ofl/mplus1p`
+  - 閲覧用ページ: https://fonts.google.com/specimen/M%2BPLUS%2B1p
   - ライセンス: `MPLUS1p-OFL.txt`
   - 出典メモ: `MPLUS1p-SOURCE.txt`
 
@@ -32,6 +34,7 @@
   - OpenSCAD 名: `Noto Sans`
   - 利用方針: variable font。named style は `Thin` から `Black` まで選択する
   - 出典: Google Fonts `ofl/notosans`
+  - 閲覧用ページ: https://fonts.google.com/noto/specimen/Noto%2BSans
   - ライセンス: `NotoSans-OFL.txt`
   - 出典メモ: `NotoSans-SOURCE.txt`
 
@@ -40,6 +43,7 @@
   - OpenSCAD 名: `Noto Sans JP`
   - 利用方針: variable font。named style は `Thin` から `Black` まで選択する
   - 出典: Google Fonts `ofl/notosansjp`
+  - 閲覧用ページ: https://fonts.google.com/noto/specimen/Noto%2BSans%2BJP
   - ライセンス: `NotoSansJP-OFL.txt`
   - 出典メモ: `NotoSansJP-SOURCE.txt`
 
@@ -47,6 +51,7 @@
   - 表示名: `M PLUS Rounded 1c Regular`
   - OpenSCAD 名: `M PLUS Rounded 1c`
   - 出典: Google Fonts `ofl/mplusrounded1c` / M+ FONTS for Google Fonts
+  - 閲覧用ページ: https://fonts.google.com/specimen/M%2BPLUS%2BRounded%2B1c
   - ライセンス: `MPLUSRounded1c-OFL.txt`
   - 出典メモ: `MPLUSRounded1c-SOURCE.txt`
 
@@ -54,6 +59,7 @@
   - 表示名: `DotGothic16 Regular`
   - OpenSCAD 名: `DotGothic16`
   - 出典: Google Fonts `ofl/dotgothic16`
+  - 閲覧用ページ: https://fonts.google.com/specimen/DotGothic16
   - ライセンス: `DotGothic16-OFL.txt`
   - 出典メモ: `DotGothic16-SOURCE.txt`
 
@@ -62,6 +68,7 @@
   - OpenSCAD 名: `kurobara-cinderella`
   - 利用方針: static font。棘付きの和文 gothic display として日本語 legend に使う
   - 出典: MODI工場 `font_kurobara-cinderella.php`
+  - 閲覧用ページ: https://modi.jpn.org/font_kurobara-cinderella.php
   - ライセンス: `KurobaraCinderella-MODI.txt` と `MPLUS1-OFL.txt`
 
 - `Bangers-Regular.ttf`
@@ -69,6 +76,7 @@
   - OpenSCAD 名: `Bangers`
   - 利用方針: static font。コミック表紙寄りの display 用として短い legend に使う
   - 出典: Google Fonts `ofl/bangers`
+  - 閲覧用ページ: https://fonts.google.com/specimen/Bangers
   - ライセンス: `Bangers-OFL.txt`
   - 出典メモ: `Bangers-SOURCE.txt`
 
@@ -77,6 +85,7 @@
   - OpenSCAD 名: `Creepster`
   - 利用方針: static font。ホラー映画タイトル寄りの display 用として短い legend に使う
   - 出典: Google Fonts `ofl/creepster`
+  - 閲覧用ページ: https://fonts.google.com/specimen/Creepster
   - ライセンス: `Creepster-OFL.txt`
   - 出典メモ: `Creepster-SOURCE.txt`
 
@@ -85,6 +94,7 @@
   - OpenSCAD 名: `Rye`
   - 利用方針: static font。西部劇ポスター寄りの display 用として短い legend に使う
   - 出典: Google Fonts `ofl/rye`
+  - 閲覧用ページ: https://fonts.google.com/specimen/Rye
   - ライセンス: `Rye-OFL.txt`
   - 出典メモ: `Rye-SOURCE.txt`
 
@@ -93,6 +103,7 @@
   - OpenSCAD 名: `Orbitron`
   - 利用方針: variable font の配布物を同梱するが、現 UI では family 既定の Regular face として扱う
   - 出典: Google Fonts `ofl/orbitron`
+  - 閲覧用ページ: https://fonts.google.com/specimen/Orbitron
   - ライセンス: `Orbitron-OFL.txt`
   - 出典メモ: `Orbitron-SOURCE.txt`
 
@@ -102,6 +113,7 @@
   - 利用方針: variable font の配布物を同梱するが、現 UI では family 既定の Regular face として扱う
   - 系統: `Art Gothic` 検索で見つけやすい近似候補。Blackletter 寄りの display
   - 出典: Google Fonts `ofl/grenzegotisch`
+  - 閲覧用ページ: https://fonts.google.com/specimen/Grenze%2BGotisch
   - ライセンス: `GrenzeGotisch-OFL.txt`
   - 出典メモ: `GrenzeGotisch-SOURCE.txt`
 
@@ -111,6 +123,7 @@
   - 利用方針: static font。石碑 inscription 寄りの gothic display として短い legend に使う
   - 系統: `Art Gothic` 検索で見つけやすい近似候補
   - 出典: Google Fonts `ofl/medievalsharp`
+  - 閲覧用ページ: https://fonts.google.com/specimen/MedievalSharp
   - ライセンス: `MedievalSharp-OFL.txt`
   - 出典メモ: `MedievalSharp-SOURCE.txt`
 

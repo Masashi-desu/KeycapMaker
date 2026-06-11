@@ -1615,6 +1615,31 @@ pre {
   gap: 6px;
 }
 
+.font-picker-landing-page-link {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 10px;
+  color: var(--solid-action);
+  background: color-mix(in srgb, var(--solid-action) 9%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--solid-action) 18%, transparent);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.font-picker-landing-page-link:hover {
+  background: color-mix(in srgb, var(--solid-action) 14%, transparent);
+}
+
+.font-picker-landing-page-link:focus-visible {
+  outline: 2px solid rgba(123, 155, 191, 0.58);
+  outline-offset: 2px;
+}
+
 .font-attribution-card {
   gap: 10px;
 }

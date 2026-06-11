@@ -714,6 +714,8 @@ const zh = Object.freeze({
     noResults: "没有匹配的字体",
     variableMeta: "可变 / 命名样式",
     staticMeta: "静态字形",
+    landingPageLinkLabel: "打开字体页面",
+    landingPageLinkAriaLabel: "在新标签页打开 {font} 的字体页面",
     attributionTitle: "版权与许可标注",
     attributions: {
       "kurobara-cinderella-regular": [

@@ -714,6 +714,8 @@ const ja = Object.freeze({
     noResults: "一致するフォントがありません",
     variableMeta: "Variable / named style",
     staticMeta: "Static face",
+    landingPageLinkLabel: "フォントページを開く",
+    landingPageLinkAriaLabel: "{font} のフォントページを新しいタブで開く",
     attributionTitle: "著作権・ライセンス表記",
     attributions: {
       "kurobara-cinderella-regular": [

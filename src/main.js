@@ -4569,6 +4569,28 @@ function renderLegendFontAttributionCard(font) {
   `;
 }
 
+function renderLegendFontLandingPageLink(font) {
+  if (!font?.landingPageUrl) {
+    return "";
+  }
+
+  const linkLabel = t("font.landingPageLinkLabel");
+  const ariaLabel = t("font.landingPageLinkAriaLabel", { font: font.label }, linkLabel);
+
+  return `
+    <a
+      class="font-picker-landing-page-link"
+      href="${escapeHtml(font.landingPageUrl)}"
+      target="_blank"
+      rel="noopener noreferrer"
+      data-font-landing-page-url="${escapeHtml(font.landingPageUrl)}"
+      aria-label="${escapeHtml(ariaLabel)}"
+    >
+      ${escapeHtml(linkLabel)}
+    </a>
+  `;
+}
+
 function renderCornerRadiusIcon(corner = "all") {
   const corners = corner === "all"
     ? ["left-top", "right-top", "right-bottom", "left-bottom"]
@@ -4854,6 +4876,7 @@ function renderField(field, options = {}) {
     const selectedPreviewStyle = buildLegendFontPreviewStyle(selectedFont);
     const selectedFontMetaLabel = getLegendFontMetaLabel(selectedFont);
     const selectedFontAttributionCard = renderLegendFontAttributionCard(selectedFont);
+    const selectedFontLandingPageLink = renderLegendFontLandingPageLink(selectedFont);
     const pickerId = `font-picker-${field.key}`;
     const isPickerOpen = state.legendFontPickerFieldKey === field.key;
 
@@ -4902,6 +4925,7 @@ function renderField(field, options = {}) {
               </span>
             ` : ""}
           </span>
+          ${selectedFontLandingPageLink}
           ${selectedFontAttributionCard}
         </span>
         ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
@@ -5600,6 +5624,16 @@ function handleInspectorCardClick(event) {
   const copyFontAttributionButton = getClosestFromEventTarget(event, "[data-copy-font-attribution]");
   if (copyFontAttributionButton) {
     void handleCopyLegendFontAttribution(copyFontAttributionButton.dataset.copyFontAttribution);
+    return;
+  }
+
+  const fontLandingPageLink = getClosestFromEventTarget(event, "[data-font-landing-page-url]");
+  if (fontLandingPageLink) {
+    event.preventDefault();
+    const landingPageUrl = fontLandingPageLink.dataset.fontLandingPageUrl;
+    if (landingPageUrl) {
+      window.open(landingPageUrl, "_blank", "noopener,noreferrer");
+    }
     return;
   }
 

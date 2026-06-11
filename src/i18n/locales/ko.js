@@ -714,6 +714,8 @@ const ko = Object.freeze({
     noResults: "일치하는 폰트가 없습니다",
     variableMeta: "가변 / 명명된 스타일",
     staticMeta: "정적 글꼴",
+    landingPageLinkLabel: "폰트 페이지 열기",
+    landingPageLinkAriaLabel: "{font} 폰트 페이지를 새 탭에서 열기",
     attributionTitle: "저작권 및 라이선스 표기",
     attributions: {
       "kurobara-cinderella-regular": [
