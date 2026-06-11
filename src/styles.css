@@ -48,6 +48,10 @@
   --action-fill: var(--panel-dark);
   --action-fill-hover: #3a2d22;
   --action-text: #fff9f0;
+  --font-picker-popover-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08) 28%, transparent);
+  --font-picker-option-surface: color-mix(in srgb, var(--panel) 88%, white 12%);
+  --font-picker-option-surface-hover: color-mix(in srgb, var(--panel-soft) 86%, white 14%);
+  --font-picker-option-selected: color-mix(in srgb, rgba(236, 243, 251, 0.98) 72%, var(--font-picker-option-surface) 28%);
   --divider-gap: 14px;
   --visual-viewport-height: 100svh;
   --visual-viewport-offset-top: 0px;
@@ -107,6 +111,10 @@
   --action-fill: #d8b77d;
   --action-fill-hover: #e4c993;
   --action-text: #1c1711;
+  --font-picker-popover-sheen: linear-gradient(180deg, rgba(255, 239, 213, 0.08), rgba(255, 239, 213, 0.03) 28%, transparent);
+  --font-picker-option-surface: color-mix(in srgb, var(--glass-control-strong) 62%, var(--panel-soft) 38%);
+  --font-picker-option-surface-hover: color-mix(in srgb, var(--glass-control-strong) 78%, var(--panel-softer) 22%);
+  --font-picker-option-selected: color-mix(in srgb, var(--control-selected) 72%, var(--font-picker-option-surface) 28%);
 }
 
 * {
@@ -1717,12 +1725,12 @@ pre {
   width: min(320px, calc(100vw - 96px));
   padding: 10px;
   border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0.08) 22%), var(--panel);
-  border: 1px solid color-mix(in srgb, var(--border) 58%, white 42%);
+  background: var(--font-picker-popover-sheen), var(--panel);
+  border: 1px solid var(--floating-control-border);
   box-shadow:
     0 24px 36px rgba(45, 36, 28, 0.18),
     0 8px 18px rgba(45, 36, 28, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    var(--popover-shadow);
   isolation: isolate;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -1762,21 +1770,21 @@ pre {
   text-align: left;
   cursor: pointer;
   color: var(--text);
-  background: rgba(249, 245, 239, 0.98);
+  background: var(--font-picker-option-surface);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--border) 46%, white 54%),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    inset 0 0 0 1px var(--glass-border-control),
+    inset 0 1px 0 var(--glass-outline);
 }
 
 .font-picker-option:hover {
-  background: rgba(243, 237, 230, 0.99);
+  background: var(--font-picker-option-surface-hover);
 }
 
 .font-picker-option.is-selected {
-  background: color-mix(in srgb, rgba(236, 243, 251, 0.98) 82%, rgba(249, 245, 239, 0.98) 18%);
+  background: var(--font-picker-option-selected);
   box-shadow:
-    inset 0 0 0 1px rgba(123, 155, 191, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    inset 0 0 0 1px color-mix(in srgb, var(--solid-action) 36%, var(--glass-border-control) 64%),
+    inset 0 1px 0 var(--glass-outline);
 }
 
 .font-picker-option__preview {
