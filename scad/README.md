@@ -18,7 +18,7 @@
 - `modules/stem_choc_v1.scad`: Kailh Choc v1 向け 2 本爪 stem
 - `modules/stem_choc_v2.scad`: Kailh Choc v2 向け MX 互換 stem
 - `modules/stem_alps.scad`: Alps / Matias 向け stem
-- `modules/stem_j_stem_lp01.scad`: J-STEM-LP01 上面を受ける裏側掘り込み形状と、半透明 preview 用の LP01 本体モデル
+- `modules/stem_j_stem_lp01.scad`: J-STEM-LP01 上面を受ける裏側掘り込み形状と、旧SCAD参照モデル。アプリの参照 preview は `public/assets/j-stem-lp01/` の公式 STEP 由来 OFF を使い、色選択でクリアのみ半透明、白とオレンジは不透明にする
 - `modules/homing_bar.scad`: body 側に追加するオプションの homing bar 形状
 - `modules/legend_block.scad`: フォント非依存の legend ボリューム
 - `modules/keycap_typewriter.scad`: 薄いタイプライター風キートップ外形

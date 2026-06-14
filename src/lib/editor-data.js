@@ -12,6 +12,7 @@ import {
   getKeycapLegendFontStyleOptions,
   resolveKeycapLegendFont,
 } from "./keycap-fonts.js";
+import { resolveJStemLp01PreviewColor } from "./j-stem-lp01-reference.js";
 
 export const DEFAULT_EXPORT_BASE_NAME = "keycap-preview";
 export const EDITOR_DATA_KIND = "keycap-maker/editor-params";
@@ -19,6 +20,7 @@ export const LEGACY_EDITOR_DATA_KINDS = new Set([EDITOR_DATA_KIND.replace("keyca
 export const EDITOR_DATA_SCHEMA_VERSION = 5;
 export const EDITOR_DATA_COMPAT_KIND = "keycap-maker/editor-params-patch";
 export const EDITOR_DATA_COMPAT_SCHEMA_VERSION = 1;
+export const J_STEM_LP01_RECOMMENDED_RECESS_CLEARANCE = 0.1;
 
 const STEM_TYPE_VALUES = new Set(["none", "mx", "choc_v1", "choc_v2", "alps", "j_stem_lp01"]);
 const TOP_SLOPE_INPUT_MODE_VALUES = new Set(["angle", "edge-height"]);
@@ -740,6 +742,21 @@ export function resolveStemType(params = {}) {
   return resolveDefaultStemType(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
 }
 
+export function resolveStemCrossMarginAfterStemTypeChange(
+  nextStemType,
+  currentStemCrossMargin,
+  previousStemType = null,
+) {
+  if (nextStemType !== "j_stem_lp01" || previousStemType === "j_stem_lp01") {
+    return currentStemCrossMargin;
+  }
+
+  const currentValue = Number(currentStemCrossMargin);
+  return !Number.isFinite(currentValue) || currentValue <= 0
+    ? J_STEM_LP01_RECOMMENDED_RECESS_CLEARANCE
+    : currentValue;
+}
+
 function resolveShapeProfileGeometryDefaults(profileKey = DEFAULT_SHAPE_PROFILE_KEY) {
   const geometryDefaults = getShapeProfileGeometryDefaults(profileKey);
   const geometryType = resolveShapeGeometryType(profileKey);
@@ -1038,6 +1055,13 @@ export function syncDerivedKeycapParams(params = {}) {
   });
   Object.assign(params, resolveTopEdgeHeights(params));
   params.stemType = resolveStemType(params);
+  if (params.stemType === "j_stem_lp01") {
+    params.stemInsetDelta = clampNonNegativeNumber(params.stemInsetDelta, defaults.stemInsetDelta ?? 0);
+  }
+  params.jStemLp01PreviewColor = resolveJStemLp01PreviewColor(
+    params.jStemLp01PreviewColor,
+    defaults.jStemLp01PreviewColor,
+  );
   params.stemEnabled = params.stemType !== "none";
   return params;
 }
@@ -1091,6 +1115,14 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (fieldKey === "stemType") {
     return isSupportedStemType(value) ? value : fallback;
+  }
+
+  if (fieldKey === "jStemLp01PreviewColor") {
+    return resolveJStemLp01PreviewColor(value, fallback);
+  }
+
+  if (fieldKey === "stemInsetDelta" && resolveStemType(paramsContext) === "j_stem_lp01") {
+    return clampNonNegativeNumber(value, fallback);
   }
 
   if (fieldKey === "topSlopeInputMode") {

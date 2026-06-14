@@ -16,6 +16,7 @@ import {
   parseEditorDataPayload,
   parseEditorDataPayloadWithReport,
   sanitizeExportBaseName,
+  resolveStemCrossMarginAfterStemTypeChange,
   syncDerivedKeycapParams,
 } from "../src/lib/editor-data.js";
 
@@ -86,11 +87,53 @@ test("J-STEM-LP01 の stemType は編集データで保持する", () => {
     params: {
       ...defaults,
       stemType: "j_stem_lp01",
+      jStemLp01PreviewColor: "orange",
     },
   });
 
   assert.equal(parsed.stemType, "j_stem_lp01");
+  assert.equal(parsed.jStemLp01PreviewColor, "orange");
   assert.equal(parsed.stemEnabled, true);
+});
+
+test("J-STEM-LP01 のプレビュー色は既定でクリアにし、不正値は丸める", () => {
+  const defaults = createDefaultKeycapParams("custom-shell");
+  const parsed = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      stemType: "j_stem_lp01",
+      jStemLp01PreviewColor: "blue",
+    },
+  });
+
+  assert.equal(defaults.jStemLp01PreviewColor, "clear");
+  assert.equal(parsed.jStemLp01PreviewColor, "clear");
+});
+
+test("J-STEM-LP01 の軸開始位置補正は負値を 0 に丸める", () => {
+  const defaults = createDefaultKeycapParams("custom-shell");
+  const parsed = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      stemType: "j_stem_lp01",
+      stemInsetDelta: -0.4,
+    },
+  });
+
+  assert.equal(parsed.stemType, "j_stem_lp01");
+  assert.equal(parsed.stemInsetDelta, 0);
+});
+
+test("J-STEM-LP01 へ切り替えると未調整クリアランスは 0.1mm から始める", () => {
+  assert.equal(resolveStemCrossMarginAfterStemTypeChange("j_stem_lp01", 0, "choc_v2"), 0.1);
+  assert.equal(resolveStemCrossMarginAfterStemTypeChange("j_stem_lp01", -0.04, "mx"), 0.1);
+  assert.equal(resolveStemCrossMarginAfterStemTypeChange("j_stem_lp01", 0.12, "choc_v2"), 0.12);
+  assert.equal(resolveStemCrossMarginAfterStemTypeChange("j_stem_lp01", 0, "j_stem_lp01"), 0);
+  assert.equal(resolveStemCrossMarginAfterStemTypeChange("mx", 0, "choc_v2"), 0);
 });
 
 test("JSON 読み込み時に bind できないパラメータを報告する", () => {

@@ -649,6 +649,10 @@ const en = Object.freeze({
       label: "Mount Type",
       hint: "Choose the switch type this keycap should fit",
     },
+    jStemLp01PreviewColor: {
+      label: "Preview Color",
+      hint: "Choose the display color for the J-STEM-LP01 reference part",
+    },
     stemOuterDelta: {
       label: "Outer Adjustment",
       hint: "0 is standard. Positive values thicken the outer circle; negative values thin it.",
@@ -658,7 +662,7 @@ const en = Object.freeze({
       mxHint: "0 is standard. Positive values widen the cross hole; negative values tighten it.",
       chocV1Hint: "0 is standard. Positive values make the two prongs thinner and looser; negative values make them thicker and tighter.",
       alpsHint: "0 is standard. Positive values make the insert thinner and looser; negative values make it thicker and tighter.",
-      jStemLp01Hint: "0 is standard. Positive values enlarge the LP01 receiver recess; negative values tighten it.",
+      jStemLp01Hint: "The initial value is 0.1 mm. If the real part is too tight, increase it; if it is loose, decrease it in 0.02 mm steps.",
       disabledHint: "Unused when no mount is generated",
     },
     stemCrossChamfer: {
@@ -669,7 +673,7 @@ const en = Object.freeze({
     stemInsetDelta: {
       label: "Mount Start Offset",
       hint: "0 is standard. Positive values raise the start position from the bottom; negative values extend it downward.",
-      jStemLp01Hint: "0 is standard. Positive values deepen the LP01 receiver recess; negative values make it shallower.",
+      jStemLp01Hint: "0 is standard. Increase the value to deepen the LP01 receiver recess.",
       disabledHint: "Unused when no mount is generated",
     },
   },
@@ -681,6 +685,11 @@ const en = Object.freeze({
       choc_v2: "Choc v2",
       alps: "Alps / Matias",
       j_stem_lp01: "J-STEM-LP01 (Experimental)",
+    },
+    jStemLp01PreviewColor: {
+      clear: "Clear",
+      white: "White",
+      orange: "Orange",
     },
     topSurfaceShape: {
       flat: "Flat",

@@ -241,6 +241,7 @@ test("J-STEM-LP01 の受け座SCADを bundle し、stemType を wrapper へ渡�
     assert.ok(nominalsScad, "J-STEM-LP01 nominal dimensions should be bundled");
     assert.equal(readRawScadDefinition(jobScad, "user_stem_type"), "\"j_stem_lp01\"");
     assert.equal(readScadDefinition(jobScad, "user_stem_cross_margin"), 0.08);
+    assert.match(baseScad, /clearance = stem_j_stem_lp01_nominal_recess_clearance \+ stem_cross_margin \+ stem_outer_delta/);
     assert.match(baseScad, /receiver_recess_stem_type\(stem_type\)/);
     assert.match(baseScad, /module keycap_trim_stem_receiver_recess/);
     assert.match(baseScad, /keycap_top_legends_volume\(quality = "export"\)\s*\{\s*keycap_trim_stem_receiver_recess\(quality\)/);

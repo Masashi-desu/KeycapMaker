@@ -150,6 +150,7 @@
     "homingBarColor": "#ff7f00",
     "stemType": "choc_v2",
     "typewriterMountHeight": 11.68,
+    "jStemLp01PreviewColor": "clear",
     "stemOuterDelta": 0,
     "stemCrossMargin": 0,
     "stemCrossChamfer": 0,
@@ -326,6 +327,7 @@
       "descriptionKey": "stem-group",
       "fieldKeys": [
         "stemType",
+        "jStemLp01PreviewColor",
         "stemOuterDelta",
         "stemCrossMargin",
         "stemCrossChamfer"

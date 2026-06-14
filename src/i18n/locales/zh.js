@@ -649,6 +649,10 @@ const zh = Object.freeze({
       label: "安装方式",
       hint: "选择键帽适配的轴体类型",
     },
+    jStemLp01PreviewColor: {
+      label: "预览颜色",
+      hint: "选择 J-STEM-LP01 参考件的显示颜色",
+    },
     stemOuterDelta: {
       label: "外周补正",
       hint: "0 为标准值。正值会加粗外周圆，负值会变细。",
@@ -658,7 +662,7 @@ const zh = Object.freeze({
       mxHint: "0 为标准值。正值会扩大十字孔，负值会收紧。",
       chocV1Hint: "0 为标准值。正值会让两个爪更细更松，负值会让其更粗更紧。",
       alpsHint: "0 为标准值。正值会让插入部更细更松，负值会让其更粗更紧。",
-      jStemLp01Hint: "0 为标准值。正值会扩大 LP01 承接凹槽外形，负值会收紧。",
+      jStemLp01Hint: "初始值为 0.1 mm。实物过紧时增大，过松时减小，以 0.02 mm 步进调整 LP01 承接凹槽外形。",
       disabledHint: "不生成安装部时不使用",
     },
     stemCrossChamfer: {
@@ -669,7 +673,7 @@ const zh = Object.freeze({
     stemInsetDelta: {
       label: "轴部起始位置补正",
       hint: "0 为标准值。正值会从底面抬高起始位置，负值会向下延伸。",
-      jStemLp01Hint: "0 为标准值。正值会加深 LP01 承接凹槽，负值会变浅。",
+      jStemLp01Hint: "0 为标准值。增大该值会加深 LP01 承接凹槽。",
       disabledHint: "不生成安装部时不使用",
     },
   },
@@ -681,6 +685,11 @@ const zh = Object.freeze({
       choc_v2: "Choc v2",
       alps: "Alps / Matias",
       j_stem_lp01: "J-STEM-LP01（实验）",
+    },
+    jStemLp01PreviewColor: {
+      clear: "透明",
+      white: "白色",
+      orange: "橙色",
     },
     topSurfaceShape: {
       flat: "平面",

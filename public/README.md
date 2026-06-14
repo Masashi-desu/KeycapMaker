@@ -14,6 +14,7 @@
 ## 現在の同梱物
 
 - `vendor/openscad/`: OpenSCAD WASM runtime
+- `assets/j-stem-lp01/`: J-STEM-LP01 の公式 STEP と preview 用 OFF 派生メッシュ
 - `fonts/MPLUS1-Variable.ttf`: `M PLUS 1` variable font
 - `fonts/MPLUS1p-Regular.ttf`: 標準ゴシック
 - `fonts/NotoSans-Variable.ttf`: `Noto Sans` variable font

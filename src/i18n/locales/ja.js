@@ -649,6 +649,10 @@ const ja = Object.freeze({
       label: "取り付け方式",
       hint: "キーキャップが合う軸の種類を選びます",
     },
+    jStemLp01PreviewColor: {
+      label: "プレビュー色",
+      hint: "J-STEM-LP01 参照パーツの表示色を選びます",
+    },
     stemOuterDelta: {
       label: "外周の補正",
       hint: "0 が標準です。プラスで外周円を太く、マイナスで細くします",
@@ -658,7 +662,7 @@ const ja = Object.freeze({
       mxHint: "0 が標準です。プラスで十字穴を広げ、マイナスで狭めます",
       chocV1Hint: "0 が標準です。プラスで 2 本爪を細くして緩く、マイナスで太くしてきつくします",
       alpsHint: "0 が標準です。プラスで差し込み部を細くして緩く、マイナスで太くしてきつくします",
-      jStemLp01Hint: "0 が標準です。プラスで LP01 受け座の掘り込み外形を広げ、マイナスで狭めます",
+      jStemLp01Hint: "0.1 mm を初期値にしています。実物がきついときはプラスで、緩いときはマイナスで LP01 受け座の掘り込み外形を 0.02 mm 刻みで調整します",
       disabledHint: "取り付け部分を作らないときは使いません",
     },
     stemCrossChamfer: {
@@ -669,7 +673,7 @@ const ja = Object.freeze({
     stemInsetDelta: {
       label: "軸の開始位置補正",
       hint: "0 が標準です。プラスで底面からの開始位置を上げ、マイナスで下へ伸ばします",
-      jStemLp01Hint: "0 が標準です。プラスで LP01 受け座の掘り込みを深く、マイナスで浅くします",
+      jStemLp01Hint: "0 が標準です。値を大きくすると LP01 受け座の掘り込みを深くします",
       disabledHint: "取り付け部分を作らないときは使いません",
     },
   },
@@ -681,6 +685,11 @@ const ja = Object.freeze({
       choc_v2: "Choc v2",
       alps: "Alps / Matias",
       j_stem_lp01: "J-STEM-LP01(試験的)",
+    },
+    jStemLp01PreviewColor: {
+      clear: "クリア",
+      white: "白",
+      orange: "オレンジ",
     },
     topSurfaceShape: {
       flat: "フラット",

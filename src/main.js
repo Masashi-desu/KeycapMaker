@@ -29,6 +29,7 @@ import {
   listEditableParamKeys,
   mergeEditorDataPayloadParams,
   parseEditorDataPayloadWithReport,
+  resolveStemCrossMarginAfterStemTypeChange,
   resolveStemType,
   sanitizeEditorParamValue,
   sanitizeExportBaseName,
@@ -36,6 +37,13 @@ import {
 } from "./lib/editor-data.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
 import { createStepBlob } from "./lib/export-step.js";
+import {
+  J_STEM_LP01_REFERENCE_OFF_PATH,
+  getJStemLp01PreviewStyle,
+  loadJStemLp01ReferenceMesh,
+  resolveJStemLp01PreviewColor,
+  transformJStemLp01ReferenceMesh,
+} from "./lib/j-stem-lp01-reference.js";
 import { parseOff } from "./lib/off-parser.js";
 import {
   DEFAULT_PROJECT_NAME,
@@ -72,7 +80,6 @@ const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
-const keycapJStemLp01ReferencePreviewPath = "/outputs/keycap-j-stem-lp01-reference-preview.off";
 const keycapStepSourceOffPath = "/outputs/keycap-single-material-step.off";
 const keycapStlExportPath = "/outputs/keycap-single-material.stl";
 const TOP_LEGEND_CONFIGS = Object.freeze([
@@ -288,6 +295,7 @@ let previewSceneModulePromise = null;
 let colorisLoadPromise = null;
 let latestPreviewRequestId = 0;
 let previewViewState = null;
+let jStemLp01ReferenceMeshPromise = null;
 let viewportLayoutMode = getViewportLayoutMode();
 let hasAttachedEditorDataDropListeners = false;
 let editorDataDragDepth = 0;
@@ -734,7 +742,10 @@ const FIELD_SLIDER_RANGE_RESOLVERS = Object.freeze({
   stemOuterDelta: () => ({ min: -STEM_DELTA_SLIDER_MAX, max: STEM_DELTA_SLIDER_MAX }),
   stemCrossMargin: () => ({ min: -STEM_DELTA_SLIDER_MAX, max: STEM_DELTA_SLIDER_MAX }),
   stemCrossChamfer: () => ({ max: STEM_CHAMFER_SLIDER_MAX }),
-  stemInsetDelta: () => ({ min: -STEM_INSET_DELTA_SLIDER_MAX, max: STEM_INSET_DELTA_SLIDER_MAX }),
+  stemInsetDelta: (params) => ({
+    min: resolveStemType(params) === "j_stem_lp01" ? 0 : -STEM_INSET_DELTA_SLIDER_MAX,
+    max: STEM_INSET_DELTA_SLIDER_MAX,
+  }),
 });
 
 function resolveFieldSliderRange(fieldKey, params = state.keycapParams) {
@@ -977,6 +988,11 @@ const STEM_TYPE_OPTIONS = Object.freeze([
   { value: "choc_v2", labelKey: "options.stemType.choc_v2" },
   { value: "alps", labelKey: "options.stemType.alps" },
   { value: "j_stem_lp01", labelKey: "options.stemType.j_stem_lp01" },
+]);
+const J_STEM_LP01_PREVIEW_COLOR_OPTIONS = Object.freeze([
+  { value: "clear", labelKey: "options.jStemLp01PreviewColor.clear", swatchClass: "clear" },
+  { value: "white", labelKey: "options.jStemLp01PreviewColor.white", swatchClass: "white" },
+  { value: "orange", labelKey: "options.jStemLp01PreviewColor.orange", swatchClass: "orange" },
 ]);
 const TOP_SURFACE_SHAPE_OPTIONS = Object.freeze([
   { value: "flat", labelKey: "options.topSurfaceShape.flat" },
@@ -2510,6 +2526,14 @@ const fieldGroupTemplates = [
         options: STEM_TYPE_OPTIONS,
       },
       {
+        key: "jStemLp01PreviewColor",
+        label: () => t("fields.jStemLp01PreviewColor.label"),
+        hint: () => t("fields.jStemLp01PreviewColor.hint"),
+        type: "preview-color-swatch",
+        options: J_STEM_LP01_PREVIEW_COLOR_OPTIONS,
+        visibleWhen: (params) => resolveStemType(params) === "j_stem_lp01",
+      },
+      {
         key: "typewriterMountHeight",
         label: () => t("fields.typewriterMountHeight.label"),
         hint: (params) => getTypewriterMountHeightHint(params),
@@ -2549,6 +2573,8 @@ const fieldGroupTemplates = [
         hint: (params) => getStemInsetHint(params),
         unit: "mm",
         step: 0.05,
+        min: (params) => resolveStemType(params) === "j_stem_lp01" ? 0 : -STEM_INSET_DELTA_SLIDER_MAX,
+        max: STEM_INSET_DELTA_SLIDER_MAX,
         visibleWhen: (params) => params.stemEnabled,
       },
     ],
@@ -2778,6 +2804,24 @@ function formatUnitInputValue(value = state.keycapParams.keyWidth) {
 function resolvePublicAssetUrl(relativePath) {
   const baseUrl = new URL(import.meta.env.BASE_URL, window.location.origin);
   return new URL(relativePath, baseUrl).toString();
+}
+
+function getJStemLp01ReferenceMeshPromise() {
+  jStemLp01ReferenceMeshPromise ??= loadJStemLp01ReferenceMesh(
+    resolvePublicAssetUrl(J_STEM_LP01_REFERENCE_OFF_PATH),
+  );
+  return jStemLp01ReferenceMeshPromise;
+}
+
+async function createJStemLp01ReferencePreviewLayer(params = state.keycapParams) {
+  const mesh = await getJStemLp01ReferenceMeshPromise();
+  const previewStyle = getJStemLp01PreviewStyle(params.jStemLp01PreviewColor);
+
+  return {
+    name: "j-stem-lp01",
+    ...previewStyle,
+    mesh: transformJStemLp01ReferenceMesh(mesh, params),
+  };
 }
 
 function getParameterGroupIconPath(groupId) {
@@ -4027,7 +4071,8 @@ function renderStemFieldGroup(group, groupIndex) {
   const groupViewTransitionName = createViewTransitionName("field-group", groupId);
   const groupBodyId = `field-group-body-${groupId}`;
   const groupFieldByKey = new Map(group.fields.map((field) => [field.key, field]));
-  const clearanceFieldKeys = new Set(STEM_CLEARANCE_CARD_DEFINITION.fieldKeys);
+  const activeClearanceCard = getActiveStemClearanceCard();
+  const clearanceFieldKeys = new Set(activeClearanceCard.fieldKeys);
   const mainFields = group.fields.filter((field) => !clearanceFieldKeys.has(field.key));
   const mainFieldByKey = new Map(mainFields.map((field) => [field.key, field]));
   const toggleLabel = isCollapsed
@@ -4049,7 +4094,7 @@ function renderStemFieldGroup(group, groupIndex) {
           ${renderFieldGridContents(mainFields, mainFieldByKey)}
         </div>
         <div class="parameter-subcard-list">
-          ${renderStemSubcard(STEM_CLEARANCE_CARD_DEFINITION, groupFieldByKey)}
+          ${renderStemSubcard(activeClearanceCard, groupFieldByKey)}
         </div>
       `;
 
@@ -4067,6 +4112,17 @@ function renderStemFieldGroup(group, groupIndex) {
       </div>
     </section>
   `;
+}
+
+function getActiveStemClearanceCard(params = state.keycapParams) {
+  if (resolveStemType(params) !== "j_stem_lp01") {
+    return STEM_CLEARANCE_CARD_DEFINITION;
+  }
+
+  return {
+    ...STEM_CLEARANCE_CARD_DEFINITION,
+    fieldKeys: STEM_CLEARANCE_CARD_DEFINITION.fieldKeys.filter((fieldKey) => fieldKey !== "stemCrossMargin"),
+  };
 }
 
 function renderLegendFieldGroup(group, groupIndex) {
@@ -4775,6 +4831,54 @@ function syncCheckboxToggleDom(input) {
   input.parentElement?.querySelector(".checkbox-toggle__label")?.replaceChildren(getCheckboxStatusLabel(input.checked));
 }
 
+function renderPreviewColorSwatchField(field, fieldClassName, fieldViewTransitionName, fieldLabel, fieldHint, fieldOptions) {
+  const selectedValue = resolveJStemLp01PreviewColor(state.keycapParams[field.key]);
+  const labelId = `field-label-${field.key}`;
+  const hintId = `field-hint-${field.key}`;
+  const hintAttribute = fieldHint ? ` aria-describedby="${hintId}"` : "";
+  const radioName = `field-${field.key}`;
+
+  return `
+    <div class="field field--preview-color${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      <span class="field-copy">
+        <span class="field-label" id="${labelId}">${fieldLabel}</span>
+        ${fieldHint ? `<span class="field-hint" id="${hintId}">${fieldHint}</span>` : ""}
+      </span>
+      <span class="preview-color-options" role="radiogroup" aria-labelledby="${labelId}"${hintAttribute}>
+        ${fieldOptions.map((option) => {
+          const previewStyle = getJStemLp01PreviewStyle(option.value);
+          const swatchClassName = option.swatchClass
+            ? ` preview-color-option__swatch--${toKebabCase(option.swatchClass)}`
+            : "";
+          const inputId = `field-${field.key}-${option.value}`;
+
+          return `
+            <label class="preview-color-option" for="${escapeHtml(inputId)}">
+              <input
+                class="preview-color-option__input"
+                id="${escapeHtml(inputId)}"
+                type="radio"
+                name="${escapeHtml(radioName)}"
+                data-field="${field.key}"
+                value="${escapeHtml(option.value)}"
+                aria-label="${escapeHtml(option.label)}"
+                ${option.value === selectedValue ? "checked" : ""}
+              />
+              <span class="preview-color-option__circle" aria-hidden="true">
+                <span
+                  class="preview-color-option__swatch${swatchClassName}"
+                  style="--preview-color-option-color: ${escapeHtml(previewStyle.colorHex)};"
+                ></span>
+              </span>
+              <span class="preview-color-option__label">${escapeHtml(option.label)}</span>
+            </label>
+          `;
+        }).join("")}
+      </span>
+    </div>
+  `;
+}
+
 function renderField(field, options = {}) {
   const value = state.keycapParams[field.key];
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
@@ -4868,6 +4972,10 @@ function renderField(field, options = {}) {
         ${checkboxControl}
       </div>
     `;
+  }
+
+  if (field.type === "preview-color-swatch") {
+    return renderPreviewColorSwatchField(field, fieldClassName, fieldViewTransitionName, fieldLabel, fieldHint, fieldOptions);
   }
 
   if (field.type === "font-search") {
@@ -8114,6 +8222,7 @@ function handleFieldChange(event) {
   const deferPreview = event.deferPreview === true;
   const deferContinuousSync = event.deferContinuousSync === true && (input.type === "number" || input.type === "range");
   const fieldConfig = getFieldConfig(field);
+  const previousStemType = resolveStemType(state.keycapParams);
   if (!field || !input) {
     return;
   }
@@ -8141,12 +8250,24 @@ function handleFieldChange(event) {
       applyShapeProfileParams(input.value);
     } else {
       state.keycapParams[field] = input.value;
+      if (field === "stemType") {
+        state.keycapParams.stemCrossMargin = resolveStemCrossMarginAfterStemTypeChange(
+          input.value,
+          state.keycapParams.stemCrossMargin,
+          previousStemType,
+        );
+      }
       if (field === "topSurfaceShape") {
         applyTopSurfaceShapePreset(input.value);
       } else if (field === "topHatSurfaceShape") {
         applyTopHatSurfaceShapePreset(input.value);
       }
     }
+  } else if (input.type === "radio") {
+    if (!input.checked) {
+      return;
+    }
+    state.keycapParams[field] = input.value;
   } else if (fieldConfig?.type === "color") {
     const normalizedColor = normalizeHexColor(input.value);
     if (!normalizedColor) {
@@ -8513,20 +8634,6 @@ function createKeycapOffJobs(purpose, params = state.keycapParams) {
         })),
     ];
 
-    if (purpose === "preview" && resolveStemType(params) === "j_stem_lp01") {
-      return [
-        ...colorLayerJobs,
-        {
-          name: "j-stem-lp01",
-          exportTarget: "j_stem_lp01_reference",
-          outputPath: keycapJStemLp01ReferencePreviewPath,
-          colorHex: "#74a9ff",
-          color: 0x74a9ff,
-          opacity: 0.36,
-        },
-      ];
-    }
-
     return colorLayerJobs;
   }
 
@@ -8563,6 +8670,7 @@ async function runKeycapOffJobs(jobs, params = state.keycapParams) {
 async function executeKeycapPreview(options = {}) {
   const { silent = false, refreshActiveProjectPreview = false } = options;
   const requestId = ++latestPreviewRequestId;
+  const previewParams = { ...state.keycapParams };
 
   state.editorStatus = "running";
   state.editorSummary = t("preview.running");
@@ -8572,29 +8680,35 @@ async function executeKeycapPreview(options = {}) {
   }
 
   try {
-    const previewResults = await runKeycapOffJobs(createKeycapOffJobs("preview"));
+    const previewResults = await runKeycapOffJobs(createKeycapOffJobs("preview", previewParams), previewParams);
+    const referenceLayer = resolveStemType(previewParams) === "j_stem_lp01"
+      ? await createJStemLp01ReferencePreviewLayer(previewParams)
+      : null;
     if (requestId !== latestPreviewRequestId) {
       return;
     }
 
+    const previewEntries = referenceLayer
+      ? [...previewResults, referenceLayer]
+      : previewResults;
     const totalElapsedMs = previewResults.reduce((sum, entry) => sum + entry.result.elapsedMs, 0);
-    const totalVertices = previewResults.reduce((sum, entry) => sum + entry.mesh.vertices.length, 0);
-    const totalFaces = previewResults.reduce((sum, entry) => sum + entry.mesh.faces.length, 0);
-    const visiblePartLabels = describePartLabels(previewResults.map((entry) => entry.name));
+    const totalVertices = previewEntries.reduce((sum, entry) => sum + entry.mesh.vertices.length, 0);
+    const totalFaces = previewEntries.reduce((sum, entry) => sum + entry.mesh.faces.length, 0);
+    const visiblePartLabels = describePartLabels(previewEntries.map((entry) => entry.name));
     state.editorStatus = "success";
     state.editorSummary = t("preview.summary", {
       elapsedMs: Math.round(totalElapsedMs),
-      objectCount: previewResults.length,
+      objectCount: previewEntries.length,
       vertexCount: totalVertices,
       faceCount: totalFaces,
     });
     state.editorLogs = previewResults.flatMap((entry) =>
       entry.result.logs.map((log) => `[${entry.name}/${log.stream}] ${log.text}`),
     );
-    state.editorError = previewResults.length > 1
+    state.editorError = previewEntries.length > 1
       ? t("preview.successMultiple", { parts: visiblePartLabels })
       : t("preview.successSingle", { parts: visiblePartLabels });
-    state.previewLayers = previewResults.map((entry) => ({
+    state.previewLayers = previewEntries.map((entry) => ({
       name: entry.name,
       color: entry.color,
       opacity: entry.opacity,

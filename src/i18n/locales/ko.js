@@ -649,6 +649,10 @@ const ko = Object.freeze({
       label: "장착 방식",
       hint: "키캡이 맞을 스위치 종류를 선택합니다",
     },
+    jStemLp01PreviewColor: {
+      label: "미리보기 색상",
+      hint: "J-STEM-LP01 참조 부품의 표시 색상을 선택합니다",
+    },
     stemOuterDelta: {
       label: "외주 보정",
       hint: "0이 표준입니다. 양수이면 외주 원을 굵게, 음수이면 가늘게 합니다.",
@@ -658,7 +662,7 @@ const ko = Object.freeze({
       mxHint: "0이 표준입니다. 양수이면 십자 구멍을 넓히고, 음수이면 좁힙니다.",
       chocV1Hint: "0이 표준입니다. 양수이면 두 갈래를 가늘게 해 느슨하게, 음수이면 두껍게 해 빡빡하게 합니다.",
       alpsHint: "0이 표준입니다. 양수이면 삽입부를 가늘게 해 느슨하게, 음수이면 두껍게 해 빡빡하게 합니다.",
-      jStemLp01Hint: "0이 표준입니다. 양수이면 LP01 받침 홈 외형을 넓히고, 음수이면 좁힙니다.",
+      jStemLp01Hint: "초기값은 0.1 mm입니다. 실제 부품이 빡빡하면 값을 키우고, 헐거우면 줄여 LP01 받침 홈 외형을 0.02 mm 단위로 조정합니다.",
       disabledHint: "장착부를 만들지 않을 때는 사용하지 않습니다",
     },
     stemCrossChamfer: {
@@ -669,7 +673,7 @@ const ko = Object.freeze({
     stemInsetDelta: {
       label: "축 시작 위치 보정",
       hint: "0이 표준입니다. 양수이면 바닥면에서 시작 위치를 올리고, 음수이면 아래로 늘립니다.",
-      jStemLp01Hint: "0이 표준입니다. 양수이면 LP01 받침 홈을 깊게, 음수이면 얕게 만듭니다.",
+      jStemLp01Hint: "0이 표준입니다. 값을 키우면 LP01 받침 홈을 더 깊게 만듭니다.",
       disabledHint: "장착부를 만들지 않을 때는 사용하지 않습니다",
     },
   },
@@ -681,6 +685,11 @@ const ko = Object.freeze({
       choc_v2: "Choc v2",
       alps: "Alps / Matias",
       j_stem_lp01: "J-STEM-LP01(실험적)",
+    },
+    jStemLp01PreviewColor: {
+      clear: "투명",
+      white: "흰색",
+      orange: "오렌지",
     },
     topSurfaceShape: {
       flat: "평면",

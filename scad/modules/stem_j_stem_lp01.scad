@@ -53,36 +53,42 @@ function j_stem_lp01_cubic_bezier_point(p0, p1, p2, p3, t) =
 function j_stem_lp01_cubic_bezier_points(p0, p1, p2, p3, steps) =
     [for (i = [0:steps]) j_stem_lp01_cubic_bezier_point(p0, p1, p2, p3, i / max(steps, 1))];
 
+// Official STEP-derived top plate outline, transformed into the local J-STEM receiver plane.
 function j_stem_lp01_plate_outline_base_points(quality = "export") =
-    let(
-        arc_steps = quality == "preview" ? 8 : 18,
-        curve_steps = quality == "preview" ? 7 : 16,
-        top_left_center = [-5.250, 5.220],
-        top_left_radius = 0.880,
-        top_right_center = [ 2.760, 5.180],
-        top_right_radius = 0.920,
-        bottom_right_center = [5.135, -5.170],
-        bottom_right_radius = 0.940,
-        bottom_left_center = [-2.820, -5.200],
-        bottom_left_radius = 0.900
-    )
-    concat(
-        [[top_left_center[0], top_left_center[1] + top_left_radius]],
-        [[top_right_center[0], top_right_center[1] + top_right_radius]],
-        j_stem_lp01_arc_points(top_right_center, top_right_radius, 90, 0, arc_steps),
-        [[3.680, 0.060]],
-        j_stem_lp01_cubic_bezier_points([3.680, 0.060], [3.680, -0.760], [3.960, -1.250], [4.250, -1.610], curve_steps),
-        j_stem_lp01_cubic_bezier_points([4.250, -1.610], [4.930, -2.250], [6.020, -3.220], [6.050, -3.830], curve_steps),
-        [[bottom_right_center[0] + bottom_right_radius, bottom_right_center[1]]],
-        j_stem_lp01_arc_points(bottom_right_center, bottom_right_radius, 0, -90, arc_steps),
-        [[bottom_left_center[0], bottom_left_center[1] - bottom_left_radius]],
-        j_stem_lp01_arc_points(bottom_left_center, bottom_left_radius, -90, -180, arc_steps),
-        [[-3.720, 0.060]],
-        j_stem_lp01_cubic_bezier_points([-3.720, 0.060], [-3.560, 1.080], [-5.360, 2.760], [-5.940, 3.300], curve_steps),
-        j_stem_lp01_cubic_bezier_points([-5.940, 3.300], [-6.130, 3.450], [-6.120, 3.670], [-6.120, 3.900], curve_steps),
-        [[-6.120, top_left_center[1]]],
-        j_stem_lp01_arc_points(top_left_center, top_left_radius, 180, 90, arc_steps)
-    );
+    [
+        [-6.1000,  5.2000],
+        [-6.1000, -2.8000],
+        [-5.9584, -3.2846],
+        [-5.5782, -3.6167],
+        [-5.2182, -3.6998],
+        [-5.2000, -3.7000],
+        [ 0.1716, -3.7000],
+        [ 0.9160, -3.8437],
+        [ 1.5858, -4.2858],
+        [ 3.1364, -5.8364],
+        [ 3.5791, -6.0789],
+        [ 3.7728, -6.1000],
+        [ 5.2000, -6.1000],
+        [ 5.6846, -5.9584],
+        [ 6.0167, -5.5782],
+        [ 6.0998, -5.2182],
+        [ 6.1000, -5.2000],
+        [ 6.1000,  2.8000],
+        [ 5.9584,  3.2846],
+        [ 5.5782,  3.6167],
+        [ 5.2182,  3.6998],
+        [ 5.2000,  3.7000],
+        [-0.1716,  3.7000],
+        [-0.9160,  3.8437],
+        [-1.5858,  4.2858],
+        [-3.1364,  5.8364],
+        [-3.5791,  6.0789],
+        [-3.7728,  6.1000],
+        [-5.2000,  6.1000],
+        [-5.6846,  5.9584],
+        [-6.0167,  5.5782],
+        [-6.0789,  5.3937]
+    ];
 
 function j_stem_lp01_plate_outline_points(hole_pitch_x = 8.11, plate_height = 12.2, quality = "export") =
     [for (point = j_stem_lp01_plate_outline_base_points(quality)) j_stem_lp01_scale_point(point, hole_pitch_x, plate_height)];
@@ -217,6 +223,7 @@ module j_stem_lp01_model(
 ) {
     post_mount_overlap = 0.02;
 
+    // Legacy SCAD reference. The app preview uses the official STEP-derived OFF asset.
     union() {
         linear_extrude(height = plate_thickness)
             j_stem_lp01_plate_top_2d(

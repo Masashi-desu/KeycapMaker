@@ -303,7 +303,7 @@ export function mountPreviewScene(container, layers, options = {}) {
     const isOverlayLayer = OVERLAY_LAYER_NAMES.has(layer.name);
     const isReferenceLayer = REFERENCE_LAYER_NAMES.has(layer.name);
     const opacity = Number.isFinite(layer.opacity) ? Math.min(Math.max(layer.opacity, 0), 1) : 1;
-    const isTransparentLayer = isReferenceLayer || opacity < 1;
+    const isTransparentLayer = opacity < 1;
     const material = new THREE.MeshStandardMaterial({
       color: layer.color ?? 0x4d8fd8,
       metalness: 0.08,
@@ -311,7 +311,7 @@ export function mountPreviewScene(container, layers, options = {}) {
       transparent: isTransparentLayer,
       opacity: isTransparentLayer ? opacity : 1,
       depthWrite: !isTransparentLayer,
-      side: isTransparentLayer ? THREE.DoubleSide : THREE.FrontSide,
+      side: isReferenceLayer || isTransparentLayer ? THREE.DoubleSide : THREE.FrontSide,
       polygonOffset: isOverlayLayer,
       polygonOffsetFactor: isOverlayLayer ? -1 : 0,
       polygonOffsetUnits: isOverlayLayer ? -2 : 0,

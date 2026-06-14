@@ -71,6 +71,8 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
   OFF メッシュ群から 3MF パッケージを生成
 - `src/lib/export-step.js`
   単一形状の OFF メッシュから STEP AP214 faceted B-rep を生成
+- `public/assets/j-stem-lp01/`
+  J-STEM-LP01 の公式 STEP と、参照 preview 用の公式 STEP 由来 OFF メッシュ
 
 ## データの流れ
 
@@ -78,9 +80,10 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
 2. `src/lib/keycap-scad-bundle.js` が `user_*` 定義を含む wrapper SCAD を生成する
 3. worker が bundled OpenSCAD runtime で SCAD を実行する
 4. preview では OFF を解析して Three.js 表示に渡す
-5. export では OFF を part ごとに集めて 3MF を生成するか、単一形状の OFF から STEP を生成するか、OpenSCAD runtime から単一 STL を生成する。編集データ JSON は state から生成する
-6. project では複数の編集データ JSON と preview 画像を `KeycapMaker.json` manifest で束ねる
-7. import ではプロジェクトディレクトリ、保存済みの編集データ JSON、または sparse な互換入力 JSON を読み込み、defaults とマージして state を復元する
+5. J-STEM-LP01 選択時の preview では、公式 STEP 由来 OFF を色選択付きの位置合わせ参照として追加する
+6. export では OFF を part ごとに集めて 3MF を生成するか、単一形状の OFF から STEP を生成するか、OpenSCAD runtime から単一 STL を生成する。編集データ JSON は state から生成する
+7. project では複数の編集データ JSON と preview 画像を `KeycapMaker.json` manifest で束ねる
+8. import ではプロジェクトディレクトリ、保存済みの編集データ JSON、または sparse な互換入力 JSON を読み込み、defaults とマージして state を復元する
 
 ### Mermaid で見る全体フロー
 
@@ -97,6 +100,7 @@ flowchart LR
   wrapper --> worker["Worker / src/openscad-worker.js"]
   worker --> wasm["OpenSCAD WASM runtime"]
   wasm --> off["OFF meshes"]
+  officialStep["Official J-STEM STEP / derived OFF"] --> preview
   off --> preview["Three.js preview"]
   off --> export3mf["3MF export"]
   off --> exportStep["single-shape STEP export"]
