@@ -2,6 +2,13 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-06-16 - ユーザー追加 font はブラウザ内のマイフォントとして扱う
+
+- 結論:
+  ユーザーが TTF / OTF を選択またはドラッグ & ドロップした場合、その font file は同梱 asset へ追加せず、ブラウザ内の `マイフォント` registry に保持する。preview / export 時だけ OpenSCAD runtime へ `/fonts/user/` asset として渡し、編集データ JSON には file bytes の hash 由来の `user-font:*` key だけを保存する。未読み込みの `user-font:*` は既定 font へ黙って置換せず、同じ font file の再追加を促す。
+- 理由:
+  GitHub Pages 配信アプリとしてサーバー保存を前提にせず、ユーザーのローカル font を使う要件と、font 再配布・同梱ライセンス確認の責務境界を分けるため
+
 ## 2026-06-03 - STEP export はブラウザ側で faceted B-rep を生成する
 
 - 結論:

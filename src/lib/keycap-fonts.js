@@ -1,4 +1,5 @@
 export const DEFAULT_KEYCAP_LEGEND_FONT_KEY = "mplus1-variable";
+export const USER_KEYCAP_LEGEND_FONT_KEY_PREFIX = "user-font:";
 
 const VARIABLE_WEIGHT_STYLE_DEFINITIONS = Object.freeze([
   { key: "thin", label: "Thin", cssWeight: 100 },
@@ -219,11 +220,303 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
 ]);
 
 const KEYCAP_LEGEND_FONT_MAP = new Map(KEYCAP_LEGEND_FONTS.map((font) => [font.key, font]));
+const USER_KEYCAP_LEGEND_FONT_MAP = new Map();
+const USER_KEYCAP_LEGEND_FONT_BYTES = new Map();
 
 export function resolveKeycapLegendFont(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
-  return KEYCAP_LEGEND_FONT_MAP.get(fontKey) ?? KEYCAP_LEGEND_FONT_MAP.get(DEFAULT_KEYCAP_LEGEND_FONT_KEY);
+  const key = String(fontKey ?? DEFAULT_KEYCAP_LEGEND_FONT_KEY);
+  const builtInFont = KEYCAP_LEGEND_FONT_MAP.get(key);
+  if (builtInFont) {
+    return builtInFont;
+  }
+
+  const userFont = USER_KEYCAP_LEGEND_FONT_MAP.get(key);
+  if (userFont) {
+    return userFont;
+  }
+
+  if (isUserKeycapLegendFontKey(key)) {
+    return createMissingUserKeycapLegendFont(key);
+  }
+
+  return KEYCAP_LEGEND_FONT_MAP.get(DEFAULT_KEYCAP_LEGEND_FONT_KEY);
 }
 
 export function getKeycapLegendFontStyleOptions(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
   return resolveKeycapLegendFont(fontKey).nativeStyleOptions ?? [];
+}
+
+export function isUserKeycapLegendFontKey(fontKey) {
+  return String(fontKey ?? "").startsWith(USER_KEYCAP_LEGEND_FONT_KEY_PREFIX);
+}
+
+function createMissingUserKeycapLegendFont(fontKey) {
+  return Object.freeze({
+    key: String(fontKey),
+    label: "Missing local font",
+    searchLabel: "missing local font",
+    fontKind: "missing",
+    fontName: "",
+    fontQuery: "",
+    measurementFamily: "",
+    cssWeight: 400,
+    isUserFont: true,
+    isMissing: true,
+  });
+}
+
+function normalizeUserFontBytes(bytes) {
+  if (bytes instanceof Uint8Array) {
+    return bytes;
+  }
+
+  if (bytes instanceof ArrayBuffer) {
+    return new Uint8Array(bytes);
+  }
+
+  if (ArrayBuffer.isView(bytes)) {
+    return new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  }
+
+  return new Uint8Array(0);
+}
+
+function normalizeUserFontKey(key) {
+  const normalizedKey = String(key ?? "");
+  return isUserKeycapLegendFontKey(normalizedKey)
+    ? normalizedKey
+    : `${USER_KEYCAP_LEGEND_FONT_KEY_PREFIX}${normalizedKey}`;
+}
+
+export function listUserKeycapLegendFonts() {
+  return Array.from(USER_KEYCAP_LEGEND_FONT_MAP.values());
+}
+
+export function listAvailableKeycapLegendFonts() {
+  return [
+    ...listUserKeycapLegendFonts(),
+    ...KEYCAP_LEGEND_FONTS,
+  ];
+}
+
+export function getUserKeycapLegendFontBytes(fontKey) {
+  return USER_KEYCAP_LEGEND_FONT_BYTES.get(String(fontKey ?? "")) ?? null;
+}
+
+export function registerUserKeycapLegendFont(fontDefinition = {}) {
+  const key = normalizeUserFontKey(fontDefinition.key);
+  const existingFont = USER_KEYCAP_LEGEND_FONT_MAP.get(key);
+  const nextBytes = normalizeUserFontBytes(fontDefinition.bytes);
+
+  if (nextBytes.byteLength === 0 && !existingFont) {
+    throw new Error("User font bytes are empty.");
+  }
+
+  if (existingFont) {
+    if (
+      fontDefinition.objectUrl
+      && fontDefinition.objectUrl !== existingFont.objectUrl
+      && typeof URL !== "undefined"
+      && typeof URL.revokeObjectURL === "function"
+    ) {
+      URL.revokeObjectURL(fontDefinition.objectUrl);
+    }
+    return existingFont;
+  }
+
+  const label = String(fontDefinition.label || fontDefinition.fileName || "Local Font");
+  const fontName = String(fontDefinition.fontName || fontDefinition.fontQuery || label);
+  const runtimePath = String(fontDefinition.runtimePath || `/fonts/user/${key.slice(USER_KEYCAP_LEGEND_FONT_KEY_PREFIX.length)}.ttf`);
+  const font = Object.freeze({
+    key,
+    label,
+    searchLabel: String(fontDefinition.searchLabel || `${label} ${fontDefinition.fileName ?? ""}`),
+    fontKind: "static",
+    fontName,
+    fontQuery: String(fontDefinition.fontQuery || fontName),
+    assetPath: "",
+    runtimePath,
+    licenseLabel: "",
+    measurementFamily: String(fontDefinition.measurementFamily || `Keycap User Font ${key.slice(USER_KEYCAP_LEGEND_FONT_KEY_PREFIX.length)}`),
+    cssWeight: Number.isFinite(Number(fontDefinition.cssWeight)) ? Number(fontDefinition.cssWeight) : 400,
+    isUserFont: true,
+    fileName: String(fontDefinition.fileName || label),
+    byteLength: Number(fontDefinition.byteLength ?? nextBytes.byteLength) || nextBytes.byteLength,
+    objectUrl: fontDefinition.objectUrl || "",
+  });
+
+  USER_KEYCAP_LEGEND_FONT_MAP.set(key, font);
+  USER_KEYCAP_LEGEND_FONT_BYTES.set(key, nextBytes);
+  return font;
+}
+
+export function removeUserKeycapLegendFont(fontKey) {
+  const key = String(fontKey ?? "");
+  const font = USER_KEYCAP_LEGEND_FONT_MAP.get(key);
+  if (!font) {
+    return false;
+  }
+
+  if (font.objectUrl && typeof URL !== "undefined" && typeof URL.revokeObjectURL === "function") {
+    URL.revokeObjectURL(font.objectUrl);
+  }
+
+  USER_KEYCAP_LEGEND_FONT_MAP.delete(key);
+  USER_KEYCAP_LEGEND_FONT_BYTES.delete(key);
+  return true;
+}
+
+export function clearUserKeycapLegendFonts() {
+  for (const font of USER_KEYCAP_LEGEND_FONT_MAP.values()) {
+    if (font.objectUrl && typeof URL !== "undefined" && typeof URL.revokeObjectURL === "function") {
+      URL.revokeObjectURL(font.objectUrl);
+    }
+  }
+
+  USER_KEYCAP_LEGEND_FONT_MAP.clear();
+  USER_KEYCAP_LEGEND_FONT_BYTES.clear();
+}
+
+function hasByteRange(start, length, totalLength) {
+  return Number.isInteger(start)
+    && Number.isInteger(length)
+    && start >= 0
+    && length >= 0
+    && start + length <= totalLength;
+}
+
+function readSfntTag(fontBytes, offset) {
+  return String.fromCharCode(...fontBytes.subarray(offset, offset + 4));
+}
+
+function readSfntTableDirectory(fontBytes) {
+  if (!hasByteRange(0, 12, fontBytes.byteLength)) {
+    return null;
+  }
+
+  const view = new DataView(fontBytes.buffer, fontBytes.byteOffset, fontBytes.byteLength);
+  const numTables = view.getUint16(4);
+  const directoryLength = 12 + (numTables * 16);
+  if (!hasByteRange(0, directoryLength, fontBytes.byteLength)) {
+    return null;
+  }
+
+  const tables = new Map();
+  for (let index = 0; index < numTables; index += 1) {
+    const entryOffset = 12 + (index * 16);
+    const tag = readSfntTag(fontBytes, entryOffset);
+    const offset = view.getUint32(entryOffset + 8);
+    const length = view.getUint32(entryOffset + 12);
+    tables.set(tag, { offset, length });
+  }
+
+  return tables;
+}
+
+function decodeUtf16Be(bytes) {
+  let text = "";
+  for (let index = 0; index + 1 < bytes.length; index += 2) {
+    text += String.fromCharCode((bytes[index] << 8) | bytes[index + 1]);
+  }
+
+  return text;
+}
+
+function decodeSfntNameRecord(bytes, platformId) {
+  if (platformId === 0 || platformId === 3) {
+    return decodeUtf16Be(bytes);
+  }
+
+  if (typeof TextDecoder !== "undefined") {
+    try {
+      return new TextDecoder("macintosh").decode(bytes);
+    } catch {}
+    try {
+      return new TextDecoder("latin1").decode(bytes);
+    } catch {}
+  }
+
+  return String.fromCharCode(...bytes);
+}
+
+function scoreSfntNameRecord(record) {
+  let score = 0;
+  if (record.platformId === 3) {
+    score += 40;
+  }
+  if (record.platformId === 0) {
+    score += 30;
+  }
+  if (record.languageId === 0x0409 || record.languageId === 0) {
+    score += 20;
+  }
+  if (record.text && /^[\x20-\x7e]+$/.test(record.text)) {
+    score += 5;
+  }
+  return score;
+}
+
+function selectSfntName(records, nameIds) {
+  return records
+    .filter((record) => nameIds.includes(record.nameId) && record.text)
+    .sort((a, b) => scoreSfntNameRecord(b) - scoreSfntNameRecord(a))[0]?.text
+    ?? "";
+}
+
+export function parseKeycapLegendFontNameMetadata(bytes) {
+  const fontBytes = normalizeUserFontBytes(bytes);
+  const tables = readSfntTableDirectory(fontBytes);
+  const nameTable = tables?.get("name");
+  if (!nameTable || !hasByteRange(nameTable.offset, nameTable.length, fontBytes.byteLength)) {
+    return {};
+  }
+
+  const view = new DataView(fontBytes.buffer, fontBytes.byteOffset, fontBytes.byteLength);
+  const nameTableOffset = nameTable.offset;
+  if (!hasByteRange(nameTableOffset, 6, fontBytes.byteLength)) {
+    return {};
+  }
+
+  const count = view.getUint16(nameTableOffset + 2);
+  const stringOffset = nameTableOffset + view.getUint16(nameTableOffset + 4);
+  const records = [];
+  for (let index = 0; index < count; index += 1) {
+    const recordOffset = nameTableOffset + 6 + (index * 12);
+    if (!hasByteRange(recordOffset, 12, fontBytes.byteLength)) {
+      continue;
+    }
+
+    const platformId = view.getUint16(recordOffset);
+    const encodingId = view.getUint16(recordOffset + 2);
+    const languageId = view.getUint16(recordOffset + 4);
+    const nameId = view.getUint16(recordOffset + 6);
+    const length = view.getUint16(recordOffset + 8);
+    const offset = view.getUint16(recordOffset + 10);
+    const textStart = stringOffset + offset;
+    if (!hasByteRange(textStart, length, fontBytes.byteLength)) {
+      continue;
+    }
+
+    const recordBytes = fontBytes.subarray(textStart, textStart + length);
+    const text = decodeSfntNameRecord(recordBytes, platformId).replace(/\0/g, "").trim();
+    records.push({
+      platformId,
+      encodingId,
+      languageId,
+      nameId,
+      text,
+    });
+  }
+
+  const familyName = selectSfntName(records, [16, 1]);
+  const subfamilyName = selectSfntName(records, [17, 2]);
+  const fullName = selectSfntName(records, [4]);
+  const postScriptName = selectSfntName(records, [6]);
+
+  return {
+    familyName,
+    subfamilyName,
+    fullName,
+    postScriptName,
+  };
 }

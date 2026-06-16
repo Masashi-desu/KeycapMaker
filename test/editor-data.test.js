@@ -19,6 +19,7 @@ import {
   resolveStemCrossMarginAfterStemTypeChange,
   syncDerivedKeycapParams,
 } from "../src/lib/editor-data.js";
+import { USER_KEYCAP_LEGEND_FONT_KEY_PREFIX } from "../src/lib/keycap-fonts.js";
 
 async function loadFixture(name) {
   const fixtureUrl = new URL(`./fixtures/${name}`, import.meta.url);
@@ -77,6 +78,25 @@ test("kind なしの疎 JSON も top-level パラメータを bind して不足�
   assert.equal(parsed.homingBarChamfer, defaults.homingBarChamfer);
   assert.equal(parsed.legendFontKey, defaults.legendFontKey);
   assert.ok(Number.isFinite(parsed.topBackHeight));
+});
+
+test("未読み込みのユーザーフォント key は編集データで保持する", () => {
+  const defaults = createDefaultKeycapParams("custom-shell");
+  const userFontKey = `${USER_KEYCAP_LEGEND_FONT_KEY_PREFIX}0123456789abcdef`;
+  const parsed = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      legendFontKey: userFontKey,
+      legendFontStyleKey: "unknown-style",
+    },
+  });
+  const exported = createEditorDataPayload(parsed);
+
+  assert.equal(parsed.legendFontKey, userFontKey);
+  assert.equal(parsed.legendFontStyleKey, "font-default");
+  assert.equal(exported.params.legendFontKey, userFontKey);
 });
 
 test("J-STEM-LP01 の stemType は編集データで保持する", () => {

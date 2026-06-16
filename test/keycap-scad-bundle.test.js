@@ -115,6 +115,61 @@ test("印字の作業領域は実測した複数文字の外形を含む", async
   }
 });
 
+test("ユーザー追加フォントを runtime asset と SCAD wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const fontKey = "user-font:test-runtime-font";
+    const fontBytes = new Uint8Array([10, 20, 30, 40]);
+    bundle.registerUserKeycapLegendFont({
+      key: fontKey,
+      label: "Local Test Regular",
+      fontName: "Local Test",
+      fontQuery: "Local Test",
+      fileName: "LocalTest-Regular.ttf",
+      bytes: fontBytes,
+      runtimePath: "/fonts/user/test-runtime-font.ttf",
+    });
+
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        legendText: "A",
+        legendFontKey: fontKey,
+      },
+    });
+    const fontAsset = files.find((file) => file.path === "/fonts/user/test-runtime-font.ttf");
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(fontAsset, "user font runtime asset should be included");
+    assert.deepEqual(Array.from(fontAsset.content), Array.from(fontBytes));
+    assert.equal(readRawScadDefinition(jobScad, "user_legend_font_name"), "\"Local Test\"");
+    bundle.removeUserKeycapLegendFont(fontKey);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("ステム入口の面取り量を SCAD wrapper へ渡す", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,

@@ -20,13 +20,29 @@ import stemNominalsScad from "../../scad/presets/stem-nominals.scad?raw";
 import {
   DEFAULT_KEYCAP_LEGEND_FONT_KEY,
   getKeycapLegendFontStyleOptions,
+  getUserKeycapLegendFontBytes,
   KEYCAP_LEGEND_FONTS,
+  listAvailableKeycapLegendFonts,
+  parseKeycapLegendFontNameMetadata,
+  registerUserKeycapLegendFont,
+  removeUserKeycapLegendFont,
   resolveKeycapLegendFont,
+  USER_KEYCAP_LEGEND_FONT_KEY_PREFIX,
 } from "./keycap-fonts.js";
 
 export const KEYCAP_ENTRY_PATH = "/scad/base/keycap.scad";
 export const KEYCAP_JOB_PATH = "/scad/base/keycap-job.scad";
-export { DEFAULT_KEYCAP_LEGEND_FONT_KEY, getKeycapLegendFontStyleOptions, KEYCAP_LEGEND_FONTS, resolveKeycapLegendFont };
+export {
+  DEFAULT_KEYCAP_LEGEND_FONT_KEY,
+  getKeycapLegendFontStyleOptions,
+  KEYCAP_LEGEND_FONTS,
+  listAvailableKeycapLegendFonts,
+  parseKeycapLegendFontNameMetadata,
+  registerUserKeycapLegendFont,
+  removeUserKeycapLegendFont,
+  resolveKeycapLegendFont,
+  USER_KEYCAP_LEGEND_FONT_KEY_PREFIX,
+};
 const LEGEND_MIN_PLAN_WIDTH_RATIO = 1.8;
 const LEGEND_PLAN_PADDING_RATIO = 0.15;
 const LEGEND_PLAN_MIN_PADDING = 0.2;
@@ -582,6 +598,9 @@ async function ensureMeasurementFontLoaded(selectedFont) {
   if (!selectedFont?.measurementFamily || typeof FontFace === "undefined" || typeof document === "undefined") {
     return null;
   }
+  if (selectedFont.isMissing) {
+    throw new Error(`マイフォントが未読み込みです: ${selectedFont.key}`);
+  }
 
   const cachedPromise = measurementFontPromises.get(selectedFont.key);
   if (cachedPromise) {
@@ -593,7 +612,7 @@ async function ensureMeasurementFontLoaded(selectedFont) {
     : { style: "normal", weight: `${selectedFont.cssWeight ?? 400}` };
   const fontFacePromise = new FontFace(
     selectedFont.measurementFamily,
-    `url(${resolvePublicAssetUrl(selectedFont.assetPath)})`,
+    `url(${resolveLegendFontAssetUrl(selectedFont)})`,
     descriptors,
   )
     .load()
@@ -611,19 +630,34 @@ async function ensureMeasurementFontLoaded(selectedFont) {
 }
 
 async function getFontBinaryAsset(selectedFont) {
+  if (selectedFont?.isMissing) {
+    throw new Error(`マイフォントが未読み込みです: ${selectedFont.key}`);
+  }
+
   const cachedPromise = fontBinaryPromises.get(selectedFont.key);
   if (cachedPromise) {
     return cachedPromise;
   }
 
-  const binaryPromise = loadBinaryAsset(selectedFont.assetPath)
+  const binaryPromise = selectedFont.isUserFont
+    ? Promise.resolve(getUserKeycapLegendFontBytes(selectedFont.key))
+    : loadBinaryAsset(selectedFont.assetPath);
+
+  const checkedBinaryPromise = binaryPromise
+    .then((fontBytes) => {
+      if (!(fontBytes instanceof Uint8Array) || (selectedFont.isUserFont && fontBytes.byteLength === 0)) {
+        throw new Error(`font asset の読み込みに失敗しました: ${selectedFont.key}`);
+      }
+
+      return fontBytes;
+    })
     .catch((error) => {
       fontBinaryPromises.delete(selectedFont.key);
       throw error;
     });
 
-  fontBinaryPromises.set(selectedFont.key, binaryPromise);
-  return binaryPromise;
+  fontBinaryPromises.set(selectedFont.key, checkedBinaryPromise);
+  return checkedBinaryPromise;
 }
 
 async function getLegendFontMetadata(selectedFont) {
@@ -1064,6 +1098,14 @@ function buildKeycapJobScad(definitions) {
 function resolvePublicAssetUrl(relativePath) {
   const baseUrl = new URL(import.meta.env.BASE_URL, window.location.origin);
   return new URL(relativePath, baseUrl).toString();
+}
+
+function resolveLegendFontAssetUrl(font) {
+  if (font?.objectUrl) {
+    return font.objectUrl;
+  }
+
+  return resolvePublicAssetUrl(font?.assetPath ?? "");
 }
 
 async function loadBinaryAsset(relativePath) {

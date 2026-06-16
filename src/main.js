@@ -68,14 +68,30 @@ import {
 } from "./lib/preview-thumbnail.js";
 import {
   DEFAULT_KEYCAP_LEGEND_FONT_KEY,
-  KEYCAP_LEGEND_FONTS,
   buildKeycapArgs,
   createKeycapFiles,
   getKeycapLegendFontStyleOptions,
+  listAvailableKeycapLegendFonts,
+  parseKeycapLegendFontNameMetadata,
+  registerUserKeycapLegendFont,
+  removeUserKeycapLegendFont,
   resolveKeycapLegendFont,
+  USER_KEYCAP_LEGEND_FONT_KEY_PREFIX,
 } from "./lib/keycap-scad-bundle.js";
 
 const app = document.querySelector("#app");
+const LEGEND_FONT_PICKER_SEGMENT_BUILTIN = "builtin";
+const LEGEND_FONT_PICKER_SEGMENT_USER = "user";
+const LEGEND_FONT_PICKER_SEGMENTS = Object.freeze([
+  {
+    key: LEGEND_FONT_PICKER_SEGMENT_BUILTIN,
+    labelKey: "font.builtinFontsSegment",
+  },
+  {
+    key: LEGEND_FONT_PICKER_SEGMENT_USER,
+    labelKey: "font.myFontsSegment",
+  },
+]);
 const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
 const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
@@ -346,6 +362,8 @@ const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
 const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
+const USER_LEGEND_FONT_FILE_ACCEPT = ".ttf,.otf,font/ttf,font/otf,application/font-sfnt,application/x-font-ttf,application/x-font-otf,application/vnd.ms-opentype";
+const USER_LEGEND_FONT_FILE_EXTENSIONS = new Set([".ttf", ".otf"]);
 const LEGEND_FIELD_SUFFIXES = Object.freeze({
   enabled: "Enabled",
   color: "Color",
@@ -811,25 +829,86 @@ function resolveLegendFontConfig(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
   return resolveKeycapLegendFont(fontKey);
 }
 
+function getAvailableLegendFonts() {
+  return listAvailableKeycapLegendFonts();
+}
+
+function normalizeLegendFontPickerSegment(value) {
+  return value === LEGEND_FONT_PICKER_SEGMENT_USER
+    ? LEGEND_FONT_PICKER_SEGMENT_USER
+    : LEGEND_FONT_PICKER_SEGMENT_BUILTIN;
+}
+
+function getLegendFontPickerInitialSegment(fieldKey = "legendFontKey") {
+  const selectedFont = resolveLegendFontConfig(state.keycapParams[fieldKey]);
+  return selectedFont?.isUserFont || selectedFont?.isMissing
+    ? LEGEND_FONT_PICKER_SEGMENT_USER
+    : LEGEND_FONT_PICKER_SEGMENT_BUILTIN;
+}
+
+function getLegendFontPickerSegmentFonts(
+  segment = state.legendFontPickerSegment,
+  fieldKey = state.legendFontPickerFieldKey || "legendFontKey",
+) {
+  const normalizedSegment = normalizeLegendFontPickerSegment(segment);
+  const availableFonts = getAvailableLegendFonts();
+  const fonts = normalizedSegment === LEGEND_FONT_PICKER_SEGMENT_USER
+    ? availableFonts.filter((font) => font.isUserFont || font.isMissing)
+    : availableFonts.filter((font) => !font.isUserFont && !font.isMissing);
+
+  if (normalizedSegment !== LEGEND_FONT_PICKER_SEGMENT_USER) {
+    return fonts;
+  }
+
+  const selectedFont = resolveLegendFontConfig(state.keycapParams[fieldKey]);
+  if (
+    selectedFont?.isMissing
+    && !fonts.some((font) => font.key === selectedFont.key)
+  ) {
+    return [selectedFont, ...fonts];
+  }
+
+  return fonts;
+}
+
+function getLegendFontPickerSegmentIndex(segment = state.legendFontPickerSegment) {
+  const normalizedSegment = normalizeLegendFontPickerSegment(segment);
+  return Math.max(LEGEND_FONT_PICKER_SEGMENTS.findIndex((item) => item.key === normalizedSegment), 0);
+}
+
 function normalizeLegendFontPickerQuery(value) {
   return String(value ?? "").trim().toLowerCase();
 }
 
-function getLegendFontPickerResults(query = state.legendFontPickerQuery) {
+function getLegendFontPickerResults(
+  query = state.legendFontPickerQuery,
+  segment = state.legendFontPickerSegment,
+  fieldKey = state.legendFontPickerFieldKey || "legendFontKey",
+) {
+  const availableFonts = getLegendFontPickerSegmentFonts(segment, fieldKey);
   const normalizedQuery = normalizeLegendFontPickerQuery(query);
   if (!normalizedQuery) {
-    return KEYCAP_LEGEND_FONTS;
+    return availableFonts;
   }
 
-  return KEYCAP_LEGEND_FONTS.filter((font) => {
+  return availableFonts.filter((font) => {
     const searchLabel = String(font.searchLabel ?? font.label).toLowerCase();
     const fontName = String(font.fontName ?? "").toLowerCase();
-    return searchLabel.includes(normalizedQuery) || fontName.includes(normalizedQuery);
+    const fileName = String(font.fileName ?? "").toLowerCase();
+    return searchLabel.includes(normalizedQuery)
+      || fontName.includes(normalizedQuery)
+      || fileName.includes(normalizedQuery);
   });
 }
 
 function getLegendFontFieldHint(params, fontFieldKey = "legendFontKey") {
   const selectedFont = resolveLegendFontConfig(params[fontFieldKey]);
+  if (selectedFont.isMissing) {
+    return t("fields.legendFontKey.missingHint");
+  }
+  if (selectedFont.isUserFont) {
+    return t("fields.legendFontKey.userHint");
+  }
   return selectedFont.fontKind === "variable"
     ? t("fields.legendFontKey.variableHint")
     : t("fields.legendFontKey.staticHint");
@@ -2707,6 +2786,7 @@ const state = {
   isImportBindingNoticeCollapsed: false,
   legendFontPickerFieldKey: "",
   legendFontPickerQuery: "",
+  legendFontPickerSegment: LEGEND_FONT_PICKER_SEGMENT_BUILTIN,
   copiedFontAttributionKey: "",
   collapsedFieldGroups: createFieldGroupCollapseState(),
   keyUnitMm: readKeyUnitMmPreference(),
@@ -3070,7 +3150,7 @@ function renderShell() {
             <strong data-i18n="dropOverlay.title"></strong>
             <span data-i18n="dropOverlay.body"></span>
           </span>
-          <span class="drop-overlay__chip" aria-hidden="true">ZIP / JSON</span>
+          <span class="drop-overlay__chip" data-i18n="dropOverlay.chip" aria-hidden="true"></span>
         </div>
       </div>
       <div data-keycap-export-overlay-root></div>
@@ -3394,6 +3474,7 @@ function render(options = {}) {
     renderKeycapExportOverlay();
     configureColoris();
     syncImportDropOverlay();
+    syncLegendFontPickerSegmentIndicator();
     focusLegendFontPickerQuery();
   };
 
@@ -3431,6 +3512,33 @@ function focusLegendFontPickerQuery() {
     input.focus();
     input.select();
   });
+}
+
+function syncLegendFontPickerSegmentIndicator(root = app) {
+  const segments = root.querySelector("[data-font-picker-segments]");
+  if (!(segments instanceof HTMLElement)) {
+    return;
+  }
+
+  const activeSegment = normalizeLegendFontPickerSegment(segments.dataset.fontPickerActiveSegment);
+  const activeButton = segments.querySelector(`[data-font-picker-segment="${activeSegment}"]`);
+  const indicator = segments.querySelector(".font-picker-segments__indicator");
+  if (!(activeButton instanceof HTMLElement) || !(indicator instanceof HTMLElement)) {
+    return;
+  }
+
+  const firstButton = segments.querySelector("[data-font-picker-segment]");
+  const baseOffset = firstButton instanceof HTMLElement ? firstButton.offsetLeft : 0;
+  indicator.style.width = `${activeButton.offsetWidth}px`;
+  indicator.style.marginLeft = "";
+  if (activeButton.offsetLeft > baseOffset) {
+    indicator.style.left = "auto";
+    indicator.style.right = `${Math.max(segments.offsetWidth - activeButton.offsetLeft - activeButton.offsetWidth, 0)}px`;
+    return;
+  }
+
+  indicator.style.left = `${activeButton.offsetLeft}px`;
+  indicator.style.right = "auto";
 }
 
 function renderImportBindingNotice() {
@@ -4544,6 +4652,9 @@ async function ensureLegendFontPreviewLoaded(font) {
   if (!font?.measurementFamily || typeof FontFace === "undefined" || typeof document === "undefined") {
     return null;
   }
+  if (font.isMissing) {
+    return null;
+  }
 
   const cachedPromise = legendFontPreviewPromises.get(font.key);
   if (cachedPromise) {
@@ -4555,7 +4666,7 @@ async function ensureLegendFontPreviewLoaded(font) {
     : { style: "normal", weight: `${font.cssWeight ?? 400}` };
   const previewPromise = new FontFace(
     font.measurementFamily,
-    `url(${resolvePublicAssetUrl(font.assetPath)})`,
+    `url(${resolveLegendFontAssetUrl(font)})`,
     descriptors,
   )
     .load()
@@ -4574,9 +4685,17 @@ async function ensureLegendFontPreviewLoaded(font) {
 }
 
 function warmLegendFontPreviewFonts() {
-  KEYCAP_LEGEND_FONTS.forEach((font) => {
+  getAvailableLegendFonts().forEach((font) => {
     void ensureLegendFontPreviewLoaded(font);
   });
+}
+
+function resolveLegendFontAssetUrl(font) {
+  if (font?.objectUrl) {
+    return font.objectUrl;
+  }
+
+  return resolvePublicAssetUrl(font?.assetPath ?? "");
 }
 
 function buildLegendFontPreviewStyle(font) {
@@ -4588,7 +4707,93 @@ function buildLegendFontPreviewStyle(font) {
 }
 
 function getLegendFontMetaLabel(font) {
+  if (font?.isMissing) {
+    return t("font.missingMeta");
+  }
+  if (font?.isUserFont) {
+    return t("font.userMeta");
+  }
   return font?.fontKind === "variable" ? t("font.variableMeta") : t("font.staticMeta");
+}
+
+function formatFileByteLength(byteLength) {
+  const bytes = Number(byteLength);
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "";
+  }
+
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function renderUserFontFileInput(fieldKey) {
+  return `
+    <input
+      type="file"
+      accept="${escapeHtml(USER_LEGEND_FONT_FILE_ACCEPT)}"
+      data-user-font-file
+      data-user-font-field="${escapeHtml(fieldKey)}"
+      multiple
+      hidden
+    />
+  `;
+}
+
+function renderUserFontAddButton(fieldKey, { compact = false, label = t("font.addLocalFont") } = {}) {
+  return `
+    <button
+      class="${compact ? "font-picker-local-action" : "font-picker-add-local"}"
+      type="button"
+      data-user-font-add="${escapeHtml(fieldKey)}"
+    >
+      <span>${escapeHtml(label)}</span>
+      ${compact ? "" : `<span>${escapeHtml(t("font.addLocalFontHint"))}</span>`}
+    </button>
+  `;
+}
+
+function renderLegendFontLocalInfo(font, fieldKey) {
+  if (font?.isMissing) {
+    return `
+      <span class="note-card font-local-card font-local-card--missing">
+        <strong>${escapeHtml(t("font.missingTitle"))}</strong>
+        <p>${escapeHtml(t("font.missingBody"))}</p>
+        ${renderUserFontAddButton(fieldKey, { compact: true, label: t("font.addMissingLocalFont") })}
+      </span>
+    `;
+  }
+
+  if (!font?.isUserFont) {
+    return "";
+  }
+
+  const byteLength = formatFileByteLength(font.byteLength);
+  return `
+    <span class="note-card font-local-card">
+      <strong>${escapeHtml(t("font.localTitle"))}</strong>
+      <p>${escapeHtml(t("font.localBody", {
+        fileName: font.fileName || font.label,
+        byteLength: byteLength ? ` / ${byteLength}` : "",
+      }))}</p>
+      <span class="font-local-card__actions">
+        ${renderUserFontAddButton(fieldKey, { compact: true, label: t("font.addLocalFont") })}
+        <button
+          class="font-picker-local-action font-picker-local-action--danger"
+          type="button"
+          data-user-font-delete="${escapeHtml(font.key)}"
+        >
+          ${escapeHtml(t("font.deleteLocalFont"))}
+        </button>
+      </span>
+    </span>
+  `;
 }
 
 function getLegendFontAttributionText(font) {
@@ -4733,6 +4938,40 @@ function renderCornerRadiusField(field, fieldClassName = "") {
   `;
 }
 
+function renderLegendFontPickerSegmentControl(fieldKey = state.legendFontPickerFieldKey || "legendFontKey") {
+  const activeSegment = normalizeLegendFontPickerSegment(state.legendFontPickerSegment);
+  const activeIndex = getLegendFontPickerSegmentIndex(activeSegment);
+  const buttons = LEGEND_FONT_PICKER_SEGMENTS.map((segment) => {
+    const isActive = segment.key === activeSegment;
+    return `
+      <button
+        class="font-picker-segment ${isActive ? "is-active" : ""}"
+        type="button"
+        role="tab"
+        aria-selected="${isActive ? "true" : "false"}"
+        data-font-picker-segment="${escapeHtml(segment.key)}"
+        data-font-picker-segment-field="${escapeHtml(fieldKey)}"
+      >
+        ${escapeHtml(t(segment.labelKey))}
+      </button>
+    `;
+  }).join("");
+
+  return `
+    <span
+      class="font-picker-segments"
+      role="tablist"
+      aria-label="${escapeHtml(t("font.segmentControlLabel"))}"
+      style="--segment-count: ${LEGEND_FONT_PICKER_SEGMENTS.length}; --segment-index: ${activeIndex};"
+      data-font-picker-segments
+      data-font-picker-active-segment="${escapeHtml(activeSegment)}"
+    >
+      <span class="font-picker-segments__indicator" aria-hidden="true"></span>
+      ${buttons}
+    </span>
+  `;
+}
+
 function renderSliderRangeControl(fieldKey, fieldConfig, value, label, options = {}) {
   const sliderAttributes = resolveFieldSliderAttributes(fieldConfig);
   if (!canRenderFieldSlider(sliderAttributes)) {
@@ -4775,33 +5014,50 @@ function renderSliderRangeControl(fieldKey, fieldConfig, value, label, options =
   `;
 }
 
+function renderLegendFontPickerResultItems(fieldKey = state.legendFontPickerFieldKey || "legendFontKey") {
+  const activeSegment = normalizeLegendFontPickerSegment(state.legendFontPickerSegment);
+  const matchingFonts = getLegendFontPickerResults(
+    state.legendFontPickerQuery,
+    activeSegment,
+    fieldKey,
+  );
+  const addLocalFontButton = activeSegment === LEGEND_FONT_PICKER_SEGMENT_USER
+    ? renderUserFontAddButton(fieldKey)
+    : "";
+  const resultMarkup = matchingFonts.length === 0
+    ? `<div class="font-picker-empty">${t("font.noResults")}</div>`
+    : matchingFonts
+      .map((font) => {
+        const isSelected = font.key === state.keycapParams[fieldKey];
+        const previewStyle = buildLegendFontPreviewStyle(font);
+        const metaLabel = getLegendFontMetaLabel(font);
+
+        return `
+          <button
+            class="font-picker-option ${isSelected ? "is-selected" : ""}"
+            type="button"
+            data-font-picker-option="${font.key}"
+            data-font-picker-field="${fieldKey}"
+          >
+            <span class="font-picker-option__preview" style="${escapeHtml(previewStyle)}">${escapeHtml(font.label)}</span>
+            <span class="font-picker-meta-row">
+              <span class="font-picker-option__meta">${escapeHtml(metaLabel)}</span>
+            </span>
+          </button>
+        `;
+      })
+      .join("");
+
+  return `${addLocalFontButton}${resultMarkup}`;
+}
+
 function renderLegendFontPickerOptions(fieldKey = state.legendFontPickerFieldKey || "legendFontKey") {
-  const matchingFonts = getLegendFontPickerResults();
-  if (matchingFonts.length === 0) {
-    return `<div class="font-picker-empty">${t("font.noResults")}</div>`;
-  }
-
-  return matchingFonts
-    .map((font) => {
-      const isSelected = font.key === state.keycapParams[fieldKey];
-      const previewStyle = buildLegendFontPreviewStyle(font);
-      const metaLabel = getLegendFontMetaLabel(font);
-
-      return `
-        <button
-          class="font-picker-option ${isSelected ? "is-selected" : ""}"
-          type="button"
-          data-font-picker-option="${font.key}"
-          data-font-picker-field="${fieldKey}"
-        >
-          <span class="font-picker-option__preview" style="${escapeHtml(previewStyle)}">${escapeHtml(font.label)}</span>
-          <span class="font-picker-meta-row">
-            <span class="font-picker-option__meta">${escapeHtml(metaLabel)}</span>
-          </span>
-        </button>
-      `;
-    })
-    .join("");
+  return `
+    ${renderLegendFontPickerSegmentControl(fieldKey)}
+    <span class="font-picker-option-list" data-font-picker-option-list>
+      ${renderLegendFontPickerResultItems(fieldKey)}
+    </span>
+  `;
 }
 
 function getCheckboxStatusLabel(checked) {
@@ -4985,6 +5241,7 @@ function renderField(field, options = {}) {
     const selectedFontMetaLabel = getLegendFontMetaLabel(selectedFont);
     const selectedFontAttributionCard = renderLegendFontAttributionCard(selectedFont);
     const selectedFontLandingPageLink = renderLegendFontLandingPageLink(selectedFont);
+    const selectedFontLocalInfo = renderLegendFontLocalInfo(selectedFont, field.key);
     const pickerId = `font-picker-${field.key}`;
     const isPickerOpen = state.legendFontPickerFieldKey === field.key;
 
@@ -4995,6 +5252,7 @@ function renderField(field, options = {}) {
           <span class="field-hint">${fieldHint}</span>
         </span>
         <span class="font-picker" data-font-picker>
+          ${renderUserFontFileInput(field.key)}
           <span class="font-picker-trigger-shell">
             <span class="field-control font-picker-trigger">
               <span class="font-picker-selection">
@@ -5034,6 +5292,7 @@ function renderField(field, options = {}) {
             ` : ""}
           </span>
           ${selectedFontLandingPageLink}
+          ${selectedFontLocalInfo}
           ${selectedFontAttributionCard}
         </span>
         ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
@@ -5745,6 +6004,12 @@ function handleInspectorCardClick(event) {
     return;
   }
 
+  const fontPickerSegmentButton = getClosestFromEventTarget(event, "[data-font-picker-segment]");
+  if (fontPickerSegmentButton) {
+    handleLegendFontPickerSegmentClick(fontPickerSegmentButton);
+    return;
+  }
+
   const fontPickerOptionButton = getClosestFromEventTarget(event, "[data-font-picker-option]");
   if (fontPickerOptionButton) {
     applyLegendFontSelection(
@@ -5754,6 +6019,18 @@ function handleInspectorCardClick(event) {
         closePicker: true,
       },
     );
+    return;
+  }
+
+  const userFontAddButton = getClosestFromEventTarget(event, "[data-user-font-add]");
+  if (userFontAddButton) {
+    openUserLegendFontFilePicker(userFontAddButton.dataset.userFontAdd);
+    return;
+  }
+
+  const userFontDeleteButton = getClosestFromEventTarget(event, "[data-user-font-delete]");
+  if (userFontDeleteButton) {
+    removeUserLegendFontAndFallback(userFontDeleteButton.dataset.userFontDelete);
     return;
   }
 
@@ -5923,6 +6200,12 @@ function handleInspectorCardWheel(event) {
 }
 
 function handleInspectorCardChange(event) {
+  const userFontInput = getClosestFromEventTarget(event, "[data-user-font-file]");
+  if (userFontInput) {
+    void handleUserLegendFontFileInput(userFontInput);
+    return;
+  }
+
   const keyUnitInput = getClosestFromEventTarget(event, "[data-key-unit-mm]");
   if (keyUnitInput) {
     handleKeyUnitBasisInput(keyUnitInput, { commit: true });
@@ -6457,6 +6740,223 @@ async function handleCopyLegendFontAttribution(fontKey) {
   }, 1600);
 }
 
+function isUserLegendFontFile(file) {
+  if (!file) {
+    return false;
+  }
+
+  const fileName = String(file.name ?? "").toLowerCase();
+  const extension = Array.from(USER_LEGEND_FONT_FILE_EXTENSIONS).find((item) => fileName.endsWith(item));
+  if (extension) {
+    return true;
+  }
+
+  return [
+    "font/ttf",
+    "font/otf",
+    "application/font-sfnt",
+    "application/x-font-ttf",
+    "application/x-font-otf",
+    "application/vnd.ms-opentype",
+  ].includes(String(file.type ?? "").toLowerCase());
+}
+
+function getUserLegendFontFileExtension(file) {
+  const fileName = String(file?.name ?? "").toLowerCase();
+  return Array.from(USER_LEGEND_FONT_FILE_EXTENSIONS).find((item) => fileName.endsWith(item)) ?? ".ttf";
+}
+
+function getUserLegendFontFileBaseName(fileName) {
+  return String(fileName ?? "Local Font")
+    .replace(/\.[^.]+$/u, "")
+    .trim()
+    || "Local Font";
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function createUserLegendFontHash(bytes) {
+  if (globalThis.crypto?.subtle?.digest) {
+    const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+    return bytesToHex(new Uint8Array(digest));
+  }
+
+  let hashA = 0x811c9dc5;
+  let hashB = 0x01000193;
+  for (const byte of bytes) {
+    hashA ^= byte;
+    hashA = Math.imul(hashA, 0x01000193) >>> 0;
+    hashB = Math.imul(hashB ^ byte, 0x85ebca6b) >>> 0;
+  }
+
+  return `${hashA.toString(16).padStart(8, "0")}${hashB.toString(16).padStart(8, "0")}`;
+}
+
+function buildUserLegendFontLabel(file, metadata = {}) {
+  const fullName = String(metadata.fullName ?? "").trim();
+  if (fullName) {
+    return fullName;
+  }
+
+  const familyName = String(metadata.familyName ?? "").trim();
+  const subfamilyName = String(metadata.subfamilyName ?? "").trim();
+  if (familyName && subfamilyName && !["regular", "normal"].includes(subfamilyName.toLowerCase())) {
+    return `${familyName} ${subfamilyName}`;
+  }
+  if (familyName) {
+    return familyName;
+  }
+
+  return getUserLegendFontFileBaseName(file.name);
+}
+
+function buildUserLegendFontQuery(file, metadata = {}) {
+  return String(metadata.familyName || metadata.fullName || metadata.postScriptName || getUserLegendFontFileBaseName(file.name)).trim();
+}
+
+async function registerUserLegendFontFile(file) {
+  if (!isUserLegendFontFile(file)) {
+    throw new Error(t("font.unsupportedLocalFont", { fileName: file?.name ?? "" }));
+  }
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (bytes.byteLength === 0) {
+    throw new Error(t("font.emptyLocalFont", { fileName: file.name }));
+  }
+
+  const hash = await createUserLegendFontHash(bytes);
+  const keySuffix = hash.slice(0, 24);
+  const key = `${USER_KEYCAP_LEGEND_FONT_KEY_PREFIX}${keySuffix}`;
+  const metadata = parseKeycapLegendFontNameMetadata(bytes);
+  const label = buildUserLegendFontLabel(file, metadata);
+  const fontQuery = buildUserLegendFontQuery(file, metadata);
+  const extension = getUserLegendFontFileExtension(file);
+  const blob = new Blob([bytes], { type: file.type || (extension === ".otf" ? "font/otf" : "font/ttf") });
+  const objectUrl = URL.createObjectURL(blob);
+
+  return registerUserKeycapLegendFont({
+    key,
+    label,
+    searchLabel: `${label} ${file.name} ${metadata.familyName ?? ""} ${metadata.fullName ?? ""} ${metadata.postScriptName ?? ""}`,
+    fontName: fontQuery,
+    fontQuery,
+    fileName: file.name,
+    byteLength: bytes.byteLength,
+    bytes,
+    objectUrl,
+    runtimePath: `/fonts/user/${keySuffix}${extension}`,
+    measurementFamily: `Keycap User Font ${keySuffix}`,
+  });
+}
+
+async function registerUserLegendFontFiles(files, options = {}) {
+  const {
+    fieldKey = state.legendFontPickerFieldKey || "legendFontKey",
+    selectFirst = false,
+  } = options;
+  const fontFiles = Array.from(files ?? []).filter(isUserLegendFontFile);
+  if (fontFiles.length === 0) {
+    throw new Error(t("font.noLocalFontFile"));
+  }
+
+  const addedFonts = [];
+  for (const file of fontFiles) {
+    const font = await registerUserLegendFontFile(file);
+    addedFonts.push(font);
+    void ensureLegendFontPreviewLoaded(font);
+  }
+
+  if (selectFirst && addedFonts[0]) {
+    applyLegendFontSelection(addedFonts[0], { fieldKey, closePicker: true });
+  }
+
+  const label = addedFonts.length === 1 ? addedFonts[0].label : t("font.localFontMultipleLabel", { count: addedFonts.length });
+  setExportStatus(
+    "success",
+    addedFonts.length === 1
+      ? t("font.localFontAdded", { font: label })
+      : t("font.localFontsAdded", { count: addedFonts.length }),
+    {
+      format: "user-font-import",
+      label: t("font.localFontLoadLabel"),
+      elapsedMs: 0,
+      byteLength: addedFonts.reduce((sum, font) => sum + Number(font.byteLength ?? 0), 0),
+      notes: t("font.localFontLoadNote", { font: label }),
+    },
+  );
+
+  render({ animateInspector: true });
+  return addedFonts;
+}
+
+function openUserLegendFontFilePicker(fieldKey = state.legendFontPickerFieldKey || "legendFontKey") {
+  const input = Array.from(app.querySelectorAll("[data-user-font-file]"))
+    .find((candidate) => candidate.dataset.userFontField === fieldKey);
+  if (input instanceof HTMLInputElement) {
+    input.click();
+  }
+}
+
+async function handleUserLegendFontFileInput(input) {
+  const files = Array.from(input.files ?? []);
+  input.value = "";
+  try {
+    await registerUserLegendFontFiles(files, {
+      fieldKey: input.dataset.userFontField || state.legendFontPickerFieldKey || "legendFontKey",
+      selectFirst: true,
+    });
+  } catch (error) {
+    setExportStatus(
+      "error",
+      t("font.localFontLoadFailed"),
+      {
+        format: "user-font-import",
+        label: t("font.localFontLoadFailedLabel"),
+        elapsedMs: 0,
+        byteLength: 0,
+        notes: `${error}`,
+      },
+    );
+    render();
+  }
+}
+
+function removeUserLegendFontAndFallback(fontKey) {
+  const font = resolveLegendFontConfig(fontKey);
+  if (!font?.isUserFont || font.isMissing) {
+    return;
+  }
+
+  const allFontFieldKeys = LEGEND_CARD_DEFINITIONS
+    .flatMap((card) => card.fieldKeys)
+    .filter((fieldKey) => fieldKey.endsWith(LEGEND_FIELD_SUFFIXES.fontKey));
+  const didUseRemovedFont = allFontFieldKeys.some((fieldKey) => state.keycapParams[fieldKey] === font.key);
+  if (didUseRemovedFont) {
+    allFontFieldKeys.forEach((fieldKey) => {
+      if (state.keycapParams[fieldKey] === font.key) {
+        state.keycapParams[fieldKey] = DEFAULT_KEYCAP_LEGEND_FONT_KEY;
+      }
+    });
+    syncDerivedKeycapParams(state.keycapParams);
+    syncActiveProjectKeycapFromCurrent();
+    state.editorStatus = "dirty";
+    state.editorSummary = t("status.dirty");
+  }
+
+  legendFontPreviewPromises.delete(font.key);
+  removeUserKeycapLegendFont(font.key);
+  setExportStatus("success", t("font.localFontDeleted", { font: font.label }));
+  render({ animateInspector: true });
+
+  if (didUseRemovedFont) {
+    schedulePreviewRefresh();
+  }
+}
+
 function applyLegendFontSelection(font, options = {}) {
   const {
     deferPreview = false,
@@ -6467,6 +6967,7 @@ function applyLegendFontSelection(font, options = {}) {
   if (closePicker) {
     state.legendFontPickerFieldKey = "";
     state.legendFontPickerQuery = "";
+    state.legendFontPickerSegment = LEGEND_FONT_PICKER_SEGMENT_BUILTIN;
   }
 
   if (!font || font.key === state.keycapParams[fieldKey]) {
@@ -6493,6 +6994,7 @@ function applyLegendFontSelection(font, options = {}) {
 function openLegendFontPicker(fieldKey = "legendFontKey") {
   state.legendFontPickerFieldKey = fieldKey;
   state.legendFontPickerQuery = "";
+  state.legendFontPickerSegment = getLegendFontPickerInitialSegment(fieldKey);
   pendingLegendFontPickerFocus = true;
   render();
   warmLegendFontPreviewFonts();
@@ -6505,6 +7007,7 @@ function closeLegendFontPicker() {
 
   state.legendFontPickerFieldKey = "";
   state.legendFontPickerQuery = "";
+  state.legendFontPickerSegment = LEGEND_FONT_PICKER_SEGMENT_BUILTIN;
   render();
 }
 
@@ -6515,6 +7018,34 @@ function handleLegendFontPickerQueryInput(input) {
   if (options) {
     options.innerHTML = renderLegendFontPickerOptions(fieldKey);
   }
+}
+
+function handleLegendFontPickerSegmentClick(button) {
+  const nextSegment = normalizeLegendFontPickerSegment(button.dataset.fontPickerSegment);
+  if (nextSegment === state.legendFontPickerSegment) {
+    return;
+  }
+
+  state.legendFontPickerSegment = nextSegment;
+  const fieldKey = button.dataset.fontPickerSegmentField || state.legendFontPickerFieldKey || "legendFontKey";
+  const picker = button.closest("[data-font-picker]");
+  const segments = picker?.querySelector("[data-font-picker-segments]");
+  const optionList = picker?.querySelector("[data-font-picker-option-list]");
+  if (!segments || !optionList) {
+    render();
+    return;
+  }
+
+  segments.style.setProperty("--segment-index", `${getLegendFontPickerSegmentIndex(nextSegment)}`);
+  segments.dataset.fontPickerActiveSegment = nextSegment;
+  segments.querySelectorAll("[data-font-picker-segment]").forEach((segmentButton) => {
+    const isActive = segmentButton.dataset.fontPickerSegment === nextSegment;
+    segmentButton.classList.toggle("is-active", isActive);
+    segmentButton.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
+  optionList.innerHTML = renderLegendFontPickerResultItems(fieldKey);
+  syncLegendFontPickerSegmentIndicator(picker);
+  button.focus();
 }
 
 function handleWindowPointerDown(event) {
@@ -6536,6 +7067,7 @@ function handleWindowPointerDown(event) {
   ) {
     state.legendFontPickerFieldKey = "";
     state.legendFontPickerQuery = "";
+    state.legendFontPickerSegment = LEGEND_FONT_PICKER_SEGMENT_BUILTIN;
     shouldRender = true;
   }
 
@@ -6559,6 +7091,7 @@ function handleWindowKeydown(event) {
   if (state.legendFontPickerFieldKey) {
     state.legendFontPickerFieldKey = "";
     state.legendFontPickerQuery = "";
+    state.legendFontPickerSegment = LEGEND_FONT_PICKER_SEGMENT_BUILTIN;
     shouldRender = true;
   }
 
@@ -7636,6 +8169,15 @@ async function importFileTransferFromDrop(dataTransfer) {
   }
 
   const files = await getDroppedFiles(dropSnapshot);
+  const fontFiles = files.filter(isUserLegendFontFile);
+  if (fontFiles.length > 0) {
+    await registerUserLegendFontFiles(fontFiles, {
+      fieldKey: state.legendFontPickerFieldKey || "legendFontKey",
+      selectFirst: Boolean(state.legendFontPickerFieldKey),
+    });
+    return;
+  }
+
   const projectManifestFile = findDroppedProjectManifestFile(files);
   if (projectManifestFile) {
     await importProjectFiles(files, projectManifestFile);

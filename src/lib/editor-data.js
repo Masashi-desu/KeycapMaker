@@ -10,6 +10,7 @@ import { normalizeHexColor } from "./color-utils.js";
 import {
   DEFAULT_KEYCAP_LEGEND_FONT_KEY,
   getKeycapLegendFontStyleOptions,
+  isUserKeycapLegendFontKey,
   resolveKeycapLegendFont,
 } from "./keycap-fonts.js";
 import { resolveJStemLp01PreviewColor } from "./j-stem-lp01-reference.js";
@@ -148,6 +149,15 @@ function isJisEnterTopHatGeometry(params = {}) {
 
 function resolveLegendFontConfig(fontKey = DEFAULT_KEYCAP_LEGEND_FONT_KEY) {
   return resolveKeycapLegendFont(fontKey);
+}
+
+function sanitizeLegendFontKey(value) {
+  const resolvedFont = resolveLegendFontConfig(value);
+  if (resolvedFont.isMissing && isUserKeycapLegendFontKey(value)) {
+    return String(value);
+  }
+
+  return resolvedFont.key;
 }
 
 function legendParamKey(prefix, suffix) {
@@ -910,7 +920,7 @@ function syncLegendFontParams(params = {}, prefix = "legend") {
   const fontStyleKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.fontStyleKey);
   const outlineDeltaKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.outlineDelta);
 
-  params[fontKey] = resolveLegendFontConfig(params[fontKey]).key;
+  params[fontKey] = sanitizeLegendFontKey(params[fontKey]);
   const styleOptions = getLegendFontStyleFieldOptions(params[fontKey]);
   const fallbackStyleKey = styleOptions[0]?.value ?? LEGEND_FONT_STYLE_FALLBACK_KEY;
   const allowedStyleKeys = new Set(styleOptions.map((option) => option.value));
@@ -1101,7 +1111,7 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
   }
 
   if (findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.fontKey)) {
-    return resolveLegendFontConfig(value).key;
+    return sanitizeLegendFontKey(value);
   }
 
   const legendFontStylePrefix = findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.fontStyleKey);
