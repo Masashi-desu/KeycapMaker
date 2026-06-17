@@ -1655,8 +1655,8 @@ pre {
 .font-picker-segments {
   --segment-gap: 4px;
   --segment-padding: 4px;
-  position: sticky;
-  top: 0;
+  flex: 0 0 auto;
+  position: relative;
   z-index: 2;
   display: grid;
   grid-template-columns: repeat(var(--segment-count), minmax(0, 1fr));
@@ -1682,9 +1682,8 @@ pre {
   box-shadow:
     0 8px 18px rgba(45, 36, 28, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  transition:
-    left 260ms cubic-bezier(0.22, 1, 0.36, 1),
-    right 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(calc(var(--segment-index) * (100% + var(--segment-gap))));
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
 }
 
@@ -1719,6 +1718,9 @@ pre {
 .font-picker-option-list {
   display: grid;
   gap: 6px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .font-picker-add-local,
@@ -1836,28 +1838,76 @@ pre {
 }
 
 .font-source-mode-tabs {
+  --source-mode-gap: 5px;
+  --source-mode-column-count: 2;
+  --source-mode-row-count: 2;
+  --source-mode-column: 0;
+  --source-mode-row: 0;
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 5px;
+  grid-template-columns: repeat(var(--source-mode-column-count), minmax(0, 1fr));
+  gap: var(--source-mode-gap);
+  isolation: isolate;
+}
+
+.font-source-mode-tabs__indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: calc((100% - (var(--source-mode-gap) * (var(--source-mode-column-count) - 1))) / var(--source-mode-column-count));
+  height: calc((100% - (var(--source-mode-gap) * (var(--source-mode-row-count) - 1))) / var(--source-mode-row-count));
+  border-radius: 9px;
+  background: var(--solid-segment-indicator);
+  box-shadow:
+    0 8px 18px rgba(45, 36, 28, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: translate(
+    calc(var(--source-mode-column) * (100% + var(--source-mode-gap))),
+    calc(var(--source-mode-row) * (100% + var(--source-mode-gap)))
+  );
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
 }
 
 .font-source-mode-tab {
+  position: relative;
+  z-index: 1;
   border: 0;
   min-width: 0;
   border-radius: 9px;
   padding: 7px 8px;
   color: var(--segment-text);
-  background: rgba(45, 36, 28, 0.06);
+  background: transparent;
   font-size: 11px;
   font-weight: 800;
   line-height: 1.25;
   text-align: center;
   cursor: pointer;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
 }
 
 .font-source-mode-tab.is-active {
   color: var(--segment-active-text);
-  background: var(--solid-segment-indicator);
+}
+
+.font-picker-source-editor__input-panel {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.font-picker-source-editor__input-panel.is-entering,
+.font-picker-source-editor__input-panel.is-exiting {
+  opacity: 0;
+  transform: translateY(2px);
 }
 
 .font-picker-source-editor__field {
@@ -1905,6 +1955,25 @@ pre {
 .font-source-mode-tab:focus-visible {
   outline: 2px solid rgba(123, 155, 191, 0.48);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .font-picker-popover,
+  .font-picker-popover__content,
+  .font-source-mode-tabs__indicator,
+  .font-picker-source-editor__input-panel {
+    transition: none;
+  }
+
+  .font-picker-popover__content.is-entering-forward,
+  .font-picker-popover__content.is-entering-back,
+  .font-picker-popover__content.is-exiting-forward,
+  .font-picker-popover__content.is-exiting-back,
+  .font-picker-source-editor__input-panel.is-entering,
+  .font-picker-source-editor__input-panel.is-exiting {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes font-source-card-fade {
@@ -2047,6 +2116,41 @@ pre {
   gap: 0;
 }
 
+.font-picker-popover.is-transitioning {
+  overflow: hidden;
+}
+
+.font-picker-popover__content {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity 180ms ease,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.font-picker-popover__content.is-entering-forward {
+  opacity: 0;
+  transform: translateX(8px);
+}
+
+.font-picker-popover__content.is-entering-back {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+.font-picker-popover__content.is-exiting-forward {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+.font-picker-popover__content.is-exiting-back {
+  opacity: 0;
+  transform: translateX(8px);
+}
+
 .font-picker-search-input {
   width: 100%;
   min-width: 0;
@@ -2064,11 +2168,11 @@ pre {
 }
 
 .font-picker-options {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
   max-height: 240px;
-  overflow-y: auto;
-  padding-right: 4px;
+  overflow: hidden;
 }
 
 .font-picker-option {
