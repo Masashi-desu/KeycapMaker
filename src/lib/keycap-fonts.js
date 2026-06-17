@@ -343,6 +343,10 @@ export function registerUserKeycapLegendFont(fontDefinition = {}) {
     fileName: String(fontDefinition.fileName || label),
     byteLength: Number(fontDefinition.byteLength ?? nextBytes.byteLength) || nextBytes.byteLength,
     objectUrl: fontDefinition.objectUrl || "",
+    sourceKind: String(fontDefinition.sourceKind || "local"),
+    sourceUrl: String(fontDefinition.sourceUrl || ""),
+    sourceLabel: String(fontDefinition.sourceLabel || ""),
+    provider: String(fontDefinition.provider || ""),
   });
 
   USER_KEYCAP_LEGEND_FONT_MAP.set(key, font);

@@ -1753,6 +1753,170 @@ pre {
   font-weight: 700;
 }
 
+.font-picker-source-card {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  color: var(--solid-action);
+  background: color-mix(in srgb, var(--solid-action) 9%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--solid-action) 18%, transparent);
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.font-picker-source-card__summary {
+  border: 0;
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  color: inherit;
+  background: transparent;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.font-picker-source-card__summary > span:first-child {
+  font-size: 12px;
+}
+
+.font-picker-source-card__summary > span:last-child {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.font-picker-source-card:hover {
+  background: color-mix(in srgb, var(--solid-action) 14%, transparent);
+}
+
+.font-picker-source-editor {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  color: var(--text);
+  animation: font-source-card-fade 180ms ease;
+}
+
+.font-picker-source-editor__header {
+  display: grid;
+  grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.font-picker-source-editor__header strong {
+  grid-column: 2;
+  min-width: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.font-picker-source-editor__back {
+  border: 0;
+  grid-column: 1;
+  justify-self: start;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(45, 36, 28, 0.07);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.font-source-mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.font-source-mode-tab {
+  border: 0;
+  min-width: 0;
+  border-radius: 9px;
+  padding: 7px 8px;
+  color: var(--segment-text);
+  background: rgba(45, 36, 28, 0.06);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+}
+
+.font-source-mode-tab.is-active {
+  color: var(--segment-active-text);
+  background: var(--solid-segment-indicator);
+}
+
+.font-picker-source-editor__field {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.font-picker-source-editor__field > span,
+.font-picker-source-editor__hint {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.font-picker-source-editor > .font-picker-local-action {
+  justify-self: end;
+}
+
+.font-picker-source-editor input[type="url"],
+.font-picker-source-editor textarea {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 10px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 64%, transparent);
+  font: inherit;
+  font-size: 12px;
+}
+
+.font-picker-source-editor textarea {
+  min-height: 86px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.font-picker-source-editor input[type="url"]:focus,
+.font-picker-source-editor textarea:focus,
+.font-picker-source-editor__back:focus-visible,
+.font-picker-source-card__summary:focus-visible,
+.font-source-mode-tab:focus-visible {
+  outline: 2px solid rgba(123, 155, 191, 0.48);
+  outline-offset: 2px;
+}
+
+@keyframes font-source-card-fade {
+  from {
+    opacity: 0.72;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .font-picker-local-action {
   justify-self: start;
   padding: 7px 10px;
@@ -1877,6 +2041,10 @@ pre {
   isolation: isolate;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+.font-picker-popover.is-source-editor {
+  gap: 0;
 }
 
 .font-picker-search-input {
