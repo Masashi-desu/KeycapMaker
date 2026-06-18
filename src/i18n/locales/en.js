@@ -560,7 +560,7 @@ const en = Object.freeze({
     },
     legendHeight: {
       label: "Text Height",
-      hint: "0 creates an embedded legend that fills most of the top shell; higher values make it raised.",
+      hint: "0 is flush. Positive values raise the text; negative values recess it below the surface.",
     },
     legendEmbed: {
       label: "Inward Embed",
@@ -610,7 +610,7 @@ const en = Object.freeze({
       },
       height: {
         label: "{side} Text Height",
-        hint: "0 creates a flush embedded sidewall legend; higher values raise it outward.",
+        hint: "0 is flush with the sidewall. Positive values raise it outward; negative values recess it inward.",
       },
       offsetX: {
         label: "{side} Horizontal Position",

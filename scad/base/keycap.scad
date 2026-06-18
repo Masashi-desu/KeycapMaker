@@ -318,7 +318,7 @@ legend_underline_offset_y = required_param(user_legend_underline_offset_y, "user
 legend_width = positive_dimension(required_param(user_legend_width, "user_legend_width"));
 legend_depth = positive_dimension(required_param(user_legend_depth, "user_legend_depth"));
 legend_text_size_value = positive_dimension(is_undef(user_legend_text_size) ? legend_depth : user_legend_text_size);
-legend_height = max(required_param(user_legend_height, "user_legend_height"), 0);
+legend_height = required_param(user_legend_height, "user_legend_height");
 legend_outline_delta = required_param(user_legend_outline_delta, "user_legend_outline_delta");
 legend_offset_x = required_param(user_legend_offset_x, "user_legend_offset_x");
 legend_offset_y = required_param(user_legend_offset_y, "user_legend_offset_y");
@@ -328,9 +328,10 @@ legend_bottom_skin = min(0.2, max(top_thickness * 0.5, 0.05));
 legend_embed = min(max(requested_legend_embed, 0), max(top_thickness - legend_bottom_skin, 0));
 // keycap_shell() builds the top face from a 0.01-thick slab, so subtraction must overshoot the surface slightly.
 legend_visible_surface_overlap = 0.02;
-legend_surface_height = max(legend_height, 0);
-legend_below_surface = legend_surface_height == 0
-    ? max(legend_embed, max(top_thickness - legend_bottom_skin, 0))
+legend_surface_height = legend_height;
+legend_auto_embed = max(legend_embed, max(top_thickness - legend_bottom_skin, 0));
+legend_below_surface = legend_surface_height <= 0
+    ? max(legend_auto_embed, -legend_surface_height + legend_bottom_skin)
     : legend_embed;
 legend_total_height = max(legend_below_surface + legend_surface_height, 0);
 top_legend_anchor_width = top_hat_enabled ? active_dish_plan_width : key_width;
@@ -349,9 +350,11 @@ function top_legend_anchor_y(anchor) =
         : anchor == "bottom"
             ? -top_legend_anchor_depth * top_legend_anchor_offset_ratio
             : 0;
+function top_legend_auto_embed(embed) =
+    max(embed, max(top_thickness - legend_bottom_skin, 0));
 function top_legend_below_surface(surface_height, embed) =
-    surface_height == 0
-        ? max(embed, max(top_thickness - legend_bottom_skin, 0))
+    surface_height <= 0
+        ? max(top_legend_auto_embed(embed), -surface_height + legend_bottom_skin)
         : embed;
 function top_legend_total_height(surface_height, below_surface) =
     max(below_surface + surface_height, 0);
@@ -366,12 +369,12 @@ top_legend_right_top_underline_offset_y = required_param(user_top_legend_right_t
 top_legend_right_top_width = positive_dimension(required_param(user_top_legend_right_top_width, "user_top_legend_right_top_width"));
 top_legend_right_top_depth = positive_dimension(required_param(user_top_legend_right_top_depth, "user_top_legend_right_top_depth"));
 top_legend_right_top_text_size_value = positive_dimension(is_undef(user_top_legend_right_top_text_size) ? top_legend_right_top_depth : user_top_legend_right_top_text_size);
-top_legend_right_top_height = max(required_param(user_top_legend_right_top_height, "user_top_legend_right_top_height"), 0);
+top_legend_right_top_height = required_param(user_top_legend_right_top_height, "user_top_legend_right_top_height");
 top_legend_right_top_outline_delta = required_param(user_top_legend_right_top_outline_delta, "user_top_legend_right_top_outline_delta");
 top_legend_right_top_offset_x = required_param(user_top_legend_right_top_offset_x, "user_top_legend_right_top_offset_x");
 top_legend_right_top_offset_y = required_param(user_top_legend_right_top_offset_y, "user_top_legend_right_top_offset_y");
 top_legend_right_top_embed = min(max(required_param(user_top_legend_right_top_embed, "user_top_legend_right_top_embed"), 0), max(top_thickness - legend_bottom_skin, 0));
-top_legend_right_top_surface_height = max(top_legend_right_top_height, 0);
+top_legend_right_top_surface_height = top_legend_right_top_height;
 top_legend_right_top_below_surface = top_legend_below_surface(top_legend_right_top_surface_height, top_legend_right_top_embed);
 top_legend_right_top_total_height = top_legend_total_height(top_legend_right_top_surface_height, top_legend_right_top_below_surface);
 
@@ -385,12 +388,12 @@ top_legend_right_bottom_underline_offset_y = required_param(user_top_legend_righ
 top_legend_right_bottom_width = positive_dimension(required_param(user_top_legend_right_bottom_width, "user_top_legend_right_bottom_width"));
 top_legend_right_bottom_depth = positive_dimension(required_param(user_top_legend_right_bottom_depth, "user_top_legend_right_bottom_depth"));
 top_legend_right_bottom_text_size_value = positive_dimension(is_undef(user_top_legend_right_bottom_text_size) ? top_legend_right_bottom_depth : user_top_legend_right_bottom_text_size);
-top_legend_right_bottom_height = max(required_param(user_top_legend_right_bottom_height, "user_top_legend_right_bottom_height"), 0);
+top_legend_right_bottom_height = required_param(user_top_legend_right_bottom_height, "user_top_legend_right_bottom_height");
 top_legend_right_bottom_outline_delta = required_param(user_top_legend_right_bottom_outline_delta, "user_top_legend_right_bottom_outline_delta");
 top_legend_right_bottom_offset_x = required_param(user_top_legend_right_bottom_offset_x, "user_top_legend_right_bottom_offset_x");
 top_legend_right_bottom_offset_y = required_param(user_top_legend_right_bottom_offset_y, "user_top_legend_right_bottom_offset_y");
 top_legend_right_bottom_embed = min(max(required_param(user_top_legend_right_bottom_embed, "user_top_legend_right_bottom_embed"), 0), max(top_thickness - legend_bottom_skin, 0));
-top_legend_right_bottom_surface_height = max(top_legend_right_bottom_height, 0);
+top_legend_right_bottom_surface_height = top_legend_right_bottom_height;
 top_legend_right_bottom_below_surface = top_legend_below_surface(top_legend_right_bottom_surface_height, top_legend_right_bottom_embed);
 top_legend_right_bottom_total_height = top_legend_total_height(top_legend_right_bottom_surface_height, top_legend_right_bottom_below_surface);
 
@@ -404,12 +407,12 @@ top_legend_left_top_underline_offset_y = required_param(user_top_legend_left_top
 top_legend_left_top_width = positive_dimension(required_param(user_top_legend_left_top_width, "user_top_legend_left_top_width"));
 top_legend_left_top_depth = positive_dimension(required_param(user_top_legend_left_top_depth, "user_top_legend_left_top_depth"));
 top_legend_left_top_text_size_value = positive_dimension(is_undef(user_top_legend_left_top_text_size) ? top_legend_left_top_depth : user_top_legend_left_top_text_size);
-top_legend_left_top_height = max(required_param(user_top_legend_left_top_height, "user_top_legend_left_top_height"), 0);
+top_legend_left_top_height = required_param(user_top_legend_left_top_height, "user_top_legend_left_top_height");
 top_legend_left_top_outline_delta = required_param(user_top_legend_left_top_outline_delta, "user_top_legend_left_top_outline_delta");
 top_legend_left_top_offset_x = required_param(user_top_legend_left_top_offset_x, "user_top_legend_left_top_offset_x");
 top_legend_left_top_offset_y = required_param(user_top_legend_left_top_offset_y, "user_top_legend_left_top_offset_y");
 top_legend_left_top_embed = min(max(required_param(user_top_legend_left_top_embed, "user_top_legend_left_top_embed"), 0), max(top_thickness - legend_bottom_skin, 0));
-top_legend_left_top_surface_height = max(top_legend_left_top_height, 0);
+top_legend_left_top_surface_height = top_legend_left_top_height;
 top_legend_left_top_below_surface = top_legend_below_surface(top_legend_left_top_surface_height, top_legend_left_top_embed);
 top_legend_left_top_total_height = top_legend_total_height(top_legend_left_top_surface_height, top_legend_left_top_below_surface);
 
@@ -423,12 +426,12 @@ top_legend_left_bottom_underline_offset_y = required_param(user_top_legend_left_
 top_legend_left_bottom_width = positive_dimension(required_param(user_top_legend_left_bottom_width, "user_top_legend_left_bottom_width"));
 top_legend_left_bottom_depth = positive_dimension(required_param(user_top_legend_left_bottom_depth, "user_top_legend_left_bottom_depth"));
 top_legend_left_bottom_text_size_value = positive_dimension(is_undef(user_top_legend_left_bottom_text_size) ? top_legend_left_bottom_depth : user_top_legend_left_bottom_text_size);
-top_legend_left_bottom_height = max(required_param(user_top_legend_left_bottom_height, "user_top_legend_left_bottom_height"), 0);
+top_legend_left_bottom_height = required_param(user_top_legend_left_bottom_height, "user_top_legend_left_bottom_height");
 top_legend_left_bottom_outline_delta = required_param(user_top_legend_left_bottom_outline_delta, "user_top_legend_left_bottom_outline_delta");
 top_legend_left_bottom_offset_x = required_param(user_top_legend_left_bottom_offset_x, "user_top_legend_left_bottom_offset_x");
 top_legend_left_bottom_offset_y = required_param(user_top_legend_left_bottom_offset_y, "user_top_legend_left_bottom_offset_y");
 top_legend_left_bottom_embed = min(max(required_param(user_top_legend_left_bottom_embed, "user_top_legend_left_bottom_embed"), 0), max(top_thickness - legend_bottom_skin, 0));
-top_legend_left_bottom_surface_height = max(top_legend_left_bottom_height, 0);
+top_legend_left_bottom_surface_height = top_legend_left_bottom_height;
 top_legend_left_bottom_below_surface = top_legend_below_surface(top_legend_left_bottom_surface_height, top_legend_left_bottom_embed);
 top_legend_left_bottom_total_height = top_legend_total_height(top_legend_left_bottom_surface_height, top_legend_left_bottom_below_surface);
 
@@ -442,7 +445,7 @@ side_legend_front_underline_offset_y = required_param(user_side_legend_front_und
 side_legend_front_width = positive_dimension(required_param(user_side_legend_front_width, "user_side_legend_front_width"));
 side_legend_front_depth = positive_dimension(required_param(user_side_legend_front_depth, "user_side_legend_front_depth"));
 side_legend_front_text_size_value = positive_dimension(is_undef(user_side_legend_front_text_size) ? side_legend_front_depth : user_side_legend_front_text_size);
-side_legend_front_height = max(required_param(user_side_legend_front_height, "user_side_legend_front_height"), 0);
+side_legend_front_height = required_param(user_side_legend_front_height, "user_side_legend_front_height");
 side_legend_front_outline_delta = required_param(user_side_legend_front_outline_delta, "user_side_legend_front_outline_delta");
 side_legend_front_offset_x = required_param(user_side_legend_front_offset_x, "user_side_legend_front_offset_x");
 side_legend_front_offset_y = required_param(user_side_legend_front_offset_y, "user_side_legend_front_offset_y");
@@ -457,7 +460,7 @@ side_legend_back_underline_offset_y = required_param(user_side_legend_back_under
 side_legend_back_width = positive_dimension(required_param(user_side_legend_back_width, "user_side_legend_back_width"));
 side_legend_back_depth = positive_dimension(required_param(user_side_legend_back_depth, "user_side_legend_back_depth"));
 side_legend_back_text_size_value = positive_dimension(is_undef(user_side_legend_back_text_size) ? side_legend_back_depth : user_side_legend_back_text_size);
-side_legend_back_height = max(required_param(user_side_legend_back_height, "user_side_legend_back_height"), 0);
+side_legend_back_height = required_param(user_side_legend_back_height, "user_side_legend_back_height");
 side_legend_back_outline_delta = required_param(user_side_legend_back_outline_delta, "user_side_legend_back_outline_delta");
 side_legend_back_offset_x = required_param(user_side_legend_back_offset_x, "user_side_legend_back_offset_x");
 side_legend_back_offset_y = required_param(user_side_legend_back_offset_y, "user_side_legend_back_offset_y");
@@ -472,7 +475,7 @@ side_legend_left_underline_offset_y = required_param(user_side_legend_left_under
 side_legend_left_width = positive_dimension(required_param(user_side_legend_left_width, "user_side_legend_left_width"));
 side_legend_left_depth = positive_dimension(required_param(user_side_legend_left_depth, "user_side_legend_left_depth"));
 side_legend_left_text_size_value = positive_dimension(is_undef(user_side_legend_left_text_size) ? side_legend_left_depth : user_side_legend_left_text_size);
-side_legend_left_height = max(required_param(user_side_legend_left_height, "user_side_legend_left_height"), 0);
+side_legend_left_height = required_param(user_side_legend_left_height, "user_side_legend_left_height");
 side_legend_left_outline_delta = required_param(user_side_legend_left_outline_delta, "user_side_legend_left_outline_delta");
 side_legend_left_offset_x = required_param(user_side_legend_left_offset_x, "user_side_legend_left_offset_x");
 side_legend_left_offset_y = required_param(user_side_legend_left_offset_y, "user_side_legend_left_offset_y");
@@ -487,7 +490,7 @@ side_legend_right_underline_offset_y = required_param(user_side_legend_right_und
 side_legend_right_width = positive_dimension(required_param(user_side_legend_right_width, "user_side_legend_right_width"));
 side_legend_right_depth = positive_dimension(required_param(user_side_legend_right_depth, "user_side_legend_right_depth"));
 side_legend_right_text_size_value = positive_dimension(is_undef(user_side_legend_right_text_size) ? side_legend_right_depth : user_side_legend_right_text_size);
-side_legend_right_height = max(required_param(user_side_legend_right_height, "user_side_legend_right_height"), 0);
+side_legend_right_height = required_param(user_side_legend_right_height, "user_side_legend_right_height");
 side_legend_right_outline_delta = required_param(user_side_legend_right_outline_delta, "user_side_legend_right_outline_delta");
 side_legend_right_offset_x = required_param(user_side_legend_right_offset_x, "user_side_legend_right_offset_x");
 side_legend_right_offset_y = required_param(user_side_legend_right_offset_y, "user_side_legend_right_offset_y");
@@ -673,6 +676,10 @@ module keycap_top_legend_surface_volume(
         center_x = anchor_x + offset_x;
         center_y = anchor_y + offset_y;
         surface_fit_depth = keycap_dish_max_drop(active_top_shape_type, active_dish_depth) + 0.05;
+        effective_surface_height = top_overlap > 0 && surface_height < 0
+            ? top_overlap
+            : surface_height + top_overlap;
+        effective_total_height = below_surface + effective_surface_height;
 
         intersection() {
             keycap_top_legend_flat_block(
@@ -680,7 +687,7 @@ module keycap_top_legend_surface_volume(
                 label = label,
                 width = width,
                 depth = depth,
-                height = total_height + top_overlap + surface_fit_depth,
+                height = effective_total_height + surface_fit_depth,
                 anchor_x = anchor_x,
                 anchor_y = anchor_y,
                 offset_x = offset_x,
@@ -708,8 +715,6 @@ module keycap_top_legend_surface_volume(
                 dish_radius = active_dish_radius,
                 pitch_deg = top_pitch_deg,
                 roll_deg = top_roll_deg,
-                bottom_extra_z = -below_surface,
-                top_extra_z = surface_height + top_overlap,
                 dish_plan_width = active_dish_plan_width,
                 dish_plan_depth = active_dish_plan_depth,
                 dish_start_left = active_dish_start_left,
@@ -718,7 +723,9 @@ module keycap_top_legend_surface_volume(
                 dish_start_back = active_dish_start_back,
                 quality = quality,
                 top_offset_x = top_offset_x,
-                top_offset_y = top_offset_y
+                top_offset_y = top_offset_y,
+                bottom_extra_z = -below_surface,
+                top_extra_z = effective_surface_height
             );
         }
     }
@@ -982,14 +989,22 @@ module keycap_sidewall_legend_volume_for_side(
     axis_x = keycap_sidewall_axis_x(side, offset_y);
     axis_y = keycap_sidewall_axis_y(side, offset_y);
     axis_z = keycap_sidewall_axis_z(side, offset_y);
-    below_surface = keycap_sidewall_wall_depth(side, axis_z) + max(inner_overlap, 0);
-    total_height = max(below_surface + max(legend_height, 0), 0);
+    side_legend_floor_thickness = 0.05;
+    surface_height = legend_height;
+    below_surface = max(
+        keycap_sidewall_wall_depth(side, axis_z) + max(inner_overlap, 0),
+        surface_height < 0 ? -surface_height + side_legend_floor_thickness : 0
+    );
+    effective_surface_height = top_overlap > 0 && surface_height < 0
+        ? top_overlap
+        : surface_height + top_overlap;
+    total_height = max(below_surface + effective_surface_height, 0);
 
     if (enabled && len(label) > 0 && total_height > 0) {
         sidewall_legend_block(
             side = side,
             label = label,
-            height = total_height + top_overlap,
+            height = total_height,
             offset_x = offset_x,
             offset_y = 0,
             base_z = -below_surface,

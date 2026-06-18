@@ -463,7 +463,7 @@ test("深い dish でもキートップ印字の曲面追従領域を確保す�
     assert.match(shellScad, /function keycap_dish_max_drop\(dish_type, dish_depth\)/);
     assert.match(shellScad, /module keycap_top_surface_band/);
     assert.match(baseScad, /surface_fit_depth = keycap_dish_max_drop\(active_top_shape_type, active_dish_depth\) \+ 0\.05;/);
-    assert.match(baseScad, /height = total_height \+ top_overlap \+ surface_fit_depth/);
+    assert.match(baseScad, /height = effective_total_height \+ surface_fit_depth/);
     assert.match(baseScad, /below_surface = below_surface \+ surface_fit_depth/);
     assert.match(baseScad, /keycap_top_surface_band\(/);
   } finally {
@@ -584,11 +584,60 @@ test("キートップ四隅の印字パラメータを SCAD wrapper へ渡す", 
   }
 });
 
+test("マイナス印字高さを SCAD wrapper と recessed legend 処理へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 50,
+    actualBoundingBoxDescent: 20,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        legendHeight: -0.4,
+        topLegendRightTopHeight: -0.25,
+        sideLegendFrontHeight: -0.3,
+      },
+    });
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const baseScad = files.find((file) => file.path === bundle.KEYCAP_ENTRY_PATH)?.content;
+
+    assert.ok(jobScad, "keycap job SCAD should be generated");
+    assert.ok(baseScad, "keycap base SCAD should be included");
+    assert.equal(readScadDefinition(jobScad, "user_legend_height"), -0.4);
+    assert.equal(readScadDefinition(jobScad, "user_top_legend_right_top_height"), -0.25);
+    assert.equal(readScadDefinition(jobScad, "user_side_legend_front_height"), -0.3);
+    assert.match(baseScad, /legend_height = required_param\(user_legend_height, "user_legend_height"\);/);
+    assert.match(baseScad, /effective_surface_height = top_overlap > 0 && surface_height < 0/);
+    assert.match(baseScad, /surface_height < 0 \? -surface_height \+ side_legend_floor_thickness : 0/);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("サイドウォール印字本体は内側面で止める", async () => {
   const baseScad = await readFile(new URL("../scad/base/keycap.scad", import.meta.url), "utf8");
 
   assert.match(baseScad, /function keycap_sidewall_wall_depth\(side, axis_z\)/);
-  assert.match(baseScad, /below_surface = keycap_sidewall_wall_depth\(side, axis_z\) \+ max\(inner_overlap, 0\);/);
+  assert.match(baseScad, /below_surface = max\(/);
+  assert.match(baseScad, /keycap_sidewall_wall_depth\(side, axis_z\) \+ max\(inner_overlap, 0\)/);
   assert.doesNotMatch(baseScad, /side_legend_through_wall_embed\s*=\s*wall_thickness\s*\+/);
 });
 

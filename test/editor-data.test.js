@@ -553,6 +553,28 @@ test("サイドウォール印字サイズは4mm、高さ初期値は面一に�
   }
 });
 
+test("印字高さのマイナス値は編集データで保持する", () => {
+  const defaults = createDefaultKeycapParams("custom-shell");
+  const parsed = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      legendHeight: -0.4,
+      topLegendRightTopHeight: -0.25,
+      sideLegendFrontHeight: -0.3,
+    },
+  });
+  const exported = createEditorDataPayload(parsed);
+
+  assert.equal(parsed.legendHeight, -0.4);
+  assert.equal(parsed.topLegendRightTopHeight, -0.25);
+  assert.equal(parsed.sideLegendFrontHeight, -0.3);
+  assert.equal(exported.params.legendHeight, -0.4);
+  assert.equal(exported.params.topLegendRightTopHeight, -0.25);
+  assert.equal(exported.params.sideLegendFrontHeight, -0.3);
+});
+
 test("シェル系の上面すぼまり初期値は一般的なキーキャップ比率にする", () => {
   assert.equal(createDefaultKeycapParams("custom-shell").topScale, 0.75);
   assert.equal(createDefaultKeycapParams("jis-enter").topScale, 0.75);

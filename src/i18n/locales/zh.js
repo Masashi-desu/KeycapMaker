@@ -560,7 +560,7 @@ const zh = Object.freeze({
     },
     legendHeight: {
       label: "文字高度",
-      hint: "设为 0 时会成为嵌入式字符，填入上表面壳体的大部分；提高数值则会凸起。",
+      hint: "0 为齐平。正值会凸起，负值会下沉到表面以下。",
     },
     legendEmbed: {
       label: "向内嵌入",
@@ -610,7 +610,7 @@ const zh = Object.freeze({
       },
       height: {
         label: "{side}文字高度",
-        hint: "设为 0 时会成为与侧壁齐平的嵌入式字符；提高数值则会向外凸起。",
+        hint: "0 为与侧壁齐平。正值会向外凸起，负值会向内下沉。",
       },
       offsetX: {
         label: "{side}横向位置",

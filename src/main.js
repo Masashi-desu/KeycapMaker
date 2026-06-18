@@ -478,6 +478,7 @@ const TOP_CENTER_HEIGHT_SLIDER_MAX = 20;
 const TOP_SLOPE_ANGLE_SLIDER_MAX_DEG = 15;
 const LEGEND_SIZE_SLIDER_MAX = 12;
 const LEGEND_DEPTH_SLIDER_MAX = 3;
+const LEGEND_HEIGHT_SLIDER_MIN = -LEGEND_DEPTH_SLIDER_MAX;
 const TYPEWRITER_RIM_HEIGHT_SLIDER_MAX = 4;
 const HOMING_BAR_WIDTH_SLIDER_MAX = 4;
 const HOMING_BAR_HEIGHT_SLIDER_MAX = 2;
@@ -820,7 +821,7 @@ function resolveFieldSliderRange(fieldKey, params = state.keycapParams) {
     return { max: getLegendSizeSliderMaximum(params) };
   }
   if (isLegendFieldWithSuffix(fieldKey, LEGEND_FIELD_SUFFIXES.height)) {
-    return { max: LEGEND_DEPTH_SLIDER_MAX };
+    return { min: LEGEND_HEIGHT_SLIDER_MIN, max: LEGEND_DEPTH_SLIDER_MAX, guide: 0 };
   }
   if (isLegendFieldWithSuffix(fieldKey, LEGEND_FIELD_SUFFIXES.embed)) {
     return { max: LEGEND_DEPTH_SLIDER_MAX };
@@ -1913,7 +1914,7 @@ function createLegendControlFields({ paramPrefix, side = null, collapseControlle
       hint: () => t(fieldKey("height.hint", "legendHeight.hint"), sideValues()),
       unit: "mm",
       step: 0.05,
-      min: 0,
+      min: LEGEND_HEIGHT_SLIDER_MIN,
       dependentFieldKeys: isSideLegend ? [] : [embedKey],
       ...visibilityConfig,
     },

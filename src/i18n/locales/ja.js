@@ -560,7 +560,7 @@ const ja = Object.freeze({
     },
     legendHeight: {
       label: "文字の高さ",
-      hint: "0 にすると上面シェルの大半を埋める埋め込み印字になり、数字を上げると盛り上がります",
+      hint: "0 は面一です。プラスで盛り上げ、マイナスで表面より下へ沈めます",
     },
     legendEmbed: {
       label: "内側への埋め込み",
@@ -610,7 +610,7 @@ const ja = Object.freeze({
       },
       height: {
         label: "{side}の文字の高さ",
-        hint: "0 にするとサイドウォールと面一の埋め込み印字になり、数字を上げると外側へ盛り上がります",
+        hint: "0 はサイドウォールと面一です。プラスで外側へ盛り上げ、マイナスで内側へ沈めます",
       },
       offsetX: {
         label: "{side}の横位置",
