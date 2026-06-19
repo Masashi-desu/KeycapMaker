@@ -7987,9 +7987,6 @@ function captureCurrentPreviewImageDataUrl() {
       return "";
     }
 
-    context.fillStyle = "#fcfaf6";
-    context.fillRect(0, 0, thumbnailSize, thumbnailSize);
-
     const sourceCanvas = document.createElement("canvas");
     sourceCanvas.width = canvas.width;
     sourceCanvas.height = canvas.height;
