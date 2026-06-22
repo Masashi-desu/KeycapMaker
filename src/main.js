@@ -605,6 +605,24 @@ function setThemePreference(theme) {
   return nextTheme;
 }
 
+const DOCUMENT_LOCALE_ATTRIBUTES = Object.freeze({
+  ja: { lang: "ja" },
+  en: { lang: "en" },
+  zh: { lang: "zh-Hans" },
+  ko: { lang: "ko" },
+});
+
+function applyDocumentLocale(locale) {
+  const nextLocale = normalizeLocale(locale);
+  const attributes = DOCUMENT_LOCALE_ATTRIBUTES[nextLocale] ?? DOCUMENT_LOCALE_ATTRIBUTES.ja;
+  const root = document.documentElement;
+
+  root.lang = attributes.lang;
+  root.dataset.locale = nextLocale;
+
+  return nextLocale;
+}
+
 function applyThemeImmediately(theme) {
   const nextTheme = normalizeTheme(theme) ?? getSystemTheme();
   document.documentElement.dataset.theme = nextTheme;
@@ -2841,6 +2859,7 @@ const state = {
 };
 
 syncDerivedKeycapParams(state.keycapParams);
+applyDocumentLocale(state.locale);
 applyTheme(state.theme);
 
 if (!app) {
@@ -3511,6 +3530,7 @@ function render(options = {}) {
   renderShell();
 
   const applyUpdate = () => {
+    applyDocumentLocale(state.locale);
     applyTheme(state.theme);
     renderLayout();
     renderPersistentShellCopy();
