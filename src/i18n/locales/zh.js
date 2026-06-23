@@ -783,7 +783,7 @@ const zh = Object.freeze({
     remoteFontLoadFailed: "添加 CDN 字体失败",
     remoteFontLoadFailedLabel: "添加 CDN 字体失败",
     landingPageLinkLabel: "打开字体页面",
-    landingPageLinkAriaLabel: "在新标签页打开 {font} 的字体页面",
+    landingPageLinkAriaLabel: "在新标签页打开 {font} 的 {page}",
     attributionTitle: "版权与许可标注",
     attributions: {
       "kurobara-cinderella-regular": [

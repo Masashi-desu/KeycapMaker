@@ -783,7 +783,7 @@ const ja = Object.freeze({
     remoteFontLoadFailed: "CDNフォントの追加に失敗しました",
     remoteFontLoadFailedLabel: "CDNフォント追加失敗",
     landingPageLinkLabel: "フォントページを開く",
-    landingPageLinkAriaLabel: "{font} のフォントページを新しいタブで開く",
+    landingPageLinkAriaLabel: "{font} のページ {page} を新しいタブで開く",
     attributionTitle: "著作権・ライセンス表記",
     attributions: {
       "kurobara-cinderella-regular": [

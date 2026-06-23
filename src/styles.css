@@ -1649,6 +1649,8 @@ pre {
   justify-self: start;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
+  max-width: 100%;
   min-width: 0;
   padding: 7px 10px;
   border-radius: 10px;
@@ -1659,6 +1661,21 @@ pre {
   font-weight: 700;
   line-height: 1.35;
   text-decoration: none;
+}
+
+.font-picker-landing-page-link__icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  object-fit: contain;
+}
+
+.font-picker-landing-page-link__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .font-picker-landing-page-link:hover {

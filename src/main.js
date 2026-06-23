@@ -5070,13 +5070,43 @@ function renderLegendFontAttributionCard(font) {
   `;
 }
 
+function getLegendFontLandingPageName(font) {
+  const explicitName = String(font?.landingPageName ?? "").trim();
+  if (explicitName) {
+    return explicitName;
+  }
+
+  try {
+    const landingPageUrl = String(font?.landingPageUrl ?? "").trim();
+    const hostname = new URL(landingPageUrl).hostname.replace(/^www\./u, "");
+    return hostname || t("font.landingPageLinkLabel");
+  } catch {
+    return t("font.landingPageLinkLabel");
+  }
+}
+
 function renderLegendFontLandingPageLink(font) {
   if (!font?.landingPageUrl) {
     return "";
   }
 
-  const linkLabel = t("font.landingPageLinkLabel");
-  const ariaLabel = t("font.landingPageLinkAriaLabel", { font: font.label }, linkLabel);
+  const pageName = getLegendFontLandingPageName(font);
+  const pageIconUrl = String(font.landingPageIconUrl ?? "").trim();
+  const pageIcon = pageIconUrl
+    ? `
+      <img
+        class="font-picker-landing-page-link__icon"
+        src="${escapeHtml(pageIconUrl)}"
+        alt=""
+        loading="lazy"
+        decoding="async"
+        referrerpolicy="no-referrer"
+        aria-hidden="true"
+        onerror="this.hidden=true"
+      />
+    `
+    : "";
+  const ariaLabel = t("font.landingPageLinkAriaLabel", { font: font.label, page: pageName }, pageName);
 
   return `
     <a
@@ -5087,7 +5117,8 @@ function renderLegendFontLandingPageLink(font) {
       data-font-landing-page-url="${escapeHtml(font.landingPageUrl)}"
       aria-label="${escapeHtml(ariaLabel)}"
     >
-      ${escapeHtml(linkLabel)}
+      ${pageIcon}
+      <span class="font-picker-landing-page-link__label">${escapeHtml(pageName)}</span>
     </a>
   `;
 }

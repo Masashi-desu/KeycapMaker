@@ -13,6 +13,16 @@ const VARIABLE_WEIGHT_STYLE_DEFINITIONS = Object.freeze([
   { key: "black", label: "Black", cssWeight: 900 },
 ]);
 
+const GOOGLE_FONTS_FAVICON_URL = "https://www.gstatic.com/images/icons/material/apps/fonts/1x/catalog/v5/favicon.svg";
+const MODI_FAVICON_URL = "https://modi.jpn.org/favicon.ico";
+
+function createGoogleFontsLandingPageMeta(pageName) {
+  return {
+    landingPageName: `${pageName} - Google Fonts`,
+    landingPageIconUrl: GOOGLE_FONTS_FAVICON_URL,
+  };
+}
+
 function createVariableWeightStyleOptions(fontName) {
   return Object.freeze(VARIABLE_WEIGHT_STYLE_DEFINITIONS.map((style) => ({
     ...style,
@@ -37,6 +47,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/MPLUS1-Variable.ttf",
     runtimePath: "/fonts/MPLUS1-Variable.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/M%2BPLUS%2B1",
+    ...createGoogleFontsLandingPageMeta("M PLUS 1"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend M PLUS 1 Variable",
   },
@@ -50,6 +61,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/MPLUS1p-Regular.ttf",
     runtimePath: "/fonts/MPLUS1p-Regular.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/M%2BPLUS%2B1p",
+    ...createGoogleFontsLandingPageMeta("M PLUS 1p"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend M PLUS 1p Regular",
     cssWeight: 400,
@@ -66,6 +78,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/NotoSans-Variable.ttf",
     runtimePath: "/fonts/NotoSans-Variable.ttf",
     landingPageUrl: "https://fonts.google.com/noto/specimen/Noto%2BSans",
+    ...createGoogleFontsLandingPageMeta("Noto Sans"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend Noto Sans Variable",
   },
@@ -81,6 +94,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/NotoSansJP-Variable.ttf",
     runtimePath: "/fonts/NotoSansJP-Variable.ttf",
     landingPageUrl: "https://fonts.google.com/noto/specimen/Noto%2BSans%2BJP",
+    ...createGoogleFontsLandingPageMeta("Noto Sans JP"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend Noto Sans JP Variable",
   },
@@ -94,6 +108,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/MPLUSRounded1c-Regular.ttf",
     runtimePath: "/fonts/MPLUSRounded1c-Regular.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/M%2BPLUS%2BRounded%2B1c",
+    ...createGoogleFontsLandingPageMeta("M PLUS Rounded 1c"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend M PLUS Rounded 1c Regular",
     cssWeight: 400,
@@ -108,6 +123,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/DotGothic16-Regular.ttf",
     runtimePath: "/fonts/DotGothic16-Regular.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/DotGothic16",
+    ...createGoogleFontsLandingPageMeta("DotGothic16"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend DotGothic16 Regular",
     cssWeight: 400,
@@ -122,6 +138,8 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/KurobaraCinderella-Regular.ttf",
     runtimePath: "/fonts/KurobaraCinderella-Regular.ttf",
     landingPageUrl: "https://modi.jpn.org/font_kurobara-cinderella.php",
+    landingPageName: "黒薔薇シンデレラ - MODI工場",
+    landingPageIconUrl: MODI_FAVICON_URL,
     licenseLabel: "MODI / M+ FONTS derived",
     requiredAttributionLines: [
       "使用フォント: 黒薔薇シンデレラ Version 1.00.20180805",
@@ -143,6 +161,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/Bangers-Regular.ttf",
     runtimePath: "/fonts/Bangers-Regular.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/Bangers",
+    ...createGoogleFontsLandingPageMeta("Bangers"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend Bangers Regular",
     cssWeight: 400,
@@ -157,6 +176,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/Creepster-Regular.ttf",
     runtimePath: "/fonts/Creepster-Regular.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/Creepster",
+    ...createGoogleFontsLandingPageMeta("Creepster"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend Creepster Regular",
     cssWeight: 400,
@@ -171,6 +191,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/Rye-Regular.ttf",
     runtimePath: "/fonts/Rye-Regular.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/Rye",
+    ...createGoogleFontsLandingPageMeta("Rye"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend Rye Regular",
     cssWeight: 400,
@@ -185,6 +206,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/Orbitron-Variable.ttf",
     runtimePath: "/fonts/Orbitron-Variable.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/Orbitron",
+    ...createGoogleFontsLandingPageMeta("Orbitron"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend Orbitron Regular",
     cssWeight: 400,
@@ -199,6 +221,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/GrenzeGotisch-Variable.ttf",
     runtimePath: "/fonts/GrenzeGotisch-Variable.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/Grenze%2BGotisch",
+    ...createGoogleFontsLandingPageMeta("Grenze Gotisch"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend Grenze Gotisch Regular",
     cssWeight: 400,
@@ -213,6 +236,7 @@ export const KEYCAP_LEGEND_FONTS = Object.freeze([
     assetPath: "fonts/MedievalSharp-Regular.ttf",
     runtimePath: "/fonts/MedievalSharp-Regular.ttf",
     landingPageUrl: "https://fonts.google.com/specimen/MedievalSharp",
+    ...createGoogleFontsLandingPageMeta("MedievalSharp"),
     licenseLabel: "SIL Open Font License 1.1",
     measurementFamily: "Keycap Legend MedievalSharp Regular",
     cssWeight: 400,

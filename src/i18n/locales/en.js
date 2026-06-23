@@ -783,7 +783,7 @@ const en = Object.freeze({
     remoteFontLoadFailed: "Failed to add CDN Font",
     remoteFontLoadFailedLabel: "CDN Font Add Failed",
     landingPageLinkLabel: "Open Font Page",
-    landingPageLinkAriaLabel: "Open the font page for {font} in a new tab",
+    landingPageLinkAriaLabel: "Open {page} for {font} in a new tab",
     attributionTitle: "Copyright and License Notice",
     attributions: {
       "kurobara-cinderella-regular": [
