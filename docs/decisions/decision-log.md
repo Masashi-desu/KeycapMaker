@@ -2,6 +2,15 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-06-25 - icon provider は latest CDN と runtime sanitizer を使う
+
+- 結論:
+  ブラウザ実行時は Lucide、Material Symbols、Font Awesome Free Solid、Remix Icon を jsDelivr の `latest` package から読み込む。取得した SVG node / body / path data は sanitizer で許可タグ・属性・path data だけに絞り、Lucide は OpenSCAD へ渡す前に stroke primitives を filled path に変換する。CDN が利用できない環境では installed package 由来の fallback data を同じ sanitizer / 変換処理に通す
+- 理由:
+  icon set の更新追従を手動生成ファイルの更新から切り離し、常に最新カタログを扱えるようにするため。以前の Lucide 事前生成 stroke-to-fill では open stroke の round cap が崩れ、`power` のようなアイコン端部が欠ける形状になったため、取得後の sanitizer と変換処理を単一経路にして再発を防ぐ
+- 関連:
+  [../architecture/scad-and-export.md](../architecture/scad-and-export.md)
+
 ## 2026-06-23 - icon legend は Lucide SVG runtime asset として扱う
 
 - 結論:

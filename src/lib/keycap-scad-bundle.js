@@ -35,10 +35,12 @@ import {
   DEFAULT_LEGEND_ICON_NAME,
   DEFAULT_LEGEND_ICON_SET,
   LEGEND_CONTENT_TYPE_ICON,
+  buildLegendIconSvgAsync,
   buildLegendIconSvg,
   buildLucideIconSvg,
   getLegendIconSetMeta,
   getLegendIconRuntimePath,
+  initializeLegendIconProvidersFromCdn,
   isLegendIconFillAvailable,
   isLegendIconFillSupported,
   listAvailableLegendIcons,
@@ -63,8 +65,10 @@ export {
   removeUserKeycapLegendFont,
   resolveKeycapLegendFont,
   buildLegendIconSvg,
+  buildLegendIconSvgAsync,
   buildLucideIconSvg,
   getLegendIconSetMeta,
+  initializeLegendIconProvidersFromCdn,
   isLegendIconFillAvailable,
   isLegendIconFillSupported,
   listAvailableLegendIcons,
@@ -1268,12 +1272,13 @@ function getRuntimeAssetsForIcon(iconDescriptor) {
     return cachedPromise;
   }
 
-  const assetPromise = Promise.resolve([
-    {
-      path: getLegendIconRuntimePath(iconName, iconSet, { filled: iconFill }),
-      content: buildLegendIconSvg(resolveLegendIcon(iconName, iconSet), { filled: iconFill }),
-    },
-  ].filter(Boolean));
+  const assetPromise = buildLegendIconSvgAsync({ name: iconName, iconSet }, { filled: iconFill })
+    .then((content) => [
+      {
+        path: getLegendIconRuntimePath(iconName, iconSet, { filled: iconFill }),
+        content,
+      },
+    ].filter(Boolean));
 
   runtimeAssetPromises.set(cacheKey, assetPromise);
   return assetPromise;

@@ -848,22 +848,26 @@ const en = Object.freeze({
     attributions: {
       lucide: [
         "Lucide Icons: ISC License",
-        "Source: https://lucide.dev/"
+        "Source: https://lucide.dev/",
+        "Icon data package CDN: https://cdn.jsdelivr.net/npm/@lucide/icons@latest/dist/esm/lucide-icons.mjs"
       ],
       "material-symbols": [
         "Material Symbols by Google: Apache License 2.0",
         "Source: https://fonts.google.com/icons",
-        "Icon data package: @iconify-json/material-symbols"
+        "Icon data package: @iconify-json/material-symbols",
+        "Icon data package CDN: https://cdn.jsdelivr.net/npm/@iconify-json/material-symbols@latest/icons.json"
       ],
       "font-awesome": [
         "Font Awesome Free Solid Icons: CC BY 4.0",
         "Code package: MIT License",
         "Source: https://fontawesome.com/",
+        "Icon data package CDN: https://cdn.jsdelivr.net/npm/@fortawesome/free-solid-svg-icons@latest/index.mjs",
         "Downloaded Font Awesome Free files include attribution comments; do not remove upstream notices from redistributed files."
       ],
       "remix-icon": [
         "Remix Icon: Remix Icon License v1.0",
         "Source: https://remixicon.com/",
+        "Icon data package CDN: https://cdn.jsdelivr.net/npm/remixicon@latest/fonts/remixicon.symbol.svg",
         "Permitted for functional or decorative use in larger works; do not sell as a standalone icon pack or use icons as logos/trademarks."
       ],
     },

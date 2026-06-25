@@ -73,6 +73,7 @@ import {
   buildKeycapArgs,
   createKeycapFiles,
   getLegendIconSetMeta,
+  initializeLegendIconProvidersFromCdn,
   isLegendIconFillAvailable,
   getKeycapLegendFontStyleOptions,
   listAvailableKeycapLegendFonts,
@@ -10550,6 +10551,19 @@ async function executeExport(format, options = {}) {
 
 syncVisualViewportMetrics();
 render();
+
+initializeLegendIconProvidersFromCdn()
+  .then((result) => {
+    if (result?.status === "loaded" && result.isCdnActive) {
+      render();
+      executeKeycapPreview({ silent: true });
+    } else if (result?.error) {
+      console.warn(result.error);
+    }
+  })
+  .catch((error) => {
+    console.warn(error);
+  });
 
 window.addEventListener("resize", handleViewportResize);
 window.visualViewport?.addEventListener("resize", handleViewportResize);

@@ -19,6 +19,7 @@ import {
   resolveLegendIcon,
   resolveLegendIconFill,
   resolveLegendIconName,
+  sanitizeLucideSvgNodes,
   searchLegendIcons,
 } from "../src/lib/keycap-icons.js";
 import fontAwesomeSolidIconSet from "../src/data/icon-sets/font-awesome-solid-icons.js";
@@ -45,6 +46,62 @@ function extractSvgPathData(svg) {
   return [...svg.matchAll(/<path\b[^>]*\sd=(["'])(.*?)\1[^>]*>/g)].map((match) => match[2]);
 }
 
+function parsePolygonPoints(pathData) {
+  return [...String(pathData ?? "").matchAll(/[ML](-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g)]
+    .map((match) => ({ x: Number(match[1]), y: Number(match[2]) }))
+    .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y));
+}
+
+function cross(a, b, c) {
+  return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
+}
+
+function isSamePoint(a, b) {
+  return Math.abs(a.x - b.x) < 0.00001 && Math.abs(a.y - b.y) < 0.00001;
+}
+
+function isPointOnSegment(a, b, p) {
+  return Math.abs(cross(a, b, p)) < 0.00001
+    && p.x >= Math.min(a.x, b.x) - 0.00001
+    && p.x <= Math.max(a.x, b.x) + 0.00001
+    && p.y >= Math.min(a.y, b.y) - 0.00001
+    && p.y <= Math.max(a.y, b.y) + 0.00001;
+}
+
+function segmentsIntersect(a, b, c, d) {
+  const abC = cross(a, b, c);
+  const abD = cross(a, b, d);
+  const cdA = cross(c, d, a);
+  const cdB = cross(c, d, b);
+
+  if (abC * abD < -0.00001 && cdA * cdB < -0.00001) {
+    return true;
+  }
+
+  return isPointOnSegment(a, b, c)
+    || isPointOnSegment(a, b, d)
+    || isPointOnSegment(c, d, a)
+    || isPointOnSegment(c, d, b);
+}
+
+function hasSelfIntersection(points) {
+  const segments = points.map((point, index) => [point, points[(index + 1) % points.length]]);
+  for (let index = 0; index < segments.length; index += 1) {
+    for (let otherIndex = index + 1; otherIndex < segments.length; otherIndex += 1) {
+      const [a, b] = segments[index];
+      const [c, d] = segments[otherIndex];
+      const adjacent = Math.abs(index - otherIndex) === 1 || (index === 0 && otherIndex === segments.length - 1);
+      if (adjacent || isSamePoint(a, c) || isSamePoint(a, d) || isSamePoint(b, c) || isSamePoint(b, d)) {
+        continue;
+      }
+      if (segmentsIntersect(a, b, c, d)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 test("アイコン picker の初期一覧はキーキャップ向け候補を表示する", () => {
   const recommendedIcons = listRecommendedLegendIcons();
 
@@ -63,20 +120,67 @@ test("検索時は初期候補にない Lucide アイコンも選択候補へ出
   assert.ok(searchResults.includes("file-volume"));
 });
 
-test("Lucide アイコンは全件モデル用 SVG body を持つ", () => {
+test("Lucide アイコンは sanitizer 済みノードからモデル用 SVG を生成する", () => {
   const lucideIcons = listAvailableLegendIcons("lucide");
 
-  assert.equal(lucideIcons.length, 1737);
-  assert.equal(lucideIcons.filter((icon) => !icon.body).length, 0);
+  assert.ok(lucideIcons.length >= 1700);
+  assert.equal(lucideIcons.filter((icon) => !Array.isArray(icon.node) || icon.node.length === 0).length, 0);
+
+  const powerSvg = buildLegendIconSvg(resolveLegendIcon("power", "lucide"));
+  assert.match(powerSvg, /^<svg\b/);
+  assert.match(powerSvg, /<path\b/);
+  assert.doesNotMatch(powerSvg, /stroke-width=|<circle|\skey=|onload=|<script/);
+  assert.doesNotMatch(powerSvg, /c-0\.14794|0,0 0,0|c0,0/);
 });
 
 test("各アイコンセットは共通の body 形式でモデル用 SVG を生成する", () => {
   listLegendIconSets().forEach((iconSet) => {
     const icons = listAvailableLegendIcons(iconSet.key);
     assert.ok(icons.length > 0, `${iconSet.key} should have icons`);
-    assert.equal(icons.filter((icon) => !icon.body).length, 0, `${iconSet.key} should have SVG bodies`);
+    if (iconSet.key === "lucide") {
+      assert.equal(icons.filter((icon) => !Array.isArray(icon.node) || icon.node.length === 0).length, 0, `${iconSet.key} should have SVG nodes`);
+    } else {
+      assert.equal(icons.filter((icon) => !icon.body).length, 0, `${iconSet.key} should have SVG bodies`);
+    }
     assert.equal(icons.filter((icon) => "paths" in icon || "svgPathData" in icon).length, 0, `${iconSet.key} should not expose set-specific path fields`);
   });
+});
+
+test("Lucide SVG ノードは sanitizer で危険な要素と属性を落とす", () => {
+  const sanitizedNodes = sanitizeLucideSvgNodes([
+    ["script", { href: "https://example.invalid/icon.js" }],
+    ["path", {
+      d: "M2 2h20",
+      key: "unsafe-key",
+      onload: "alert(1)",
+      style: "stroke:red",
+      "stroke-width": "2",
+    }],
+  ]);
+
+  assert.deepEqual(sanitizedNodes, [
+    ["path", {
+      d: "M2 2h20",
+      "stroke-width": "2",
+    }],
+  ]);
+
+  const svg = buildLegendIconSvg({
+    iconSet: "lucide",
+    name: "unsafe-test",
+    size: 24,
+    node: sanitizedNodes,
+  });
+  assert.match(svg, /<path\b/);
+  assert.doesNotMatch(svg, /script|onload|style=|\skey=|stroke-width=/);
+});
+
+test("Lucide stroke-to-fill は round cap の path を自己交差させない", () => {
+  const svg = buildLegendIconSvg(resolveLegendIcon("corner-down-right", "lucide"));
+  const pathDataList = extractSvgPathData(svg);
+  const selfIntersectingPaths = pathDataList.filter((pathData) => hasSelfIntersection(parsePolygonPoints(pathData)));
+
+  assert.equal(selfIntersectingPaths.length, 0);
 });
 
 test("Material Symbols のモデル用 body は元 Iconify data の Outlined FILL=0 形状を使う", async () => {
@@ -286,7 +390,7 @@ test("アイコン名の正規化と SVG 生成はアイコンセットごとの
   assert.equal((lucideCircleSvg.match(/M/g) ?? []).length, 2);
   assert.ok((lucideStrokeSvg.match(/M/g) ?? []).length > 1);
   assert.ok((lucideDeleteSvg.match(/M/g) ?? []).length > 1);
-  assert.equal((lucideCommandSvg.match(/<path/g) ?? []).length, 1);
+  assert.ok((lucideCommandSvg.match(/<path/g) ?? []).length > 1);
   assert.ok((lucideCommandSvg.match(/M/g) ?? []).length > 1);
   assert.doesNotMatch(lucideStrokeSvg, /stroke-width=/);
   assert.doesNotMatch(lucideDeleteSvg, /stroke-width=/);
