@@ -170,6 +170,199 @@ test("ユーザー追加フォントを runtime asset と SCAD wrapper へ渡す
   }
 });
 
+test("Lucide アイコン印字を runtime asset と SCAD wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        legendEnabled: true,
+        legendText: "",
+        legendContentType: "icon",
+        legendIconSet: "lucide",
+        legendIconName: "circle-power",
+        legendOutlineDelta: 0.5,
+      },
+    });
+    const iconAsset = files.find((file) => file.path === "/icons/lucide/circle-power.svg");
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(iconAsset, "lucide icon runtime asset should be included");
+    assert.match(iconAsset.content, /<svg[^>]+viewBox="0 0 24 24"/);
+    assert.match(iconAsset.content, /<svg[^>]+fill="#000000"[^>]+stroke="none"/);
+    assert.ok((iconAsset.content.match(/M/g) ?? []).length > 1);
+    assert.doesNotMatch(iconAsset.content, /stroke-width=/);
+    assert.doesNotMatch(iconAsset.content, /<circle/);
+    assert.equal(readRawScadDefinition(jobScad, "user_legend_content_type"), "\"icon\"");
+    assert.equal(readRawScadDefinition(jobScad, "user_legend_icon_path"), "\"/icons/lucide/circle-power.svg\"");
+    assert.equal(readScadDefinition(jobScad, "user_legend_outline_delta"), 0);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
+test("Lucide 以外のアイコンセットも runtime asset と SCAD wrapper へ渡す", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const files = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        legendEnabled: true,
+        legendText: "",
+        legendContentType: "icon",
+        legendIconSet: "font-awesome",
+        legendIconName: "volume-up",
+      },
+    });
+    const iconAsset = files.find((file) => file.path === "/icons/font-awesome/volume-high.svg");
+    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(iconAsset, "font awesome icon runtime asset should be included");
+    assert.match(iconAsset.content, /<svg[^>]+viewBox="0 0 640 512"/);
+    assert.equal(readRawScadDefinition(jobScad, "user_legend_icon_path"), "\"/icons/font-awesome/volume-high.svg\"");
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
+test("アイコンの塗りつぶし設定は runtime asset と SCAD wrapper へ bool として反映する", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 70,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const materialFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        legendEnabled: true,
+        legendContentType: "icon",
+        legendIconSet: "material-symbols",
+        legendIconName: "circle",
+        legendIconFill: false,
+        topLegendLeftTopEnabled: true,
+        topLegendLeftTopContentType: "icon",
+        topLegendLeftTopIconSet: "material-symbols",
+        topLegendLeftTopIconName: "circle",
+        topLegendLeftTopIconFill: true,
+      },
+    });
+    const materialOutlineAsset = materialFiles.find((file) => file.path === "/icons/material-symbols/circle.svg");
+    const materialFilledAsset = materialFiles.find((file) => file.path === "/icons/material-symbols/circle-fill.svg");
+    const materialJobScad = materialFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(materialOutlineAsset, "material outlined icon runtime asset should be included");
+    assert.ok(materialFilledAsset, "material filled icon runtime asset should be included");
+    assert.notEqual(materialOutlineAsset.content, materialFilledAsset.content);
+    assert.equal(readRawScadDefinition(materialJobScad, "user_legend_icon_path"), "\"/icons/material-symbols/circle.svg\"");
+    assert.equal(
+      readRawScadDefinition(materialJobScad, "user_top_legend_left_top_icon_path"),
+      "\"/icons/material-symbols/circle-fill.svg\"",
+    );
+
+    const materialWithoutFillVariantFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        legendEnabled: true,
+        legendContentType: "icon",
+        legendIconSet: "material-symbols",
+        legendIconName: "arrow-forward",
+        legendIconFill: true,
+      },
+    });
+    const materialWithoutFillVariantAsset = materialWithoutFillVariantFiles.find((file) => file.path === "/icons/material-symbols/arrow-forward.svg");
+    const materialUnexpectedFillAsset = materialWithoutFillVariantFiles.find((file) => file.path === "/icons/material-symbols/arrow-forward-fill.svg");
+    const materialWithoutFillVariantJobScad = materialWithoutFillVariantFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(materialWithoutFillVariantAsset, "material icon without a distinct filled variant should use the base runtime asset");
+    assert.equal(materialUnexpectedFillAsset, undefined);
+    assert.equal(
+      readRawScadDefinition(materialWithoutFillVariantJobScad, "user_legend_icon_path"),
+      "\"/icons/material-symbols/arrow-forward.svg\"",
+    );
+
+    const remixFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        legendEnabled: true,
+        legendContentType: "icon",
+        legendIconSet: "remix-icon",
+        legendIconName: "circle-line",
+        legendIconFill: true,
+      },
+    });
+    const remixFilledAsset = remixFiles.find((file) => file.path === "/icons/remix-icon/circle-fill.svg");
+    const remixJobScad = remixFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+
+    assert.ok(remixFilledAsset, "remix filled icon runtime asset should be included");
+    assert.match(remixFilledAsset.content, /viewBox="0 0 24 24"/);
+    assert.equal(readRawScadDefinition(remixJobScad, "user_legend_icon_path"), "\"/icons/remix-icon/circle-fill.svg\"");
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
 test("ステム入口の面取り量を SCAD wrapper へ渡す", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,

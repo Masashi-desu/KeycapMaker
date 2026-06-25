@@ -13,7 +13,12 @@
     "vite": "^7.1.10"
   },
   "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^7.2.0",
+    "@iconify-json/material-symbols": "^1.2.79",
+    "@lucide/icons": "^1.21.0",
     "fflate": "^0.8.2",
+    "paper": "^0.12.18",
+    "remixicon": "^4.9.1",
     "three": "^0.183.2"
   }
 }

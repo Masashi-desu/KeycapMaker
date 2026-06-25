@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import * as THREE from "three";
 
-import { createPreviewGeometry } from "../src/lib/preview-scene.js";
+import { createPreviewGeometry, getPreviewLayerMaterialSide } from "../src/lib/preview-scene.js";
 
 function readNormal(geometry, vertexIndex) {
   const normals = geometry.getAttribute("normal");
@@ -99,4 +100,12 @@ test("preview normals do not blend faces that only touch at one vertex", () => {
   });
 
   assertNormalClose(readNormal(geometry, 0), { x: 0, y: 0, z: 1 }, "first face normal at vertex-only contact");
+});
+
+test("legend overlay meshes are double-sided so imported SVG contours do not disappear", () => {
+  assert.equal(getPreviewLayerMaterialSide("legend", 1), THREE.DoubleSide);
+  assert.equal(getPreviewLayerMaterialSide("legend-left-top", 1), THREE.DoubleSide);
+  assert.equal(getPreviewLayerMaterialSide("j-stem-lp01", 1), THREE.DoubleSide);
+  assert.equal(getPreviewLayerMaterialSide("body", 0.5), THREE.DoubleSide);
+  assert.equal(getPreviewLayerMaterialSide("body", 1), THREE.FrontSide);
 });

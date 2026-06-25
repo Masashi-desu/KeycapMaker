@@ -534,6 +534,22 @@ const ko = Object.freeze({
       hint: "여러 글자를 그대로 입력할 수 있습니다",
       placeholder: "A / Shift / あ",
     },
+    legendContentType: {
+      label: "각인 내용",
+      hint: "문자를 넣을지 아이콘을 넣을지 선택합니다.",
+    },
+    legendIconSet: {
+      label: "아이콘 세트",
+      hint: "각인에 사용할 아이콘 세트를 선택합니다.",
+    },
+    legendIconName: {
+      label: "아이콘",
+      hint: "{set} 아이콘 {count}개에서 검색할 수 있습니다.",
+    },
+    legendIconFill: {
+      label: "아이콘 채우기",
+      hint: "선택한 아이콘이 지원할 때 외곽선과 채우기 스타일을 전환합니다.",
+    },
     legendFontKey: {
       label: "서체",
       staticHint: "돋보기로 검색할 수 있습니다",
@@ -551,8 +567,8 @@ const ko = Object.freeze({
       hint: "밑줄 위치와 두께는 font 파일의 정보를 사용합니다. 임의의 모양으로 대체하지 않습니다.",
     },
     legendSize: {
-      label: "문자 크기",
-      hint: "각인할 문자의 크기를 변경합니다.",
+      label: "각인 크기",
+      hint: "각인할 문자 또는 아이콘의 크기를 변경합니다.",
     },
     legendOutlineDelta: {
       label: "굵기 보정",
@@ -591,6 +607,21 @@ const ko = Object.freeze({
         label: "{side} 입력 문자",
         hint: "여러 글자를 그대로 입력할 수 있습니다",
       },
+      contentType: {
+        label: "{side} 각인 내용",
+        hint: "문자를 넣을지 아이콘을 넣을지 선택합니다.",
+      },
+      iconSet: {
+        label: "{side} 아이콘 세트",
+        hint: "각인에 사용할 아이콘 세트를 선택합니다.",
+      },
+      iconName: {
+        label: "{side} 아이콘",
+      },
+      iconFill: {
+        label: "{side} 아이콘 채우기",
+        hint: "선택한 아이콘이 지원할 때 외곽선과 채우기 스타일을 전환합니다.",
+      },
       fontKey: {
         label: "{side} 서체",
       },
@@ -602,8 +633,8 @@ const ko = Object.freeze({
         hint: "밑줄 위치와 두께는 font 파일의 정보를 사용합니다. 임의의 모양으로 대체하지 않습니다.",
       },
       size: {
-        label: "{side} 문자 크기",
-        hint: "측벽에 각인할 문자의 크기를 변경합니다.",
+        label: "{side} 각인 크기",
+        hint: "측벽에 각인할 문자 또는 아이콘의 크기를 변경합니다.",
       },
       outlineDelta: {
         label: "{side} 굵기 보정",
@@ -704,6 +735,16 @@ const ko = Object.freeze({
       angle: "각도로 조정",
       "edge-height": "모서리 높이로 조정",
     },
+    legendContentType: {
+      text: "문자",
+      icon: "아이콘",
+    },
+    legendIconSet: {
+      lucide: "Lucide",
+      "material-symbols": "Material Symbols",
+      "font-awesome": "Font Awesome Free Solid",
+      "remix-icon": "Remix Icon",
+    },
   },
   stemDescriptions: {
     none: "장착부를 만들지 않습니다. 외형이나 각인만 확인하고 싶을 때 사용합니다.",
@@ -792,6 +833,38 @@ const ko = Object.freeze({
         "라이선스 표기: This font is free software. Unlimited permission is granted to use, copy, and distribute it, with or without modification, either commercially or noncommercially. THIS FONT IS PROVIDED \"AS IS\" WITHOUT WARRANTY.",
         "파생 원본 라이선스: SIL Open Font License, Version 1.1",
         "배포 페이지: https://modi.jpn.org/font_kurobara-cinderella.php"
+      ],
+    },
+  },
+  icons: {
+    searchAriaLabel: "아이콘 검색",
+    searchDialogLabel: "아이콘 검색",
+    searchPlaceholder: "아이콘 이름으로 검색",
+    noResults: "일치하는 아이콘이 없습니다",
+    recommendedLabel: "키캡 추천 후보",
+    searchResultsLabel: "검색 결과",
+    attributionTitle: "아이콘 저작권 및 라이선스 표기",
+    openCatalog: "{set}에서 찾기",
+    attributions: {
+      lucide: [
+        "Lucide Icons: ISC License",
+        "Source: https://lucide.dev/"
+      ],
+      "material-symbols": [
+        "Material Symbols by Google: Apache License 2.0",
+        "Source: https://fonts.google.com/icons",
+        "Icon data package: @iconify-json/material-symbols"
+      ],
+      "font-awesome": [
+        "Font Awesome Free Solid Icons: CC BY 4.0",
+        "Code package: MIT License",
+        "Source: https://fontawesome.com/",
+        "Downloaded Font Awesome Free files include attribution comments; do not remove upstream notices from redistributed files."
+      ],
+      "remix-icon": [
+        "Remix Icon: Remix Icon License v1.0",
+        "Source: https://remixicon.com/",
+        "Permitted for functional or decorative use in larger works; do not sell as a standalone icon pack or use icons as logos/trademarks."
       ],
     },
   },

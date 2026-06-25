@@ -534,6 +534,22 @@ const en = Object.freeze({
       hint: "Multiple characters can be entered as-is",
       placeholder: "A / Shift / あ",
     },
+    legendContentType: {
+      label: "Legend Content",
+      hint: "Choose whether this legend uses text or an icon.",
+    },
+    legendIconSet: {
+      label: "Icon Set",
+      hint: "Choose the icon set used for the legend.",
+    },
+    legendIconName: {
+      label: "Icon",
+      hint: "Search {count} {set} icons.",
+    },
+    legendIconFill: {
+      label: "Fill Icon",
+      hint: "Switch between outlined and filled variants when the selected icon supports it.",
+    },
     legendFontKey: {
       label: "Typeface",
       staticHint: "Search with the magnifying glass",
@@ -551,8 +567,8 @@ const en = Object.freeze({
       hint: "Underline position and thickness come from the font file. They are not replaced with an arbitrary look.",
     },
     legendSize: {
-      label: "Text Size",
-      hint: "Change the size of the legend text.",
+      label: "Legend Size",
+      hint: "Change the size of the legend text or icon.",
     },
     legendOutlineDelta: {
       label: "Weight Adjustment",
@@ -591,6 +607,21 @@ const en = Object.freeze({
         label: "{side} Legend Text",
         hint: "Multiple characters can be entered as-is",
       },
+      contentType: {
+        label: "{side} Legend Content",
+        hint: "Choose whether this side legend uses text or an icon.",
+      },
+      iconSet: {
+        label: "{side} Icon Set",
+        hint: "Choose the icon set used for the legend.",
+      },
+      iconName: {
+        label: "{side} Icon",
+      },
+      iconFill: {
+        label: "Fill {side} Icon",
+        hint: "Switch between outlined and filled variants when the selected icon supports it.",
+      },
       fontKey: {
         label: "{side} Typeface",
       },
@@ -602,8 +633,8 @@ const en = Object.freeze({
         hint: "Underline position and thickness come from the font file. They are not replaced with an arbitrary look.",
       },
       size: {
-        label: "{side} Text Size",
-        hint: "Change the size of the sidewall legend text.",
+        label: "{side} Legend Size",
+        hint: "Change the size of sidewall legend text or icon.",
       },
       outlineDelta: {
         label: "{side} Weight Adjustment",
@@ -704,6 +735,16 @@ const en = Object.freeze({
       angle: "Adjust by Angle",
       "edge-height": "Adjust by Edge Height",
     },
+    legendContentType: {
+      text: "Text",
+      icon: "Icon",
+    },
+    legendIconSet: {
+      lucide: "Lucide",
+      "material-symbols": "Material Symbols",
+      "font-awesome": "Font Awesome Free Solid",
+      "remix-icon": "Remix Icon",
+    },
   },
   stemDescriptions: {
     none: "No mount is generated. Use this when you only want to inspect the outer shape or legend.",
@@ -792,6 +833,38 @@ const en = Object.freeze({
         "License notice: This font is free software. Unlimited permission is granted to use, copy, and distribute it, with or without modification, either commercially or noncommercially. THIS FONT IS PROVIDED \"AS IS\" WITHOUT WARRANTY.",
         "Base license: SIL Open Font License, Version 1.1",
         "Distribution page: https://modi.jpn.org/font_kurobara-cinderella.php"
+      ],
+    },
+  },
+  icons: {
+    searchAriaLabel: "Search icons",
+    searchDialogLabel: "Icon Search",
+    searchPlaceholder: "Search by icon name",
+    noResults: "No matching icons",
+    recommendedLabel: "Keycap picks",
+    searchResultsLabel: "Search results",
+    attributionTitle: "Icon copyright and license notice",
+    openCatalog: "Browse {set}",
+    attributions: {
+      lucide: [
+        "Lucide Icons: ISC License",
+        "Source: https://lucide.dev/"
+      ],
+      "material-symbols": [
+        "Material Symbols by Google: Apache License 2.0",
+        "Source: https://fonts.google.com/icons",
+        "Icon data package: @iconify-json/material-symbols"
+      ],
+      "font-awesome": [
+        "Font Awesome Free Solid Icons: CC BY 4.0",
+        "Code package: MIT License",
+        "Source: https://fontawesome.com/",
+        "Downloaded Font Awesome Free files include attribution comments; do not remove upstream notices from redistributed files."
+      ],
+      "remix-icon": [
+        "Remix Icon: Remix Icon License v1.0",
+        "Source: https://remixicon.com/",
+        "Permitted for functional or decorative use in larger works; do not sell as a standalone icon pack or use icons as logos/trademarks."
       ],
     },
   },

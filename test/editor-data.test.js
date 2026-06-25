@@ -42,6 +42,9 @@ test("互換入力 JSON は欠損した typewriter パラメータを defaults �
   assert.equal(parsed.legendText, "ESC");
   assert.equal(parsed.legendFontKey, "orbitron-regular");
   assert.equal(parsed.legendFontStyleKey, "font-default");
+  assert.equal(parsed.legendContentType, "text");
+  assert.equal(parsed.legendIconSet, "lucide");
+  assert.equal(parsed.legendIconName, "circle");
   assert.equal(parsed.stemType, defaults.stemType);
   assert.equal(parsed.topSlopeInputMode, defaults.topSlopeInputMode);
   assert.equal(parsed.topSurfaceShape, defaults.topSurfaceShape);
@@ -60,6 +63,121 @@ test("互換入力 JSON は欠損した typewriter パラメータを defaults �
   );
   assert.equal(exported.params.rimWidth, defaults.rimWidth);
   assert.equal(exported.params.rimEnabled, false);
+});
+
+test("既存の文字印字 JSON は icon 用フィールドがなくても text として読み込む", () => {
+  const defaults = createDefaultKeycapParams("custom-shell");
+  const parsed = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      legendText: "ESC",
+      legendContentType: undefined,
+      legendIconSet: undefined,
+      legendIconName: undefined,
+    },
+  });
+  const exported = createEditorDataPayload(parsed);
+
+  assert.equal(parsed.legendText, "ESC");
+  assert.equal(parsed.legendContentType, "text");
+  assert.equal(parsed.legendIconSet, "lucide");
+  assert.equal(parsed.legendIconName, "circle");
+  assert.equal(parsed.legendIconFill, false);
+  assert.equal(exported.params.legendContentType, "text");
+  assert.equal(exported.params.legendIconSet, "lucide");
+  assert.equal(exported.params.legendIconName, "circle");
+  assert.equal(exported.params.legendIconFill, false);
+});
+
+test("アイコン印字 JSON は icon 設定を保持し、不正な icon 名は既定値へ丸める", () => {
+  const defaults = createDefaultKeycapParams("custom-shell");
+  const parsed = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      legendContentType: "icon",
+      legendIconSet: "lucide",
+      legendIconName: "volume-2",
+    },
+  });
+  const fallback = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      legendContentType: "icon",
+      legendIconSet: "lucide",
+      legendIconName: "not-a-real-lucide-icon",
+    },
+  });
+
+  assert.equal(parsed.legendContentType, "icon");
+  assert.equal(parsed.legendIconSet, "lucide");
+  assert.equal(parsed.legendIconName, "volume-2");
+  assert.equal(parsed.legendIconFill, false);
+  assert.equal(fallback.legendContentType, "icon");
+  assert.equal(fallback.legendIconName, "circle");
+});
+
+test("対応アイコンセットの塗りつぶし設定は JSON で bool として保持する", () => {
+  const defaults = createDefaultKeycapParams("custom-shell");
+  const material = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      legendContentType: "icon",
+      legendIconSet: "material-symbols",
+      legendIconName: "circle",
+      legendIconFill: true,
+    },
+  });
+  const lucide = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      legendContentType: "icon",
+      legendIconSet: "lucide",
+      legendIconName: "circle",
+      legendIconFill: true,
+    },
+  });
+  const materialWithoutFillVariant = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      legendContentType: "icon",
+      legendIconSet: "material-symbols",
+      legendIconName: "arrow-forward",
+      legendIconFill: true,
+    },
+  });
+  const legacyRemixFillName = parseEditorDataPayload({
+    kind: EDITOR_DATA_KIND,
+    schemaVersion: EDITOR_DATA_SCHEMA_VERSION,
+    params: {
+      ...defaults,
+      legendContentType: "icon",
+      legendIconSet: "remix-icon",
+      legendIconName: "circle-fill",
+    },
+  });
+  const exported = createEditorDataPayload(legacyRemixFillName);
+
+  assert.equal(material.legendIconName, "circle");
+  assert.equal(material.legendIconFill, true);
+  assert.equal(lucide.legendIconFill, false);
+  assert.equal(materialWithoutFillVariant.legendIconName, "arrow-forward");
+  assert.equal(materialWithoutFillVariant.legendIconFill, false);
+  assert.equal(legacyRemixFillName.legendIconName, "circle-line");
+  assert.equal(legacyRemixFillName.legendIconFill, true);
+  assert.equal(exported.params.legendIconName, "circle-line");
+  assert.equal(exported.params.legendIconFill, true);
 });
 
 test("kind なしの疎 JSON も top-level パラメータを bind して不足分を補完する", async () => {

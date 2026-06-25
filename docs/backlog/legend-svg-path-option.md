@@ -37,6 +37,8 @@ bundled OpenSCAD runtime では、`text()` を小さいサイズで使うと曲�
 
 未採用。まずは OpenSCAD 内で完結する改善を優先し、次の条件のいずれかが出たら再検討する。
 
+補足: icon legend では、文字の glyph outline 生成とは別に、配布済み SVG icon data を provider ごとの runtime asset として渡す `import()` 経路を採用済み。ここでの未採用判断は、ユーザー入力文字列を font から path 化して SVG legend にする案を指す。
+
 - `$fn` と内部拡大縮小でも丸みの品質が不足する
 - 複数 legend、icon、side legend で `text()` ベースの限界が顕著になる
 - ブラウザ側での glyph outline 生成を別用途でも使いたくなる

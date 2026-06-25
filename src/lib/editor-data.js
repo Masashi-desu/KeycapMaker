@@ -13,6 +13,18 @@ import {
   isUserKeycapLegendFontKey,
   resolveKeycapLegendFont,
 } from "./keycap-fonts.js";
+import {
+  DEFAULT_LEGEND_ICON_NAME,
+  DEFAULT_LEGEND_ICON_SET,
+  DEFAULT_LEGEND_ICON_FILL,
+  DEFAULT_LEGEND_CONTENT_TYPE,
+  inferLegendIconFillFromName,
+  isLegendIconFillAvailable,
+  resolveLegendContentType,
+  resolveLegendIconFill,
+  resolveLegendIconName,
+  resolveLegendIconSet,
+} from "./keycap-icons.js";
 import { resolveJStemLp01PreviewColor } from "./j-stem-lp01-reference.js";
 
 export const DEFAULT_EXPORT_BASE_NAME = "keycap-preview";
@@ -59,10 +71,14 @@ const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
 const LEGEND_FIELD_SUFFIXES = Object.freeze({
   enabled: "Enabled",
   color: "Color",
+  contentType: "ContentType",
   text: "Text",
   fontKey: "FontKey",
   fontStyleKey: "FontStyleKey",
   underlineEnabled: "UnderlineEnabled",
+  iconSet: "IconSet",
+  iconName: "IconName",
+  iconFill: "IconFill",
   size: "Size",
   outlineDelta: "OutlineDelta",
   height: "Height",
@@ -916,10 +932,21 @@ function resolveTopEdgeHeights(params = {}) {
 }
 
 function syncLegendFontParams(params = {}, prefix = "legend") {
+  const contentTypeKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.contentType);
+  const iconSetKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.iconSet);
+  const iconNameKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.iconName);
   const fontKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.fontKey);
   const fontStyleKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.fontStyleKey);
   const outlineDeltaKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.outlineDelta);
+  const iconFillKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.iconFill);
 
+  params[contentTypeKey] = resolveLegendContentType(params[contentTypeKey] ?? DEFAULT_LEGEND_CONTENT_TYPE);
+  params[iconSetKey] = resolveLegendIconSet(params[iconSetKey] ?? DEFAULT_LEGEND_ICON_SET);
+  const inferredIconFill = inferLegendIconFillFromName(params[iconNameKey], params[iconSetKey]);
+  params[iconNameKey] = resolveLegendIconName(params[iconNameKey] ?? DEFAULT_LEGEND_ICON_NAME, params[iconSetKey]);
+  params[iconFillKey] = isLegendIconFillAvailable(params[iconNameKey], params[iconSetKey])
+    ? (resolveLegendIconFill(params[iconFillKey] ?? DEFAULT_LEGEND_ICON_FILL) || inferredIconFill)
+    : DEFAULT_LEGEND_ICON_FILL;
   params[fontKey] = sanitizeLegendFontKey(params[fontKey]);
   const styleOptions = getLegendFontStyleFieldOptions(params[fontKey]);
   const fallbackStyleKey = styleOptions[0]?.value ?? LEGEND_FONT_STYLE_FALLBACK_KEY;
@@ -1112,6 +1139,32 @@ export function sanitizeEditorParamValue(fieldKey, value, fallback, paramsContex
 
   if (findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.fontKey)) {
     return sanitizeLegendFontKey(value);
+  }
+
+  if (findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.contentType)) {
+    return resolveLegendContentType(value ?? fallback);
+  }
+
+  if (findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.iconSet)) {
+    return resolveLegendIconSet(value ?? fallback);
+  }
+
+  const legendIconNamePrefix = findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.iconName);
+  if (legendIconNamePrefix) {
+    const iconSet = resolveLegendIconSet(paramsContext?.[legendParamKey(legendIconNamePrefix, LEGEND_FIELD_SUFFIXES.iconSet)] ?? DEFAULT_LEGEND_ICON_SET);
+    const iconFillKey = legendParamKey(legendIconNamePrefix, LEGEND_FIELD_SUFFIXES.iconFill);
+    const inferredIconFill = inferLegendIconFillFromName(value ?? fallback, iconSet);
+    if (inferredIconFill && isLegendIconFillAvailable(value ?? fallback, iconSet) && paramsContext) {
+      paramsContext[iconFillKey] = resolveLegendIconFill(paramsContext[iconFillKey] ?? DEFAULT_LEGEND_ICON_FILL) || inferredIconFill;
+    }
+    return resolveLegendIconName(value ?? fallback, iconSet);
+  }
+
+  const legendIconFillPrefix = findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.iconFill);
+  if (legendIconFillPrefix) {
+    const iconSet = resolveLegendIconSet(paramsContext?.[legendParamKey(legendIconFillPrefix, LEGEND_FIELD_SUFFIXES.iconSet)] ?? DEFAULT_LEGEND_ICON_SET);
+    const iconName = paramsContext?.[legendParamKey(legendIconFillPrefix, LEGEND_FIELD_SUFFIXES.iconName)] ?? DEFAULT_LEGEND_ICON_NAME;
+    return isLegendIconFillAvailable(iconName, iconSet) ? resolveLegendIconFill(value ?? fallback) : DEFAULT_LEGEND_ICON_FILL;
   }
 
   const legendFontStylePrefix = findLegendParamPrefix(fieldKey, LEGEND_FIELD_SUFFIXES.fontStyleKey);

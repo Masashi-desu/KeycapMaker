@@ -26,11 +26,14 @@ module sidewall_legend_block(
     underline_width = 0,
     underline_thickness = 0,
     underline_offset_y = 0,
+    content_type = "text",
+    icon_path = "",
     outline_delta = 0,
     text_size = undef,
     quality = "export"
 ) {
-    if (!is_undef(label) && len(label) > 0 && height > 0) {
+    is_icon = content_type == "icon" && len(icon_path) > 0;
+    if ((is_icon || (!is_undef(label) && len(label) > 0)) && height > 0) {
         sidewall_legend_transform(origin, axis_x, axis_y, axis_z)
             legend_block(
                 label = label,
@@ -45,6 +48,8 @@ module sidewall_legend_block(
                 underline_width = underline_width,
                 underline_thickness = underline_thickness,
                 underline_offset_y = underline_offset_y,
+                content_type = content_type,
+                icon_path = icon_path,
                 outline_delta = outline_delta,
                 text_size = text_size,
                 quality = quality

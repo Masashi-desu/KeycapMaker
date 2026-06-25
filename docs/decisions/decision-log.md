@@ -2,6 +2,24 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-06-23 - icon legend は Lucide SVG runtime asset として扱う
+
+- 結論:
+  legend は `text` と `icon` の content type を持つ。まず Lucide に対応し、UI では文字と独立したアイコンセット・アイコン名を選択する。SCAD bridge は選択した Lucide SVG を `/icons/lucide/*.svg` の runtime asset として渡し、SCAD 側で `import()` した 2D 形状を legend volume として押し出す。既存 JSON に icon 用フィールドがない場合は `text` として読み込み、文字印字の互換性を維持する
+- 理由:
+  font と icon は選択対象もライセンスも形状生成経路も異なるため、font 選択に混ぜず content type で分ける方が拡張しやすい。Lucide はアイコン名検索とSVGデータ取得がしやすく、静的配信のブラウザ内OpenSCAD runtimeへasset注入する既存経路にも合うため
+- 関連:
+  [../architecture/scad-and-export.md](../architecture/scad-and-export.md)
+
+## 2026-06-24 - icon legend provider を複数セット対応へ拡張
+
+- 結論:
+  `src/lib/keycap-icons.js` に icon provider registry を置き、UI と SCAD bridge は `legendIconSet` / `legendIconName` から共通 API で icon metadata、検索、SVG runtime asset を取得する。追加 provider は Material Symbols、Font Awesome Free Solid、Remix Icon。runtime asset path は `/icons/{set}/{name}.svg` とする
+- 理由:
+  アイコンセットごとにデータ形式、viewBox、ライセンス表記が異なるため、UI や SCAD bridge へ個別分岐を増やすより provider に閉じ込める方が拡張とライセンス表示を保ちやすい。既存 JSON は default `lucide` / `circle` を維持するため互換性を壊さない
+- 関連:
+  [../architecture/scad-and-export.md](../architecture/scad-and-export.md)
+
 ## 2026-06-16 - ユーザー追加 font はブラウザ内のマイフォントとして扱う
 
 - 結論:

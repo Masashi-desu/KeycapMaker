@@ -534,6 +534,22 @@ const ja = Object.freeze({
       hint: "複数文字をそのまま入力できます",
       placeholder: "A / Shift / あ",
     },
+    legendContentType: {
+      label: "印字の内容",
+      hint: "文字を入れるか、アイコンを入れるかを選びます",
+    },
+    legendIconSet: {
+      label: "アイコンセット",
+      hint: "印字に使うアイコンセットを選びます",
+    },
+    legendIconName: {
+      label: "アイコン",
+      hint: "{set} の {count} 件から検索できます",
+    },
+    legendIconFill: {
+      label: "アイコンを塗りつぶす",
+      hint: "対応するアイコンではアウトラインと塗りつぶしを切り替えます",
+    },
     legendFontKey: {
       label: "書体",
       staticHint: "虫眼鏡から検索できます",
@@ -551,8 +567,8 @@ const ja = Object.freeze({
       hint: "下線位置と太さは font ファイルの情報を使います。任意の見た目へ置き換えません",
     },
     legendSize: {
-      label: "文字の大きさ",
-      hint: "印字する文字の大きさを変更します。",
+      label: "印字の大きさ",
+      hint: "印字する文字またはアイコンの大きさを変更します。",
     },
     legendOutlineDelta: {
       label: "太さ補正",
@@ -591,6 +607,21 @@ const ja = Object.freeze({
         label: "{side}に入れる文字",
         hint: "複数文字をそのまま入力できます",
       },
+      contentType: {
+        label: "{side}の印字内容",
+        hint: "文字を入れるか、アイコンを入れるかを選びます",
+      },
+      iconSet: {
+        label: "{side}のアイコンセット",
+        hint: "印字に使うアイコンセットを選びます",
+      },
+      iconName: {
+        label: "{side}のアイコン",
+      },
+      iconFill: {
+        label: "{side}のアイコンを塗りつぶす",
+        hint: "対応するアイコンではアウトラインと塗りつぶしを切り替えます",
+      },
       fontKey: {
         label: "{side}の書体",
       },
@@ -602,8 +633,8 @@ const ja = Object.freeze({
         hint: "下線位置と太さは font ファイルの情報を使います。任意の見た目へ置き換えません",
       },
       size: {
-        label: "{side}の文字の大きさ",
-        hint: "サイドウォールに印字する文字の大きさを変更します",
+        label: "{side}の印字の大きさ",
+        hint: "サイドウォールに印字する文字またはアイコンの大きさを変更します",
       },
       outlineDelta: {
         label: "{side}の太さ補正",
@@ -704,6 +735,16 @@ const ja = Object.freeze({
       angle: "角度で調整",
       "edge-height": "端の高さで調整",
     },
+    legendContentType: {
+      text: "文字",
+      icon: "アイコン",
+    },
+    legendIconSet: {
+      lucide: "Lucide",
+      "material-symbols": "Material Symbols",
+      "font-awesome": "Font Awesome Free Solid",
+      "remix-icon": "Remix Icon",
+    },
   },
   stemDescriptions: {
     none: "取り付け部分を作りません。外形や印字だけを確認したいとき向けです。",
@@ -792,6 +833,38 @@ const ja = Object.freeze({
         "ライセンス表記: This font is free software. Unlimited permission is granted to use, copy, and distribute it, with or without modification, either commercially or noncommercially. THIS FONT IS PROVIDED \"AS IS\" WITHOUT WARRANTY.",
         "派生元ライセンス: SIL Open Font License, Version 1.1",
         "配布ページ: https://modi.jpn.org/font_kurobara-cinderella.php"
+      ],
+    },
+  },
+  icons: {
+    searchAriaLabel: "アイコンを検索",
+    searchDialogLabel: "アイコン検索",
+    searchPlaceholder: "アイコン名で検索",
+    noResults: "一致するアイコンがありません",
+    recommendedLabel: "キーキャップ向け候補",
+    searchResultsLabel: "検索結果",
+    attributionTitle: "アイコンの著作権・ライセンス表記",
+    openCatalog: "{set}で探す",
+    attributions: {
+      lucide: [
+        "Lucide Icons: ISC License",
+        "Source: https://lucide.dev/"
+      ],
+      "material-symbols": [
+        "Material Symbols by Google: Apache License 2.0",
+        "Source: https://fonts.google.com/icons",
+        "Icon data package: @iconify-json/material-symbols"
+      ],
+      "font-awesome": [
+        "Font Awesome Free Solid Icons: CC BY 4.0",
+        "Code package: MIT License",
+        "Source: https://fontawesome.com/",
+        "Downloaded Font Awesome Free files include attribution comments; do not remove upstream notices from redistributed files."
+      ],
+      "remix-icon": [
+        "Remix Icon: Remix Icon License v1.0",
+        "Source: https://remixicon.com/",
+        "Permitted for functional or decorative use in larger works; do not sell as a standalone icon pack or use icons as logos/trademarks."
       ],
     },
   },

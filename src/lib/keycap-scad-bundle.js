@@ -29,6 +29,27 @@ import {
   resolveKeycapLegendFont,
   USER_KEYCAP_LEGEND_FONT_KEY_PREFIX,
 } from "./keycap-fonts.js";
+import {
+  DEFAULT_LEGEND_CONTENT_TYPE,
+  DEFAULT_LEGEND_ICON_FILL,
+  DEFAULT_LEGEND_ICON_NAME,
+  DEFAULT_LEGEND_ICON_SET,
+  LEGEND_CONTENT_TYPE_ICON,
+  buildLegendIconSvg,
+  buildLucideIconSvg,
+  getLegendIconSetMeta,
+  getLegendIconRuntimePath,
+  isLegendIconFillAvailable,
+  isLegendIconFillSupported,
+  listAvailableLegendIcons,
+  listLegendIconSets,
+  resolveLegendIconFill,
+  resolveLegendContentType,
+  resolveLegendIcon,
+  resolveLegendIconName,
+  resolveLegendIconSet,
+  searchLegendIcons,
+} from "./keycap-icons.js";
 
 export const KEYCAP_ENTRY_PATH = "/scad/base/keycap.scad";
 export const KEYCAP_JOB_PATH = "/scad/base/keycap-job.scad";
@@ -41,6 +62,19 @@ export {
   registerUserKeycapLegendFont,
   removeUserKeycapLegendFont,
   resolveKeycapLegendFont,
+  buildLegendIconSvg,
+  buildLucideIconSvg,
+  getLegendIconSetMeta,
+  isLegendIconFillAvailable,
+  isLegendIconFillSupported,
+  listAvailableLegendIcons,
+  listLegendIconSets,
+  searchLegendIcons,
+  resolveLegendContentType,
+  resolveLegendIconFill,
+  resolveLegendIcon,
+  resolveLegendIconName,
+  resolveLegendIconSet,
   USER_KEYCAP_LEGEND_FONT_KEY_PREFIX,
 };
 const LEGEND_MIN_PLAN_WIDTH_RATIO = 1.8;
@@ -51,10 +85,14 @@ const LEGEND_OVERFLOW_GUARD_DEPTH_RATIO = 3.0;
 const LEGEND_TEXT_MEASURE_SCALE = 100;
 const LEGEND_FIELD_SUFFIXES = Object.freeze({
   enabled: "Enabled",
+  contentType: "ContentType",
   text: "Text",
   fontKey: "FontKey",
   fontStyleKey: "FontStyleKey",
   underlineEnabled: "UnderlineEnabled",
+  iconSet: "IconSet",
+  iconName: "IconName",
+  iconFill: "IconFill",
   size: "Size",
   outlineDelta: "OutlineDelta",
   height: "Height",
@@ -873,6 +911,16 @@ function resolveLegendPlanSize({ size, outlineDelta, textBounds, underlineGeomet
   };
 }
 
+function resolveLegendIconPlanSize({ size, outlineDelta, minimumWidth = 0, minimumDepth = 0 }) {
+  const padding = resolveLegendPlanPadding(size, outlineDelta);
+  const iconExtent = Math.max(size + padding * 2, 0);
+
+  return {
+    width: Math.max(positiveTextMetric(minimumWidth), iconExtent),
+    depth: Math.max(positiveTextMetric(minimumDepth), iconExtent),
+  };
+}
+
 async function resolveLegendBridgeDefinitions({
   params,
   paramPrefix,
@@ -882,54 +930,79 @@ async function resolveLegendBridgeDefinitions({
   includeEmbed = true,
 }) {
   const enabledKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.enabled);
+  const contentTypeKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.contentType);
   const textKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.text);
   const fontKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey);
   const fontStyleKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.fontStyleKey);
   const underlineEnabledKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.underlineEnabled);
+  const iconSetKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.iconSet);
+  const iconNameKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.iconName);
+  const iconFillKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.iconFill);
   const sizeKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.size);
   const outlineDeltaKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.outlineDelta);
   const heightKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.height);
   const embedKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.embed);
   const offsetXKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.offsetX);
   const offsetYKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.offsetY);
-  const selectedFont = resolveKeycapLegendFont(params[fontKey]);
-  const selectedFontStyle = resolveKeycapLegendFontStyle(selectedFont, params[fontStyleKey]);
+  const contentType = resolveLegendContentType(params[contentTypeKey] ?? DEFAULT_LEGEND_CONTENT_TYPE);
+  const isIconLegend = contentType === LEGEND_CONTENT_TYPE_ICON;
+  const iconSet = resolveLegendIconSet(params[iconSetKey] ?? DEFAULT_LEGEND_ICON_SET);
+  const iconName = resolveLegendIconName(params[iconNameKey] ?? DEFAULT_LEGEND_ICON_NAME, iconSet);
+  const iconFill = isLegendIconFillAvailable(iconName, iconSet)
+    && resolveLegendIconFill(params[iconFillKey] ?? DEFAULT_LEGEND_ICON_FILL);
   const legendSize = clampLegendSize(params[sizeKey]);
   const resolvedTextSize = legendTextSize(legendSize);
   const label = params[textKey] ?? "";
-  const outlineDelta = params[outlineDeltaKey] ?? 0;
-  const textBounds = await measureLegendTextBounds({
-    label,
-    size: resolvedTextSize,
-    selectedFont,
-    selectedFontStyle,
-  });
-  const underlineGeometry = await resolveLegendUnderlineGeometry({
-    enabled: params[underlineEnabledKey],
-    label,
-    size: resolvedTextSize,
-    selectedFont,
-    selectedFontStyle,
-  });
-  const overflowGuard = resolveLegendOverflowGuardSize({
-    label,
-    size: resolvedTextSize,
-    outlineDelta,
-    underlineGeometry,
-  });
-  const planSize = resolveLegendPlanSize({
-    size: resolvedTextSize,
-    outlineDelta,
-    textBounds,
-    underlineGeometry,
-    minimumWidth: Math.max(positiveTextMetric(minimumWidth), overflowGuard.width),
-    minimumDepth: Math.max(positiveTextMetric(minimumDepth), overflowGuard.depth),
-  });
+  const outlineDelta = isIconLegend ? 0 : (params[outlineDeltaKey] ?? 0);
+  const selectedFont = isIconLegend ? null : resolveKeycapLegendFont(params[fontKey]);
+  const selectedFontStyle = isIconLegend ? null : resolveKeycapLegendFontStyle(selectedFont, params[fontStyleKey]);
+  const textBounds = isIconLegend
+    ? { width: resolvedTextSize, depth: resolvedTextSize }
+    : await measureLegendTextBounds({
+      label,
+      size: resolvedTextSize,
+      selectedFont,
+      selectedFontStyle,
+    });
+  const underlineGeometry = isIconLegend
+    ? { enabled: false, span: 0, thickness: 0, centerOffset: 0 }
+    : await resolveLegendUnderlineGeometry({
+      enabled: params[underlineEnabledKey],
+      label,
+      size: resolvedTextSize,
+      selectedFont,
+      selectedFontStyle,
+    });
+  const planSize = isIconLegend
+    ? resolveLegendIconPlanSize({
+      size: resolvedTextSize,
+      outlineDelta,
+      minimumWidth,
+      minimumDepth,
+    })
+    : (() => {
+      const overflowGuard = resolveLegendOverflowGuardSize({
+        label,
+        size: resolvedTextSize,
+        outlineDelta,
+        underlineGeometry,
+      });
+      return resolveLegendPlanSize({
+        size: resolvedTextSize,
+        outlineDelta,
+        textBounds,
+        underlineGeometry,
+        minimumWidth: Math.max(positiveTextMetric(minimumWidth), overflowGuard.width),
+        minimumDepth: Math.max(positiveTextMetric(minimumDepth), overflowGuard.depth),
+      });
+    })();
 
   return {
     [`user_${userPrefix}_enabled`]: Boolean(params[enabledKey]),
+    [`user_${userPrefix}_content_type`]: contentType,
     [`user_${userPrefix}_text`]: label,
-    [`user_${userPrefix}_font_name`]: selectedFontStyle?.fontQuery ?? selectedFont.fontQuery ?? selectedFont.fontName,
+    [`user_${userPrefix}_font_name`]: selectedFontStyle?.fontQuery ?? selectedFont?.fontQuery ?? selectedFont?.fontName ?? "",
+    [`user_${userPrefix}_icon_path`]: getLegendIconRuntimePath(iconName, iconSet, { filled: iconFill }),
     [`user_${userPrefix}_underline_enabled`]: underlineGeometry.enabled,
     [`user_${userPrefix}_underline_width`]: underlineGeometry.span,
     [`user_${userPrefix}_underline_thickness`]: underlineGeometry.thickness,
@@ -1143,14 +1216,81 @@ async function getRuntimeAssetsForFont(fontKey) {
 
 function getLegendFontKeys(params = {}) {
   return [
-    ...TOP_LEGEND_CONFIGS.map((config) => params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey)]),
-    ...SIDE_LEGEND_CONFIGS.map((config) => params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey)]),
-  ].filter(Boolean);
+    ...TOP_LEGEND_CONFIGS,
+    ...SIDE_LEGEND_CONFIGS,
+  ]
+    .filter((config) => resolveLegendContentType(
+      params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.contentType)] ?? DEFAULT_LEGEND_CONTENT_TYPE,
+    ) !== LEGEND_CONTENT_TYPE_ICON)
+    .map((config) => params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey)])
+    .filter(Boolean);
+}
+
+function getLegendIconDescriptors(params = {}) {
+  return [
+    ...TOP_LEGEND_CONFIGS,
+    ...SIDE_LEGEND_CONFIGS,
+  ]
+    .filter((config) => Boolean(params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled)]))
+    .map((config) => {
+      const contentType = resolveLegendContentType(
+        params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.contentType)] ?? DEFAULT_LEGEND_CONTENT_TYPE,
+      );
+      if (contentType !== LEGEND_CONTENT_TYPE_ICON) {
+        return null;
+      }
+
+      const iconSet = resolveLegendIconSet(
+        params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.iconSet)] ?? DEFAULT_LEGEND_ICON_SET,
+      );
+      const iconName = resolveLegendIconName(
+        params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.iconName)] ?? DEFAULT_LEGEND_ICON_NAME,
+        iconSet,
+      );
+      const iconFill = isLegendIconFillAvailable(iconName, iconSet)
+        && resolveLegendIconFill(
+          params[legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.iconFill)] ?? DEFAULT_LEGEND_ICON_FILL,
+        );
+
+      return { iconSet, iconName, iconFill };
+    })
+    .filter(Boolean);
+}
+
+function getRuntimeAssetsForIcon(iconDescriptor) {
+  const iconSet = resolveLegendIconSet(iconDescriptor?.iconSet);
+  const iconName = resolveLegendIconName(iconDescriptor?.iconName, iconSet);
+  const iconFill = isLegendIconFillAvailable(iconName, iconSet)
+    && resolveLegendIconFill(iconDescriptor?.iconFill ?? DEFAULT_LEGEND_ICON_FILL);
+  const cacheKey = `icon:${iconSet}:${iconName}:${iconFill ? "filled" : "outlined"}`;
+  const cachedPromise = runtimeAssetPromises.get(cacheKey);
+  if (cachedPromise) {
+    return cachedPromise;
+  }
+
+  const assetPromise = Promise.resolve([
+    {
+      path: getLegendIconRuntimePath(iconName, iconSet, { filled: iconFill }),
+      content: buildLegendIconSvg(resolveLegendIcon(iconName, iconSet), { filled: iconFill }),
+    },
+  ].filter(Boolean));
+
+  runtimeAssetPromises.set(cacheKey, assetPromise);
+  return assetPromise;
 }
 
 async function getRuntimeAssets(params = {}) {
   const fontKeys = Array.from(new Set(getLegendFontKeys(params)));
-  const assetLists = await Promise.all(fontKeys.map((fontKey) => getRuntimeAssetsForFont(fontKey)));
+  const iconDescriptors = Array.from(
+    new Map(getLegendIconDescriptors(params).map((descriptor) => [
+      `${descriptor.iconSet}:${descriptor.iconName}:${descriptor.iconFill ? "filled" : "outlined"}`,
+      descriptor,
+    ])).values(),
+  );
+  const assetLists = await Promise.all([
+    ...fontKeys.map((fontKey) => getRuntimeAssetsForFont(fontKey)),
+    ...iconDescriptors.map((descriptor) => getRuntimeAssetsForIcon(descriptor)),
+  ]);
   return assetLists.flat();
 }
 

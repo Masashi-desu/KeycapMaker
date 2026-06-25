@@ -534,6 +534,22 @@ const zh = Object.freeze({
       hint: "可以直接输入多个字符",
       placeholder: "A / Shift / あ",
     },
+    legendContentType: {
+      label: "字符内容",
+      hint: "选择使用文字还是图标。",
+    },
+    legendIconSet: {
+      label: "图标集",
+      hint: "选择用于字符的图标集。",
+    },
+    legendIconName: {
+      label: "图标",
+      hint: "可搜索 {count} 个 {set} 图标。",
+    },
+    legendIconFill: {
+      label: "填充图标",
+      hint: "所选图标支持时，可切换轮廓和填充样式。",
+    },
     legendFontKey: {
       label: "字体",
       staticHint: "可通过放大镜搜索",
@@ -551,8 +567,8 @@ const zh = Object.freeze({
       hint: "下划线位置和粗细使用 font 文件中的信息，不会替换为任意外观。",
     },
     legendSize: {
-      label: "文字大小",
-      hint: "更改字符的大小。",
+      label: "字符/图标大小",
+      hint: "更改字符或图标的大小。",
     },
     legendOutlineDelta: {
       label: "粗细补正",
@@ -591,6 +607,21 @@ const zh = Object.freeze({
         label: "{side}输入字符",
         hint: "可以直接输入多个字符",
       },
+      contentType: {
+        label: "{side}字符内容",
+        hint: "选择使用文字还是图标。",
+      },
+      iconSet: {
+        label: "{side}图标集",
+        hint: "选择用于字符的图标集。",
+      },
+      iconName: {
+        label: "{side}图标",
+      },
+      iconFill: {
+        label: "填充{side}图标",
+        hint: "所选图标支持时，可切换轮廓和填充样式。",
+      },
       fontKey: {
         label: "{side}字体",
       },
@@ -602,8 +633,8 @@ const zh = Object.freeze({
         hint: "下划线位置和粗细使用 font 文件中的信息，不会替换为任意外观。",
       },
       size: {
-        label: "{side}文字大小",
-        hint: "更改侧壁字符的大小。",
+        label: "{side}字符/图标大小",
+        hint: "更改侧壁字符或图标的大小。",
       },
       outlineDelta: {
         label: "{side}粗细补正",
@@ -704,6 +735,16 @@ const zh = Object.freeze({
       angle: "按角度调整",
       "edge-height": "按边缘高度调整",
     },
+    legendContentType: {
+      text: "文字",
+      icon: "图标",
+    },
+    legendIconSet: {
+      lucide: "Lucide",
+      "material-symbols": "Material Symbols",
+      "font-awesome": "Font Awesome Free Solid",
+      "remix-icon": "Remix Icon",
+    },
   },
   stemDescriptions: {
     none: "不生成安装部。适合只检查外形或字符时使用。",
@@ -792,6 +833,38 @@ const zh = Object.freeze({
         "许可标注: This font is free software. Unlimited permission is granted to use, copy, and distribute it, with or without modification, either commercially or noncommercially. THIS FONT IS PROVIDED \"AS IS\" WITHOUT WARRANTY.",
         "派生源许可: SIL Open Font License, Version 1.1",
         "发布页面: https://modi.jpn.org/font_kurobara-cinderella.php"
+      ],
+    },
+  },
+  icons: {
+    searchAriaLabel: "搜索图标",
+    searchDialogLabel: "图标搜索",
+    searchPlaceholder: "按图标名称搜索",
+    noResults: "没有匹配的图标",
+    recommendedLabel: "键帽常用候选",
+    searchResultsLabel: "搜索结果",
+    attributionTitle: "图标版权与许可标注",
+    openCatalog: "浏览 {set}",
+    attributions: {
+      lucide: [
+        "Lucide Icons: ISC License",
+        "Source: https://lucide.dev/"
+      ],
+      "material-symbols": [
+        "Material Symbols by Google: Apache License 2.0",
+        "Source: https://fonts.google.com/icons",
+        "Icon data package: @iconify-json/material-symbols"
+      ],
+      "font-awesome": [
+        "Font Awesome Free Solid Icons: CC BY 4.0",
+        "Code package: MIT License",
+        "Source: https://fontawesome.com/",
+        "Downloaded Font Awesome Free files include attribution comments; do not remove upstream notices from redistributed files."
+      ],
+      "remix-icon": [
+        "Remix Icon: Remix Icon License v1.0",
+        "Source: https://remixicon.com/",
+        "Permitted for functional or decorative use in larger works; do not sell as a standalone icon pack or use icons as logos/trademarks."
       ],
     },
   },

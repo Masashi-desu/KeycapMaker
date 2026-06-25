@@ -69,14 +69,24 @@ import {
 } from "./lib/preview-thumbnail.js";
 import {
   DEFAULT_KEYCAP_LEGEND_FONT_KEY,
+  buildLegendIconSvg,
   buildKeycapArgs,
   createKeycapFiles,
+  getLegendIconSetMeta,
+  isLegendIconFillAvailable,
   getKeycapLegendFontStyleOptions,
   listAvailableKeycapLegendFonts,
+  listAvailableLegendIcons,
+  listLegendIconSets,
   parseKeycapLegendFontNameMetadata,
   registerUserKeycapLegendFont,
   removeUserKeycapLegendFont,
+  resolveLegendContentType,
+  resolveLegendIcon,
+  resolveLegendIconName,
+  resolveLegendIconSet,
   resolveKeycapLegendFont,
+  searchLegendIcons,
   USER_KEYCAP_LEGEND_FONT_KEY_PREFIX,
 } from "./lib/keycap-scad-bundle.js";
 
@@ -360,6 +370,7 @@ let projectKeycapDragPlacement = "before";
 let projectKeycapDragDidMove = false;
 let projectKeycapDragOrderLabels = new Map();
 let fontAttributionCopyResetTimer = 0;
+let iconAttributionCopyResetTimer = 0;
 const legendFontPreviewPromises = new Map();
 const pendingCheckboxFieldChanges = new Map();
 const pendingFieldHintSyncs = new Map();
@@ -367,6 +378,7 @@ const pendingFieldInputSyncs = new Map();
 const pendingLinkedSizeInputSyncs = new Set();
 let pendingLegendFontPickerFocus = false;
 let pendingLegendFontSourceInputFocus = false;
+let pendingLegendIconPickerFocus = false;
 let pendingActiveProjectSyncTimer = 0;
 let pendingFieldUiSyncTimer = 0;
 let legendFontSourceEditorTransitionToken = 0;
@@ -406,15 +418,22 @@ const LEGEND_MIN_SIZE = 0.5;
 const LEGEND_OUTLINE_MIN = -1.2;
 const LEGEND_OUTLINE_MAX = 1.2;
 const LEGEND_FONT_STYLE_FALLBACK_KEY = "font-default";
+const LEGEND_CONTENT_TYPE_TEXT = "text";
+const LEGEND_CONTENT_TYPE_ICON = "icon";
+const LEGEND_ICON_PICKER_RESULT_LIMIT = 96;
 const USER_LEGEND_FONT_FILE_ACCEPT = ".ttf,.otf,font/ttf,font/otf,application/font-sfnt,application/x-font-ttf,application/x-font-otf,application/vnd.ms-opentype";
 const USER_LEGEND_FONT_FILE_EXTENSIONS = new Set([".ttf", ".otf"]);
 const LEGEND_FIELD_SUFFIXES = Object.freeze({
   enabled: "Enabled",
   color: "Color",
+  contentType: "ContentType",
   text: "Text",
   fontKey: "FontKey",
   fontStyleKey: "FontStyleKey",
   underlineEnabled: "UnderlineEnabled",
+  iconSet: "IconSet",
+  iconName: "IconName",
+  iconFill: "IconFill",
   size: "Size",
   outlineDelta: "OutlineDelta",
   height: "Height",
@@ -427,6 +446,10 @@ function createLegendFieldKeys(paramPrefix, { side = null } = {}) {
   const keys = [
     LEGEND_FIELD_SUFFIXES.enabled,
     LEGEND_FIELD_SUFFIXES.color,
+    LEGEND_FIELD_SUFFIXES.contentType,
+    LEGEND_FIELD_SUFFIXES.iconSet,
+    LEGEND_FIELD_SUFFIXES.iconName,
+    LEGEND_FIELD_SUFFIXES.iconFill,
     LEGEND_FIELD_SUFFIXES.text,
     LEGEND_FIELD_SUFFIXES.fontKey,
     LEGEND_FIELD_SUFFIXES.fontStyleKey,
@@ -997,6 +1020,38 @@ function getLegendFontStyleHint(params, fontFieldKey = "legendFontKey") {
   return isLegendFontStyleSelectable(params, fontFieldKey)
     ? t("fields.legendFontStyleKey.selectableHint")
     : t("fields.legendFontStyleKey.defaultHint");
+}
+
+function getLegendContentTypeOptions() {
+  return [
+    { value: LEGEND_CONTENT_TYPE_TEXT, label: t("options.legendContentType.text") },
+    { value: LEGEND_CONTENT_TYPE_ICON, label: t("options.legendContentType.icon") },
+  ];
+}
+
+function getLegendIconSetOptions() {
+  return listLegendIconSets().map((iconSet) => ({
+    value: iconSet.key,
+    label: t(`options.legendIconSet.${iconSet.key}`, {}, iconSet.label),
+  }));
+}
+
+function isLegendIconContent(params, contentTypeKey) {
+  return resolveLegendContentType(params[contentTypeKey]) === LEGEND_CONTENT_TYPE_ICON;
+}
+
+function isLegendTextContent(params, contentTypeKey) {
+  return !isLegendIconContent(params, contentTypeKey);
+}
+
+function getLegendIconFieldHint(params, iconSetFieldKey) {
+  const iconSet = resolveLegendIconSet(params[iconSetFieldKey]);
+  const iconSetMeta = getLegendIconSetMeta(iconSet);
+  const iconCount = listAvailableLegendIcons(iconSet).length;
+  return t("fields.legendIconName.hint", {
+    count: iconCount,
+    set: t(`options.legendIconSet.${iconSet}`, {}, iconSetMeta.label),
+  });
 }
 
 function clampTypewriterCornerRadius(value, fallback = 0) {
@@ -1831,10 +1886,14 @@ function createLegendControlFields({ paramPrefix, side = null, collapseControlle
   const sideLabel = () => getSideLegendLabel(side);
   const enabledKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.enabled);
   const colorKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.color);
+  const contentTypeKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.contentType);
   const textKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.text);
   const fontKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.fontKey);
   const fontStyleKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.fontStyleKey);
   const underlineEnabledKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.underlineEnabled);
+  const iconSetKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.iconSet);
+  const iconNameKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.iconName);
+  const iconFillKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.iconFill);
   const sizeKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.size);
   const outlineDeltaKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.outlineDelta);
   const heightKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.height);
@@ -1844,8 +1903,23 @@ function createLegendControlFields({ paramPrefix, side = null, collapseControlle
   const visibilityConfig = { visibleWhen: (params) => params[enabledKey] };
   const sideValues = () => ({ side: sideLabel() });
   const fieldKey = (genericKey, topKey) => (isSideLegend ? `fields.sideLegend.${genericKey}` : `fields.${topKey}`);
+  const textVisibilityConfig = {
+    visibleWhen: (params) => params[enabledKey] && isLegendTextContent(params, contentTypeKey),
+  };
+  const iconVisibilityConfig = {
+    visibleWhen: (params) => params[enabledKey] && isLegendIconContent(params, contentTypeKey),
+  };
+  const iconFillVisibilityConfig = {
+    visibleWhen: (params) => params[enabledKey]
+      && isLegendIconContent(params, contentTypeKey)
+      && isLegendIconFillAvailable(params[iconNameKey], resolveLegendIconSet(params[iconSetKey])),
+  };
   const enabledDependentFieldKeys = collapseControlled ? [] : [
     colorKey,
+    contentTypeKey,
+    iconSetKey,
+    iconNameKey,
+    iconFillKey,
     textKey,
     fontKey,
     sizeKey,
@@ -1874,13 +1948,45 @@ function createLegendControlFields({ paramPrefix, side = null, collapseControlle
       ...visibilityConfig,
     },
     {
+      key: contentTypeKey,
+      label: () => t(fieldKey("contentType.label", "legendContentType.label"), sideValues()),
+      hint: () => t(fieldKey("contentType.hint", "legendContentType.hint"), sideValues()),
+      type: "select",
+      options: () => getLegendContentTypeOptions(),
+      dependentFieldKeys: [iconSetKey, iconNameKey, iconFillKey, textKey, fontKey],
+      ...visibilityConfig,
+    },
+    {
+      key: iconSetKey,
+      label: () => t(fieldKey("iconSet.label", "legendIconSet.label"), sideValues()),
+      hint: () => t(fieldKey("iconSet.hint", "legendIconSet.hint"), sideValues()),
+      type: "select",
+      options: () => getLegendIconSetOptions(),
+      dependentFieldKeys: [iconNameKey, iconFillKey],
+      ...iconVisibilityConfig,
+    },
+    {
+      key: iconNameKey,
+      label: () => t(fieldKey("iconName.label", "legendIconName.label"), sideValues()),
+      hint: (params) => getLegendIconFieldHint(params, iconSetKey),
+      type: "icon-search",
+      ...iconVisibilityConfig,
+    },
+    {
+      key: iconFillKey,
+      label: () => t(fieldKey("iconFill.label", "legendIconFill.label"), sideValues()),
+      hint: () => t(fieldKey("iconFill.hint", "legendIconFill.hint"), sideValues()),
+      type: "checkbox",
+      ...iconFillVisibilityConfig,
+    },
+    {
       key: textKey,
       label: () => t(fieldKey("text.label", "legendText.label"), sideValues()),
       hint: () => t(fieldKey("text.hint", "legendText.hint"), sideValues()),
       type: "text",
       maxLength: 24,
       placeholder: () => t("fields.legendText.placeholder"),
-      ...visibilityConfig,
+      ...textVisibilityConfig,
     },
     {
       key: fontKey,
@@ -1888,7 +1994,7 @@ function createLegendControlFields({ paramPrefix, side = null, collapseControlle
       hint: (params) => getLegendFontFieldHint(params, fontKey),
       type: "font-search",
       dependentFieldKeys: [fontStyleKey, underlineEnabledKey],
-      ...visibilityConfig,
+      ...textVisibilityConfig,
     },
     {
       key: fontStyleKey,
@@ -1897,14 +2003,14 @@ function createLegendControlFields({ paramPrefix, side = null, collapseControlle
       type: "select",
       options: (params) => getLegendFontStyleFieldOptions(params, fontKey),
       disabledWhen: (params) => !isLegendFontStyleSelectable(params, fontKey),
-      ...visibilityConfig,
+      ...textVisibilityConfig,
     },
     {
       key: underlineEnabledKey,
       label: () => t(fieldKey("underlineEnabled.label", "legendUnderlineEnabled.label"), sideValues()),
       hint: () => t(fieldKey("underlineEnabled.hint", "legendUnderlineEnabled.hint"), sideValues()),
       type: "checkbox",
-      ...visibilityConfig,
+      ...textVisibilityConfig,
     },
     {
       key: sizeKey,
@@ -1924,7 +2030,7 @@ function createLegendControlFields({ paramPrefix, side = null, collapseControlle
       step: 0.02,
       min: LEGEND_OUTLINE_MIN,
       max: LEGEND_OUTLINE_MAX,
-      ...visibilityConfig,
+      ...textVisibilityConfig,
     },
     {
       key: heightKey,
@@ -2852,7 +2958,10 @@ const state = {
   legendFontPickerSegment: LEGEND_FONT_PICKER_SEGMENT_BUILTIN,
   legendFontSourceEditorFieldKey: "",
   legendFontSourceInputMode: LEGEND_FONT_SOURCE_MODE_GOOGLE,
+  legendIconPickerFieldKey: "",
+  legendIconPickerQuery: "",
   copiedFontAttributionKey: "",
+  copiedIconAttributionKey: "",
   collapsedFieldGroups: createFieldGroupCollapseState(),
   keyUnitMm: readKeyUnitMmPreference(),
   keycapParams: createInitialKeycapParams(),
@@ -3545,6 +3654,7 @@ function render(options = {}) {
     syncLegendFontSourceModeControl();
     focusLegendFontPickerQuery();
     focusLegendFontSourceInput();
+    focusLegendIconPickerQuery();
   };
 
   if (animateInspector && isUiMotionEnabled()) {
@@ -3591,6 +3701,23 @@ function focusLegendFontSourceInput() {
   pendingLegendFontSourceInputFocus = false;
   const input = app.querySelector("[data-user-font-source-input]");
   if (!(input instanceof HTMLInputElement) && !(input instanceof HTMLTextAreaElement)) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    input.focus();
+    input.select();
+  });
+}
+
+function focusLegendIconPickerQuery() {
+  if (!pendingLegendIconPickerFocus) {
+    return;
+  }
+
+  pendingLegendIconPickerFocus = false;
+  const input = app.querySelector("[data-icon-picker-query]");
+  if (!(input instanceof HTMLInputElement)) {
     return;
   }
 
@@ -5070,6 +5197,42 @@ function renderLegendFontAttributionCard(font) {
   `;
 }
 
+function getLegendIconAttributionText(iconSet) {
+  const iconSetMeta = getLegendIconSetMeta(iconSet);
+  const localizedLines = t(`icons.attributions.${iconSetMeta.key}`, {}, null);
+  if (Array.isArray(localizedLines)) {
+    return localizedLines.join("\n");
+  }
+
+  const lines = Array.isArray(iconSetMeta.attributionLines) ? iconSetMeta.attributionLines : [];
+  return lines.join("\n");
+}
+
+function renderLegendIconAttributionCard(iconSet) {
+  const iconSetMeta = getLegendIconSetMeta(iconSet);
+  const attributionText = getLegendIconAttributionText(iconSetMeta.key);
+  if (!attributionText) {
+    return "";
+  }
+
+  const isCopied = state.copiedIconAttributionKey === iconSetMeta.key;
+  return `
+    <span class="note-card font-attribution-card icon-attribution-card">
+      <span class="font-attribution-card__header">
+        <strong>${t("icons.attributionTitle")}</strong>
+        <button
+          class="font-attribution-card__copy"
+          type="button"
+          data-copy-icon-attribution="${escapeHtml(iconSetMeta.key)}"
+        >
+          ${isCopied ? t("actions.copied") : t("actions.copy")}
+        </button>
+      </span>
+      <pre class="font-attribution-card__body">${escapeHtml(attributionText)}</pre>
+    </span>
+  `;
+}
+
 function getLegendFontLandingPageName(font) {
   const explicitName = String(font?.landingPageName ?? "").trim();
   if (explicitName) {
@@ -5359,6 +5522,82 @@ function renderLegendFontPickerPopoverContent(
     : renderLegendFontPickerSearchContent(fieldKey);
 }
 
+function findLegendParamPrefixByFieldKey(fieldKey, suffix) {
+  return [...TOP_LEGEND_CONFIGS, ...SIDE_LEGEND_CONFIGS]
+    .map((config) => config.paramPrefix)
+    .find((prefix) => fieldKey === legendParamKey(prefix, suffix));
+}
+
+function getLegendIconSetFieldKey(iconNameFieldKey) {
+  const prefix = findLegendParamPrefixByFieldKey(iconNameFieldKey, LEGEND_FIELD_SUFFIXES.iconName);
+  return prefix ? legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.iconSet) : "legendIconSet";
+}
+
+function getLegendIconFillFieldKey(iconNameFieldKey) {
+  const prefix = findLegendParamPrefixByFieldKey(iconNameFieldKey, LEGEND_FIELD_SUFFIXES.iconName);
+  return prefix ? legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.iconFill) : "legendIconFill";
+}
+
+function renderLegendIconSvg(icon, filled = false) {
+  return buildLegendIconSvg(icon, { color: "currentColor", filled });
+}
+
+function getLegendIconPickerResults(fieldKey = state.legendIconPickerFieldKey || "legendIconName") {
+  const iconSetFieldKey = getLegendIconSetFieldKey(fieldKey);
+  const iconSet = resolveLegendIconSet(state.keycapParams[iconSetFieldKey]);
+  return searchLegendIcons(state.legendIconPickerQuery, iconSet, LEGEND_ICON_PICKER_RESULT_LIMIT);
+}
+
+function renderLegendIconPickerResultItems(fieldKey = state.legendIconPickerFieldKey || "legendIconName") {
+  const matchingIcons = getLegendIconPickerResults(fieldKey);
+  const selectedIconSet = resolveLegendIconSet(state.keycapParams[getLegendIconSetFieldKey(fieldKey)]);
+  const selectedIconName = resolveLegendIconName(state.keycapParams[fieldKey], selectedIconSet);
+  const selectedIconFill = isLegendIconFillAvailable(selectedIconName, selectedIconSet)
+    && Boolean(state.keycapParams[getLegendIconFillFieldKey(fieldKey)]);
+  if (matchingIcons.length === 0) {
+    return `<div class="icon-picker-empty">${t("icons.noResults")}</div>`;
+  }
+
+  return matchingIcons.map((icon) => {
+    const isSelected = icon.name === selectedIconName;
+    return `
+      <button
+        class="icon-picker-option ${isSelected ? "is-selected" : ""}"
+        type="button"
+        data-icon-picker-option="${escapeHtml(icon.name)}"
+        data-icon-picker-field="${escapeHtml(fieldKey)}"
+        title="${escapeHtml(icon.name)}"
+      >
+        <span class="icon-picker-option__glyph" aria-hidden="true">${renderLegendIconSvg(icon, selectedIconFill)}</span>
+        <span class="icon-picker-option__name">${escapeHtml(icon.name)}</span>
+      </button>
+    `;
+  }).join("");
+}
+
+function renderLegendIconPickerContent(fieldKey = state.legendIconPickerFieldKey || "legendIconName") {
+  const hasSearchQuery = Boolean(String(state.legendIconPickerQuery ?? "").trim());
+  const resultHeading = hasSearchQuery ? t("icons.searchResultsLabel") : t("icons.recommendedLabel");
+
+  return `
+    <label class="field-control font-picker-search-input icon-picker-search-input">
+      <span class="font-picker-search-input__icon">${SEARCH_ICON_MARKUP}</span>
+      <input
+        type="text"
+        data-icon-picker-query="${escapeHtml(fieldKey)}"
+        value="${escapeHtml(state.legendIconPickerQuery)}"
+        placeholder="${escapeHtml(t("icons.searchPlaceholder"))}"
+        spellcheck="false"
+        autocomplete="off"
+      />
+    </label>
+    <span class="icon-picker-result-heading">${escapeHtml(resultHeading)}</span>
+    <span class="icon-picker-option-list" data-icon-picker-option-list>
+      ${renderLegendIconPickerResultItems(fieldKey)}
+    </span>
+  `;
+}
+
 function getCheckboxStatusLabel(checked) {
   return checked ? t("actions.on") : t("actions.off");
 }
@@ -5590,6 +5829,84 @@ function renderField(field, options = {}) {
           ${selectedFontAttributionCard}
         </span>
         ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
+      </div>
+    `;
+  }
+
+  if (field.type === "icon-search") {
+    const iconSetFieldKey = getLegendIconSetFieldKey(field.key);
+    const selectedIconSet = resolveLegendIconSet(state.keycapParams[iconSetFieldKey]);
+    const iconFillFieldKey = getLegendIconFillFieldKey(field.key);
+    const selectedIconSetMeta = getLegendIconSetMeta(selectedIconSet);
+    const selectedIcon = resolveLegendIcon(value, selectedIconSet);
+    const selectedIconName = selectedIcon?.name ?? resolveLegendIconName(value, selectedIconSet);
+    const selectedIconFill = isLegendIconFillAvailable(selectedIconName, selectedIconSet)
+      && Boolean(state.keycapParams[iconFillFieldKey]);
+    const selectedIconSetLabel = t(`options.legendIconSet.${selectedIconSet}`, {}, selectedIconSetMeta.label);
+    const selectedIconCatalogUrl = selectedIconSetMeta.catalogUrl || selectedIconSetMeta.sourceUrl;
+    const selectedIconFaviconUrl = selectedIconSetMeta.faviconUrl || "";
+    const selectedIconAttributionCard = renderLegendIconAttributionCard(selectedIconSet);
+    const pickerId = `icon-picker-${field.key}`;
+    const isPickerOpen = state.legendIconPickerFieldKey === field.key;
+
+    return `
+      <div class="field field--icon-search ${isPickerOpen ? "is-open" : ""}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        <span class="field-copy">
+          <span class="field-label">${fieldLabel}</span>
+          <span class="field-hint">${fieldHint}</span>
+        </span>
+        <span class="icon-picker" data-icon-picker>
+          <span class="icon-picker-trigger-shell">
+            <span class="field-control icon-picker-trigger">
+              <span class="icon-picker-selection">
+                <span class="icon-picker-selection__glyph" aria-hidden="true">${renderLegendIconSvg(selectedIcon, selectedIconFill)}</span>
+                <span class="icon-picker-selection__copy">
+                  <span class="icon-picker-selection__label">${escapeHtml(selectedIconName)}</span>
+                  <span class="icon-picker-selection__meta">${escapeHtml(selectedIconSetLabel)}</span>
+                </span>
+              </span>
+              <button
+                class="font-picker-search-button icon-picker-search-button"
+                type="button"
+                data-icon-picker-open="${field.key}"
+                aria-expanded="${isPickerOpen ? "true" : "false"}"
+                aria-controls="${pickerId}"
+                aria-label="${escapeHtml(t("icons.searchAriaLabel"))}"
+              >
+                ${SEARCH_ICON_MARKUP}
+              </button>
+            </span>
+            ${selectedIconCatalogUrl ? `<a
+              class="font-attribution-link icon-picker-catalog-link"
+              href="${escapeHtml(selectedIconCatalogUrl)}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ${selectedIconFaviconUrl ? `<img
+                class="icon-picker-catalog-link__favicon"
+                src="${escapeHtml(selectedIconFaviconUrl)}"
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+              />` : ""}
+              <span class="icon-picker-catalog-link__label">${escapeHtml(t("icons.openCatalog", { set: selectedIconSetLabel }))}</span>
+            </a>` : ""}
+            ${isPickerOpen ? `
+              <span
+                class="font-picker-popover icon-picker-popover"
+                id="${pickerId}"
+                role="dialog"
+                aria-label="${escapeHtml(t("icons.searchDialogLabel"))}"
+              >
+                <span class="font-picker-popover__content icon-picker-popover__content" data-icon-picker-popover-content>
+                  ${renderLegendIconPickerContent(field.key)}
+                </span>
+              </span>
+            ` : ""}
+          </span>
+          ${selectedIconAttributionCard}
+        </span>
       </div>
     `;
   }
@@ -6288,6 +6605,12 @@ function handleInspectorCardClick(event) {
     return;
   }
 
+  const copyIconAttributionButton = getClosestFromEventTarget(event, "[data-copy-icon-attribution]");
+  if (copyIconAttributionButton) {
+    void handleCopyLegendIconAttribution(copyIconAttributionButton.dataset.copyIconAttribution);
+    return;
+  }
+
   const fontLandingPageLink = getClosestFromEventTarget(event, "[data-font-landing-page-url]");
   if (fontLandingPageLink) {
     event.preventDefault();
@@ -6310,6 +6633,18 @@ function handleInspectorCardClick(event) {
       resolveLegendFontConfig(fontPickerOptionButton.dataset.fontPickerOption),
       {
         fieldKey: fontPickerOptionButton.dataset.fontPickerField,
+        closePicker: true,
+      },
+    );
+    return;
+  }
+
+  const iconPickerOptionButton = getClosestFromEventTarget(event, "[data-icon-picker-option]");
+  if (iconPickerOptionButton) {
+    applyLegendIconSelection(
+      iconPickerOptionButton.dataset.iconPickerOption,
+      {
+        fieldKey: iconPickerOptionButton.dataset.iconPickerField,
         closePicker: true,
       },
     );
@@ -6362,6 +6697,16 @@ function handleInspectorCardClick(event) {
     return;
   }
 
+  const iconPickerOpenButton = getClosestFromEventTarget(event, "[data-icon-picker-open]");
+  if (iconPickerOpenButton) {
+    if (state.legendIconPickerFieldKey === iconPickerOpenButton.dataset.iconPickerOpen) {
+      closeLegendIconPicker();
+    } else {
+      openLegendIconPicker(iconPickerOpenButton.dataset.iconPickerOpen);
+    }
+    return;
+  }
+
   const importBindingToggleButton = getClosestFromEventTarget(event, "[data-import-binding-toggle]");
   if (importBindingToggleButton) {
     toggleImportBindingNotice();
@@ -6397,6 +6742,12 @@ function handleInspectorCardInput(event) {
   const fontPickerQueryInput = getClosestFromEventTarget(event, "[data-font-picker-query]");
   if (fontPickerQueryInput) {
     handleLegendFontPickerQueryInput(fontPickerQueryInput);
+    return;
+  }
+
+  const iconPickerQueryInput = getClosestFromEventTarget(event, "[data-icon-picker-query]");
+  if (iconPickerQueryInput) {
+    handleLegendIconPickerQueryInput(iconPickerQueryInput);
     return;
   }
 
@@ -6597,17 +6948,33 @@ function handleInspectorCardKeydown(event) {
   }
 
   const fontPickerQueryInput = getClosestFromEventTarget(event, "[data-font-picker-query]");
-  if (!fontPickerQueryInput) {
+  const iconPickerQueryInput = getClosestFromEventTarget(event, "[data-icon-picker-query]");
+  if (!fontPickerQueryInput && !iconPickerQueryInput) {
     return;
   }
 
   if (event.key === "Escape") {
-    closeLegendFontPicker();
+    if (fontPickerQueryInput) {
+      closeLegendFontPicker();
+    } else {
+      closeLegendIconPicker();
+    }
     event.preventDefault();
     return;
   }
 
   if (event.key !== "Enter") {
+    return;
+  }
+
+  if (iconPickerQueryInput) {
+    const firstMatchingIcon = getLegendIconPickerResults()[0];
+    if (!firstMatchingIcon) {
+      return;
+    }
+
+    applyLegendIconSelection(firstMatchingIcon, { fieldKey: state.legendIconPickerFieldKey, closePicker: true });
+    event.preventDefault();
     return;
   }
 
@@ -7068,6 +7435,28 @@ async function handleCopyLegendFontAttribution(fontKey) {
     }
 
     state.copiedFontAttributionKey = "";
+    render();
+  }, 1600);
+}
+
+async function handleCopyLegendIconAttribution(iconSet) {
+  const iconSetMeta = getLegendIconSetMeta(iconSet);
+  const attributionText = getLegendIconAttributionText(iconSetMeta.key);
+  if (!attributionText) {
+    return;
+  }
+
+  await copyTextToClipboard(attributionText);
+  state.copiedIconAttributionKey = iconSetMeta.key;
+  render();
+
+  window.clearTimeout(iconAttributionCopyResetTimer);
+  iconAttributionCopyResetTimer = window.setTimeout(() => {
+    if (state.copiedIconAttributionKey !== iconSetMeta.key) {
+      return;
+    }
+
+    state.copiedIconAttributionKey = "";
     render();
   }, 1600);
 }
@@ -7653,6 +8042,44 @@ function applyLegendFontSelection(font, options = {}) {
   return true;
 }
 
+function applyLegendIconSelection(icon, options = {}) {
+  const {
+    closePicker = false,
+    fieldKey = state.legendIconPickerFieldKey || "legendIconName",
+  } = options;
+  const iconSetFieldKey = getLegendIconSetFieldKey(fieldKey);
+  const iconSet = resolveLegendIconSet(state.keycapParams[iconSetFieldKey]);
+  const iconFillFieldKey = getLegendIconFillFieldKey(fieldKey);
+  const resolvedIcon = icon?.name ? icon : resolveLegendIcon(icon, iconSet);
+  const nextIconName = resolveLegendIconName(resolvedIcon?.name, iconSet);
+  const nextIconFill = isLegendIconFillAvailable(nextIconName, iconSet)
+    ? Boolean(state.keycapParams[iconFillFieldKey])
+    : false;
+  const iconFillChanged = Boolean(state.keycapParams[iconFillFieldKey]) !== nextIconFill;
+
+  if (closePicker) {
+    state.legendIconPickerFieldKey = "";
+    state.legendIconPickerQuery = "";
+  }
+
+  if (nextIconName === state.keycapParams[fieldKey] && !iconFillChanged) {
+    if (closePicker) {
+      render();
+    }
+    return false;
+  }
+
+  state.keycapParams[fieldKey] = nextIconName;
+  state.keycapParams[iconFillFieldKey] = nextIconFill;
+  syncDerivedKeycapParams(state.keycapParams);
+  syncActiveProjectKeycapFromCurrent();
+  state.editorStatus = "dirty";
+  state.editorSummary = t("status.dirty");
+  render({ animateInspector: true });
+  schedulePreviewRefresh();
+  return true;
+}
+
 function openLegendFontPicker(fieldKey = "legendFontKey") {
   state.legendFontPickerFieldKey = fieldKey;
   state.legendFontPickerQuery = "";
@@ -7661,6 +8088,23 @@ function openLegendFontPicker(fieldKey = "legendFontKey") {
   pendingLegendFontPickerFocus = true;
   render();
   warmLegendFontPreviewFonts();
+}
+
+function openLegendIconPicker(fieldKey = "legendIconName") {
+  state.legendIconPickerFieldKey = fieldKey;
+  state.legendIconPickerQuery = "";
+  pendingLegendIconPickerFocus = true;
+  render();
+}
+
+function closeLegendIconPicker() {
+  if (!state.legendIconPickerFieldKey) {
+    return;
+  }
+
+  state.legendIconPickerFieldKey = "";
+  state.legendIconPickerQuery = "";
+  render();
 }
 
 function closeLegendFontPicker() {
@@ -7673,6 +8117,22 @@ function closeLegendFontPicker() {
   state.legendFontPickerSegment = LEGEND_FONT_PICKER_SEGMENT_BUILTIN;
   state.legendFontSourceEditorFieldKey = "";
   render();
+}
+
+function handleLegendIconPickerQueryInput(input) {
+  state.legendIconPickerQuery = input.value;
+  const fieldKey = input.dataset.iconPickerQuery || state.legendIconPickerFieldKey || "legendIconName";
+  const picker = input.closest("[data-icon-picker]");
+  const optionList = picker?.querySelector("[data-icon-picker-option-list]");
+  const resultHeading = picker?.querySelector(".icon-picker-result-heading");
+  if (resultHeading) {
+    resultHeading.textContent = String(state.legendIconPickerQuery ?? "").trim()
+      ? t("icons.searchResultsLabel")
+      : t("icons.recommendedLabel");
+  }
+  if (optionList) {
+    optionList.innerHTML = renderLegendIconPickerResultItems(fieldKey);
+  }
 }
 
 function handleLegendFontPickerQueryInput(input) {
@@ -7739,6 +8199,16 @@ function handleWindowPointerDown(event) {
     shouldRender = true;
   }
 
+  if (
+    state.legendIconPickerFieldKey
+    && event.target instanceof Element
+    && !event.target.closest("[data-icon-picker]")
+  ) {
+    state.legendIconPickerFieldKey = "";
+    state.legendIconPickerQuery = "";
+    shouldRender = true;
+  }
+
   if (shouldRender) {
     render();
   }
@@ -7761,6 +8231,12 @@ function handleWindowKeydown(event) {
     state.legendFontPickerQuery = "";
     state.legendFontPickerSegment = LEGEND_FONT_PICKER_SEGMENT_BUILTIN;
     state.legendFontSourceEditorFieldKey = "";
+    shouldRender = true;
+  }
+
+  if (state.legendIconPickerFieldKey) {
+    state.legendIconPickerFieldKey = "";
+    state.legendIconPickerQuery = "";
     shouldRender = true;
   }
 
@@ -9470,6 +9946,22 @@ function handleFieldChange(event) {
       } else if (field === "topHatSurfaceShape") {
         applyTopHatSurfaceShapePreset(input.value);
       }
+      if (isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.contentType)) {
+        state.legendFontPickerFieldKey = "";
+        state.legendFontPickerQuery = "";
+        state.legendIconPickerFieldKey = "";
+        state.legendIconPickerQuery = "";
+      } else if (isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.iconSet)) {
+        const legendPrefix = findLegendParamPrefixByFieldKey(field, LEGEND_FIELD_SUFFIXES.iconSet);
+        const iconNameKey = legendPrefix ? legendParamKey(legendPrefix, LEGEND_FIELD_SUFFIXES.iconName) : "legendIconName";
+        const iconFillKey = legendPrefix ? legendParamKey(legendPrefix, LEGEND_FIELD_SUFFIXES.iconFill) : "legendIconFill";
+        state.keycapParams[field] = resolveLegendIconSet(input.value);
+        state.keycapParams[iconNameKey] = resolveLegendIconName(state.keycapParams[iconNameKey], state.keycapParams[field]);
+        state.keycapParams[iconFillKey] = isLegendIconFillAvailable(state.keycapParams[iconNameKey], state.keycapParams[field])
+          ? Boolean(state.keycapParams[iconFillKey])
+          : false;
+        state.legendIconPickerQuery = "";
+      }
     }
   } else if (input.type === "radio") {
     if (!input.checked) {
@@ -9560,6 +10052,9 @@ function handleFieldChange(event) {
 
   const shouldRenderInspector = TOP_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
     || SIDE_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
+    || isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.contentType)
+    || isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.iconSet)
+    || isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.iconFill)
     || field === "homingBarEnabled"
     || field === "rimEnabled"
     || field === "topHatEnabled"

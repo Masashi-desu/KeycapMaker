@@ -44,6 +44,31 @@ module legend_text_profile(
     }
 }
 
+module legend_icon_shape(icon_path, size) {
+    // Legend icon assets are generated in a 24 mm square coordinate space.
+    scale([size / 24, size / 24, 1])
+        import(file = icon_path, center = true);
+}
+
+module legend_icon_profile(
+    icon_path,
+    size,
+    outline_delta = 0
+) {
+    if (abs(outline_delta) > 0.0001) {
+        offset(delta = outline_delta)
+            legend_icon_shape(
+                icon_path = icon_path,
+                size = size
+            );
+    } else {
+        legend_icon_shape(
+            icon_path = icon_path,
+            size = size
+        );
+    }
+}
+
 module legend_block(
     label,
     width,
@@ -57,11 +82,14 @@ module legend_block(
     underline_width = 0,
     underline_thickness = 0,
     underline_offset_y = 0,
+    content_type = "text",
+    icon_path = "",
     outline_delta = 0,
     text_size = undef,
     quality = "export"
 ) {
-    if (!is_undef(label) && len(label) > 0) {
+    is_icon = content_type == "icon" && len(icon_path) > 0;
+    if (is_icon || (!is_undef(label) && len(label) > 0)) {
         size = legend_text_size(is_undef(text_size) ? depth : text_size);
         curve_steps = legend_text_curve_steps(quality);
         internal_scale = legend_text_internal_scale(quality);
@@ -72,15 +100,23 @@ module legend_block(
                 // preserves more of the original font curvature before scaling back down.
                 scale([1 / internal_scale, 1 / internal_scale, 1])
                     union() {
-                        legend_text_profile(
-                            label = label,
-                            size = size * internal_scale,
-                            font_name = font_name,
-                            outline_delta = outline_delta * internal_scale,
-                            curve_steps = curve_steps
-                        );
+                        if (is_icon) {
+                            legend_icon_profile(
+                                icon_path = icon_path,
+                                size = size * internal_scale,
+                                outline_delta = outline_delta * internal_scale
+                            );
+                        } else {
+                            legend_text_profile(
+                                label = label,
+                                size = size * internal_scale,
+                                font_name = font_name,
+                                outline_delta = outline_delta * internal_scale,
+                                curve_steps = curve_steps
+                            );
+                        }
 
-                        if (underline_enabled && underline_width > 0 && underline_thickness > 0) {
+                        if (!is_icon && underline_enabled && underline_width > 0 && underline_thickness > 0) {
                             translate([0, underline_offset_y * internal_scale])
                                 square(
                                     [underline_width * internal_scale, underline_thickness * internal_scale],

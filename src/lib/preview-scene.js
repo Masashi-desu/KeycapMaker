@@ -150,6 +150,16 @@ export function createPreviewGeometry(mesh) {
   return geometry;
 }
 
+export function getPreviewLayerMaterialSide(layerName, opacity = 1) {
+  const isOverlayLayer = OVERLAY_LAYER_NAMES.has(layerName);
+  const isReferenceLayer = REFERENCE_LAYER_NAMES.has(layerName);
+  const isTransparentLayer = Number.isFinite(opacity) && opacity < 1;
+
+  return isOverlayLayer || isReferenceLayer || isTransparentLayer
+    ? THREE.DoubleSide
+    : THREE.FrontSide;
+}
+
 function normalizeLayers(layers) {
   if (Array.isArray(layers)) {
     return layers;
@@ -301,7 +311,6 @@ export function mountPreviewScene(container, layers, options = {}) {
   const layerEntries = normalizeLayers(layers).map((layer) => {
     const geometry = createPreviewGeometry(layer.mesh);
     const isOverlayLayer = OVERLAY_LAYER_NAMES.has(layer.name);
-    const isReferenceLayer = REFERENCE_LAYER_NAMES.has(layer.name);
     const opacity = Number.isFinite(layer.opacity) ? Math.min(Math.max(layer.opacity, 0), 1) : 1;
     const isTransparentLayer = opacity < 1;
     const material = new THREE.MeshStandardMaterial({
@@ -311,13 +320,13 @@ export function mountPreviewScene(container, layers, options = {}) {
       transparent: isTransparentLayer,
       opacity: isTransparentLayer ? opacity : 1,
       depthWrite: !isTransparentLayer,
-      side: isReferenceLayer || isTransparentLayer ? THREE.DoubleSide : THREE.FrontSide,
+      side: getPreviewLayerMaterialSide(layer.name, opacity),
       polygonOffset: isOverlayLayer,
       polygonOffsetFactor: isOverlayLayer ? -1 : 0,
       polygonOffsetUnits: isOverlayLayer ? -2 : 0,
     });
     const previewMesh = new THREE.Mesh(geometry, material);
-    previewMesh.renderOrder = isReferenceLayer ? 2 : (isOverlayLayer ? 1 : 0);
+    previewMesh.renderOrder = REFERENCE_LAYER_NAMES.has(layer.name) ? 2 : (isOverlayLayer ? 1 : 0);
     scene.add(previewMesh);
     geometry.computeBoundingBox();
     return { geometry, material, previewMesh };
