@@ -182,8 +182,8 @@ function createStepHeader({ name, createdAt }) {
   return [
     "ISO-10303-21;",
     "HEADER;",
-    "FILE_DESCRIPTION(('Keycap Maker faceted STEP export'),'2;1');",
-    `FILE_NAME(${encodeStepString(`${objectName}.step`)},${encodeStepString(timestamp)},(${encodeStepString("Keycap Maker")}),(${encodeStepString("Keycap Maker")}),${encodeStepString("Keycap Maker")},${encodeStepString("Keycap Maker")},'');`,
+    "FILE_DESCRIPTION(('KeycapMaker faceted STEP export'),'2;1');",
+    `FILE_NAME(${encodeStepString(`${objectName}.step`)},${encodeStepString(timestamp)},(${encodeStepString("KeycapMaker")}),(${encodeStepString("KeycapMaker")}),${encodeStepString("KeycapMaker")},${encodeStepString("KeycapMaker")},'');`,
     "FILE_SCHEMA(('AUTOMOTIVE_DESIGN_CC2 { 1 2 10303 214 2 1 1 }'));",
     "ENDSEC;",
     "DATA;",
@@ -212,7 +212,7 @@ export function createStepText(mesh, options = {}) {
   const angleUnitId = writer.add("(NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.))");
   const solidAngleUnitId = writer.add("(NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT())");
   const uncertaintyId = writer.add(`UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(0.001),${lengthUnitId},'distance_accuracy_value','')`);
-  const contextId = writer.add(`(GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((${uncertaintyId})) GLOBAL_UNIT_ASSIGNED_CONTEXT((${lengthUnitId},${angleUnitId},${solidAngleUnitId})) REPRESENTATION_CONTEXT('Keycap Maker',''))`);
+  const contextId = writer.add(`(GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((${uncertaintyId})) GLOBAL_UNIT_ASSIGNED_CONTEXT((${lengthUnitId},${angleUnitId},${solidAngleUnitId})) REPRESENTATION_CONTEXT('KeycapMaker',''))`);
 
   const pointIds = vertices.map((vertex) =>
     writer.add(`CARTESIAN_POINT('',${formatVectorTuple([vertex.x, vertex.y, vertex.z])})`),

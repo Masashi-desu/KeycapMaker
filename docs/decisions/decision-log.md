@@ -321,7 +321,7 @@
 - 結論:
   STL は推奨 export ではなくオプション扱いにし、`single_material_shape` target から色と legend を含まない単一メッシュとして出力する
 - 理由:
-  STL は標準的に色、material、part 分離、アセンブリ情報を保持しないため、Keycap Maker の separate volume / 色分け / legend 要件には 3MF の方が適している。一方で slicer や製造要件によって STL が必要な場合があるため、単色形状としての保存経路を用意する
+  STL は標準的に色、material、part 分離、アセンブリ情報を保持しないため、KeycapMaker の separate volume / 色分け / legend 要件には 3MF の方が適している。一方で slicer や製造要件によって STL が必要な場合があるため、単色形状としての保存経路を用意する
 
 ## 2026-04-25 - font asset は軽量 provenance note を必須にする
 
