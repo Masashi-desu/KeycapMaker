@@ -386,6 +386,14 @@ const ja = Object.freeze({
       label: "トップハットを付ける",
       hint: "既存のキートップ上に、別形状の小さいキートップを追加します",
     },
+    topHatSeparateColorEnabled: {
+      label: "本体と色を分ける",
+      hint: "オンにするとトップハットを別パーツとして出力し、個別の色を設定できます",
+    },
+    topHatColor: {
+      label: "トップハットの色",
+      hint: "カラーコードを直接入力するか、カラーピッカーで選べます",
+    },
     topHatSurfaceShape: {
       label: "トップハット形状",
       hint: "トップハット上面だけの形状です。通常のキートップ形状とは別に設定します",
@@ -874,6 +882,7 @@ const ja = Object.freeze({
   },
   partLabels: {
     body: "本体",
+    topHat: "トップハット",
     rim: "キーリム",
     legend: "印字",
     topLegend: "{position}",

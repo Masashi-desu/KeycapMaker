@@ -386,6 +386,14 @@ const ko = Object.freeze({
       label: "탑햇 추가",
       hint: "기존 키톱 위에 별도 형상의 작은 키톱을 추가합니다.",
     },
+    topHatSeparateColorEnabled: {
+      label: "본체와 색상 분리",
+      hint: "켜면 탑햇을 별도 부품으로 내보내고 개별 색상을 설정할 수 있습니다.",
+    },
+    topHatColor: {
+      label: "탑햇 색상",
+      hint: "색상 코드를 직접 입력하거나 색상 선택기로 고를 수 있습니다",
+    },
     topHatSurfaceShape: {
       label: "탑햇 형상",
       hint: "일반 키톱 형상과 별도로 설정하는 탑햇 상면 형상입니다.",
@@ -874,6 +882,7 @@ const ko = Object.freeze({
   },
   partLabels: {
     body: "본체",
+    topHat: "탑햇",
     rim: "키 림",
     legend: "각인",
     topLegend: "{position}",

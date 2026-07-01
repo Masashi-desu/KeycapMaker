@@ -143,6 +143,7 @@ const LEGEND_FONT_SOURCE_INPUT_MODES = Object.freeze([
   },
 ]);
 const keycapBodyPreviewPath = "/outputs/keycap-body-preview.off";
+const keycapTopHatPreviewPath = "/outputs/keycap-top-hat-preview.off";
 const keycapRimPreviewPath = "/outputs/keycap-rim-preview.off";
 const keycapHomingPreviewPath = "/outputs/keycap-homing-preview.off";
 const keycapLegendPreviewPath = "/outputs/keycap-legend-preview.off";
@@ -529,6 +530,7 @@ const COLORIS_STYLE_PATH = "vendor/coloris/coloris.min.css";
 const COLORIS_SCRIPT_PATH = "vendor/coloris/coloris.min.js";
 const DEFAULT_KEYCAP_COLORS = Object.freeze({
   bodyColor: "#f8f9fa",
+  topHatColor: "#f8f9fa",
   rimColor: "#d8ccb8",
   legendColor: "#212529",
   topLegendRightTopColor: "#212529",
@@ -2331,6 +2333,7 @@ const fieldGroupTemplates = [
         hint: () => t("fields.topHatEnabled.hint"),
         type: "checkbox",
         dependentFieldKeys: [
+          "topHatSeparateColorEnabled",
           "topHatSurfaceShape",
           "topHatDishDepth",
           "topHatTopWidth",
@@ -2344,6 +2347,22 @@ const fieldGroupTemplates = [
           "topHatShoulderAngle",
           "topHatShoulderRadius",
         ],
+      },
+      {
+        key: "topHatSeparateColorEnabled",
+        label: () => t("fields.topHatSeparateColorEnabled.label"),
+        hint: () => t("fields.topHatSeparateColorEnabled.hint"),
+        type: "checkbox",
+        visibleWhen: (params) => params.topHatEnabled && Number(params.topHatHeight ?? 0) > 0,
+        dependentFieldKeys: ["topHatColor"],
+      },
+      {
+        key: "topHatColor",
+        label: () => t("fields.topHatColor.label"),
+        hint: () => t("fields.topHatColor.hint"),
+        type: "color",
+        placeholder: DEFAULT_KEYCAP_COLORS.topHatColor,
+        visibleWhen: (params) => params.topHatEnabled && params.topHatSeparateColorEnabled && Number(params.topHatHeight ?? 0) > 0,
       },
       {
         key: "topHatSurfaceShape",
@@ -3188,6 +3207,8 @@ function getPartLabel(partName) {
   switch (partName) {
     case "rim":
       return t("partLabels.rim");
+    case "top-hat":
+      return t("partLabels.topHat");
     case "legend":
       return t("partLabels.legend");
     case "homing":
@@ -9926,6 +9947,13 @@ function handleFieldChange(event) {
     }
   } else if (input.type === "checkbox") {
     state.keycapParams[field] = input.checked;
+    if (
+      field === "topHatSeparateColorEnabled"
+      && input.checked
+      && getColorFieldValue("topHatColor") === DEFAULT_KEYCAP_COLORS.topHatColor
+    ) {
+      state.keycapParams.topHatColor = getColorFieldValue("bodyColor");
+    }
     const cornerRadiusFieldSet = findCornerRadiusFieldSetByIndividualField(field);
     if (cornerRadiusFieldSet) {
       syncCornerRadiusFieldsToSharedValue(cornerRadiusFieldSet);
@@ -10059,6 +10087,8 @@ function handleFieldChange(event) {
     || field === "homingBarEnabled"
     || field === "rimEnabled"
     || field === "topHatEnabled"
+    || field === "topHatSeparateColorEnabled"
+    || field === "topHatHeight"
     || field === "topSurfaceShape"
     || field === "topHatSurfaceShape"
     || field === "topSlopeInputMode"
@@ -10286,6 +10316,12 @@ function createColorLayerJob({ name, exportTarget, outputPath, colorFieldKey, pa
   };
 }
 
+function isTopHatSeparateRenderable(params = state.keycapParams) {
+  return Boolean(params.topHatEnabled)
+    && Boolean(params.topHatSeparateColorEnabled)
+    && Number(params.topHatHeight ?? 0) > 0;
+}
+
 function createKeycapOffJobs(purpose, params = state.keycapParams) {
   if (purpose === "preview" || purpose === "3mf") {
     const colorLayerJobs = [
@@ -10296,6 +10332,17 @@ function createKeycapOffJobs(purpose, params = state.keycapParams) {
         colorFieldKey: "bodyColor",
         params,
       }),
+      ...(isTopHatSeparateRenderable(params)
+        ? [
+            createColorLayerJob({
+              name: "top-hat",
+              exportTarget: "top_hat",
+              outputPath: keycapTopHatPreviewPath,
+              colorFieldKey: "topHatColor",
+              params,
+            }),
+          ]
+        : []),
       ...(isTypewriterRimRenderable(params)
         ? [
             createColorLayerJob({

@@ -500,6 +500,9 @@ test("J-STEM-LP01 の受け座SCADを bundle し、stemType を wrapper へ渡�
     assert.match(baseScad, /hole_pitch_y = stem_j_stem_lp01_nominal_hole_pitch_y/);
     assert.match(baseScad, /hole_diameter = stem_j_stem_lp01_nominal_hole_diameter/);
     assert.match(baseScad, /resolved_export_target == "j_stem_lp01_reference"/);
+    assert.match(baseScad, /resolved_export_target == "top_hat"/);
+    assert.match(baseScad, /module keycap_top_hat\(quality = "export"\)/);
+    assert.match(baseScad, /keycap_body_shell_mount_cut\(quality, include_separate_top_hat = true\)/);
     assert.match(receiverScad, /module j_stem_lp01_model/);
     assert.match(receiverScad, /module j_stem_lp01_receiver_recess[\s\S]*include_holes = true/);
     assert.match(receiverScad, /hole_pitch_x = 8\.11/);
@@ -1269,6 +1272,7 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
       params: {
         ...registry.createDefaultKeycapParams("custom-shell"),
         topHatEnabled: true,
+        topHatSeparateColorEnabled: true,
         topHatTopWidth: 11.2,
         topHatTopDepth: 9.4,
         topHatBottomWidth: 12.6,
@@ -1316,15 +1320,27 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
         topHatDishDepth: 0.8,
       },
     });
+    const topHatTargetFiles = await bundle.createKeycapFiles({
+      exportTarget: "top_hat",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topHatEnabled: true,
+        topHatSeparateColorEnabled: true,
+      },
+    });
     const customJobScad = customFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
     const recessedJobScad = recessedFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
     const jisJobScad = jisFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const topHatTargetJobScad = topHatTargetFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
 
     assert.ok(customJobScad, "custom shell job SCAD should be generated");
     assert.ok(recessedJobScad, "custom shell recessed top-hat job SCAD should be generated");
     assert.ok(jisJobScad, "JIS Enter job SCAD should be generated");
+    assert.ok(topHatTargetJobScad, "top-hat target job SCAD should be generated");
+    assert.equal(readRawScadDefinition(topHatTargetJobScad, "export_target"), "\"top_hat\"");
     assert.match(customJobScad, /^user_shape_geometry_type = "shell";/m);
     assert.match(customJobScad, /^user_top_hat_enabled = true;/m);
+    assert.match(customJobScad, /^user_top_hat_separate_enabled = true;/m);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_width"), 11.2);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_depth"), 9.4);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_bottom_width"), 12.6);
@@ -1341,6 +1357,7 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
     assert.equal(readRawScadDefinition(customJobScad, "user_top_hat_shape_type"), "\"cylindrical\"");
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_dish_depth"), 0.5);
     assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_height"), -0.8);
+    assert.match(recessedJobScad, /^user_top_hat_separate_enabled = false;/m);
     assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_shoulder_radius"), -0.4);
     assert.equal(readRawScadDefinition(recessedJobScad, "user_top_hat_shape_type"), "\"flat\"");
     assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_dish_depth"), 0);

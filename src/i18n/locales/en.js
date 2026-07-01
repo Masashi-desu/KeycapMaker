@@ -386,6 +386,14 @@ const en = Object.freeze({
       label: "Add Top Hat",
       hint: "Add a smaller independently shaped keytop above the existing keytop.",
     },
+    topHatSeparateColorEnabled: {
+      label: "Separate From Body",
+      hint: "Export the top hat as a separate part and give it its own color.",
+    },
+    topHatColor: {
+      label: "Top Hat Color",
+      hint: "Enter a color code directly or use the color picker",
+    },
     topHatSurfaceShape: {
       label: "Top Hat Surface",
       hint: "Shape only for the top-hat surface, independent from the main keytop surface.",
@@ -874,6 +882,7 @@ const en = Object.freeze({
   },
   partLabels: {
     body: "Body",
+    topHat: "Top Hat",
     rim: "Key Rim",
     legend: "Legend",
     topLegend: "{position}",

@@ -1126,6 +1126,7 @@ async function createKeycapDefinitions({ params, exportTarget }) {
     user_top_offset_x: numberOr(params.topOffsetX, 0),
     user_top_offset_y: numberOr(params.topOffsetY, 0),
     user_top_hat_enabled: isTopHatGeometryType(shapeGeometry.shapeGeometryType) && Boolean(params.topHatEnabled),
+    user_top_hat_separate_enabled: isTopHatGeometryType(shapeGeometry.shapeGeometryType) && Boolean(params.topHatSeparateColorEnabled),
     user_top_hat_top_width: Math.max(numberOr(params.topHatTopWidth, 10.5), 0.2),
     user_top_hat_top_depth: Math.max(numberOr(params.topHatTopDepth, 9.5), 0.2),
     user_top_hat_bottom_width: Math.max(numberOr(params.topHatBottomWidth, numberOr(params.topHatTopWidth, 10.5)), 0.2),

@@ -37,6 +37,8 @@
     "dishRadius": 45,
     "dishDepth": 0,
     "topHatEnabled": false,
+    "topHatSeparateColorEnabled": false,
+    "topHatColor": "#f8f9fa",
     "topHatSurfaceShape": "flat",
     "topHatDishDepth": 0,
     "topHatTopWidth": 10.5,
@@ -255,6 +257,8 @@
       "description": "既存のキートップ上へ追加する小さな上面の有無、天面 / 底面寸法、R、高さ、肩角度を調整します。",
       "fieldKeys": [
         "topHatEnabled",
+        "topHatSeparateColorEnabled",
+        "topHatColor",
         "topHatSurfaceShape",
         "topHatDishDepth",
         "topHatTopWidth",

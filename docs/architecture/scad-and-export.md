@@ -18,6 +18,7 @@
 - `preview`
 - `body`
 - `body_core`
+- `top_hat`
 - `rim`
 - `homing`
 - `legend`
@@ -36,9 +37,9 @@
 
 ## separate volume の扱い
 
-- body / rim / legend は別体積を維持する
+- body / top-hat / rim / legend は別体積を維持できる
 - homing bar は body 側の触覚マーカーとして扱い、legend と混ぜない
-- body / rim / legend / homing の相対位置は共有原点で揃える
+- body / top-hat / rim / legend / homing の相対位置は共有原点で揃える
 - 色だけに依存せず、mesh 自体を part として分ける
 
 ## preview と export の責務分離
@@ -48,7 +49,7 @@
 - export:
   part 分離と形状の意味づけを優先する
 
-現在の preview は OFF メッシュを body / rim / homing / legend ごとに生成して Three.js へ渡します。Three.js 側では shared vertex を保った indexed geometry を基準に creased normals を作り、曲面は滑らかに、急角は残す。SCAD 側の円弧分割は feature の半径と `quality` に応じて上限付きで増やす。現在の 3MF export は同じ part 群から 3MF を組み立てます。STEP export は `single_material_shape` target を OFF として出力し、ブラウザ側で STEP AP214 faceted B-rep へ変換します。STL export は `single_material_shape` target から OpenSCAD runtime の STL 出力を直接使い、色と legend を含まない単一メッシュとして扱います。
+現在の preview は OFF メッシュを body / top-hat / rim / homing / legend ごとに生成して Three.js へ渡します。top-hat は分離色が有効な場合だけ別 OFF になる。Three.js 側では shared vertex を保った indexed geometry を基準に creased normals を作り、曲面は滑らかに、急角は残す。SCAD 側の円弧分割は feature の半径と `quality` に応じて上限付きで増やす。現在の 3MF export は同じ part 群から 3MF を組み立てます。STEP export は `single_material_shape` target を OFF として出力し、ブラウザ側で STEP AP214 faceted B-rep へ変換します。STL export は `single_material_shape` target から OpenSCAD runtime の STL 出力を直接使い、色と legend を含まない単一メッシュとして扱います。
 
 legend の `text()` は bundled OpenSCAD runtime 上で preview / export の `quality` に応じて曲線分割数を上げ、内部では拡大してから縮小する。これにより、小さい文字サイズでも丸みのある書体の輪郭が過度に角張るのを抑える。font の native style は JS 側で `font` query を組み立てて指定し、ユーザー操作なしの擬似 bold / italic / slanted は行わない。下線は font file の `post` / `head` / `hhea` から `UnderlinePosition` / `UnderlineThickness` / line box 中心を読み、`valign="center"` な text 座標へ変換したうえで実測文字幅と組み合わせる。font metadata を取れない場合の任意フォールバックは行わない。輪郭補正は `legendOutlineDelta` を通した明示入力時だけ `offset()` を使う。
 legend は content type として `text` と `icon` を持つ。`text` は従来どおり font と `text()` を使い、`icon` は選択した icon provider の SVG を runtime asset として `/icons/{iconSet}/{runtimeName}.svg` に注入し、SCAD 側で `import()` した 2D 形状を `linear_extrude()` して legend volume にする。font 選択とは独立して `legendIconSet` / `legendIconName` / `legendIconFill` を保持し、既存 JSON に icon 用フィールドがない場合は `text` / `lucide` / `circle` / `false` を補完する。`legendIconFill` は選択した icon が通常 body とは異なる filled body を持つ場合だけ有効になり、Material Symbols は outline shape と base filled shape、Remix Icon は `*-line` と `*-fill` へ provider ごとに解決する。ブラウザ実行時は Lucide、Material Symbols、Font Awesome Free Solid、Remix Icon を jsDelivr の `latest` package から読み込み、取得した SVG node / body / path data を sanitizer に通してから OpenSCAD 用 SVG を作る。Lucide は sanitizer 済み node をさらに stroke primitives から filled path へ変換する。CDN が利用できない場合は installed package 由来の fallback data を同じ sanitizer / 変換経路に通す。見た目が変わらない icon では `legendIconFill` を `false` に丸め、UI も表示しない。アイコンでは provider が持つ stroke / fill の形状比率を維持し、`legendOutlineDelta` による `offset()` 太さ補正は適用しない。アイコンでも `legendSize`、`legendHeight`、位置、色は共通に扱い、下線は出さない。現在の provider は Lucide、Material Symbols、Font Awesome Free Solid、Remix Icon。
@@ -77,7 +78,7 @@ SCAD 側では dish も top plane と同じ座標変換へ載せるため、`top
 shell shape の `topScale` は UI パラメータとして保持しつつ、JS bridge で現在の `keyWidth` / `keyDepth` / `topCenterHeight` から最終的な前後左右角度へ解決してから SCAD へ渡す。上面の footprint は `keyWidth * topScale` と `keyDepth * topScale` を目標にするため、正方形キーはすぼめても上面が正方形のまま縮む。初期値 `0.75` は 18mm の 1u キーで上面を約 13.5mm にする。下限は基本 `0.02` とし、上面 footprint または内側クリアランスが 0.2mm 未満に潰れる寸法条件では、JS 側で 0.01 step 単位に切り上げる。
 custom shell と JIS Enter の `keycapEdgeRadius` は、キートップ上面とサイドウォールの境目だけに適用する R 面取りとして扱う。0 は従来の角面、正値は既存の shoulder 生成を維持したうえで上端の局所的な roundover だけを追加する。球状に近いキートップ全体の盛り上げはこのパラメータや `dishDepth` の責務に含めず、将来的に専用パラメータで調整する。
 custom shell と JIS Enter の `keycapShoulderRadius` は、キーキャップ本体の底面から上面へすぼまる shoulder 断面に適用する。0 は従来の直線的な角面、正値は外側へ丸く膨らむ shoulder、負値は内側へ凹む shoulder として扱う。最大絶対値は `topCenterHeight` と `topScale` から決まる実際の水平すぼまり量の小さい方に丸める。
-custom shell は `topHatEnabled` で上面にもう一つの小さいキートップを追加できる。top-hat は body 側の形状として扱い、`topHatSurfaceShape` / `topHatDishDepth` / `topHatTopWidth` / `topHatTopDepth` / `topHatBottomWidth` / `topHatBottomDepth` / `topHatTopRadius` / `topHatBottomRadius` / `topHatHeight` / `topHatShoulderAngle` / `topHatShoulderRadius` を `user_*` へ渡す。`topHatSurfaceShape` は通常の `topSurfaceShape` とは独立した top-hat 上面の `flat` / `cylindrical` / `spherical` で、既定値は `flat`。`topHatDishDepth` は top-hat 上面 footprint を基準に 0 以上へ丸め、`flat` では 0 として扱う。`topHatTopWidth` / `topHatTopDepth` は top-hat 上面の寸法、`topHatBottomWidth` / `topHatBottomDepth` は top-hat 底面の寸法として扱い、底面寸法は上面寸法以上かつ親キートップ上面内に丸める。`topHatTopRadius` は top-hat 上面のR、`topHatBottomRadius` は top-hat 底面のRとして別々に扱う。`topHatTopRadiusIndividualEnabled` が有効な場合だけ `topHatTopRadiusLeftTop` / `topHatTopRadiusRightTop` / `topHatTopRadiusRightBottom` / `topHatTopRadiusLeftBottom` を `user_top_hat_top_radii` として渡し、`topHatBottomRadiusIndividualEnabled` が有効な場合だけ `topHatBottomRadiusLeftTop` / `topHatBottomRadiusRightTop` / `topHatBottomRadiusRightBottom` / `topHatBottomRadiusLeftBottom` を `user_top_hat_bottom_radii` として渡す。SCAD 側の配列順はいずれも `[left_top, right_top, right_bottom, left_bottom]`。`topHatHeight` がマイナスの場合は同じ形状を上面から凹ませ、シェル天井を貫通しない深さに丸める。`topHatShoulderRadius` は 0 で角面、正値で shoulder の断面を丸め、負値で凹ませる。最大絶対値は実際の shoulder 高さと横幅の小さい方に丸めるため、45 度では横から見た断面が 1/4 円状になるところまで指定できる。typewriter 系にはまだ表示しない。
+custom shell は `topHatEnabled` で上面にもう一つの小さいキートップを追加できる。top-hat は既定では body 側の形状として扱い、`topHatSeparateColorEnabled` が有効かつ `topHatHeight` が正値の場合だけ `top_hat` target として別 part 化する。この場合も `single_material_shape` では一体化する。`topHatColor` は preview / 3MF の `top_hat` part 色としてだけ使う。`topHatSurfaceShape` / `topHatDishDepth` / `topHatTopWidth` / `topHatTopDepth` / `topHatBottomWidth` / `topHatBottomDepth` / `topHatTopRadius` / `topHatBottomRadius` / `topHatHeight` / `topHatShoulderAngle` / `topHatShoulderRadius` を `user_*` へ渡す。`topHatSurfaceShape` は通常の `topSurfaceShape` とは独立した top-hat 上面の `flat` / `cylindrical` / `spherical` で、既定値は `flat`。`topHatDishDepth` は top-hat 上面 footprint を基準に 0 以上へ丸め、`flat` では 0 として扱う。`topHatTopWidth` / `topHatTopDepth` は top-hat 上面の寸法、`topHatBottomWidth` / `topHatBottomDepth` は top-hat 底面の寸法として扱い、底面寸法は上面寸法以上かつ親キートップ上面内に丸める。`topHatTopRadius` は top-hat 上面のR、`topHatBottomRadius` は top-hat 底面のRとして別々に扱う。`topHatTopRadiusIndividualEnabled` が有効な場合だけ `topHatTopRadiusLeftTop` / `topHatTopRadiusRightTop` / `topHatTopRadiusRightBottom` / `topHatTopRadiusLeftBottom` を `user_top_hat_top_radii` として渡し、`topHatBottomRadiusIndividualEnabled` が有効な場合だけ `topHatBottomRadiusLeftTop` / `topHatBottomRadiusRightTop` / `topHatBottomRadiusRightBottom` / `topHatBottomRadiusLeftBottom` を `user_top_hat_bottom_radii` として渡す。SCAD 側の配列順はいずれも `[left_top, right_top, right_bottom, left_bottom]`。`topHatHeight` がマイナスの場合は同じ形状を上面から凹ませ、シェル天井を貫通しない深さに丸める。`topHatShoulderRadius` は 0 で角面、正値で shoulder の断面を丸め、負値で凹ませる。最大絶対値は実際の shoulder 高さと横幅の小さい方に丸めるため、45 度では横から見た断面が 1/4 円状になるところまで指定できる。typewriter 系にはまだ表示しない。
 JIS Enter shape は `jis_enter` geometry type として扱う。既定値は一般的な縦長 Enter footprint の 1.5u x 2u、左下欠き込み 0.25u x 1u で、`jisEnterNotchWidth` / `jisEnterNotchDepth` により欠き込み量を編集できる。JIS X 6002 は物理キートップ寸法を規定しないため、この shape は実用上よく使われる JIS / ISO 系 keycap footprint のプリセットとして扱う。typewriter style の JIS Enter は `typewriter_jis_enter` geometry type とし、同じ JIS footprint を使いながら typewriter の薄型 top、rim、逆向き stem mount を適用する。
 shape ごとの初期値、geometry defaults、表示グループ構成は `src/data/keycap-shapes/*.json` に置き、SCAD 側は top-level user parameter に対してフェイルセーフ default を持たない。JS bridge が shape JSON から必要値をすべて解決して `user_*` として注入する。
 
@@ -105,7 +106,7 @@ flowchart TD
   stemNominals["scad/presets/stem-nominals.scad"] --> wrapper
   wrapper --> worker["src/openscad-worker.js"]
   worker --> wasm["bundled OpenSCAD WASM runtime"]
-  wasm --> off["body / rim / homing / legend 系の OFF"]
+  wasm --> off["body / top-hat / rim / homing / legend 系の OFF"]
   off --> preview["preview-scene.js / Three.js"]
   off --> export3mf["export-3mf.js / 3MF"]
   off --> exportStep["export-step.js / STEP faceted B-rep"]
@@ -170,6 +171,8 @@ flowchart TD
   custom shell のマイナス本体 shoulder R 確認用
 - `scad/samples/keycap-top-hat.scad`
   custom shell の top-hat キートップ確認用
+- `scad/samples/keycap-top-hat-separated.scad`
+  custom shell の top-hat 別パーツ target 確認用
 - `scad/samples/keycap-top-hat-spherical.scad`
   custom shell の spherical top-hat 上面確認用
 - `scad/samples/keycap-top-hat-top-radii.scad`
@@ -187,9 +190,10 @@ flowchart TD
 
 - 出力元は OFF メッシュ
 - 3MF 内では part ごとに object resource を分ける
-- `build` には part 直列ではなく、body / rim / homing / legend 系 part を `components` として束ねた親 object を 1 件だけ置く
+- `build` には part 直列ではなく、body / top-hat / rim / homing / legend 系 part を `components` として束ねた親 object を 1 件だけ置く
 - 親 object の `name` には UI の `名称` を使う
-- 現在の part 候補は `body`、`rim`、`homing`、`legend`、`legend-left-top`、`legend-right-top`、`legend-left-bottom`、`legend-right-bottom`、`legend-front`、`legend-back`、`legend-left`、`legend-right`
+- 現在の part 候補は `body`、`top-hat`、`rim`、`homing`、`legend`、`legend-left-top`、`legend-right-top`、`legend-left-bottom`、`legend-right-bottom`、`legend-front`、`legend-back`、`legend-left`、`legend-right`
+- top-hat 分離色が無効、または top-hat が凹み形状の場合、`top-hat` object は含まれない
 - キートップ legend が無効なら対応する `legend*` object は含まれない
 - sidewall legend が無効なら対応する `legend-*` object は含まれない
 - text legend と icon legend はどちらも `legend*` object として扱い、3MF 内の part 分離と色指定を維持する
@@ -203,7 +207,7 @@ flowchart TD
 
 - 出力元は `single_material_shape` target の OFF メッシュ
 - bundled OpenSCAD runtime は native STEP export に対応していないため、ブラウザ側で STEP AP214 の `FACETED_BREP_SHAPE_REPRESENTATION` として生成する
-- body shell、stem、homing bar、typewriter rim を単一形状として扱う
+- body shell、top-hat、stem、homing bar、typewriter rim を単一形状として扱う
 - legend は出力に含めない
 - 色、material、part 名、separate volume 情報は含めない
 - 曲面は OpenSCAD が生成した faceted mesh を `POLY_LOOP` / `FACE_SURFACE` として表現するため、CAD 交換用ではあるがパラメトリックな NURBS / analytic surface ではない
@@ -214,7 +218,7 @@ flowchart TD
 
 - 出力元は `single_material_shape` target
 - OpenSCAD runtime から binary STL として直接出力する
-- body shell、stem、homing bar、typewriter rim を単一メッシュとして union する
+- body shell、top-hat、stem、homing bar、typewriter rim を単一メッシュとして union する
 - legend は出力に含めない
 - 色、material、part 名、separate volume 情報は含めない
 - 色分けや legend が必要な場合は 3MF を使う

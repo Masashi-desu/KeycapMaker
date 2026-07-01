@@ -386,6 +386,14 @@ const zh = Object.freeze({
       label: "添加 Top Hat",
       hint: "在现有键顶上添加一个可独立设置形状的小键顶。",
     },
+    topHatSeparateColorEnabled: {
+      label: "与本体分色",
+      hint: "开启后将 top hat 作为单独部件输出，并可单独设置颜色。",
+    },
+    topHatColor: {
+      label: "Top Hat 颜色",
+      hint: "可直接输入颜色代码，或使用颜色选择器",
+    },
     topHatSurfaceShape: {
       label: "Top Hat 形状",
       hint: "仅用于 top hat 上表面的形状，与普通键顶形状独立设置。",
@@ -874,6 +882,7 @@ const zh = Object.freeze({
   },
   partLabels: {
     body: "本体",
+    topHat: "Top Hat",
     rim: "键圈",
     legend: "字符",
     topLegend: "{position}",

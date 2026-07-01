@@ -191,6 +191,9 @@ top_roll_deg = required_param(user_top_roll_deg, "user_top_roll_deg");
 top_offset_x = required_param(user_top_offset_x, "user_top_offset_x");
 top_offset_y = required_param(user_top_offset_y, "user_top_offset_y");
 requested_top_hat_enabled = required_param(user_top_hat_enabled, "user_top_hat_enabled");
+requested_top_hat_separate_enabled = is_undef(user_top_hat_separate_enabled)
+    ? false
+    : user_top_hat_separate_enabled;
 top_hat_top_width = positive_dimension(required_param(user_top_hat_top_width, "user_top_hat_top_width"));
 top_hat_top_depth = positive_dimension(required_param(user_top_hat_top_depth, "user_top_hat_top_depth"));
 top_hat_bottom_width = is_undef(user_top_hat_bottom_width) ? undef : positive_dimension(user_top_hat_bottom_width);
@@ -235,6 +238,11 @@ top_hat_dish_radius = positive_dimension(is_undef(user_top_hat_dish_radius) ? di
 top_hat_enabled = (shape_geometry_type == "shell" || shape_geometry_type == "jis_enter")
     && requested_top_hat_enabled
     && abs(top_hat_height) > 0.001;
+top_hat_separate_part_enabled = top_hat_enabled
+    && requested_top_hat_separate_enabled
+    && top_hat_height > 0.001;
+function top_hat_body_enabled(include_separate_top_hat) =
+    top_hat_enabled && (!top_hat_separate_part_enabled || include_separate_top_hat);
 top_hat_surface_z_shift = top_hat_enabled
     ? keycap_dish_surface_offset(
         0,
@@ -1192,7 +1200,7 @@ module keycap_side_legends_visible_volume(quality = "export") {
     }
 }
 
-module keycap_body_shell_positive(quality = "export") {
+module keycap_body_shell_positive(quality = "export", include_separate_top_hat = false) {
     if (shape_geometry_type == "typewriter") {
         keycap_typewriter_cap(
             width = key_width,
@@ -1245,7 +1253,7 @@ module keycap_body_shell_positive(quality = "export") {
             top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
-            top_hat_enabled = top_hat_enabled,
+            top_hat_enabled = top_hat_body_enabled(include_separate_top_hat),
             top_hat_inset = top_hat_inset,
             top_hat_top_radius = top_hat_top_radius,
             top_hat_top_radii = top_hat_top_radii,
@@ -1281,7 +1289,7 @@ module keycap_body_shell_positive(quality = "export") {
             top_shape_type = top_shape_type,
             dish_radius = dish_radius,
             dish_depth = dish_depth,
-            top_hat_enabled = top_hat_enabled,
+            top_hat_enabled = top_hat_body_enabled(include_separate_top_hat),
             top_hat_top_width = top_hat_top_width,
             top_hat_top_depth = top_hat_top_depth,
             top_hat_bottom_width = top_hat_bottom_width,
@@ -1306,9 +1314,77 @@ module keycap_body_shell_positive(quality = "export") {
     }
 }
 
-module keycap_body_shell(quality = "export") {
+module keycap_top_hat_positive(quality = "export") {
+    if (top_hat_separate_part_enabled) {
+        if (shape_geometry_type == "jis_enter") {
+            keycap_jis_enter_top_hat_cap(
+                left = dish_limit_top_left,
+                right = dish_limit_top_right,
+                front = dish_limit_top_front,
+                back = dish_limit_top_back,
+                notch_width = jis_enter_notch_width,
+                notch_depth = jis_enter_notch_depth,
+                top_inset = top_hat_inset,
+                top_radius = top_hat_top_radius,
+                bottom_radius = top_hat_bottom_radius,
+                bottom_corner_radii = top_hat_bottom_radii,
+                top_corner_radii = top_hat_top_radii,
+                height = top_hat_height,
+                shoulder_angle = top_hat_shoulder_angle,
+                shoulder_radius = top_hat_shoulder_radius,
+                top_shape_type = top_hat_shape_type,
+                dish_radius = top_hat_dish_radius,
+                dish_depth = top_hat_dish_depth,
+                top_center_height = top_center_height,
+                pitch_deg = top_pitch_deg,
+                roll_deg = top_roll_deg,
+                surface_z_shift = top_hat_surface_z_shift,
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
+            );
+        } else {
+            keycap_top_hat_cap(
+                parent_top_width = dish_limit_top_right - dish_limit_top_left,
+                parent_top_depth = dish_limit_top_back - dish_limit_top_front,
+                top_width = top_hat_top_width,
+                top_depth = top_hat_top_depth,
+                bottom_width = top_hat_bottom_width,
+                bottom_depth = top_hat_bottom_depth,
+                top_radius = top_hat_top_radius,
+                bottom_radius = top_hat_bottom_radius,
+                bottom_corner_radii = top_hat_bottom_radii,
+                top_corner_radii = top_hat_top_radii,
+                height = top_hat_height,
+                shoulder_angle = top_hat_shoulder_angle,
+                shoulder_radius = top_hat_shoulder_radius,
+                top_shape_type = top_hat_shape_type,
+                dish_radius = top_hat_dish_radius,
+                dish_depth = top_hat_dish_depth,
+                top_center_height = top_center_height,
+                pitch_deg = top_pitch_deg,
+                roll_deg = top_roll_deg,
+                surface_z_shift = top_hat_surface_z_shift,
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y
+            );
+        }
+    }
+}
+
+module keycap_top_hat(quality = "export") {
+    if (top_hat_separate_part_enabled) {
+        difference() {
+            keycap_top_hat_positive(quality);
+            keycap_top_legends_visible_volume(quality);
+        }
+    }
+}
+
+module keycap_body_shell(quality = "export", include_separate_top_hat = false) {
     difference() {
-        keycap_body_shell_mount_cut(quality);
+        keycap_body_shell_mount_cut(quality, include_separate_top_hat);
         keycap_top_legends_visible_volume(quality);
         keycap_side_legends_visible_volume(quality);
         if (rim_enabled) {
@@ -1317,9 +1393,9 @@ module keycap_body_shell(quality = "export") {
     }
 }
 
-module keycap_body_shell_mount_cut(quality = "export") {
+module keycap_body_shell_mount_cut(quality = "export", include_separate_top_hat = false) {
     difference() {
-        keycap_body_shell_positive(quality);
+        keycap_body_shell_positive(quality, include_separate_top_hat);
         keycap_stem_receiver_recess(quality);
     }
 }
@@ -1627,7 +1703,7 @@ module keycap_body(quality = "export") {
 
 module keycap_single_material_shape(quality = "export") {
     union() {
-        keycap_body_shell_mount_cut(quality);
+        keycap_body_shell_mount_cut(quality, include_separate_top_hat = true);
         keycap_stem(quality);
         keycap_homing_bar(quality);
         keycap_rim_positive(quality);
@@ -1691,6 +1767,10 @@ module export_homing() {
     keycap_homing_bar("export");
 }
 
+module export_top_hat() {
+    keycap_top_hat("export");
+}
+
 module export_rim() {
     keycap_rim("export");
 }
@@ -1742,6 +1822,7 @@ module export_j_stem_lp01_reference() {
 module preview_model() {
     union() {
         keycap_body("preview");
+        keycap_top_hat("preview");
         keycap_rim("preview");
         keycap_top_legends_volume("preview");
         keycap_side_legends_volume("preview");
@@ -1754,6 +1835,8 @@ if (resolved_export_target == "body") {
     export_body_core();
 } else if (resolved_export_target == "homing") {
     export_homing();
+} else if (resolved_export_target == "top_hat") {
+    export_top_hat();
 } else if (resolved_export_target == "rim") {
     export_rim();
 } else if (resolved_export_target == "legend") {

@@ -11,7 +11,7 @@
 
 ## 現在の主要ファイル
 
-- `base/keycap.scad`: `export_target` で `preview / body / body_core / rim / homing / legend / top_legend_* / side_legend_* / single_material_shape / j_stem_lp01_reference` を切り替える基礎エントリ
+- `base/keycap.scad`: `export_target` で `preview / body / body_core / top_hat / rim / homing / legend / top_legend_* / side_legend_* / single_material_shape / j_stem_lp01_reference` を切り替える基礎エントリ
 - `modules/keycap_shell.scad`: `top_center_height + pitch / roll` 基準の外形シェル、dish、内側 hollow
 - `modules/keycap_jis_enter.scad`: JIS / ISO 系の縦長 Enter footprint 用シェル、typewriter variant、内側 hollow
 - `modules/stem_mx.scad`: MX 互換 stem ボディ
@@ -47,6 +47,7 @@
 - `samples/keycap-shoulder-rounded-hollow.scad`: custom shell の丸い shoulder と内側 hollow 追従確認用サンプル
 - `samples/keycap-shoulder-concave.scad`: custom shell のマイナス本体 shoulder R 確認用サンプル
 - `samples/keycap-top-hat.scad`: custom shell の top-hat キートップと底面R確認用サンプル
+- `samples/keycap-top-hat-separated.scad`: custom shell の top-hat 別パーツ target 確認用サンプル
 - `samples/keycap-top-hat-spherical.scad`: custom shell の spherical top-hat 上面確認用サンプル
 - `samples/keycap-top-hat-top-radii.scad`: custom shell の top-hat 上面4隅R個別指定確認用サンプル
 - `samples/keycap-top-hat-recess.scad`: custom shell のマイナス高さ top-hat 凹み確認用サンプル
@@ -59,6 +60,7 @@
 - preview 用と export 用で重さや精度を分けてよい
 - 色指定だけに依存せず、body と legend の分離可能性を維持する
 - typewriter shape の key rim は body と別体積で扱い、3MF 側でも独立 part を維持する
+- top-hat は通常 body と一体で扱い、分離色が有効な場合だけ `top_hat` target と 3MF part を追加する。STEP / STL 用の `single_material_shape` では分離色の有無にかかわらず一体化する
 - homing bar は body 側の触覚マーカーとして扱い、legend とは別責務にする
 - ブラウザ内 OpenSCAD runtime へ UI パラメータを渡すときは、shape JSON から解決した明示値を wrapper SCAD の `user_*` へ注入する
 - `text()` を使う場合はフォント依存を明示し、アセット配置とライセンスを確認する

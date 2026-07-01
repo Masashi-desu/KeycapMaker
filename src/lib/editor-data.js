@@ -52,6 +52,7 @@ const TOP_SURFACE_SHAPE_PRESETS = Object.freeze({
 });
 const COLOR_FIELD_KEYS = new Set([
   "bodyColor",
+  "topHatColor",
   "rimColor",
   "legendColor",
   "topLegendRightTopColor",
@@ -392,6 +393,12 @@ function inferLegacyTopSurfaceShape(params = {}) {
   }
 
   return "spherical";
+}
+
+function inferMissingTopHatColor(params = {}) {
+  return params.topHatColor == null && params.bodyColor != null
+    ? { topHatColor: params.bodyColor }
+    : {};
 }
 
 function resolveActiveDishDepth(params = {}) {
@@ -1037,6 +1044,13 @@ export function syncDerivedKeycapParams(params = {}) {
     params.topHatEnabled = typeof params.topHatEnabled === "boolean"
       ? params.topHatEnabled
       : Boolean(defaults.topHatEnabled);
+    params.topHatSeparateColorEnabled = typeof params.topHatSeparateColorEnabled === "boolean"
+      ? params.topHatSeparateColorEnabled
+      : Boolean(defaults.topHatSeparateColorEnabled);
+    params.topHatColor = normalizeHexColor(params.topHatColor)
+      ?? normalizeHexColor(defaults.topHatColor)
+      ?? normalizeHexColor(params.bodyColor)
+      ?? "#f8f9fa";
     params.topHatShoulderAngle = clampTopHatShoulderAngle(params.topHatShoulderAngle, defaults.topHatShoulderAngle ?? 45);
     if ("topHatInset" in defaults || "topHatInset" in params) {
       params.topHatInset = clampTopHatInset(params.topHatInset, params, defaults.topHatInset ?? 2.0);
@@ -1499,6 +1513,7 @@ function parseFullEditorDataPayload(payload) {
     ...pickEditorSelectors(defaults),
     ...selectors,
     ...params,
+    ...inferMissingTopHatColor(params),
     ...(legacyTopSurfaceShape == null ? {} : { topSurfaceShape: legacyTopSurfaceShape }),
     shapeProfile: rawProfileKey,
   };
@@ -1535,6 +1550,7 @@ function parseCompatibleEditorDataPayload(payload) {
     ...pickEditorSelectors(defaults),
     ...selectors,
     ...mergedInputParams,
+    ...inferMissingTopHatColor(mergedInputParams),
     ...(legacyTopSurfaceShape == null ? {} : { topSurfaceShape: legacyTopSurfaceShape }),
     shapeProfile: rawProfileKey,
   };

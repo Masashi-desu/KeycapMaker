@@ -723,6 +723,10 @@ test("トップハットはキートップから独立したカードで天面�
 
   assert.equal(topGroup.fieldKeys.includes("topHatEnabled"), false);
   assert.notEqual(topHatGroup, undefined);
+  assert.deepEqual(
+    topHatGroup.fieldKeys.slice(0, 3),
+    ["topHatEnabled", "topHatSeparateColorEnabled", "topHatColor"],
+  );
   const topWidthIndex = topHatGroup.fieldKeys.indexOf("topHatTopWidth");
   assert.notEqual(topWidthIndex, -1);
   assert.deepEqual(
@@ -733,6 +737,8 @@ test("トップハットはキートップから独立したカードで天面�
   assert.notEqual(jisTopHatGroup, undefined);
   assert.deepEqual(jisTopHatGroup.fieldKeys, [
     "topHatEnabled",
+    "topHatSeparateColorEnabled",
+    "topHatColor",
     "topHatSurfaceShape",
     "topHatDishDepth",
     "topHatInset",
@@ -976,6 +982,24 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
     topHatSurfaceShape: "spherical",
     topHatDishDepth: 0.8,
   });
+  const coloredTopHat = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topHatEnabled: true,
+    topHatSeparateColorEnabled: true,
+    topHatColor: "#123abc",
+  });
+  const fallbackColoredTopHat = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topHatEnabled: true,
+    topHatSeparateColorEnabled: "yes",
+    topHatColor: "not-a-color",
+  });
+  const missingColoredTopHat = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    bodyColor: "#cc3300",
+    topHatEnabled: true,
+    topHatSeparateColorEnabled: true,
+  });
   const jisEnterDefaults = createDefaultKeycapParams("jis-enter");
 
   assert.equal(wideTopHat.topHatEnabled, true);
@@ -1019,6 +1043,12 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
   assert.equal(curvedTopHat.topSurfaceShape, "flat");
   assert.equal(curvedTopHat.topHatSurfaceShape, "spherical");
   assert.equal(curvedTopHat.topHatDishDepth, 0.8);
+  assert.equal(coloredTopHat.topHatSeparateColorEnabled, true);
+  assert.equal(coloredTopHat.topHatColor, "#123abc");
+  assert.equal(fallbackColoredTopHat.topHatSeparateColorEnabled, false);
+  assert.equal(fallbackColoredTopHat.topHatColor, "#f8f9fa");
+  assert.equal(missingColoredTopHat.topHatSeparateColorEnabled, true);
+  assert.equal(missingColoredTopHat.topHatColor, "#cc3300");
   assert.equal(jisEnterDefaults.topHatSurfaceShape, "flat");
   assert.equal(jisEnterDefaults.topHatDishDepth, 0);
   assert.equal(jisEnterDefaults.topHatEnabled, false);
