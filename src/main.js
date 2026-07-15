@@ -50,7 +50,7 @@ import {
   DEFAULT_PROJECT_NAME,
   PROJECT_MANIFEST_FILENAME,
   assignProjectKeycapDisplayOrder,
-  createEmptyProjectState,
+  createProjectStateWithActiveKeycap,
   createProjectKeycapEntriesForSave,
   createProjectKeycapEntry,
   createProjectManifest,
@@ -2958,6 +2958,7 @@ function getShapeProfileVisibleFieldKeys(profileKey = DEFAULT_SHAPE_PROFILE_KEY)
 
 const initialLocale = getInitialLocale();
 const initialTheme = getInitialTheme();
+const initialKeycapParams = syncDerivedKeycapParams(createInitialKeycapParams());
 
 const state = {
   locale: initialLocale,
@@ -2968,7 +2969,9 @@ const state = {
   exportHistory: [],
   projectStatus: "idle",
   projectSummary: "",
-  project: createEmptyProjectState(),
+  project: createProjectStateWithActiveKeycap({
+    fallbackKeycapParams: initialKeycapParams,
+  }),
   keycapExportOverlayKeycapId: "",
   keycapDesignOverlayKeycapId: "",
   editorStatus: "idle",
@@ -2992,10 +2995,9 @@ const state = {
   copiedIconAttributionKey: "",
   collapsedFieldGroups: createFieldGroupCollapseState(),
   keyUnitMm: readKeyUnitMmPreference(),
-  keycapParams: createInitialKeycapParams(),
+  keycapParams: initialKeycapParams,
 };
 
-syncDerivedKeycapParams(state.keycapParams);
 applyDocumentLocale(state.locale);
 applyTheme(state.theme);
 
@@ -4143,6 +4145,7 @@ function renderKeycapExportOverlay() {
 }
 
 function renderKeycapDesignOverlay(overlayRoot, entry) {
+  const isOnlyProjectKeycap = state.project.keycaps.length <= 1;
   overlayRoot.innerHTML = `
     <div class="keycap-export-overlay" data-keycap-design-overlay role="presentation">
       <section
@@ -4175,11 +4178,12 @@ function renderKeycapDesignOverlay(overlayRoot, entry) {
                 <strong id="keycap-design-delete-title">${escapeHtml(t("project.deleteTitle"))}</strong>
               </span>
             </div>
-            <p class="export-action-card__text">${escapeHtml(t("project.deleteBody"))}</p>
+            <p class="export-action-card__text">${escapeHtml(t(isOnlyProjectKeycap ? "project.deleteLastBody" : "project.deleteBody"))}</p>
             <button
               class="export-save-button project-danger-button"
               type="button"
               data-keycap-delete="${escapeHtml(entry.id)}"
+              ${isOnlyProjectKeycap ? "disabled" : ""}
             >
               ${EXPORT_ICON_MARKUP.trash}
               <span>${escapeHtml(t("project.deleteAction"))}</span>
@@ -4208,28 +4212,26 @@ function renderProjectTab() {
         <section class="field-group-card project-card" aria-labelledby="project-name-title">
           <div class="field-group-header">
             <div class="field-group-card__header field-group-card__header--plain">
-              <span class="field-group-card__title-stack field-group-card__title-stack--solo">
+              <span class="field-group-card__title-stack">
                 <h3 id="project-name-title">${t("project.nameTitle")}</h3>
+                <p id="project-name-hint">${t("project.nameHint")}</p>
               </span>
             </div>
           </div>
           <div class="field-group-body">
-            <label class="field">
-              <span class="field-copy">
-                <span class="field-label">${t("project.nameLabel")}</span>
-                <span class="field-hint">${t("project.nameHint")}</span>
-              </span>
-              <span class="field-control">
-                <input
-                  type="text"
-                  data-project-name
-                  value="${escapeHtml(projectName)}"
-                  maxlength="80"
-                  spellcheck="false"
-                  autocomplete="off"
-                />
-              </span>
-            </label>
+            <span class="field-control name-field-control">
+              <input
+                id="project-name-input"
+                type="text"
+                data-project-name
+                value="${escapeHtml(projectName)}"
+                maxlength="80"
+                spellcheck="false"
+                autocomplete="off"
+                aria-labelledby="project-name-title"
+                aria-describedby="project-name-hint"
+              />
+            </span>
           </div>
         </section>
 
@@ -8516,7 +8518,24 @@ function refreshActiveProjectKeycapPreviewFromCurrent() {
   }
 
   const previewViewState = clonePreviewViewState(activeEntry.previewViewState) ?? captureCurrentPreviewViewState();
-  syncActiveProjectKeycapFromCurrent(captureCurrentProjectPreview({ previewViewState }));
+  const capturedPreview = captureCurrentProjectPreview({ previewViewState });
+  syncActiveProjectKeycapFromCurrent(capturedPreview);
+
+  const refreshedEntry = state.project.keycaps.find((entry) => entry.id === activeEntry.id) ?? activeEntry;
+  syncVisibleProjectKeycapPreviewImage(refreshedEntry);
+  return refreshedEntry;
+}
+
+function syncVisibleProjectKeycapPreviewImage(entry) {
+  const image = getProjectKeycapCardById(entry?.id)?.querySelector(".project-keycap-item__preview img");
+  if (!(image instanceof HTMLImageElement)) {
+    return;
+  }
+
+  const nextImageDataUrl = entry.previewImageDataUrl || createProjectPreviewPlaceholderDataUrl(entry.params);
+  if (image.getAttribute("src") !== nextImageDataUrl) {
+    image.setAttribute("src", nextImageDataUrl);
+  }
 }
 
 function drawFallbackPreviewThumbnail(context, canvas, thumbnailSize) {
@@ -8630,6 +8649,10 @@ async function applyProjectKeycapSelection(entryId) {
 }
 
 async function deleteProjectKeycap(entryId) {
+  if (state.project.keycaps.length <= 1) {
+    return;
+  }
+
   const entryIndex = state.project.keycaps.findIndex((item) => item.id === entryId);
   if (entryIndex === -1) {
     closeKeycapDesignOverlay();
@@ -9141,30 +9164,25 @@ async function importProjectDirectory(directoryHandle) {
     }));
   }
 
-  state.project = createEmptyProjectState({
+  const didCreateFallbackKeycap = keycaps.length === 0;
+  state.project = createProjectStateWithActiveKeycap({
     name: manifest.name,
     keycaps,
     activeKeycapId: manifest.activeKeycapId,
     directoryHandle,
-    isDirty: false,
+    isDirty: didCreateFallbackKeycap,
+    fallbackKeycapParams: state.keycapParams,
   });
-  const activeEntry = keycaps.find((entry) => entry.id === state.project.activeKeycapId) ?? keycaps[0] ?? null;
-  if (activeEntry) {
-    activateProjectKeycapEntry(activeEntry);
-  } else {
-    state.lastImportBindingReport = null;
-    state.isImportBindingNoticeCollapsed = false;
-  }
+  const activeEntry = state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId);
+  activateProjectKeycapEntry(activeEntry);
 
   state.sidebarTab = "project";
-  state.editorStatus = activeEntry ? "dirty" : state.editorStatus;
-  state.editorSummary = activeEntry ? t("status.loadedDirty") : state.editorSummary;
-  setProjectStatus("success", t("project.loaded", { name: state.project.name, count: keycaps.length }));
+  state.editorStatus = "dirty";
+  state.editorSummary = t("status.loadedDirty");
+  setProjectStatus("success", t("project.loaded", { name: state.project.name, count: state.project.keycaps.length }));
   render({ animateInspector: true });
 
-  if (activeEntry) {
-    await executeKeycapPreview({ silent: true });
-  }
+  await executeKeycapPreview({ silent: true, refreshActiveProjectPreview: didCreateFallbackKeycap });
 }
 
 function getDroppedFilePath(file) {
@@ -9232,30 +9250,25 @@ async function importProjectFiles(files, manifestFile) {
     }));
   }
 
-  state.project = createEmptyProjectState({
+  const didCreateFallbackKeycap = keycaps.length === 0;
+  state.project = createProjectStateWithActiveKeycap({
     name: manifest.name,
     keycaps,
     activeKeycapId: manifest.activeKeycapId,
     directoryHandle: null,
-    isDirty: false,
+    isDirty: didCreateFallbackKeycap,
+    fallbackKeycapParams: state.keycapParams,
   });
-  const activeEntry = keycaps.find((entry) => entry.id === state.project.activeKeycapId) ?? keycaps[0] ?? null;
-  if (activeEntry) {
-    activateProjectKeycapEntry(activeEntry);
-  } else {
-    state.lastImportBindingReport = null;
-    state.isImportBindingNoticeCollapsed = false;
-  }
+  const activeEntry = state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId);
+  activateProjectKeycapEntry(activeEntry);
 
   state.sidebarTab = "project";
-  state.editorStatus = activeEntry ? "dirty" : state.editorStatus;
-  state.editorSummary = activeEntry ? t("status.loadedDirty") : state.editorSummary;
-  setProjectStatus("success", t("project.loaded", { name: state.project.name, count: keycaps.length }));
+  state.editorStatus = "dirty";
+  state.editorSummary = t("status.loadedDirty");
+  setProjectStatus("success", t("project.loaded", { name: state.project.name, count: state.project.keycaps.length }));
   render({ animateInspector: true });
 
-  if (activeEntry) {
-    await executeKeycapPreview({ silent: true });
-  }
+  await executeKeycapPreview({ silent: true, refreshActiveProjectPreview: didCreateFallbackKeycap });
 }
 
 async function importProjectArchiveFile(file) {
@@ -9297,30 +9310,25 @@ async function importProjectArchiveFile(file) {
     }));
   }
 
-  state.project = createEmptyProjectState({
+  const didCreateFallbackKeycap = keycaps.length === 0;
+  state.project = createProjectStateWithActiveKeycap({
     name: manifest.name,
     keycaps,
     activeKeycapId: manifest.activeKeycapId,
     directoryHandle: null,
-    isDirty: false,
+    isDirty: didCreateFallbackKeycap,
+    fallbackKeycapParams: state.keycapParams,
   });
-  const activeEntry = keycaps.find((entry) => entry.id === state.project.activeKeycapId) ?? keycaps[0] ?? null;
-  if (activeEntry) {
-    activateProjectKeycapEntry(activeEntry);
-  } else {
-    state.lastImportBindingReport = null;
-    state.isImportBindingNoticeCollapsed = false;
-  }
+  const activeEntry = state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId);
+  activateProjectKeycapEntry(activeEntry);
 
   state.sidebarTab = "project";
-  state.editorStatus = activeEntry ? "dirty" : state.editorStatus;
-  state.editorSummary = activeEntry ? t("status.loadedDirty") : state.editorSummary;
-  setProjectStatus("success", t("project.loaded", { name: state.project.name, count: keycaps.length }));
+  state.editorStatus = "dirty";
+  state.editorSummary = t("status.loadedDirty");
+  setProjectStatus("success", t("project.loaded", { name: state.project.name, count: state.project.keycaps.length }));
   render({ animateInspector: true });
 
-  if (activeEntry) {
-    await executeKeycapPreview({ silent: true });
-  }
+  await executeKeycapPreview({ silent: true, refreshActiveProjectPreview: didCreateFallbackKeycap });
 }
 
 async function importEditorDataFromDrop(files) {
@@ -10430,6 +10438,7 @@ async function executeKeycapPreview(options = {}) {
   const { silent = false, refreshActiveProjectPreview = false } = options;
   const requestId = ++latestPreviewRequestId;
   const previewParams = { ...state.keycapParams };
+  let didGeneratePreview = false;
 
   state.editorStatus = "running";
   state.editorSummary = t("preview.running");
@@ -10473,6 +10482,7 @@ async function executeKeycapPreview(options = {}) {
       opacity: entry.opacity,
       mesh: entry.mesh,
     }));
+    didGeneratePreview = true;
   } catch (error) {
     if (requestId !== latestPreviewRequestId) {
       return;
@@ -10486,7 +10496,7 @@ async function executeKeycapPreview(options = {}) {
   }
 
   await renderPreviewViewer();
-  if (refreshActiveProjectPreview) {
+  if (didGeneratePreview && refreshActiveProjectPreview) {
     refreshActiveProjectKeycapPreviewFromCurrent();
   }
 }
@@ -10611,7 +10621,7 @@ initializeLegendIconProvidersFromCdn()
   .then((result) => {
     if (result?.status === "loaded" && result.isCdnActive) {
       render();
-      executeKeycapPreview({ silent: true });
+      executeKeycapPreview({ silent: true, refreshActiveProjectPreview: true });
     } else if (result?.error) {
       console.warn(result.error);
     }
@@ -10632,7 +10642,7 @@ if (typeof themePreferenceQuery?.addEventListener === "function") {
   themePreferenceQuery.addListener(handleSystemThemeChange);
 }
 
-executeKeycapPreview({ silent: true });
+executeKeycapPreview({ silent: true, refreshActiveProjectPreview: true });
 
 ensureColorisLoaded().catch((error) => {
   console.warn(error);

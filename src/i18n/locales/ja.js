@@ -111,6 +111,7 @@ const ja = Object.freeze({
     deleteChip: "削除",
     deleteTitle: "キーキャップを削除",
     deleteBody: "このキーキャップをプロジェクト一覧から削除します。",
+    deleteLastBody: "プロジェクトには1件以上のキーキャップが必要なため、このキーキャップは削除できません。",
     deleteAction: "削除",
     save: "プロジェクトを保存",
     edited: "プロジェクトを編集中",
