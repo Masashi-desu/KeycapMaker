@@ -1515,7 +1515,7 @@ function resolveTopEdgeHeights(params = {}) {
   const rollSlope = degTan(topRollDeg);
   const topSurfaceShape = params.topSurfaceShape ?? "flat";
   const rawDishDepth = Number(params.dishDepth ?? 0);
-  const activeDishDepth = topSurfaceShape === "flat" || !Number.isFinite(rawDishDepth) ? 0 : Math.max(rawDishDepth, 0);
+  const activeDishDepth = topSurfaceShape === "flat" || !Number.isFinite(rawDishDepth) ? 0 : rawDishDepth;
 
   return {
     topFrontHeight: geometry.topCenterHeight + geometry.topFront * pitchSlope,
@@ -1649,7 +1649,11 @@ function getKeycapShoulderRadiusHint(params) {
 }
 
 function getDishDepthHint(params) {
-  const values = { maxDepth: formatMillimeter(getDishDepthMax(params)) };
+  const maximum = getDishDepthMax(params);
+  const values = {
+    minDepth: formatMillimeter(-maximum),
+    maxDepth: formatMillimeter(maximum),
+  };
   if (params.topSurfaceShape === "cylindrical") {
     return t("fields.dishDepth.cylindricalHint", values);
   }
@@ -1662,7 +1666,11 @@ function getDishDepthHint(params) {
 }
 
 function getTopHatDishDepthHint(params) {
-  const values = { maxDepth: formatMillimeter(getTopHatDishDepthMax(params)) };
+  const maximum = getTopHatDishDepthMax(params);
+  const values = {
+    minDepth: formatMillimeter(-maximum),
+    maxDepth: formatMillimeter(maximum),
+  };
   if (params.topHatSurfaceShape === "cylindrical") {
     return t("fields.topHatDishDepth.cylindricalHint", values);
   }
@@ -2323,7 +2331,7 @@ const fieldGroupTemplates = [
         hint: (params) => getDishDepthHint(params),
         unit: "mm",
         step: 0.05,
-        min: 0,
+        min: (params) => -getDishDepthMax(params),
         max: (params) => getDishDepthMax(params),
         visibleWhen: (params) => params.topSurfaceShape !== "flat",
       },
@@ -2378,7 +2386,7 @@ const fieldGroupTemplates = [
         hint: (params) => getTopHatDishDepthHint(params),
         unit: "mm",
         step: 0.05,
-        min: 0,
+        min: (params) => -getTopHatDishDepthMax(params),
         max: (params) => getTopHatDishDepthMax(params),
         visibleWhen: (params) => params.topHatEnabled && params.topHatSurfaceShape !== "flat",
       },

@@ -102,8 +102,7 @@ const TOP_SCALE_MIN = 0.02;
 const TOP_SCALE_MAX = 1;
 const TOP_SCALE_STEP = 0.01;
 const TOP_SCALE_MIN_FACE_SIZE = 0.2;
-const DISH_DEPTH_STEP = 0.05;
-const DISH_REFERENCE_UNIT = 18;
+const DISH_DEPTH_MAX = 1.5;
 const TOP_THICKNESS_MIN = 0.05;
 const TOP_HAT_MIN_SIZE = 0.2;
 const TOP_HAT_MIN_HEIGHT = 0.05;
@@ -270,7 +269,7 @@ function resolveTopScaleMinimum(params = {}) {
   const topThickness = resolveTopThickness(params, defaults, geometryDefaults);
   const activeDishDepth = resolveActiveDishDepth({ ...defaults, ...params, shapeProfile: profileKey });
   const innerHeight = Math.max(
-    topCenterHeight - activeDishDepth - topThickness,
+    topCenterHeight - Math.max(activeDishDepth, 0) - topThickness,
     TOP_SCALE_MIN_FACE_SIZE,
   );
   const outerFaceMinimum = TOP_SCALE_MIN_FACE_SIZE / Math.max(Math.min(keyWidth, keyDepth), TOP_SCALE_MIN_FACE_SIZE);
@@ -298,55 +297,14 @@ function resolveTopScaleAngle(size, topCenterHeight, topScale) {
   return atanDeg(inset / Math.max(topCenterHeight, 0.1));
 }
 
-function resolveDishLimitTopFootprint(params = {}) {
-  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
-  const defaults = createDefaultKeycapParams(profileKey);
-  const geometryType = resolveShapeGeometryType(profileKey);
-  const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
-  const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
-  const topScale = isTypewriterGeometryType(geometryType)
-    ? 1
-    : clampBasicTopScale(params.topScale, defaults.topScale ?? 1);
-  const topWidth = isTypewriterGeometryType(geometryType) ? keyWidth : keyWidth * topScale;
-  const topDepth = isTypewriterGeometryType(geometryType) ? keyDepth : keyDepth * topScale;
-
-  return {
-    left: -topWidth / 2,
-    right: topWidth / 2,
-    front: -topDepth / 2,
-    back: topDepth / 2,
-    dishPlanWidth: keyWidth,
-    dishPlanDepth: keyDepth,
-  };
-}
-
-function dishAxisScale(size) {
-  return Math.max(Number(size) / DISH_REFERENCE_UNIT, 0.001);
-}
-
-function dishSagFromRadialSq(radialSq, dishRadius) {
-  const safeRadius = Math.max(Number(dishRadius ?? 45), 0.1);
-  const safeRadialSq = Math.min(Math.max(Number(radialSq) || 0, 0), safeRadius * safeRadius);
-  return safeRadius - Math.sqrt(Math.max((safeRadius * safeRadius) - safeRadialSq, 0));
-}
-
 export function getDishDepthMax(params = {}) {
   const topSurfaceShape = resolveProfileTopSurfaceShape(params.shapeProfile, params.topSurfaceShape, "flat");
-  if (topSurfaceShape === "flat") {
-    return 0;
-  }
-
-  const footprint = resolveDishLimitTopFootprint(params);
-  const xRadius = Math.max(Math.abs(footprint.left), Math.abs(footprint.right)) / dishAxisScale(footprint.dishPlanWidth);
-  const yRadius = Math.max(Math.abs(footprint.front), Math.abs(footprint.back)) / dishAxisScale(footprint.dishPlanDepth);
-  const radialSq = topSurfaceShape === "cylindrical"
-    ? xRadius * xRadius
-    : (xRadius * xRadius) + (yRadius * yRadius);
-  return floorToNumericStep(dishSagFromRadialSq(radialSq, params.dishRadius), DISH_DEPTH_STEP, 0);
+  return topSurfaceShape === "flat" ? 0 : DISH_DEPTH_MAX;
 }
 
 function clampDishDepth(value, params = {}, fallback = 0) {
-  return clampNumberRange(value, fallback, 0, getDishDepthMax(params));
+  const maximum = getDishDepthMax(params);
+  return clampNumberRange(value, fallback, -maximum, maximum);
 }
 
 function resolveTopSlopeInputMode(value, fallback = "angle") {
@@ -388,7 +346,7 @@ export function getTopSurfaceShapePreset(value, fallback = "flat") {
 
 function inferLegacyTopSurfaceShape(params = {}) {
   const dishDepth = Number(params.dishDepth ?? 0);
-  if (params.topSurfaceShape != null || !Number.isFinite(dishDepth) || dishDepth <= 0.001) {
+  if (params.topSurfaceShape != null || !Number.isFinite(dishDepth) || Math.abs(dishDepth) <= 0.001) {
     return null;
   }
 
@@ -409,7 +367,7 @@ function resolveActiveDishDepth(params = {}) {
 
   return resolveProfileTopSurfaceShape(params.shapeProfile, params.topSurfaceShape, "flat") === "flat"
     ? 0
-    : Math.max(dishDepth, 0);
+    : dishDepth;
 }
 
 function clampTypewriterCornerRadius(value, fallback = 0, params = {}) {
@@ -498,39 +456,14 @@ function getTopHatUsableFootprintLimits(params = {}) {
   };
 }
 
-function getTopHatSurfaceFootprint(params = {}) {
-  if (isJisEnterTopHatGeometry(params) && ("topHatInset" in params)) {
-    const limits = getTopHatFootprintLimits(params);
-    const inset = clampTopHatInset(params.topHatInset, params, params.topHatInset);
-    return {
-      width: Math.max(limits.width - inset * 2, TOP_HAT_MIN_SIZE),
-      depth: Math.max(limits.depth - inset * 2, TOP_HAT_MIN_SIZE),
-    };
-  }
-
-  return {
-    width: clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth),
-    depth: clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth),
-  };
-}
-
 export function getTopHatDishDepthMax(params = {}, topHatSurfaceShape = params.topHatSurfaceShape ?? "flat") {
   const resolvedShape = resolveTopSurfaceShape(topHatSurfaceShape, "flat");
-  if (resolvedShape === "flat") {
-    return 0;
-  }
-
-  const footprint = getTopHatSurfaceFootprint(params);
-  const xRadius = (footprint.width / 2) / dishAxisScale(footprint.width);
-  const yRadius = (footprint.depth / 2) / dishAxisScale(footprint.depth);
-  const radialSq = resolvedShape === "cylindrical"
-    ? xRadius * xRadius
-    : (xRadius * xRadius) + (yRadius * yRadius);
-  return floorToNumericStep(dishSagFromRadialSq(radialSq, params.dishRadius), DISH_DEPTH_STEP, 0);
+  return resolvedShape === "flat" ? 0 : DISH_DEPTH_MAX;
 }
 
 function clampTopHatDishDepth(value, params = {}, fallback = 0) {
-  return clampNumberRange(value, fallback, 0, getTopHatDishDepthMax(params));
+  const maximum = getTopHatDishDepthMax(params);
+  return clampNumberRange(value, fallback, -maximum, maximum);
 }
 
 function getJisEnterTopHatInsetMax(params = {}) {

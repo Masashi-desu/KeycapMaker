@@ -378,8 +378,8 @@ const ko = Object.freeze({
     },
     dishDepth: {
       label: "깊이",
-      cylindricalHint: "0 이상 현재 최댓값 {maxDepth} 이하로 한 방향의 오목함을 만듭니다.",
-      sphericalHint: "0 이상 현재 최댓값 {maxDepth} 이하로 그릇 모양의 오목함을 만듭니다.",
+      cylindricalHint: "현재 범위는 {minDepth}~{maxDepth}입니다. 양수는 한 방향으로 오목하게, 음수는 볼록하게 만듭니다.",
+      sphericalHint: "현재 범위는 {minDepth}~{maxDepth}입니다. 양수는 그릇 모양으로 오목하게, 음수는 구면으로 볼록하게 만듭니다.",
       flatHint: "평면에서는 적용되지 않습니다.",
     },
     topHatEnabled: {
@@ -400,8 +400,8 @@ const ko = Object.freeze({
     },
     topHatDishDepth: {
       label: "탑햇 깊이",
-      cylindricalHint: "0 이상 현재 최댓값 {maxDepth} 이하로 탑햇 상면에 한 방향의 오목함을 만듭니다.",
-      sphericalHint: "0 이상 현재 최댓값 {maxDepth} 이하로 탑햇 상면에 그릇 모양의 오목함을 만듭니다.",
+      cylindricalHint: "현재 범위는 {minDepth}~{maxDepth}입니다. 양수는 탑햇 상면을 한 방향으로 오목하게, 음수는 볼록하게 만듭니다.",
+      sphericalHint: "현재 범위는 {minDepth}~{maxDepth}입니다. 양수는 그릇 모양으로 오목하게, 음수는 구면으로 볼록하게 만듭니다.",
       flatHint: "평면에서는 적용되지 않습니다.",
     },
     topHatTopWidth: {

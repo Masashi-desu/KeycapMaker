@@ -378,8 +378,8 @@ const ja = Object.freeze({
     },
     dishDepth: {
       label: "深さ",
-      cylindricalHint: "0 以上、現在の最大 {maxDepth} までの値で一方向に凹ませます",
-      sphericalHint: "0 以上、現在の最大 {maxDepth} までの値で椀形に凹ませます",
+      cylindricalHint: "現在の範囲は {minDepth}〜{maxDepth} です。正値で一方向に凹み、負値で盛り上がります",
+      sphericalHint: "現在の範囲は {minDepth}〜{maxDepth} です。正値で椀形に凹み、負値で球面状に盛り上がります",
       flatHint: "フラットでは効きません",
     },
     topHatEnabled: {
@@ -400,8 +400,8 @@ const ja = Object.freeze({
     },
     topHatDishDepth: {
       label: "トップハットの深さ",
-      cylindricalHint: "0 以上、現在の最大 {maxDepth} までの値でトップハット上面を一方向に凹ませます",
-      sphericalHint: "0 以上、現在の最大 {maxDepth} までの値でトップハット上面を椀形に凹ませます",
+      cylindricalHint: "現在の範囲は {minDepth}〜{maxDepth} です。正値で一方向に凹み、負値で盛り上がります",
+      sphericalHint: "現在の範囲は {minDepth}〜{maxDepth} です。正値で椀形に凹み、負値で球面状に盛り上がります",
       flatHint: "フラットでは効きません",
     },
     topHatTopWidth: {

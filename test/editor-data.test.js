@@ -425,7 +425,7 @@ test("旧 dish 指定だけの入力は spherical として解釈する", () => 
   assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight - 0.8);
 });
 
-test("負の深さは 0 に丸めて盛り上がりとして扱わない", () => {
+test("負の深さは現在の曲面を反転して盛り上がりとして扱う", () => {
   const parsed = parseEditorDataPayload({
     shapeProfile: "custom-shell",
     topSurfaceShape: "cylindrical",
@@ -433,11 +433,15 @@ test("負の深さは 0 に丸めて盛り上がりとして扱わない", () =>
   });
 
   assert.equal(parsed.topSurfaceShape, "cylindrical");
-  assert.equal(parsed.dishDepth, 0);
-  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight);
+  assert.equal(parsed.dishDepth, -0.6);
+  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight + 0.6);
+
+  const reparsed = parseEditorDataPayload(createEditorDataPayload(parsed));
+  assert.equal(reparsed.topSurfaceShape, "cylindrical");
+  assert.equal(reparsed.dishDepth, -0.6);
 });
 
-test("深さはキートップ最高点を下げない範囲へ丸める", () => {
+test("曲面の深さは既定値を保ちつつ正負とも 1.5mm まで許容する", () => {
   const cylindrical = parseEditorDataPayload({
     shapeProfile: "custom-shell",
     topSurfaceShape: "cylindrical",
@@ -448,6 +452,16 @@ test("深さはキートップ最高点を下げない範囲へ丸める", () =>
     topSurfaceShape: "spherical",
     dishDepth: 1.45,
   });
+  const raisedCylindrical = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topSurfaceShape: "cylindrical",
+    dishDepth: -1.4,
+  });
+  const raisedSpherical = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topSurfaceShape: "spherical",
+    dishDepth: -1.45,
+  });
   const wideSpherical = parseEditorDataPayload({
     shapeProfile: "custom-shell",
     keyWidth: 36,
@@ -455,21 +469,35 @@ test("深さはキートップ最高点を下げない範囲へ丸める", () =>
     topSurfaceShape: "spherical",
     dishDepth: 1.45,
   });
+  const overMaximum = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topSurfaceShape: "cylindrical",
+    dishDepth: 2,
+  });
+  const belowMinimum = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topSurfaceShape: "spherical",
+    dishDepth: -2,
+  });
 
-  assert.equal(cylindrical.dishDepth, 0.5);
-  assert.equal(spherical.dishDepth, 1.0);
-  assert.equal(wideSpherical.dishDepth, 1.0);
+  assert.equal(cylindrical.dishDepth, 1.4);
+  assert.equal(spherical.dishDepth, 1.45);
+  assert.equal(raisedCylindrical.dishDepth, -1.4);
+  assert.equal(raisedSpherical.dishDepth, -1.45);
+  assert.equal(wideSpherical.dishDepth, 1.45);
+  assert.equal(overMaximum.dishDepth, 1.5);
+  assert.equal(belowMinimum.dishDepth, -1.5);
 });
 
-test("旧 dish 指定だけの負値は top shape を推測しない", () => {
+test("旧 dish 指定だけの負値も spherical の盛り上がりとして解釈する", () => {
   const parsed = parseEditorDataPayload({
     shapeProfile: "custom-shell",
     dishDepth: -0.6,
   });
 
-  assert.equal(parsed.topSurfaceShape, "flat");
-  assert.equal(parsed.dishDepth, 0);
-  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight);
+  assert.equal(parsed.topSurfaceShape, "spherical");
+  assert.equal(parsed.dishDepth, -0.6);
+  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight + 0.6);
 });
 
 test("typewriter は spherical top を受ける", () => {
@@ -481,12 +509,21 @@ test("typewriter は spherical top を受ける", () => {
 
   assert.equal(parsed.topSurfaceShape, "spherical");
   assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight - 0.8);
+
+  const raised = parseEditorDataPayload({
+    shapeProfile: "typewriter",
+    topSurfaceShape: "spherical",
+    dishDepth: -0.8,
+  });
+  assert.equal(raised.dishDepth, -0.8);
+  assert.equal(raised.topVisibleCenterHeight, raised.topCenterHeight + 0.8);
 });
 
 test("タイプライターJISエンターは spherical top と欠き込み寸法を受ける", () => {
   const parsed = parseEditorDataPayload({
     shapeProfile: "typewriter-jis-enter",
     topSurfaceShape: "spherical",
+    dishDepth: -0.8,
     keyWidth: 27,
     keyDepth: 36,
     jisEnterNotchWidth: 4.5,
@@ -495,6 +532,8 @@ test("タイプライターJISエンターは spherical top と欠き込み寸�
 
   assert.equal(parsed.shapeProfile, "typewriter-jis-enter");
   assert.equal(parsed.topSurfaceShape, "spherical");
+  assert.equal(parsed.dishDepth, -0.8);
+  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight + 0.8);
   assert.equal(parsed.jisEnterNotchWidth, 4.5);
   assert.equal(parsed.jisEnterNotchDepth, 18);
 });
@@ -982,6 +1021,12 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
     topHatSurfaceShape: "spherical",
     topHatDishDepth: 0.8,
   });
+  const raisedTopHat = parseEditorDataPayload({
+    shapeProfile: "custom-shell",
+    topHatEnabled: true,
+    topHatSurfaceShape: "spherical",
+    topHatDishDepth: -4,
+  });
   const coloredTopHat = parseEditorDataPayload({
     shapeProfile: "custom-shell",
     topHatEnabled: true,
@@ -1043,6 +1088,8 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
   assert.equal(curvedTopHat.topSurfaceShape, "flat");
   assert.equal(curvedTopHat.topHatSurfaceShape, "spherical");
   assert.equal(curvedTopHat.topHatDishDepth, 0.8);
+  assert.equal(raisedTopHat.topHatSurfaceShape, "spherical");
+  assert.equal(raisedTopHat.topHatDishDepth, -1.5);
   assert.equal(coloredTopHat.topHatSeparateColorEnabled, true);
   assert.equal(coloredTopHat.topHatColor, "#123abc");
   assert.equal(fallbackColoredTopHat.topHatSeparateColorEnabled, false);

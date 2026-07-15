@@ -155,7 +155,7 @@ top_corner_radii = top_corner_individual_enabled
 dish_radius = positive_dimension(required_param(user_dish_radius, "user_dish_radius"));
 requested_dish_depth = required_param(user_dish_depth, "user_dish_depth");
 requested_top_shape_type = is_undef(user_top_shape_type)
-    ? (requested_dish_depth > 0.001 ? "spherical" : "flat")
+    ? (abs(requested_dish_depth) > 0.001 ? "spherical" : "flat")
     : user_top_shape_type;
 top_shape_type = assert(
     supported_top_shape_type(requested_top_shape_type),
@@ -709,7 +709,8 @@ module keycap_top_legend_surface_volume(
     if (enabled && legend_has_content(label, content_type, icon_path) && total_height > 0) {
         center_x = anchor_x + offset_x;
         center_y = anchor_y + offset_y;
-        surface_fit_depth = keycap_dish_max_drop(active_top_shape_type, active_dish_depth) + 0.05;
+        surface_fit_drop = keycap_dish_max_drop(active_top_shape_type, active_dish_depth) + 0.05;
+        surface_fit_rise = keycap_dish_max_rise(active_top_shape_type, active_dish_depth);
         effective_surface_height = top_overlap > 0 && surface_height < 0
             ? top_overlap
             : surface_height + top_overlap;
@@ -721,12 +722,12 @@ module keycap_top_legend_surface_volume(
                 label = label,
                 width = width,
                 depth = depth,
-                height = effective_total_height + surface_fit_depth,
+                height = effective_total_height + surface_fit_drop + surface_fit_rise,
                 anchor_x = anchor_x,
                 anchor_y = anchor_y,
                 offset_x = offset_x,
                 offset_y = offset_y,
-                below_surface = below_surface + surface_fit_depth,
+                below_surface = below_surface + surface_fit_drop,
                 font_name = font_name,
                 underline_enabled = underline_enabled,
                 underline_width = underline_width,

@@ -187,6 +187,108 @@ module keycap_jis_enter_top_prism(
             );
 }
 
+// Preserve the JIS notch while extending each side region above the top plane.
+module keycap_jis_enter_top_tapered_prism(
+    left,
+    right,
+    front,
+    back,
+    notch_width,
+    notch_depth,
+    radius,
+    top_center_height,
+    pitch_deg = 0,
+    roll_deg = 0,
+    height = 1,
+    base_z = 0,
+    left_slope = 0,
+    right_slope = 0,
+    front_slope = 0,
+    back_slope = 0,
+    quality = "export",
+    top_offset_x = 0,
+    top_offset_y = 0,
+    corner_radii = undef
+) {
+    safe_notch_width = jis_enter_coord_notch_width(left, right, notch_width);
+    safe_notch_depth = jis_enter_coord_notch_depth(front, back, notch_depth);
+    notch_x = jis_enter_notch_x(left, right, safe_notch_width);
+    notch_y = jis_enter_notch_y(front, back, safe_notch_depth);
+    upper_corner_radii = is_undef(corner_radii)
+        ? undef
+        : [corner_radii[0], corner_radii[1], 0, corner_radii[3]];
+    lower_corner_radii = is_undef(corner_radii)
+        ? undef
+        : [0, 0, corner_radii[2], corner_radii[3]];
+
+    if (jis_enter_has_notch(left, right, front, back, safe_notch_width, safe_notch_depth)) {
+        union() {
+            keycap_top_tapered_prism(
+                left = left,
+                right = right,
+                front = notch_y,
+                back = back,
+                radius = radius,
+                top_center_height = top_center_height,
+                pitch_deg = pitch_deg,
+                roll_deg = roll_deg,
+                height = height,
+                base_z = base_z,
+                left_slope = left_slope,
+                right_slope = right_slope,
+                front_slope = front_slope,
+                back_slope = back_slope,
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y,
+                corner_radii = upper_corner_radii
+            );
+
+            keycap_top_tapered_prism(
+                left = notch_x,
+                right = right,
+                front = front,
+                back = back,
+                radius = radius,
+                top_center_height = top_center_height,
+                pitch_deg = pitch_deg,
+                roll_deg = roll_deg,
+                height = height,
+                base_z = base_z,
+                left_slope = left_slope,
+                right_slope = right_slope,
+                front_slope = front_slope,
+                back_slope = back_slope,
+                quality = quality,
+                top_offset_x = top_offset_x,
+                top_offset_y = top_offset_y,
+                corner_radii = lower_corner_radii
+            );
+        }
+    } else {
+        keycap_top_tapered_prism(
+            left = left,
+            right = right,
+            front = front,
+            back = back,
+            radius = radius,
+            top_center_height = top_center_height,
+            pitch_deg = pitch_deg,
+            roll_deg = roll_deg,
+            height = height,
+            base_z = base_z,
+            left_slope = left_slope,
+            right_slope = right_slope,
+            front_slope = front_slope,
+            back_slope = back_slope,
+            quality = quality,
+            top_offset_x = top_offset_x,
+            top_offset_y = top_offset_y,
+            corner_radii = corner_radii
+        );
+    }
+}
+
 module keycap_jis_enter_selective_rounded_rect(
     left,
     right,
@@ -443,6 +545,7 @@ module keycap_jis_enter_top_hat_cap(
         ? 0
         : min(safe_shoulder_radius / shoulder_radius_limit, 1) * (shoulder_radius < 0 ? -1 : 1);
     shoulder_steps = keycap_top_hat_shoulder_curve_steps(safe_shoulder_radius, quality);
+    bump_side_slope = safe_height <= 0.001 ? 0 : actual_outset / safe_height;
     join_overlap = 0.05;
     base_z = height < 0 ? join_overlap : -join_overlap;
     top_z = height < 0 ? -safe_height : safe_height;
@@ -471,13 +574,15 @@ module keycap_jis_enter_top_hat_cap(
     if (safe_height > 0.001 && inset_limit > 0.001) {
         keycap_top_plane_transform(top_center_height, pitch_deg, roll_deg, top_offset_x, top_offset_y)
             translate([0, 0, surface_z_shift])
-                keycap_apply_top_surface(
+                keycap_jis_enter_apply_top_surface(
                     width = right - left,
                     depth = back - front,
                     top_left = top_hat_top_left,
                     top_right = top_hat_top_right,
                     top_front = top_hat_top_front,
                     top_back = top_hat_top_back,
+                    notch_width = notch_width,
+                    notch_depth = notch_depth,
                     top_radius = safe_top_radius,
                     top_center_height = top_z,
                     dish_type = safe_top_shape_type,
@@ -490,6 +595,10 @@ module keycap_jis_enter_top_hat_cap(
                     dish_start_front = top_hat_top_front,
                     dish_start_back = top_hat_top_back,
                     quality = quality,
+                    bump_left_slope = bump_side_slope,
+                    bump_right_slope = bump_side_slope,
+                    bump_front_slope = bump_side_slope,
+                    bump_back_slope = bump_side_slope,
                     top_corner_radii = safe_top_corner_radii
                 )
                     keycap_jis_enter_top_hat_cap_shape(
@@ -554,13 +663,12 @@ module keycap_jis_enter_rect_outer_shell(
         shoulder_steps = keycap_top_hat_shoulder_curve_steps(safe_shoulder_radius, quality);
         top_width = max(top_right - top_left, 0.2);
         top_depth = max(top_back - top_front, 0.2);
-        top_edge_inset_limit = max(min((top_width - 0.2) / 2, (top_depth - 0.2) / 2), 0);
-        top_edge_radius_limit = max(min(top_center_height, shoulder_outset), 0);
-        top_edge_unit_inset = keycap_top_edge_top_inset(1, top_center_height, shoulder_outset);
-        effective_top_edge_radius = min(
-            max(top_edge_radius, 0),
-            top_edge_radius_limit,
-            top_edge_unit_inset <= 0.001 ? 0 : top_edge_inset_limit / top_edge_unit_inset
+        effective_top_edge_radius = keycap_top_edge_effective_radius(
+            top_edge_radius,
+            top_center_height,
+            shoulder_outset,
+            top_width,
+            top_depth
         );
         top_edge_side_drop = keycap_top_edge_side_drop(effective_top_edge_radius, top_center_height, shoulder_outset);
         top_edge_top_inset = keycap_top_edge_top_inset(effective_top_edge_radius, top_center_height, shoulder_outset);
@@ -816,10 +924,23 @@ module keycap_jis_enter_dish_bump(
     surface_z_shift = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    dish_plan_width = undef,
+    dish_plan_depth = undef,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef,
+    bump_left_slope = 0,
+    bump_right_slope = 0,
+    bump_front_slope = 0,
+    bump_back_slope = 0,
+    top_corner_radii = undef
 ) {
     if (keycap_dish_is_active(dish_type, dish_depth) && dish_depth < 0) {
-        bump_clip_height = max(abs(dish_depth) + max(dish_radius, 0.1) + 2, 2);
+        bump_clip_height = abs(dish_depth) + 0.05;
+        resolved_dish_plan_width = is_undef(dish_plan_width) ? width : dish_plan_width;
+        resolved_dish_plan_depth = is_undef(dish_plan_depth) ? depth : dish_plan_depth;
 
         intersection() {
             keycap_dish_volume(
@@ -832,14 +953,18 @@ module keycap_jis_enter_dish_bump(
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 z_shift = surface_z_shift,
-                dish_plan_width = width,
-                dish_plan_depth = depth,
+                dish_plan_width = resolved_dish_plan_width,
+                dish_plan_depth = resolved_dish_plan_depth,
+                dish_start_left = dish_start_left,
+                dish_start_right = dish_start_right,
+                dish_start_front = dish_start_front,
+                dish_start_back = dish_start_back,
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y
             );
 
-            keycap_jis_enter_top_prism(
+            keycap_jis_enter_top_tapered_prism(
                 left = top_left,
                 right = top_right,
                 front = top_front,
@@ -851,9 +976,15 @@ module keycap_jis_enter_dish_bump(
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 height = bump_clip_height,
+                base_z = surface_z_shift,
+                left_slope = bump_left_slope,
+                right_slope = bump_right_slope,
+                front_slope = bump_front_slope,
+                back_slope = bump_back_slope,
                 quality = quality,
                 top_offset_x = top_offset_x,
-                top_offset_y = top_offset_y
+                top_offset_y = top_offset_y,
+                corner_radii = top_corner_radii
             );
         }
     }
@@ -878,8 +1009,26 @@ module keycap_jis_enter_apply_top_surface(
     surface_z_shift = 0,
     quality = "export",
     top_offset_x = 0,
-    top_offset_y = 0
+    top_offset_y = 0,
+    dish_plan_width = undef,
+    dish_plan_depth = undef,
+    dish_start_left = undef,
+    dish_start_right = undef,
+    dish_start_front = undef,
+    dish_start_back = undef,
+    bump_left_slope = 0,
+    bump_right_slope = 0,
+    bump_front_slope = 0,
+    bump_back_slope = 0,
+    top_corner_radii = undef
 ) {
+    resolved_dish_plan_width = is_undef(dish_plan_width) ? width : dish_plan_width;
+    resolved_dish_plan_depth = is_undef(dish_plan_depth) ? depth : dish_plan_depth;
+    resolved_dish_start_left = is_undef(dish_start_left) ? top_left : dish_start_left;
+    resolved_dish_start_right = is_undef(dish_start_right) ? top_right : dish_start_right;
+    resolved_dish_start_front = is_undef(dish_start_front) ? top_front : dish_start_front;
+    resolved_dish_start_back = is_undef(dish_start_back) ? top_back : dish_start_back;
+
     if (!keycap_dish_is_active(dish_type, dish_depth)) {
         children();
     } else if (dish_depth > 0) {
@@ -895,12 +1044,12 @@ module keycap_jis_enter_apply_top_surface(
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 surface_z_shift = surface_z_shift,
-                dish_plan_width = width,
-                dish_plan_depth = depth,
-                dish_start_left = top_left,
-                dish_start_right = top_right,
-                dish_start_front = top_front,
-                dish_start_back = top_back,
+                dish_plan_width = resolved_dish_plan_width,
+                dish_plan_depth = resolved_dish_plan_depth,
+                dish_start_left = resolved_dish_start_left,
+                dish_start_right = resolved_dish_start_right,
+                dish_start_front = resolved_dish_start_front,
+                dish_start_back = resolved_dish_start_back,
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y
@@ -928,7 +1077,18 @@ module keycap_jis_enter_apply_top_surface(
                 surface_z_shift = surface_z_shift,
                 quality = quality,
                 top_offset_x = top_offset_x,
-                top_offset_y = top_offset_y
+                top_offset_y = top_offset_y,
+                dish_plan_width = resolved_dish_plan_width,
+                dish_plan_depth = resolved_dish_plan_depth,
+                dish_start_left = resolved_dish_start_left,
+                dish_start_right = resolved_dish_start_right,
+                dish_start_front = resolved_dish_start_front,
+                dish_start_back = resolved_dish_start_back,
+                bump_left_slope = bump_left_slope,
+                bump_right_slope = bump_right_slope,
+                bump_front_slope = bump_front_slope,
+                bump_back_slope = bump_back_slope,
+                top_corner_radii = top_corner_radii
             );
         }
     }
@@ -1147,23 +1307,53 @@ module keycap_jis_enter_shell(
     top_right = base_right - top_center_height * tan(right_angle);
     top_front = base_front + top_center_height * tan(front_angle);
     top_back = base_back - top_center_height * tan(back_angle);
+    top_notch_x = jis_enter_notch_x(base_left, base_right, safe_notch_width)
+        + top_center_height * tan(left_angle);
+    top_notch_y = jis_enter_notch_y(base_front, base_back, safe_notch_depth)
+        + top_center_height * tan(front_angle);
+    shoulder_outset = max(min(
+        max(top_left - base_left, 0),
+        max(base_right - top_right, 0),
+        max(top_front - base_front, 0),
+        max(base_back - top_back, 0)
+    ), 0);
+    top_surface_inset = keycap_top_edge_surface_inset(
+        keycap_edge_radius,
+        top_center_height,
+        shoulder_outset,
+        max(top_right - top_notch_x, 0.2),
+        max(top_back - top_notch_y, 0.2)
+    );
+    surface_top_left = top_left + top_surface_inset;
+    surface_top_right = top_right - top_surface_inset;
+    surface_top_front = top_front + top_surface_inset;
+    surface_top_back = top_back - top_surface_inset;
+    surface_top_radius = max(top_corner_radius - top_surface_inset, 0);
 
     difference() {
         union() {
             keycap_jis_enter_apply_top_surface(
                 width = safe_width,
                 depth = safe_depth,
-                top_left = top_left,
-                top_right = top_right,
-                top_front = top_front,
-                top_back = top_back,
+                top_left = surface_top_left,
+                top_right = surface_top_right,
+                top_front = surface_top_front,
+                top_back = surface_top_back,
                 notch_width = safe_notch_width,
                 notch_depth = safe_notch_depth,
-                top_radius = top_corner_radius,
+                top_radius = surface_top_radius,
                 top_center_height = top_center_height,
                 dish_type = top_shape_type,
                 dish_depth = dish_depth,
                 dish_radius = dish_radius,
+                dish_start_left = top_left,
+                dish_start_right = top_right,
+                dish_start_front = top_front,
+                dish_start_back = top_back,
+                bump_left_slope = tan(left_angle),
+                bump_right_slope = tan(right_angle),
+                bump_front_slope = tan(front_angle),
+                bump_back_slope = tan(back_angle),
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 quality = quality,
@@ -1466,6 +1656,7 @@ module keycap_jis_enter_typewriter_dish_bump(
                 pitch_deg = pitch_deg,
                 roll_deg = roll_deg,
                 height = bump_clip_height,
+                base_z = surface_z_shift,
                 quality = quality,
                 top_offset_x = top_offset_x,
                 top_offset_y = top_offset_y
