@@ -12,6 +12,7 @@ import {
   createProjectKeycapEntry,
   createProjectManifest,
   createProjectPreviewPlaceholderDataUrl,
+  createProjectStateWithActiveKeycap,
   findProjectManifestPath,
   getProjectAssetMimeType,
   getProjectPreviewImageExtension,
@@ -60,6 +61,39 @@ test("現在のキーキャップからプロジェクト内キーキャップ�
     targetScale: [0, 0, 0],
     viewOffsetRatio: [0.1, -0.2],
   });
+});
+
+test("プロジェクトが空の場合はキーキャップを1件作成して active にする", () => {
+  const params = {
+    ...createDefaultKeycapParams("custom-shell"),
+    name: "Initial",
+  };
+  const project = createProjectStateWithActiveKeycap({
+    fallbackKeycapParams: params,
+  });
+
+  assert.equal(project.keycaps.length, 1);
+  assert.equal(project.keycaps[0].name, "Initial");
+  assert.equal(project.activeKeycapId, project.keycaps[0].id);
+});
+
+test("プロジェクトにキーキャップがある場合は先頭を active の fallback にする", () => {
+  const params = createDefaultKeycapParams("custom-shell");
+  const laterEntry = createProjectKeycapEntry(params, {
+    id: "keycap-later",
+    displayOrder: 2,
+  });
+  const firstEntry = createProjectKeycapEntry(params, {
+    id: "keycap-first",
+    displayOrder: 1,
+  });
+  const project = createProjectStateWithActiveKeycap({
+    keycaps: [laterEntry, firstEntry],
+    activeKeycapId: "keycap-missing",
+  });
+
+  assert.deepEqual(project.keycaps.map((entry) => entry.id), ["keycap-first", "keycap-later"]);
+  assert.equal(project.activeKeycapId, "keycap-first");
 });
 
 test("プロジェクト manifest を作成し、読み戻せる", () => {

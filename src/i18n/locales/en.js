@@ -111,6 +111,7 @@ const en = Object.freeze({
     deleteChip: "Delete",
     deleteTitle: "Delete Keycap",
     deleteBody: "Remove this keycap from the project list.",
+    deleteLastBody: "This keycap cannot be deleted because a project must contain at least one keycap.",
     deleteAction: "Delete",
     save: "Save Project",
     edited: "Project is being edited",

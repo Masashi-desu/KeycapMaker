@@ -111,6 +111,7 @@ const zh = Object.freeze({
     deleteChip: "删除",
     deleteTitle: "删除键帽",
     deleteBody: "将此键帽从项目列表中删除。",
+    deleteLastBody: "项目必须至少包含一个键帽，因此无法删除此键帽。",
     deleteAction: "删除",
     save: "保存项目",
     edited: "正在编辑项目",

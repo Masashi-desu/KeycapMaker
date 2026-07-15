@@ -111,6 +111,7 @@ const ko = Object.freeze({
     deleteChip: "삭제",
     deleteTitle: "키캡 삭제",
     deleteBody: "이 키캡을 프로젝트 목록에서 삭제합니다.",
+    deleteLastBody: "프로젝트에는 키캡이 하나 이상 있어야 하므로 이 키캡은 삭제할 수 없습니다.",
     deleteAction: "삭제",
     save: "프로젝트 저장",
     edited: "프로젝트 편집 중",

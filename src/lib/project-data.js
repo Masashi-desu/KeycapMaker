@@ -274,6 +274,19 @@ export function createEmptyProjectState(options = {}) {
   };
 }
 
+export function createProjectStateWithActiveKeycap(options = {}) {
+  const sourceKeycaps = Array.isArray(options.keycaps) ? options.keycaps : [];
+  const keycaps = sourceKeycaps.length > 0
+    ? sourceKeycaps
+    : [createProjectKeycapEntry(options.fallbackKeycapParams, options.fallbackKeycapOptions)];
+  const project = createEmptyProjectState({
+    ...options,
+    keycaps,
+  });
+  project.activeKeycapId ||= project.keycaps[0].id;
+  return project;
+}
+
 export function createProjectManifest(project = {}, savedAt = new Date().toISOString()) {
   const keycaps = assignProjectKeycapDisplayOrder(Array.isArray(project.keycaps) ? project.keycaps : []);
   const activeKeycapId = keycaps.some((entry) => entry.id === project.activeKeycapId)

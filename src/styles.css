@@ -3421,6 +3421,12 @@ pre {
   background: #762c26;
 }
 
+.project-danger-button:disabled,
+.project-danger-button:disabled:hover {
+  cursor: not-allowed;
+  background: color-mix(in srgb, #8f352d 48%, var(--action-fill) 52%);
+}
+
 .note-card--neutral:last-child {
   margin-bottom: 2px;
 }
