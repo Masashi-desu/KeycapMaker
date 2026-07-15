@@ -523,51 +523,7 @@ test("J-STEM-LP01 の受け座SCADを bundle し、stemType を wrapper へ渡�
   }
 });
 
-test("dishDepth の負値は SCAD wrapper と base で 0 に丸める", async () => {
-  const restoreBrowserMocks = installBrowserMocks({
-    width: 120,
-    actualBoundingBoxLeft: 60,
-    actualBoundingBoxRight: 60,
-    actualBoundingBoxAscent: 50,
-    actualBoundingBoxDescent: 30,
-  });
-  const server = await createServer({
-    root: PROJECT_ROOT,
-    appType: "custom",
-    logLevel: "silent",
-    server: {
-      middlewareMode: true,
-    },
-  });
-
-  try {
-    const [bundle, registry] = await Promise.all([
-      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
-      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
-    ]);
-    const files = await bundle.createKeycapFiles({
-      exportTarget: "preview",
-      params: {
-        ...registry.createDefaultKeycapParams("custom-shell"),
-        topSurfaceShape: "spherical",
-        dishDepth: -1.2,
-      },
-    });
-    const jobScad = files.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
-    const baseScad = files.find((file) => file.path === bundle.KEYCAP_ENTRY_PATH)?.content;
-
-    assert.ok(jobScad, "keycap job SCAD should be generated");
-    assert.ok(baseScad, "keycap base SCAD should be included");
-    assert.equal(readRawScadDefinition(jobScad, "user_top_shape_type"), "\"spherical\"");
-    assert.equal(readScadDefinition(jobScad, "user_dish_depth"), 0);
-    assert.match(baseScad, /keycap_clamp_dish_depth\(/);
-  } finally {
-    await server.close();
-    restoreBrowserMocks();
-  }
-});
-
-test("過大な dishDepth は SCAD wrapper でキートップ最高点を下げない範囲へ丸める", async () => {
+test("dishDepth の負値は cylindrical / spherical の盛り上がりとして SCAD へ渡す", async () => {
   const restoreBrowserMocks = installBrowserMocks({
     width: 120,
     actualBoundingBoxLeft: 60,
@@ -594,7 +550,7 @@ test("過大な dishDepth は SCAD wrapper でキートップ最高点を下げ�
       params: {
         ...registry.createDefaultKeycapParams("custom-shell"),
         topSurfaceShape: "cylindrical",
-        dishDepth: 1.4,
+        dishDepth: -1.2,
       },
     });
     const sphericalFiles = await bundle.createKeycapFiles({
@@ -602,7 +558,79 @@ test("過大な dishDepth は SCAD wrapper でキートップ最高点を下げ�
       params: {
         ...registry.createDefaultKeycapParams("custom-shell"),
         topSurfaceShape: "spherical",
-        dishDepth: 1.45,
+        dishDepth: -1.2,
+      },
+    });
+    const cylindricalJobScad = cylindricalFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const sphericalJobScad = sphericalFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const baseScad = sphericalFiles.find((file) => file.path === bundle.KEYCAP_ENTRY_PATH)?.content;
+    const shellScad = sphericalFiles.find((file) => file.path === "/scad/modules/keycap_shell.scad")?.content;
+    const jisEnterScad = sphericalFiles.find((file) => file.path === "/scad/modules/keycap_jis_enter.scad")?.content;
+
+    assert.ok(cylindricalJobScad, "cylindrical keycap job SCAD should be generated");
+    assert.ok(sphericalJobScad, "spherical keycap job SCAD should be generated");
+    assert.ok(baseScad, "keycap base SCAD should be included");
+    assert.ok(shellScad, "keycap shell module should be included");
+    assert.ok(jisEnterScad, "JIS Enter module should be included");
+    assert.equal(readRawScadDefinition(cylindricalJobScad, "user_top_shape_type"), "\"cylindrical\"");
+    assert.equal(readScadDefinition(cylindricalJobScad, "user_dish_depth"), -1.2);
+    assert.equal(readRawScadDefinition(sphericalJobScad, "user_top_shape_type"), "\"spherical\"");
+    assert.equal(readScadDefinition(sphericalJobScad, "user_dish_depth"), -1.2);
+    assert.match(baseScad, /keycap_clamp_dish_depth\(/);
+    assert.match(baseScad, /abs\(requested_dish_depth\) > 0\.001 \? "spherical" : "flat"/);
+    assert.match(shellScad, /min\(max\(dish_depth, -depth_limit\), depth_limit\)/);
+    assert.match(shellScad, /dish_type == "flat"[\s\S]*\? 0[\s\S]*: 1\.5;/);
+    assert.match(shellScad, /top_center_height - max\(dish_depth, 0\) - top_thickness/);
+    assert.match(shellScad, /base_z = surface_z_shift/);
+    assert.match(shellScad, /module keycap_top_tapered_prism\(/);
+    assert.match(shellScad, /bump_clip_height = abs\(dish_depth\) \+ 0\.05;/);
+    assert.match(shellScad, /bump_front_slope = tan\(front_angle\)/);
+    assert.match(jisEnterScad, /dish_start_left = top_left[\s\S]*dish_start_back = top_back/);
+    assert.match(jisEnterScad, /module keycap_jis_enter_top_tapered_prism\(/);
+    assert.match(jisEnterScad, /bump_front_slope = tan\(front_angle\)/);
+    assert.match(jisEnterScad, /base_z = surface_z_shift/);
+  } finally {
+    await server.close();
+    restoreBrowserMocks();
+  }
+});
+
+test("過大な dishDepth は SCAD wrapper で正負 1.5mm の範囲へ丸める", async () => {
+  const restoreBrowserMocks = installBrowserMocks({
+    width: 120,
+    actualBoundingBoxLeft: 60,
+    actualBoundingBoxRight: 60,
+    actualBoundingBoxAscent: 50,
+    actualBoundingBoxDescent: 30,
+  });
+  const server = await createServer({
+    root: PROJECT_ROOT,
+    appType: "custom",
+    logLevel: "silent",
+    server: {
+      middlewareMode: true,
+    },
+  });
+
+  try {
+    const [bundle, registry] = await Promise.all([
+      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
+      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
+    ]);
+    const cylindricalFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topSurfaceShape: "cylindrical",
+        dishDepth: 2,
+      },
+    });
+    const sphericalFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topSurfaceShape: "spherical",
+        dishDepth: 2,
       },
     });
     const cylindricalJobScad = cylindricalFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
@@ -610,8 +638,8 @@ test("過大な dishDepth は SCAD wrapper でキートップ最高点を下げ�
 
     assert.ok(cylindricalJobScad, "cylindrical keycap job SCAD should be generated");
     assert.ok(sphericalJobScad, "spherical keycap job SCAD should be generated");
-    assert.equal(readScadDefinition(cylindricalJobScad, "user_dish_depth"), 0.5);
-    assert.equal(readScadDefinition(sphericalJobScad, "user_dish_depth"), 1.0);
+    assert.equal(readScadDefinition(cylindricalJobScad, "user_dish_depth"), 1.5);
+    assert.equal(readScadDefinition(sphericalJobScad, "user_dish_depth"), 1.5);
   } finally {
     await server.close();
     restoreBrowserMocks();
@@ -657,10 +685,12 @@ test("深い dish でもキートップ印字の曲面追従領域を確保す�
     assert.match(shellScad, /dish_z_scale = max\(abs\(dish_depth\), 0\.001\) \/ start_sag;/);
     assert.match(shellScad, /dish_start_left = resolved_dish_start_left/);
     assert.match(shellScad, /function keycap_dish_max_drop\(dish_type, dish_depth\)/);
+    assert.match(shellScad, /function keycap_dish_max_rise\(dish_type, dish_depth\)/);
     assert.match(shellScad, /module keycap_top_surface_band/);
-    assert.match(baseScad, /surface_fit_depth = keycap_dish_max_drop\(active_top_shape_type, active_dish_depth\) \+ 0\.05;/);
-    assert.match(baseScad, /height = effective_total_height \+ surface_fit_depth/);
-    assert.match(baseScad, /below_surface = below_surface \+ surface_fit_depth/);
+    assert.match(baseScad, /surface_fit_drop = keycap_dish_max_drop\(active_top_shape_type, active_dish_depth\) \+ 0\.05;/);
+    assert.match(baseScad, /surface_fit_rise = keycap_dish_max_rise\(active_top_shape_type, active_dish_depth\);/);
+    assert.match(baseScad, /height = effective_total_height \+ surface_fit_drop \+ surface_fit_rise/);
+    assert.match(baseScad, /below_surface = below_surface \+ surface_fit_drop/);
     assert.match(baseScad, /keycap_top_surface_band\(/);
   } finally {
     await server.close();
@@ -1305,6 +1335,15 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
         topHatShoulderRadius: -0.4,
       },
     });
+    const raisedTopHatFiles = await bundle.createKeycapFiles({
+      exportTarget: "preview",
+      params: {
+        ...registry.createDefaultKeycapParams("custom-shell"),
+        topHatEnabled: true,
+        topHatSurfaceShape: "spherical",
+        topHatDishDepth: -4,
+      },
+    });
     const jisFiles = await bundle.createKeycapFiles({
       exportTarget: "preview",
       params: {
@@ -1330,11 +1369,13 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
     });
     const customJobScad = customFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
     const recessedJobScad = recessedFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
+    const raisedTopHatJobScad = raisedTopHatFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
     const jisJobScad = jisFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
     const topHatTargetJobScad = topHatTargetFiles.find((file) => file.path === bundle.KEYCAP_JOB_PATH)?.content;
 
     assert.ok(customJobScad, "custom shell job SCAD should be generated");
     assert.ok(recessedJobScad, "custom shell recessed top-hat job SCAD should be generated");
+    assert.ok(raisedTopHatJobScad, "custom shell raised top-hat job SCAD should be generated");
     assert.ok(jisJobScad, "JIS Enter job SCAD should be generated");
     assert.ok(topHatTargetJobScad, "top-hat target job SCAD should be generated");
     assert.equal(readRawScadDefinition(topHatTargetJobScad, "export_target"), "\"top_hat\"");
@@ -1361,6 +1402,8 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
     assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_shoulder_radius"), -0.4);
     assert.equal(readRawScadDefinition(recessedJobScad, "user_top_hat_shape_type"), "\"flat\"");
     assert.equal(readScadDefinition(recessedJobScad, "user_top_hat_dish_depth"), 0);
+    assert.equal(readRawScadDefinition(raisedTopHatJobScad, "user_top_hat_shape_type"), "\"spherical\"");
+    assert.equal(readScadDefinition(raisedTopHatJobScad, "user_top_hat_dish_depth"), -1.5);
     assert.match(jisJobScad, /^user_shape_geometry_type = "jis_enter";/m);
     assert.match(jisJobScad, /^user_top_hat_enabled = true;/m);
     assert.equal(readScadDefinition(jisJobScad, "user_top_hat_inset"), 2.2);

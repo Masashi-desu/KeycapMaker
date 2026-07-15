@@ -378,8 +378,8 @@ const zh = Object.freeze({
     },
     dishDepth: {
       label: "深度",
-      cylindricalHint: "使用 0 到当前最大值 {maxDepth} 的值形成单方向凹陷。",
-      sphericalHint: "使用 0 到当前最大值 {maxDepth} 的值形成碗状凹陷。",
+      cylindricalHint: "当前范围为 {minDepth} 至 {maxDepth}。正值形成单方向凹陷，负值形成凸起。",
+      sphericalHint: "当前范围为 {minDepth} 至 {maxDepth}。正值形成碗状凹陷，负值形成球面凸起。",
       flatHint: "平面时此项不起作用。",
     },
     topHatEnabled: {
@@ -400,8 +400,8 @@ const zh = Object.freeze({
     },
     topHatDishDepth: {
       label: "Top Hat 深度",
-      cylindricalHint: "使用 0 到当前最大值 {maxDepth} 的值，让 top hat 上表面形成单方向凹陷。",
-      sphericalHint: "使用 0 到当前最大值 {maxDepth} 的值，让 top hat 上表面形成碗状凹陷。",
+      cylindricalHint: "当前范围为 {minDepth} 至 {maxDepth}。正值让 top hat 上表面形成单方向凹陷，负值形成凸起。",
+      sphericalHint: "当前范围为 {minDepth} 至 {maxDepth}。正值形成碗状凹陷，负值形成球面凸起。",
       flatHint: "平面时此项不起作用。",
     },
     topHatTopWidth: {

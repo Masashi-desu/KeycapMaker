@@ -39,6 +39,7 @@
 - `samples/keycap-stem-clip.scad`: 強い左右傾斜でも stem が内側天井で止まるか確認するサンプル
 - `samples/keycap-j-stem-lp01.scad`: J-STEM-LP01 受け座の裏側掘り込み確認用サンプル
 - `samples/keycap-surface-quality.scad`: 角丸、dish、stem 外周の曲面品質をまとめて確認するサンプル
+- `samples/keycap-convex-surfaces.scad`: cylindrical / spherical の `dishDepth = -1.5mm`、幅広キー、上端R、JIS Enter の凸面確認用サンプル
 - `samples/keycap-top-corner-radii.scad`: custom shell 上面の4隅R個別指定確認用サンプル
 - `samples/keycap-top-orientation.scad`: 上面中央高さ固定 + pitch / roll の確認用サンプル
 - `samples/keycap-top-offset.scad`: stem 原点を固定したキートップ中心の XY offset 確認用サンプル

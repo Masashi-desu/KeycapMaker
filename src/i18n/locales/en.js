@@ -378,8 +378,8 @@ const en = Object.freeze({
     },
     dishDepth: {
       label: "Depth",
-      cylindricalHint: "Use 0 through the current maximum {maxDepth} for a one-direction recess.",
-      sphericalHint: "Use 0 through the current maximum {maxDepth} for a bowl-shaped recess.",
+      cylindricalHint: "Current range: {minDepth} to {maxDepth}. Positive values recess in one direction; negative values raise the surface.",
+      sphericalHint: "Current range: {minDepth} to {maxDepth}. Positive values form a bowl-shaped recess; negative values form a spherical crown.",
       flatHint: "This has no effect when flat is selected.",
     },
     topHatEnabled: {
@@ -400,8 +400,8 @@ const en = Object.freeze({
     },
     topHatDishDepth: {
       label: "Top Hat Depth",
-      cylindricalHint: "Use 0 through the current maximum {maxDepth} for a one-direction recess on the top hat.",
-      sphericalHint: "Use 0 through the current maximum {maxDepth} for a bowl-shaped recess on the top hat.",
+      cylindricalHint: "Current range: {minDepth} to {maxDepth}. Positive values recess the top hat in one direction; negative values raise it.",
+      sphericalHint: "Current range: {minDepth} to {maxDepth}. Positive values form a bowl-shaped recess; negative values form a spherical crown.",
       flatHint: "This has no effect when flat is selected.",
     },
     topHatTopWidth: {

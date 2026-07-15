@@ -2,6 +2,17 @@
 
 採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
 
+## 2026-07-15 - dishDepth の負値を既存曲面の盛り上がりとして扱う
+
+- 結論:
+  `topSurfaceShape` / `topHatSurfaceShape` の `cylindrical` / `spherical` は、正の `dishDepth` を従来どおり凹み、負値を同じ曲面の鏡像となる盛り上がりとして扱う。入力範囲は両形状とも `-1.5mm` から `+1.5mm` とし、既定値の cylindrical `0.5mm`、spherical `1.0mm` は維持する。凸面は丸め後の実上面境界を起点とし、既存サイドウォール勾配を上方へ延長した envelope で切って、垂直なリップや余分な外形を作らない。内側天井と stem 取付高さは負値で持ち上げない
+- 理由:
+  円柱面 / 球面の一般的な曲率と正値側の形状を変えず、キー寸法・上面すぼまり・JIS Enter footprint・上端Rへ追従する凸面を同じパラメータで表現するため。単純な球 / 円柱と垂直 prism の和では側面境界に段差が生じるため、側面の連続 envelope が必要になる
+- 置換:
+  2026-05-03 の「凹み専用の非負値」を置き換え、2026-04-23 の当初の符号契約を、側面接続・legend・homing bar・stem の追従を含めて再採用する
+- 関連:
+  [../architecture/scad-and-export.md](../architecture/scad-and-export.md)
+
 ## 2026-06-25 - icon provider は latest CDN と runtime sanitizer を使う
 
 - 結論:
@@ -47,6 +58,9 @@
 
 ## 2026-05-03 - dishDepth は凹み専用の非負値に戻す
 
+- 状態:
+  2026-07-15 の判断で置換済み
+
 - 結論:
   `topSurfaceShape` の `cylindrical` / `spherical` は既存の実用的な正値の凹み挙動を正とし、`dishDepth` は 0 以上だけを受ける。過大な正値はキートップの最高点が下がらない範囲へ丸め、浅い値でも凹みの開始位置は上面 footprint 基準で固定する。負値による盛り上がりは扱わず、将来の専用パラメータとして別設計にする
 - 理由:
@@ -91,7 +105,7 @@
 - 結論:
   custom-shell のキートップ形状は `topSurfaceShape` で切り替え、`dishDepth` はプラスで凹み、マイナスで盛り上がりとして扱う。cylindrical は固定向きとし、`topPitchDeg` / `topRollDeg` を変えても dish 自体の曲率は維持したまま傾ける
 - 補足:
-  `dishDepth` のマイナス盛り上がり部分は 2026-05-03 の判断で取り下げ、盛り上がりは将来の専用パラメータとして扱う
+  `dishDepth` のマイナス盛り上がり部分は 2026-05-03 に一度取り下げたが、側面接続と従属形状の追従を実装したうえで 2026-07-15 に再採用した
 - 理由:
   フラットだけではキートップの触感と見た目の幅が狭く、cylindrical / spherical の一般的な差を小さな UI 拡張で表現できるため
 

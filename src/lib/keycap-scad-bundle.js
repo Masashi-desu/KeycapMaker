@@ -161,8 +161,7 @@ const TOP_SCALE_MIN = 0.02;
 const TOP_SCALE_MAX = 1;
 const TOP_SCALE_STEP = 0.01;
 const TOP_SCALE_MIN_FACE_SIZE = 0.2;
-const DISH_DEPTH_STEP = 0.05;
-const DISH_REFERENCE_UNIT = 18;
+const DISH_DEPTH_MAX = 1.5;
 const TOP_THICKNESS_MIN = 0.05;
 const TOP_HAT_MIN_SIZE = 0.2;
 const TOP_SURFACE_SHAPE_VALUES = new Set(["flat", "cylindrical", "spherical"]);
@@ -258,7 +257,7 @@ function clampBasicTopScale(value, fallback = 1) {
 
 function resolveTopScaleActiveDishDepth(params = {}) {
   const dishDepth = Number(params.dishDepth ?? 0);
-  const topSurfaceShape = params.topSurfaceShape ?? (dishDepth > 0.001 ? "spherical" : "flat");
+  const topSurfaceShape = params.topSurfaceShape ?? (Math.abs(dishDepth) > 0.001 ? "spherical" : "flat");
   return topSurfaceShape === "flat" || !Number.isFinite(dishDepth) ? 0 : Math.max(dishDepth, 0);
 }
 
@@ -314,56 +313,14 @@ function resolveTopScaleAngle(size, topCenterHeight, topScale) {
   return atanDeg(inset / Math.max(topCenterHeight, 0.1));
 }
 
-function resolveDishLimitTopFootprint(params = {}) {
-  const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
-  const defaults = createDefaultKeycapParams(profileKey);
-  const geometryType = resolveShapeGeometryType(profileKey);
-  const keyWidth = clampMinimum(params.keyWidth, defaults.keyWidth ?? 18, 1);
-  const keyDepth = clampMinimum(params.keyDepth, defaults.keyDepth ?? 18, 1);
-  const topScale = isTypewriterGeometryType(geometryType)
-    ? 1
-    : clampBasicTopScale(params.topScale, defaults.topScale ?? 1);
-  const topWidth = isTypewriterGeometryType(geometryType) ? keyWidth : keyWidth * topScale;
-  const topDepth = isTypewriterGeometryType(geometryType) ? keyDepth : keyDepth * topScale;
-
-  return {
-    left: -topWidth / 2,
-    right: topWidth / 2,
-    front: -topDepth / 2,
-    back: topDepth / 2,
-    dishPlanWidth: keyWidth,
-    dishPlanDepth: keyDepth,
-  };
-}
-
-function dishAxisScale(size) {
-  return Math.max(Number(size) / DISH_REFERENCE_UNIT, 0.001);
-}
-
-function dishSagFromRadialSq(radialSq, dishRadius) {
-  const safeRadius = Math.max(Number(dishRadius ?? 45), 0.1);
-  const safeRadialSq = Math.min(Math.max(Number(radialSq) || 0, 0), safeRadius * safeRadius);
-  return safeRadius - Math.sqrt(Math.max((safeRadius * safeRadius) - safeRadialSq, 0));
-}
-
 function getDishDepthMax(params = {}, topSurfaceShape = params.topSurfaceShape ?? "flat") {
-  if (topSurfaceShape === "flat") {
-    return 0;
-  }
-
-  const footprint = resolveDishLimitTopFootprint(params);
-  const xRadius = Math.max(Math.abs(footprint.left), Math.abs(footprint.right)) / dishAxisScale(footprint.dishPlanWidth);
-  const yRadius = Math.max(Math.abs(footprint.front), Math.abs(footprint.back)) / dishAxisScale(footprint.dishPlanDepth);
-  const radialSq = topSurfaceShape === "cylindrical"
-    ? xRadius * xRadius
-    : (xRadius * xRadius) + (yRadius * yRadius);
-  return floorToNumericStep(dishSagFromRadialSq(radialSq, params.dishRadius), DISH_DEPTH_STEP, 0);
+  return topSurfaceShape === "flat" ? 0 : DISH_DEPTH_MAX;
 }
 
 function clampDishDepth(value, params = {}, topSurfaceShape = params.topSurfaceShape ?? "flat") {
   const nextValue = Number(value);
   const maximum = getDishDepthMax(params, topSurfaceShape);
-  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : 0, 0), maximum);
+  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : 0, -maximum), maximum);
 }
 
 function resolveTopSurfaceShape(value, fallback = "flat") {
@@ -374,45 +331,15 @@ function resolveTopSurfaceShape(value, fallback = "flat") {
   return TOP_SURFACE_SHAPE_VALUES.has(fallback) ? fallback : "flat";
 }
 
-function resolveTopHatSurfaceFootprint(params = {}) {
-  const footprint = resolveDishLimitTopFootprint(params);
-  const width = Math.max(footprint.right - footprint.left, TOP_HAT_MIN_SIZE);
-  const depth = Math.max(footprint.back - footprint.front, TOP_HAT_MIN_SIZE);
-  const geometryType = resolveShapeGeometryType(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
-
-  if (geometryType === "jis_enter") {
-    const inset = Math.min(Math.max(numberOr(params.topHatInset, 2.0), 0), Math.max(Math.min(width, depth) / 2, 0));
-    return {
-      width: Math.max(width - inset * 2, TOP_HAT_MIN_SIZE),
-      depth: Math.max(depth - inset * 2, TOP_HAT_MIN_SIZE),
-    };
-  }
-
-  return {
-    width: Math.min(Math.max(numberOr(params.topHatTopWidth, 10.5), TOP_HAT_MIN_SIZE), width),
-    depth: Math.min(Math.max(numberOr(params.topHatTopDepth, 9.5), TOP_HAT_MIN_SIZE), depth),
-  };
-}
-
 function getTopHatDishDepthMax(params = {}, topHatSurfaceShape = params.topHatSurfaceShape ?? "flat") {
   const resolvedShape = resolveTopSurfaceShape(topHatSurfaceShape, "flat");
-  if (resolvedShape === "flat") {
-    return 0;
-  }
-
-  const footprint = resolveTopHatSurfaceFootprint(params);
-  const xRadius = (footprint.width / 2) / dishAxisScale(footprint.width);
-  const yRadius = (footprint.depth / 2) / dishAxisScale(footprint.depth);
-  const radialSq = resolvedShape === "cylindrical"
-    ? xRadius * xRadius
-    : (xRadius * xRadius) + (yRadius * yRadius);
-  return floorToNumericStep(dishSagFromRadialSq(radialSq, params.dishRadius), DISH_DEPTH_STEP, 0);
+  return resolvedShape === "flat" ? 0 : DISH_DEPTH_MAX;
 }
 
 function clampTopHatDishDepth(value, params = {}, topHatSurfaceShape = params.topHatSurfaceShape ?? "flat") {
   const nextValue = Number(value);
   const maximum = getTopHatDishDepthMax(params, topHatSurfaceShape);
-  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : 0, 0), maximum);
+  return Math.min(Math.max(Number.isFinite(nextValue) ? nextValue : 0, -maximum), maximum);
 }
 
 function getKeycapShoulderRadiusMax({ geometryType, keyWidth, keyDepth, topCenterHeight, topScale }) {
@@ -1040,7 +967,7 @@ function formatDefinitionValue(value) {
 
 async function createKeycapDefinitions({ params, exportTarget }) {
   const requestedDishDepth = Number(params.dishDepth ?? 0);
-  const topSurfaceShape = params.topSurfaceShape ?? (requestedDishDepth > 0.001 ? "spherical" : "flat");
+  const topSurfaceShape = params.topSurfaceShape ?? (Math.abs(requestedDishDepth) > 0.001 ? "spherical" : "flat");
   const dishDepth = topSurfaceShape === "flat" || !Number.isFinite(requestedDishDepth)
     ? 0
     : clampDishDepth(requestedDishDepth, params, topSurfaceShape);

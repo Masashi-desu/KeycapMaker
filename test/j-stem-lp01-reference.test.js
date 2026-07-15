@@ -100,6 +100,8 @@ test("J-STEM-LP01 参照メッシュは SCAD の top plane transform と同じ�
   };
   const transformed = transformJStemLp01ReferenceMesh(mesh, params);
   const transform = getJStemLp01ReferenceTransform(params);
+  const flatTransform = getJStemLp01ReferenceTransform({ ...params, topSurfaceShape: "flat", dishDepth: 0 });
+  const raisedTransform = getJStemLp01ReferenceTransform({ ...params, dishDepth: -0.5 });
 
   assert.deepEqual(transformed.faces, mesh.faces);
   assertClose(transformed.vertices[0].x, 1.25, "transformed x");
@@ -109,6 +111,7 @@ test("J-STEM-LP01 参照メッシュは SCAD の top plane transform と同じ�
     3 + transform.mountZ + Math.tan(5 * Math.PI / 180) + (2 * Math.tan(10 * Math.PI / 180)),
     "transformed z",
   );
+  assertClose(raisedTransform.mountZ, flatTransform.mountZ, "raised surface keeps receiver mount height");
 });
 
 test("J-STEM-LP01 参照メッシュは受け座の掘り込み深さ補正へ追従する", () => {
