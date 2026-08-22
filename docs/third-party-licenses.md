@@ -155,15 +155,19 @@
 
 これらのJavaScript Actionは、各公式releaseのNode.js 24版をcommit SHAで固定しています。`actionlint` は公式containerのversion tagを固定しています。
 
-## J-STEM-LP01参照CADの未解決条件
+## J-STEM-LP01参照CADの掲載判断
 
 [JezailFunder JapanのJ-STEM-LP01](https://jezailfunder.jp/products/j-stem-lp01) が公式配布する `j-stem.step` と、その派生preview meshを `public/assets/j-stem-lp01/` で配信しています。公式ダウンロードと同梱STEPのSHA-256は一致します。
 
 | 正式名称 | 同梱物 | 公式配布元 | ライセンス / 条件 |
 | --- | --- | --- | --- |
-| J-STEM-LP01 reference CAD | `j-stem-lp01.step`、`j-stem-lp01-reference.off` | [product page](https://jezailfunder.jp/products/j-stem-lp01)、[official STEP](https://cdn.shopify.com/s/files/1/0937/1798/7635/files/j-stem.step) | 個別ライセンス名と再配布許諾は公式ページに提示されていません。[公式利用規約](https://jezailfunder.jp/policies/terms-of-service)を参照 |
+| J-STEM-LP01 reference CAD | `j-stem-lp01.step`、`j-stem-lp01-reference.off` | [product page](https://jezailfunder.jp/products/j-stem-lp01)、[official STEP](https://cdn.shopify.com/s/files/1/0937/1798/7635/files/j-stem.step) | 個別ライセンス名と再配布許諾文は公式ページに提示されていません。公式配布と製品の性質を根拠に、本projectでは現行の掲載・再配布に問題ないと判断しています。[公式利用規約](https://jezailfunder.jp/policies/terms-of-service)を参照 |
 
-この項目だけは、一次情報から再配布ライセンスを確定できません。既存機能を無断で削除・置換しないため現状と証跡を明示して残していますが、次の公開更新前に権利者からSTEPと派生OFFの再配布許諾を確認する必要があります。
+本projectは、J-STEM-LP01が加工したキーキャップへの組み込み、CADの参照、それらを用いた製作物の再利用や販売を前提とする性質の製品であると判断しています。この製品の性質と公式product pageにおけるCADの配布を踏まえ、公式STEP、preview用派生OFF、およびCADを参照した形状データの現行配置と配信に問題ないと判断しました。
+
+また、J-STEM-LP01対応機能の追加を告知したXの投稿に対してJezailFunder JapanからLikeリアクションがあり、その後も取り下げ要請を受けていないことを、掲載継続の判断経緯として記録します。これらは個別ライセンス名または明示的な許諾文として扱うものではなく、本projectの判断根拠を明示するものです。
+
+本CAD、派生資産、またはそれらの引用・掲載について権利者から異議申立てや取り下げ要請があった場合は、内容を確認したうえで対象の掲載・配信を取り下げる方針です。
 
 ## 更新規則
 

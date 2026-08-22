@@ -2,14 +2,27 @@
 
 採用時点の設計判断を時系列で残す歴史記録です。現行仕様の正本は `docs/architecture/` と `docs/guide/` であり、後続項目または実装と衝突する古い判断は現行仕様として使いません。
 
+## 2026-08-22 - J-STEM-LP01参照CADの掲載を継続する
+
+- 結論:
+  公式STEP、preview用派生OFF、およびCADを参照した形状データの現行配置を維持し、公開ページでの掲載・配信を継続する。権利者から異議申立てまたは取り下げ要請があった場合は、内容を確認したうえで対象の引用・掲載・配信を取り下げる
+- 理由:
+  J-STEM-LP01のCADは公式product pageから配布されている。また、当該製品は加工したキーキャップへの組み込み、CADの参照、それらを用いた製作物の再利用や販売を前提とする性質があると判断した。さらに、J-STEM-LP01対応機能の追加告知に対してJezailFunder JapanからX上のLikeリアクションがあり、その後も取り下げ要請がなかったことを判断経緯として記録する
+- ライセンス表記:
+  個別ライセンス名や明示的な再配布許諾文が公式に提示されたとは記載せず、上記の根拠に基づく本projectの掲載判断として明記する
+- 置換:
+  同日の「第三者資源の正本を一つのinventoryへ集約する」で次の公開更新前の未解決事項とした判断を置き換える
+- 関連:
+  [../third-party-licenses.md](../third-party-licenses.md#j-stem-lp01参照cadの掲載判断)
+
 ## 2026-08-22 - 第三者資源の正本を一つのinventoryへ集約する
 
 - 結論:
   npmの直接・間接・platform optional dependency、vendored code、CDN、Web font、bundled legend font、CI Action、外部CADを `docs/third-party-licenses.md` へ集約し、各資源の公式source、version、用途、license textを記録する。個別directoryは固有provenance/noticeだけを持ち、Agent skillはこの正本と開発規約を参照する
 - 理由:
   dependency、公開資源、UI attribution、Agent手順に分散していた情報を、lockfileと実装から静的検証できる一つの責務へまとめるため
-- 未解決:
-  J-STEM-LP01公式CADは公式downloadとのbyte一致を確認したが、再配布ライセンスが提示されていない。推測でlicenseを付けず、次の公開更新前の確認事項としてinventoryに残す
+- 更新:
+  当初はJ-STEM-LP01公式CADの再配布条件を次の公開更新前の確認事項としたが、同日の「J-STEM-LP01参照CADの掲載を継続する」で掲載判断を更新した
 
 ## 2026-08-22 - push差分を論理classへ分類してCI/CDを選ぶ
 
