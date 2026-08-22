@@ -1,13 +1,14 @@
-# design ディレクトリ案内
+# design歴史資料
 
-`docs/design/` は画面デザインの正本を置く場所です。実装時に見た目や構造で迷った場合は、まずここを参照します。
+`docs/design/` は、初期画面設計に使ったPencil sourceとrenderを歴史資料として保存する場所です。`.pen` の最終更新は2026-05-10で、その後にproject、font/icon、export UIが更新されているため、現在の画面仕様の正本ではありません。
 
 ## 収録内容
 
-- `Keycap_maker.pen`: Pencil の編集元ファイルです。デザイン変更時の正本として扱います
-- `assets/`: `.pen` が参照する関連アセットを保持します。現在のレンダリング画像 `keycap-render.png` もここに置きます
+- `Keycap_maker.pen`: 初期画面設計の編集元
+- `assets/keycap-render.png`: `.pen` が参照する当時のrender
 
 ## 運用ルール
 
-- 画面デザインを変更した場合は、`.pen` を先に更新し、その変更に対応するプレビュー画像も必要に応じて更新します
-- 実装側の UI はこのディレクトリの内容に合わせ、差分が出た場合は `docs/design/` を基準に判断します
+- 現行behaviorは `src/`、自動test、[architecture](../architecture/overview.md)、[manual verification](../guide/manual-verification.md) を正とします
+- `.pen` を再び設計sourceとして採用する場合は、現行UIへ同期したcommitと対象範囲をこの文書へ記録します
+- 歴史資料の状態では、実装を `.pen` へ合わせる受け入れ条件にしません

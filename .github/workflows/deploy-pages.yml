@@ -1,54 +1,134 @@
-name: Deploy GitHub Pages
+name: CI and deploy GitHub Pages
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/deploy-pages.yml"
-      - "index.html"
-      - "package.json"
-      - "package-lock.json"
-      - "public/**"
-      - "scad/**/*.scad"
-      - "src/**"
-      - "!src/**/*.md"
-      - "vite.config.js"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
-  group: pages
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
-    if: github.ref == 'refs/heads/main'
+  classify:
+    name: Classify changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      classification: ${{ steps.classify.outputs.classification }}
+      docs: ${{ steps.classify.outputs.docs }}
+      test: ${{ steps.classify.outputs.test }}
+      build: ${{ steps.classify.outputs.build }}
     steps:
-      - name: Configure Git defaults
-        run: git config --global init.defaultBranch main
+      - name: Checkout repository history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Classify the pushed range
+        id: classify
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            node scripts/change-classification.mjs --manual | tee change-classification.json
+          else
+            node scripts/change-classification.mjs --base "$BEFORE_SHA" --head "$HEAD_SHA" | tee change-classification.json
+          fi
+          {
+            echo '### Change classification'
+            echo '```json'
+            cat change-classification.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  docs:
+    name: Validate documentation
+    if: needs.classify.outputs.docs == 'true'
+    needs: classify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Validate documentation and bundled fonts
+        run: npm run test:docs
+
+  test:
+    name: Run required tests
+    if: needs.classify.outputs.test == 'true'
+    needs: classify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: npm
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v6
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run test suite
+        run: npm test
+
+      - name: Lint GitHub Actions workflows
+        run: docker run --rm -v "$GITHUB_WORKSPACE:/repo" --workdir /repo rhysd/actionlint:1.7.12 -color
+
+  build:
+    name: Build Pages artifact
+    if: needs.classify.outputs.build == 'true' && needs.test.result == 'success'
+    needs:
+      - classify
+      - test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          enablement: true
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Configure Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - name: Build site
         env:
@@ -56,20 +136,31 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: npm run build
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist
 
   deploy:
-    needs: build
+    name: Deploy GitHub Pages
+    if: >-
+      needs.classify.outputs.build == 'true' &&
+      needs.build.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
+    needs:
+      - classify
+      - build
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
-        env:
-          NODE_OPTIONS: --no-deprecation
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

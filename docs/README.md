@@ -1,6 +1,6 @@
 # docs ディレクトリ案内
 
-`docs/` は、現在の実装を保守・拡張するための文書群です。未解決の TODO と採用済みの設計判断を分け、日常的に参照しやすい構成にしています。
+`docs/` は、現在の実装を保守・拡張するための文書群です。現行仕様、開発規約、歴史的判断、未解決のTODOを分けています。
 
 ## サブディレクトリの役割
 
@@ -9,7 +9,8 @@
 - `decisions/`: 採用済みの判断を時系列で残す記録
 - `reference/`: 用語や短い参照資料
 - `backlog/`: 未着手または継続検討中の拡張 TODO
-- `design/`: Pencil の `.pen` を含む画面デザインの正本
+- `design/`: 過去のPencil `.pen` とrenderを保持する歴史資料
+- `third-party-licenses.md`: 配信資源、npm依存、CDN、font、CI toolのライセンス一覧
 
 ## 推奨読書順
 
@@ -18,16 +19,19 @@
 3. [architecture/project-data.md](architecture/project-data.md)
 4. [guide/development.md](guide/development.md)
 5. [guide/manual-verification.md](guide/manual-verification.md)
-6. [decisions/decision-log.md](decisions/decision-log.md)
-6. 必要に応じて `backlog/` と `design/`
+6. [third-party-licenses.md](third-party-licenses.md)
+7. [decisions/decision-log.md](decisions/decision-log.md)
+8. 必要に応じて `backlog/` と `design/`
 
 ## 運用ルール
 
-- 構成や責務が変わったら `architecture/` を更新する
-- 日常運用や確認手順が変わったら `guide/` を更新する
+- 開発、branch、品質gate、release、生成物、同期規則は [guide/development.md](guide/development.md) を正本とする
+- 構成や責務が変わったら `architecture/` と対応testを更新する
+- 日常運用や確認手順が変わったら `guide/`、npm script、workflowを同期する
 - 採用した判断は [decisions/decision-log.md](decisions/decision-log.md) に残す
 - 将来の拡張案や未解決事項は `backlog/` に寄せる
-- 画面デザイン変更は `design/` を正本とする
+- 第三者資源を変えたら [third-party-licenses.md](third-party-licenses.md) とnotice/provenanceを同期する
+- `design/` は歴史的なPencil sourceであり、現行behaviorは実装・test・architectureを正とする
 
 ## 参照資料
 

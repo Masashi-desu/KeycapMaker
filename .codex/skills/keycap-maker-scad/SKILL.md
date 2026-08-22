@@ -3,42 +3,18 @@ name: keycap-maker-scad
 description: Extend and maintain Keycap Maker's modular OpenSCAD assets under `scad/` and the browser parameter bridge that feeds them. Use when Codex needs to work on this repository's keycap-specific structure, including body/legend split, preview/export separation, `scad/base` vs `scad/modules` placement, presets, samples, or the `src/lib/keycap-scad-bundle.js` `-D` parameter mapping.
 ---
 
-# Keycap Maker Scad
+# Keycap Maker SCAD
 
-## Quick Start
+## Canonical repository rules
 
-1. Use `$openscad-authoring` for standard OpenSCAD syntax and geometry decisions.
-2. Read [references/repo-conventions.md](references/repo-conventions.md) before editing any `scad/` asset in this repository.
-3. Confirm which layer you are changing:
-   - `scad/base/` for export entrypoints and whole-key orchestration.
-   - `scad/modules/` for reusable geometry pieces.
-   - `scad/presets/` for defaults and parameter sets.
-   - `scad/samples/` for regression fixtures and minimal examples.
-4. Preserve the repo's core design choices:
-   - preview と export の責務分離
-   - body と legend の別体積維持
-   - UI パラメータと SCAD 幾何パラメータの分離
-5. If a parameter crosses the app boundary, inspect `src/lib/keycap-scad-bundle.js` and keep the `-D` bridge aligned.
+Read [the development guide](../../../docs/guide/development.md), [SCAD/export contract](../../../docs/architecture/scad-and-export.md), [SCAD directory guide](../../../scad/README.md), and [current routing index](references/repo-conventions.md). Those documents own common structure, quality gates, and synchronization.
 
-## Repo Rules
+## Task sequence
 
-- Keep `scad/base/keycap.scad` style orchestration explicit: entry module, body module, legend module, preview module, and export target selection.
-- Prefer adding a new module file over expanding `base/` with low-level geometry.
-- Use `include` for preset/default value files and `use` for reusable geometry modules.
-- Keep origin and Z-baseline consistent across body, legend, and subtractive features.
-- Treat legend geometry as an explicit body unless the task specifically requires union or engraving.
-- When introducing text legends, document font source and leave final font-license confirmation to the human reviewer.
+1. Inspect the current entrypoint, adjacent module, shape JSON, bridge mapping, and existing tests before choosing a layer.
+2. Keep whole-key/export orchestration in `scad/base/`, reusable geometry in `scad/modules/`, SCAD nominal constants in `scad/presets/`, and regression fixtures in `scad/samples/`.
+3. If an app parameter changes, synchronize shape JSON, `src/lib/keycap-scad-bundle.js`, SCAD `user_*` mapping, architecture documentation, and tests.
+4. Preserve preview/export and separate-volume contracts defined by the architecture document.
+5. Apply the artifact gate and only the affected manual geometry/export checks from the development guide.
 
-## Change Workflow
-
-1. Read the relevant repo docs called out in [references/repo-conventions.md](references/repo-conventions.md).
-2. Inspect adjacent `scad/` files before deciding where a change belongs.
-3. Keep preview/export and body/legend behavior explicit in code structure, not implicit in scattered conditionals.
-4. Add or update a sample under `scad/samples/` for non-trivial geometry changes.
-5. If app-exposed parameters change, update the `user_*` / `-D` wiring consistently.
-
-## Output Expectations
-
-- Return edits that preserve the modular split of this repository.
-- Mention when a requested change conflicts with preview/export separation or body/legend separation.
-- Prefer small additive changes to existing `scad/modules/` and `scad/presets/` assets over large rewrites.
+Mention any requested behavior that intentionally changes an existing geometry or export contract.

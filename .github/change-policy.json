@@ -1,0 +1,31 @@
+{
+  "documentation": [
+    "README.md",
+    "*.md",
+    "LICENSE*",
+    "NOTICE*",
+    "CONTRIBUTING*",
+    "CODE_OF_CONDUCT*",
+    "docs/**",
+    ".codex/**/*.md",
+    ".github/**/*.md",
+    "src/**/*.md",
+    "scad/**/*.md"
+  ],
+  "validation": [
+    ".github/**",
+    "test/**",
+    "scripts/**",
+    ".codex/**",
+    ".gitignore",
+    ".gitattributes"
+  ],
+  "published": [
+    "index.html",
+    "vite.config.*",
+    "src/**",
+    "scad/**/*.scad",
+    "public/**"
+  ],
+  "dedicatedWorkflowOwnership": []
+}

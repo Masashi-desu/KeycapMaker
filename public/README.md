@@ -1,25 +1,12 @@
-# public ディレクトリ案内
+# public directory
 
-`public/` は GitHub Pages でそのまま配信する静的アセットの置き場です。
+`public/` は、Viteが加工せずPages artifactへコピーする公開静的資源です。source codeから参照するruntime pathと、大容量binary、font、image、license/provenanceを保持します。
 
-## 配置候補
+- `vendor/`: OpenSCAD、Coloris、icon providerのruntimeまたはnotice
+- `fonts/`: legend font本体、OFL/terms、取得revisionとSHA-256を含むsource note
+- `assets/j-stem-lp01/`: 公式STEPと派生preview OFF
+- `icons/parameters/`: parameter UI用SVG
+- `og-card.png`: `index.html` が指定するOpen Graph画像
+- `favicon.svg`: page icon
 
-- Wasm バイナリ
-- フォントファイル
-- アイコンや画像
-- 配信時にビルドでそのまま参照する補助ファイル
-
-`text()` を利用するフォントを同梱する場合も、このディレクトリ配下の配置方針を先に決めてください。
-
-## 現在の同梱物
-
-- `vendor/openscad/`: OpenSCAD WASM runtime
-- `assets/j-stem-lp01/`: J-STEM-LP01 の公式 STEP と preview 用 OFF 派生メッシュ
-- `fonts/MPLUS1-Variable.ttf`: `M PLUS 1` variable font
-- `fonts/MPLUS1p-Regular.ttf`: 標準ゴシック
-- `fonts/NotoSans-Variable.ttf`: `Noto Sans` variable font
-- `fonts/NotoSansJP-Variable.ttf`: `Noto Sans JP` variable font
-- `fonts/MPLUSRounded1c-Regular.ttf`: 丸みのあるゴシック
-- `fonts/DotGothic16-Regular.ttf`: ドット風ゴシック
-- `fonts/*-OFL.txt`: 各フォントのライセンス
-- `fonts/*-SOURCE.txt`: 一部フォントの出典・メタデータ確認メモ
+全font inventoryは [fonts/README.md](fonts/README.md)、第三者資源全体の版・用途・ライセンスは [第三者コンポーネントとライセンス](../docs/third-party-licenses.md) を正とします。公開資源を変えた場合は、[開発・貢献規約](../docs/guide/development.md) のartifact gateを実行します。

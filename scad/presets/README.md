@@ -1,3 +1,3 @@
 # scad/presets
 
-profile、キーサイズ、初期パラメータなど、UI と SCAD をつなぐプリセット定義を配置する場所です。
+`scad/presets/` は、SCAD内で共有するnominal constantを置く場所です。現在は `stem-nominals.scad` がstem寸法を所有します。UIのshape初期値と表示groupは `src/data/keycap-shapes/*.json` が正本であり、ここへ複製しません。

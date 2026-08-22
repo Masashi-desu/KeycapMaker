@@ -38,6 +38,8 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
   shape JSON の集約、selector、既定 shape の解決
 - `src/data/keycap-shapes/*.json`
   shape ごとの初期値、geometry defaults、表示グループ定義
+- `src/data/icon-sets/`
+  CDNを利用できない場合のoffline icon fallback catalog。生成済みcatalogを初期bundleへ含めるため、Viteのchunk warning baselineは現在のbundle実測値に合わせる
 - `src/lib/keycap-fonts.js`
   legend font の選択肢と style 解決を UI / export / import で共有する
 
@@ -127,7 +129,7 @@ flowchart LR
 - sidewall legend は各側面の中央基準面の傾きに合わせて配置し、壁の内側面まで自動で埋め込む。角丸や JIS Enter の欠き込み面へは自動追従しない
 - variable font の native style は使えるが、italic / slanted は font 側に実データがない限り出せない
 - 3MF の色情報は付与しているが、スライサー互換性は別途手動確認が必要
-- OpenSCAD runtime とフォント同梱のライセンス確認は人間の最終確認が必要
+- J-STEM-LP01公式CADと派生OFFは、公式配布物との同一性を確認済みだが再配布ライセンスが未提示。公開判断は第三者ライセンス文書の未解決条件を参照する
 
 ## 関連資料
 
@@ -135,4 +137,5 @@ flowchart LR
 - [project-data.md](project-data.md)
 - [../guide/development.md](../guide/development.md)
 - [../guide/manual-verification.md](../guide/manual-verification.md)
+- [../third-party-licenses.md](../third-party-licenses.md)
 - [../backlog/legend-extensibility-todo.md](../backlog/legend-extensibility-todo.md)

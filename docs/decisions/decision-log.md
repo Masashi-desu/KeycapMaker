@@ -1,6 +1,22 @@
 # 判断記録
 
-採用済みの設計判断を時系列で残す。日々の進捗メモではなく、今後の保守や拡張で前提になる内容だけを書く。
+採用時点の設計判断を時系列で残す歴史記録です。現行仕様の正本は `docs/architecture/` と `docs/guide/` であり、後続項目または実装と衝突する古い判断は現行仕様として使いません。
+
+## 2026-08-22 - 第三者資源の正本を一つのinventoryへ集約する
+
+- 結論:
+  npmの直接・間接・platform optional dependency、vendored code、CDN、Web font、bundled legend font、CI Action、外部CADを `docs/third-party-licenses.md` へ集約し、各資源の公式source、version、用途、license textを記録する。個別directoryは固有provenance/noticeだけを持ち、Agent skillはこの正本と開発規約を参照する
+- 理由:
+  dependency、公開資源、UI attribution、Agent手順に分散していた情報を、lockfileと実装から静的検証できる一つの責務へまとめるため
+- 未解決:
+  J-STEM-LP01公式CADは公式downloadとのbyte一致を確認したが、再配布ライセンスが提示されていない。推測でlicenseを付けず、次の公開更新前の確認事項としてinventoryに残す
+
+## 2026-08-22 - push差分を論理classへ分類してCI/CDを選ぶ
+
+- 結論:
+  documentation、validation、package metadata、published artifact、dedicated workflow ownershipを `.github/change-policy.json` とsemantic package/lockfile diffで分類する。混在時は最強gateを使い、test成功後だけbuild、build成功後かつ公開branchまたはmanual runだけdeployする
+- 理由:
+  docs-onlyやdescription-only変更でbuild/deployを繰り返さず、dependency graphや未知fileを安全側のartifact gateへ送るため
 
 ## 2026-07-15 - dishDepth の負値を既存曲面の盛り上がりとして扱う
 

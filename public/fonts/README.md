@@ -2,6 +2,8 @@
 
 印字の書体選択では、フロントエンドへ同梱して配信できるライセンスのものだけを使います。
 
+この文書はbundled legend font固有の受入条件とhuman inventoryを担います。第三者資源全体の正本は [第三者コンポーネントとライセンス](../../docs/third-party-licenses.md)、品質gateと同期規則は [開発・貢献規約](../../docs/guide/development.md) を参照してください。
+
 ## 軽量取り込みルール
 
 - 同梱する font は、再配布と Web 配信が明確に許可されたものだけにする。

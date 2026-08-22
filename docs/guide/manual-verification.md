@@ -4,6 +4,8 @@
 
 geometry contract、runtime、export を変更したときに、ブラウザ上とスライサー上で最低限確認すべき項目をまとめる。
 
+この文書は自動testの保証一覧ではなく、app-visibleな変更に対する手動checklistです。文書、license、test、workflowだけの変更では実施しません。自動gateと変更classは [development.md](development.md) を正とします。
+
 ## ブラウザ確認
 
 ### 1. 初期表示
