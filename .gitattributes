@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Keep upstream font license bytes stable so provenance SHA-256 values are portable.
+public/fonts/*-OFL.txt -text
+public/fonts/Bangers-OFL.txt -diff
+public/fonts/DotGothic16-OFL.txt -diff
