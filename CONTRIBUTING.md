@@ -35,6 +35,24 @@ npm run preview
 
 手動workflow実行は安全側に倒し、分類結果にかかわらずtest、build、deployを要求します。自動deployは公開branchへのpushかつ公開artifact classの変更だけです。
 
+```mermaid
+gitGraph
+  commit id: "main: published"
+  branch dev
+  checkout dev
+  commit id: "dev integration"
+  branch feat_example
+  checkout feat_example
+  commit id: "feature work"
+  checkout dev
+  merge feat_example id: "merge feature"
+  commit id: "build check"
+  checkout main
+  merge dev id: "dev -> main" tag: "deploy"
+  checkout dev
+  merge main id: "sync main"
+```
+
 ## 変更分類と品質gate
 
 分類の正本は `.github/change-policy.json`、判定実装は `scripts/change-classification.mjs` です。複数classが混ざる場合は、`artifact`、`validation`、`documentation`、`metadata` の順に強いgateを使います。未知のfileは安全側で `artifact` に分類します。
@@ -52,7 +70,7 @@ build jobは必須test jobの成功後だけ実行し、deploy jobはbuild成功
 
 ## 手動・環境固有の確認
 
-自動gate後、変更した責務に限って [manual-verification.md](manual-verification.md) を使います。
+自動gate後、変更した責務に限って [manual-verification.md](docs/guide/manual-verification.md) を使います。
 
 - app-visible UI、preview、runtime asset loadingを変えた: 対応するブラウザ項目
 - SCAD geometry、preview mesh、exportを変えた: representative sampleと該当export
@@ -71,7 +89,7 @@ root overviewや `docs/` だけの変更では静的な文書gateだけを実行
 - `public/`: Viteが加工せず公開物へコピーするruntime、font、image、license/provenance
 - `test/`: Nodeで再現できるbehavior、geometry、文書、分類の自動test
 - `docs/architecture/`: 現行の構造とcontract
-- `docs/guide/`: 開発・運用・手動確認
+- `docs/guide/`: 手動確認と個別の運用ガイド
 - `docs/decisions/`: 歴史的な判断記録。現行仕様と衝突する場合はarchitecture/guideを優先する
 - `docs/backlog/`: 未採用または未完了の将来案
 - `docs/design/`: 過去のPencil sourceとrender。現在の実装仕様の正本ではない
@@ -90,10 +108,10 @@ root overviewや `docs/` だけの変更では静的な文書gateだけを実行
 ## 文書・実装・test・workflowの同期
 
 - 構造またはcontractを変える: `docs/architecture/` と対応testを更新する
-- operator手順または品質gateを変える: `docs/guide/`、npm script、workflow、分類testを更新する
+- operator手順または品質gateを変える: `CONTRIBUTING.md`、`docs/guide/`、npm script、workflow、分類testを更新する
 - 採用済みの長期判断を変える: `docs/decisions/decision-log.md` に追記し、現行仕様はarchitecture/guideへ反映する
 - 未採用案を実装した: backlogを現行仕様へ統合し、backlog側へ採用済み状態と参照先を残すか削除する
-- dependency、font、icon、vendored code、外部assetを変える: [第三者コンポーネントとライセンス](../third-party-licenses.md)、同梱notice/provenance、静的validatorを同期する
+- dependency、font、icon、vendored code、外部assetを変える: [第三者コンポーネントとライセンス](docs/third-party-licenses.md)、同梱notice/provenance、静的validatorを同期する
 - metadataまたはOpen Graph画像を変える: `index.html` とroot overviewの画像参照を同期する
 - 追跡fileを検証後に変えた: 変更classを再判定し、必要なgateを再実行する
 

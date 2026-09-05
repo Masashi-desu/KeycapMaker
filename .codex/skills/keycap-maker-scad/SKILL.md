@@ -7,7 +7,7 @@ description: Extend and maintain Keycap Maker's modular OpenSCAD assets under `s
 
 ## Canonical repository rules
 
-Read [the development guide](../../../docs/guide/development.md), [SCAD/export contract](../../../docs/architecture/scad-and-export.md), [SCAD directory guide](../../../scad/README.md), and [current routing index](references/repo-conventions.md). Those documents own common structure, quality gates, and synchronization.
+Read [the development guide](../../../CONTRIBUTING.md), [SCAD/export contract](../../../docs/architecture/scad-and-export.md), [SCAD directory guide](../../../scad/README.md), and [current routing index](references/repo-conventions.md). Those documents own common structure, quality gates, and synchronization.
 
 ## Task sequence
 

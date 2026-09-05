@@ -1,11 +1,11 @@
 # docs ディレクトリ案内
 
-`docs/` は、現在の実装を保守・拡張するための文書群です。現行仕様、開発規約、歴史的判断、未解決のTODOを分けています。
+`docs/` は、現在の実装を保守・拡張するための文書群です。現行仕様、手動確認手順、歴史的判断、未解決のTODOを分けています。開発・貢献規約の正本はrootの [CONTRIBUTING.md](../CONTRIBUTING.md) です。
 
 ## サブディレクトリの役割
 
 - `architecture/`: アプリ構成、SCAD / export 契約、実装上の前提
-- `guide/`: ローカル開発手順、手動確認手順、更新時の運用
+- `guide/`: 手動確認手順と個別の運用ガイド
 - `decisions/`: 採用済みの判断を時系列で残す記録
 - `reference/`: 用語や短い参照資料
 - `backlog/`: 未着手または継続検討中の拡張 TODO
@@ -17,7 +17,7 @@
 1. [architecture/overview.md](architecture/overview.md)
 2. [architecture/scad-and-export.md](architecture/scad-and-export.md)
 3. [architecture/project-data.md](architecture/project-data.md)
-4. [guide/development.md](guide/development.md)
+4. [CONTRIBUTING.md](../CONTRIBUTING.md)
 5. [guide/manual-verification.md](guide/manual-verification.md)
 6. [third-party-licenses.md](third-party-licenses.md)
 7. [decisions/decision-log.md](decisions/decision-log.md)
@@ -25,7 +25,7 @@
 
 ## 運用ルール
 
-- 開発、branch、品質gate、release、生成物、同期規則は [guide/development.md](guide/development.md) を正本とする
+- 開発、branch、品質gate、release、生成物、同期規則は [CONTRIBUTING.md](../CONTRIBUTING.md) を正本とする
 - 構成や責務が変わったら `architecture/` と対応testを更新する
 - 日常運用や確認手順が変わったら `guide/`、npm script、workflowを同期する
 - 採用した判断は [decisions/decision-log.md](decisions/decision-log.md) に残す

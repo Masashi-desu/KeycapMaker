@@ -2,7 +2,7 @@
 
 This file is an Agent routing aid, not a second copy of repository conventions.
 
-- Development, branches, gates, generated files, and synchronization: [development guide](../../../../docs/guide/development.md)
+- Development, branches, gates, generated files, and synchronization: [development guide](../../../../CONTRIBUTING.md)
 - Current SCAD and export behavior: [SCAD/export contract](../../../../docs/architecture/scad-and-export.md)
 - Current SCAD files and directory responsibilities: [SCAD directory guide](../../../../scad/README.md)
 - Browser parameter bridge: `src/lib/keycap-scad-bundle.js`

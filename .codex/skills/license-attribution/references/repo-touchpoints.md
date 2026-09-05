@@ -1,6 +1,6 @@
 # License Attribution Touchpoints
 
-Repository-wide rules and the authoritative inventory live in `docs/guide/development.md` and `docs/third-party-licenses.md`. This file only maps the existing attribution implementation.
+Repository-wide rules and the authoritative inventory live in `CONTRIBUTING.md` and `docs/third-party-licenses.md`. This file only maps the existing attribution implementation.
 
 ## Primary Files
 

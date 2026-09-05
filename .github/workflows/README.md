@@ -1,6 +1,6 @@
 # GitHub Actions
 
-`deploy-pages.yml` は、push差分の分類、必要な検証、Pages artifact build、公開branchへのdeployを一つの依存graphとして所有します。branch運用と品質gateの正本は [開発・貢献規約](../../docs/guide/development.md) です。
+`deploy-pages.yml` は、push差分の分類、必要な検証、Pages artifact build、公開branchへのdeployを一つの依存graphとして所有します。branch運用と品質gateの正本は [開発・貢献規約](../../CONTRIBUTING.md) です。
 
 ## Job responsibilities
 

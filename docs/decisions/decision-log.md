@@ -1,6 +1,17 @@
 # 判断記録
 
-採用時点の設計判断を時系列で残す歴史記録です。現行仕様の正本は `docs/architecture/` と `docs/guide/` であり、後続項目または実装と衝突する古い判断は現行仕様として使いません。
+採用時点の設計判断を時系列で残す歴史記録です。開発規約の正本は `CONTRIBUTING.md`、現行仕様と運用ガイドの正本は `docs/architecture/` と `docs/guide/` であり、後続項目または実装と衝突する古い判断は現行仕様として使いません。
+
+## 2026-08-22 - 開発・貢献規約をrootのCONTRIBUTINGへ集約する
+
+- 結論:
+  `docs/guide/development.md` の内容をrootの `CONTRIBUTING.md` へ移し、開発環境、branch、品質gate、release、生成物、資源責務、実装規約、文書同期の正本とする。旧ファイルは削除し、repository内の参照は `CONTRIBUTING.md` へ統一する
+- branch図:
+  `main` のREADMEにあったMermaid `gitGraph` を `CONTRIBUTING.md` のbranch運用に復元し、開発branchからreleaseへの流れを視覚資料として維持する
+- 理由:
+  貢献者がrootの標準的な入口から開発規約を発見できるようにし、同じ規約の重複管理とbranch運用図の消失を防ぐため
+- 関連:
+  [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 ## 2026-08-22 - J-STEM-LP01参照CADの掲載を継続する
 

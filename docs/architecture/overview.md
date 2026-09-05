@@ -135,7 +135,7 @@ flowchart LR
 
 - [scad-and-export.md](scad-and-export.md)
 - [project-data.md](project-data.md)
-- [../guide/development.md](../guide/development.md)
+- [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
 - [../guide/manual-verification.md](../guide/manual-verification.md)
 - [../third-party-licenses.md](../third-party-licenses.md)
 - [../backlog/legend-extensibility-todo.md](../backlog/legend-extensibility-todo.md)

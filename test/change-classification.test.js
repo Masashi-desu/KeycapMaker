@@ -35,14 +35,14 @@ function classify(files, overrides = {}) {
 }
 
 test("repository documentation receives only the lightweight documentation gate", () => {
-  assert.deepEqual(classify(["README.md", "docs/guide/development.md"]), {
+  assert.deepEqual(classify(["README.md", "CONTRIBUTING.md"]), {
     classification: "documentation",
     docs: true,
     test: false,
     build: false,
     reasons: [
+      "CONTRIBUTING.md: repository documentation",
       "README.md: repository documentation",
-      "docs/guide/development.md: repository documentation",
     ],
   });
 });

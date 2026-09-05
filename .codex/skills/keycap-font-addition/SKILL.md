@@ -9,7 +9,7 @@ description: Add, update, or audit bundled legend fonts in the Keycap Maker repo
 
 Read these before changing a font:
 
-1. [development guide](../../../docs/guide/development.md) for change classes, quality gates, generated files, and synchronization.
+1. [development guide](../../../CONTRIBUTING.md) for change classes, quality gates, generated files, and synchronization.
 2. [third-party inventory](../../../docs/third-party-licenses.md) for the complete published/dependency inventory and update rule.
 3. [font inventory](../../../public/fonts/README.md) for font-specific acceptance, evidence, and user-visible attribution requirements.
 4. [attribution touchpoints](../license-attribution/references/repo-touchpoints.md) for implementation locations.

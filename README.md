@@ -16,7 +16,7 @@ KeycapMakerは、キーキャップの形状、印字、homing、stemをブラ�
 
 ## 開発・保守
 
-- [開発・貢献規約](docs/guide/development.md)
+- [開発・貢献規約](CONTRIBUTING.md)
 - [文書案内](docs/README.md)
 - [アプリ全体像](docs/architecture/overview.md)
 - [SCAD / export契約](docs/architecture/scad-and-export.md)

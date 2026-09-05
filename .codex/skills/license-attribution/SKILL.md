@@ -7,7 +7,7 @@ description: Add or update copyright and license attribution workflows in this r
 
 ## Canonical repository rules
 
-Use [the development guide](../../../docs/guide/development.md) for quality gates and synchronization, and [the third-party inventory](../../../docs/third-party-licenses.md) for the authoritative component/license list. Font acceptance and evidence belong to [the font inventory](../../../public/fonts/README.md). Read [repo touchpoints](references/repo-touchpoints.md) for the existing UI/data plumbing.
+Use [the development guide](../../../CONTRIBUTING.md) for quality gates and synchronization, and [the third-party inventory](../../../docs/third-party-licenses.md) for the authoritative component/license list. Font acceptance and evidence belong to [the font inventory](../../../public/fonts/README.md). Read [repo touchpoints](references/repo-touchpoints.md) for the existing UI/data plumbing.
 
 ## Task sequence
 
