@@ -8,6 +8,8 @@ import {
 } from "../src/data/keycap-shape-registry.js";
 import {
   createEditorDataPayload,
+  getTopHatUsableFootprintLimits,
+  getTopHatHeightMax,
   deleteEditorDataPayloadPath,
   EDITOR_DATA_KIND,
   EDITOR_DATA_SCHEMA_VERSION,
@@ -925,6 +927,44 @@ test("JISエンターの既定寸法はステム原点を下胴中央に置く",
   assert.equal(params.jisEnterNotchDepth, 18);
 });
 
+test("top-hat の寸法を限界まで往復しても高さを失わず、再正規化と JSON 保存後も復旧する", () => {
+  const params = syncDerivedKeycapParams({
+    ...createDefaultKeycapParams("custom-shell"),
+    topHatEnabled: true,
+    topHatHeight: 1.4,
+  });
+  const assertValid = (value) => {
+    const limits = getTopHatUsableFootprintLimits(value);
+    const gap = 2 * value.topHatHeight / Math.tan(value.topHatShoulderAngle * Math.PI / 180);
+    assert.equal(value.topHatHeight, 1.4);
+    for (const [axis, limit] of [["Width", limits.width], ["Depth", limits.depth]]) {
+      assert.ok(value[`topHatTop${axis}`] >= 0.2);
+      assert.ok(value[`topHatBottom${axis}`] <= limit + 1e-9);
+      assert.ok(value[`topHatBottom${axis}`] - value[`topHatTop${axis}`] >= gap - 1e-9);
+    }
+  };
+
+  for (const axis of ["Width", "Depth"]) {
+    for (const top of [13.1, 99, 9.5, 0.2, 10.5]) {
+      params[`topHatTop${axis}`] = top;
+      syncDerivedKeycapParams(params);
+      assertValid(params);
+      params[`topHatBottom${axis}`] = 0.2;
+      syncDerivedKeycapParams(params);
+      assertValid(params);
+    }
+  }
+
+  // Simulate invalid saved or in-memory dimensions bypassing the input controls.
+  Object.assign(params, { topHatTopWidth: 99, topHatTopDepth: 13.1, topHatBottomWidth: -1, topHatBottomDepth: 13.1 });
+  assertValid(parseEditorDataPayload(createEditorDataPayload(params)));
+  syncDerivedKeycapParams(params);
+  assertValid(params);
+  const recovered = { ...params };
+  syncDerivedKeycapParams(params);
+  assert.deepEqual(params, recovered);
+});
+
 test("top-hat パラメータは対応形状ごとに保持し上面内に丸める", () => {
   const wideTopHat = parseEditorDataPayload({
     shapeProfile: "custom-shell",
@@ -1054,9 +1094,9 @@ test("top-hat パラメータは対応形状ごとに保持し上面内に丸め
   assert.ok(wideTopHat.topHatBottomDepth < wideTopHat.keyDepth);
   assert.equal(wideTopHat.topHatTopRadius, Math.min(wideTopHat.topHatTopWidth, wideTopHat.topHatTopDepth) / 2);
   assert.equal(wideTopHat.topHatShoulderAngle, 85);
-  assert.ok(wideTopHat.topHatShoulderRadius <= 0.001);
-  assert.ok(wideTopHat.topHatHeight <= 0.051);
-  assert.ok(smallTopHat.topHatHeight > wideTopHat.topHatHeight);
+  assert.ok(wideTopHat.topHatShoulderRadius > 0);
+  assert.equal(wideTopHat.topHatHeight, 20);
+  assert.equal(smallTopHat.topHatHeight, getTopHatHeightMax(smallTopHat));
   assert.equal(smallTopHat.topHatShoulderRadius, 0.6);
   assert.ok(smallTopHat.topHatBottomRadius > smallTopHat.topHatTopRadius);
   assert.equal(individualTopHat.topHatTopRadiusIndividualEnabled, true);

@@ -579,6 +579,34 @@ test("OpenSCAD full body は dishDepth の正負と代表 footprint で曲面契
       }
     });
 
+    await t.test("矛盾する top-hat 寸法でも再描画時に高さを保ち、別パーツと一体形状を生成する", async () => {
+      const params = createBodyParams(registry.createDefaultKeycapParams("custom-shell"), {
+        topHatEnabled: true,
+        topHatSeparateColorEnabled: true,
+        topHatTopWidth: 10.5,
+        topHatTopDepth: 13.1,
+        topHatBottomWidth: 0.2,
+        topHatBottomDepth: 13.1,
+        topHatHeight: 1.4,
+      });
+      const original = { ...params };
+      for (const exportTarget of ["top_hat", "single_material_shape"]) {
+        const rendered = await renderBody({ bundle, wasmBinary, params, exportTarget });
+        assertHealthyBody(rendered, `recovered ${exportTarget}`);
+        assertClose(rendered.bounds.maxZ, params.topCenterHeight + 1.4, 0.06, "top-hat height should survive invalid dimensions");
+        assert.equal(readScadNumber(rendered.jobScad, "user_top_hat_height"), 1.4);
+      }
+      assert.deepEqual(params, original, "rendering must not mutate the caller's parameters");
+      const corrected = await renderBody({
+        bundle,
+        wasmBinary,
+        params: { ...params, topHatTopDepth: 8, topHatBottomWidth: 13.1 },
+        exportTarget: "top_hat",
+      });
+      assertHealthyBody(corrected, "top-hat after dimensions are restored");
+      assertClose(corrected.bounds.maxZ, params.topCenterHeight + 1.4, 0.06, "next render should recover without reloading");
+    });
+
     await t.test("負の spherical でも flush legend の曲面追従 volume は空にならない", async () => {
       const rendered = await renderBody({
         bundle,

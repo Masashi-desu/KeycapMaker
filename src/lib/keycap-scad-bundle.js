@@ -1,3 +1,4 @@
+import { syncTopHatParams } from "./editor-data.js";
 import {
   createDefaultKeycapParams,
   DEFAULT_SHAPE_PROFILE_KEY,
@@ -1228,6 +1229,7 @@ async function getRuntimeAssets(params = {}) {
 }
 
 export async function createKeycapFiles({ params, exportTarget }) {
+  params = syncTopHatParams({ ...params });
   const definitions = await createKeycapDefinitions({ params, exportTarget });
   const runtimeAssets = await getRuntimeAssets(params);
 

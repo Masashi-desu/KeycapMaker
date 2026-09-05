@@ -25,6 +25,12 @@ import {
   createInitialKeycapParams,
   getDishDepthMax,
   getTopHatDishDepthMax,
+  getTopHatUsableFootprintLimits,
+  getTopHatTopWidthMax,
+  getTopHatTopDepthMax,
+  getTopHatBottomWidthMin,
+  getTopHatBottomDepthMin,
+  getTopHatHeightMax,
   getTopSurfaceShapePreset,
   listEditableParamKeys,
   mergeEditorDataPayloadParams,
@@ -516,7 +522,6 @@ const TOP_HAT_MIN_HEIGHT = 0.05;
 const TOP_HAT_MIN_SHOULDER_ANGLE = 5;
 const TOP_HAT_MAX_SHOULDER_ANGLE = 85;
 const TOP_HAT_MIN_SHOULDER_RADIUS = 0;
-const TOP_HAT_EDGE_CLEARANCE = 0.2;
 const TOP_HAT_RECESS_CLEARANCE = 0.05;
 const LINKED_SIZE_UNIT_FIELDS = Object.freeze({
   keySizeUnits: "keyWidth",
@@ -825,8 +830,8 @@ const FIELD_SLIDER_RANGE_RESOLVERS = Object.freeze({
   topCenterHeight: () => ({ max: TOP_CENTER_HEIGHT_SLIDER_MAX }),
   topOffsetX: (params) => getLegendOffsetSliderRange(params, "x"),
   topOffsetY: (params) => getLegendOffsetSliderRange(params, "y"),
-  topHatTopWidth: (params) => ({ max: getTopHatUsableFootprintLimits(params).width }),
-  topHatTopDepth: (params) => ({ max: getTopHatUsableFootprintLimits(params).depth }),
+  topHatTopWidth: (params) => ({ max: getTopHatTopWidthMax(params) }),
+  topHatTopDepth: (params) => ({ max: getTopHatTopDepthMax(params) }),
   topHatHeight: (params) => ({ max: getTopHatHeightMax(params) }),
   rimWidth: (params) => ({ max: getTypewriterRimMaxWidth(params) }),
   rimHeightUp: () => ({ max: TYPEWRITER_RIM_HEIGHT_SLIDER_MAX }),
@@ -1690,14 +1695,6 @@ function getTopHatFootprintLimits(params = state.keycapParams) {
   };
 }
 
-function getTopHatUsableFootprintLimits(params = state.keycapParams) {
-  const limits = getTopHatFootprintLimits(params);
-  return {
-    width: Math.max(limits.width - TOP_HAT_EDGE_CLEARANCE * 2, TOP_HAT_MIN_SIZE),
-    depth: Math.max(limits.depth - TOP_HAT_EDGE_CLEARANCE * 2, TOP_HAT_MIN_SIZE),
-  };
-}
-
 function getJisEnterTopHatInsetMax(params = state.keycapParams) {
   const limits = getTopHatFootprintLimits(params);
   const notchWidth = Math.min(Math.max(Number(params.jisEnterNotchWidth ?? 0), 0), Math.max(limits.width - TOP_HAT_MIN_SIZE, 0));
@@ -1723,23 +1720,13 @@ function getTopHatSafeInset(params = state.keycapParams) {
 }
 
 function getTopHatTopWidthValue(params = state.keycapParams) {
-  const limits = getTopHatUsableFootprintLimits(params);
   const width = Number(params.topHatTopWidth ?? TOP_HAT_MIN_SIZE);
-  return Math.min(Math.max(Number.isFinite(width) ? width : TOP_HAT_MIN_SIZE, TOP_HAT_MIN_SIZE), limits.width);
+  return Math.min(Math.max(Number.isFinite(width) ? width : TOP_HAT_MIN_SIZE, TOP_HAT_MIN_SIZE), getTopHatTopWidthMax(params));
 }
 
 function getTopHatTopDepthValue(params = state.keycapParams) {
-  const limits = getTopHatUsableFootprintLimits(params);
   const depth = Number(params.topHatTopDepth ?? TOP_HAT_MIN_SIZE);
-  return Math.min(Math.max(Number.isFinite(depth) ? depth : TOP_HAT_MIN_SIZE, TOP_HAT_MIN_SIZE), limits.depth);
-}
-
-function getTopHatBottomWidthMin(params = state.keycapParams) {
-  return getTopHatTopWidthValue(params);
-}
-
-function getTopHatBottomDepthMin(params = state.keycapParams) {
-  return getTopHatTopDepthValue(params);
+  return Math.min(Math.max(Number.isFinite(depth) ? depth : TOP_HAT_MIN_SIZE, TOP_HAT_MIN_SIZE), getTopHatTopDepthMax(params));
 }
 
 function getTopHatBottomWidthValue(params = state.keycapParams) {
@@ -1781,13 +1768,6 @@ function getTopHatActualShoulderOutset(params = state.keycapParams) {
   return Math.min(shoulderOutset, height / Math.tan((shoulderAngle * Math.PI) / 180));
 }
 
-function getTopHatHeightMax(params = state.keycapParams) {
-  const availableOutset = getTopHatShoulderOutset(params);
-  const maxHeight = availableOutset * Math.tan((getTopHatSafeShoulderAngle(params) * Math.PI) / 180);
-
-  return Math.max(maxHeight, TOP_HAT_MIN_HEIGHT);
-}
-
 function getTopHatHeightMin(params = state.keycapParams) {
   const geometry = resolveTopPlaneGeometry(params);
   return -Math.max(Number(geometry.topThickness ?? 0) - TOP_HAT_RECESS_CLEARANCE, 0);
@@ -1822,13 +1802,11 @@ function getTopHatShoulderRadiusMin(params = state.keycapParams) {
 }
 
 function getTopHatTopWidthHint(params) {
-  const limits = getTopHatUsableFootprintLimits(params);
-  return t("fields.topHatTopWidth.hint", { maxWidth: formatMillimeter(limits.width) });
+  return t("fields.topHatTopWidth.hint", { maxWidth: formatMillimeter(getTopHatTopWidthMax(params)) });
 }
 
 function getTopHatTopDepthHint(params) {
-  const limits = getTopHatUsableFootprintLimits(params);
-  return t("fields.topHatTopDepth.hint", { maxDepth: formatMillimeter(limits.depth) });
+  return t("fields.topHatTopDepth.hint", { maxDepth: formatMillimeter(getTopHatTopDepthMax(params)) });
 }
 
 function getTopHatBottomWidthHint(params) {
@@ -2398,11 +2376,13 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.1,
         min: TOP_HAT_MIN_SIZE,
+        max: (params) => getTopHatTopWidthMax(params),
         primaryMiniLabel: () => t("fields.topHatTopWidth.miniLabel"),
         secondaryLabel: () => t("fields.topHatTopWidth.secondaryLabel"),
         secondaryField: "topHatTopWidthUnits",
         secondaryUnit: "u",
         secondaryStep: 0.05,
+        secondaryMax: (params) => getTopHatTopWidthMax(params) / getKeyUnitMm(),
         secondaryMin: () => TOP_HAT_MIN_SIZE / getKeyUnitMm(),
         visibleWhen: (params) => params.topHatEnabled,
       },
@@ -2414,11 +2394,13 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.1,
         min: TOP_HAT_MIN_SIZE,
+        max: (params) => getTopHatTopDepthMax(params),
         primaryMiniLabel: () => t("fields.topHatTopDepth.miniLabel"),
         secondaryLabel: () => t("fields.topHatTopDepth.secondaryLabel"),
         secondaryField: "topHatTopDepthUnits",
         secondaryUnit: "u",
         secondaryStep: 0.05,
+        secondaryMax: (params) => getTopHatTopDepthMax(params) / getKeyUnitMm(),
         secondaryMin: () => TOP_HAT_MIN_SIZE / getKeyUnitMm(),
         visibleWhen: (params) => params.topHatEnabled,
       },
@@ -2436,6 +2418,7 @@ const fieldGroupTemplates = [
         secondaryField: "topHatBottomWidthUnits",
         secondaryUnit: "u",
         secondaryStep: 0.05,
+        secondaryMax: (params) => getTopHatUsableFootprintLimits(params).width / getKeyUnitMm(),
         secondaryMin: (params) => getTopHatBottomWidthMin(params) / getKeyUnitMm(),
         visibleWhen: (params) => params.topHatEnabled,
       },
@@ -2453,6 +2436,7 @@ const fieldGroupTemplates = [
         secondaryField: "topHatBottomDepthUnits",
         secondaryUnit: "u",
         secondaryStep: 0.05,
+        secondaryMax: (params) => getTopHatUsableFootprintLimits(params).depth / getKeyUnitMm(),
         secondaryMin: (params) => getTopHatBottomDepthMin(params) / getKeyUnitMm(),
         visibleWhen: (params) => params.topHatEnabled,
       },
@@ -2583,6 +2567,7 @@ const fieldGroupTemplates = [
         unit: "mm",
         step: 0.05,
         min: (params) => getTopHatHeightMin(params),
+        max: (params) => getTopHatHeightMax(params),
         visibleWhen: (params) => params.topHatEnabled,
       },
       {
@@ -3084,6 +3069,12 @@ function formatNumericFieldValue(fieldKey, value, stepOverride = null) {
 
 function formatUnitInputValue(value = state.keycapParams.keyWidth) {
   return (Number(value) / getKeyUnitMm()).toFixed(2);
+}
+
+function resolveLinkedSizeUnitConstraint(value) {
+  const resolvedValue = resolveFieldAttribute(value);
+  // Match the unit readout precision; geometry is still clamped in mm.
+  return resolvedValue == null ? null : Number(Number(resolvedValue).toFixed(2));
 }
 
 function resolvePublicAssetUrl(relativePath) {
@@ -5720,7 +5711,8 @@ function renderField(field, options = {}) {
   const fieldMax = resolveFieldAttribute(field.max);
   const fieldStep = resolveFieldAttribute(field.step);
   const sliderAttributes = resolveFieldSliderAttributes(field);
-  const secondaryMin = resolveFieldAttribute(field.secondaryMin);
+  const secondaryMin = resolveLinkedSizeUnitConstraint(field.secondaryMin);
+  const secondaryMax = resolveLinkedSizeUnitConstraint(field.secondaryMax);
   const secondaryStep = resolveFieldAttribute(field.secondaryStep);
   const fieldClassName = options.className ? ` ${options.className}` : "";
   const dependentFields = options.dependentFields ?? [];
@@ -6065,6 +6057,7 @@ function renderField(field, options = {}) {
                 data-field="${field.secondaryField}"
                 value="${formatUnitInputValue(value)}"
                 ${secondaryMin != null ? `min="${secondaryMin}"` : ""}
+                ${secondaryMax != null ? `max="${secondaryMax}"` : ""}
                 ${secondaryStep != null ? `step="${secondaryStep}"` : ""}
                 aria-label="${escapeHtml(secondaryLabel || fieldLabel)}"
               />
@@ -9709,11 +9702,11 @@ function getNumericFieldMinimum(fieldKey, fieldConfig, input = null) {
   }
 
   if (fieldKey === "topHatBottomWidthUnits") {
-    return getTopHatBottomWidthMin() / getKeyUnitMm();
+    return getTopHatBottomWidthMin(state.keycapParams) / getKeyUnitMm();
   }
 
   if (fieldKey === "topHatBottomDepthUnits") {
-    return getTopHatBottomDepthMin() / getKeyUnitMm();
+    return getTopHatBottomDepthMin(state.keycapParams) / getKeyUnitMm();
   }
 
   const minimum = Number(resolveFieldAttribute(fieldConfig?.min));
@@ -9729,6 +9722,17 @@ function parseNumericInputValue(input, fieldKey, fieldConfig) {
   const nextValue = Number(rawValue);
   if (!Number.isFinite(nextValue)) {
     return null;
+  }
+
+  const primaryField = LINKED_SIZE_UNIT_FIELDS[fieldKey] ?? fieldKey;
+  if (["topHatTopWidth", "topHatTopDepth", "topHatBottomWidth", "topHatBottomDepth"].includes(primaryField)) {
+    const unitScale = primaryField === fieldKey ? 1 : getKeyUnitMm();
+    return sanitizeEditorParamValue(
+      primaryField,
+      nextValue * unitScale,
+      state.keycapParams[primaryField],
+      state.keycapParams,
+    ) / unitScale;
   }
 
   const minimum = getNumericFieldMinimum(fieldKey, fieldConfig, input);
@@ -10271,7 +10275,8 @@ function syncLinkedSizeInputs(changedField) {
     return;
   }
 
-  syncFieldConstraintAttribute(unitInput, "min", resolveFieldAttribute(primaryFieldConfig?.secondaryMin));
+  syncFieldConstraintAttribute(unitInput, "min", resolveLinkedSizeUnitConstraint(primaryFieldConfig?.secondaryMin));
+  syncFieldConstraintAttribute(unitInput, "max", resolveLinkedSizeUnitConstraint(primaryFieldConfig?.secondaryMax));
   syncFieldConstraintAttribute(unitInput, "step", resolveFieldAttribute(primaryFieldConfig?.secondaryStep));
 
   const syncedUnitValue = formatUnitInputValue(state.keycapParams[changedPrimaryField]);
@@ -10437,6 +10442,8 @@ async function runKeycapOffJobs(jobs, params = state.keycapParams) {
 async function executeKeycapPreview(options = {}) {
   const { silent = false, refreshActiveProjectPreview = false } = options;
   const requestId = ++latestPreviewRequestId;
+  syncDerivedKeycapParams(state.keycapParams);
+  syncVisibleTopFieldState();
   const previewParams = { ...state.keycapParams };
   let didGeneratePreview = false;
 

@@ -448,7 +448,7 @@ function getTopHatFootprintLimits(params = {}) {
   };
 }
 
-function getTopHatUsableFootprintLimits(params = {}) {
+export function getTopHatUsableFootprintLimits(params = {}) {
   const limits = getTopHatFootprintLimits(params);
   return {
     width: Math.max(limits.width - TOP_HAT_EDGE_CLEARANCE * 2, TOP_HAT_MIN_SIZE),
@@ -488,24 +488,45 @@ function clampTopHatInset(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
   return clampNumberRange(value, fallback, 0, getJisEnterTopHatInsetMax(params));
 }
 
+function getTopHatRequiredDimensionGap(params = {}) {
+  const defaults = createDefaultKeycapParams(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
+  const height = Math.max(clampTopHatHeight(params.topHatHeight, params, defaults.topHatHeight ?? 1.4), 0);
+  const angle = clampTopHatShoulderAngle(params.topHatShoulderAngle, defaults.topHatShoulderAngle ?? 45);
+  return 2 * height / degTan(angle);
+}
+
+export function getTopHatTopWidthMax(params = {}) {
+  return Math.max(getTopHatUsableFootprintLimits(params).width - getTopHatRequiredDimensionGap(params), TOP_HAT_MIN_SIZE);
+}
+
+export function getTopHatTopDepthMax(params = {}) {
+  return Math.max(getTopHatUsableFootprintLimits(params).depth - getTopHatRequiredDimensionGap(params), TOP_HAT_MIN_SIZE);
+}
+
 function clampTopHatTopWidth(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
-  return clampNumberRange(value, fallback, TOP_HAT_MIN_SIZE, getTopHatUsableFootprintLimits(params).width);
+  return clampNumberRange(value, fallback, TOP_HAT_MIN_SIZE, getTopHatTopWidthMax(params));
 }
 
 function clampTopHatTopDepth(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
-  return clampNumberRange(value, fallback, TOP_HAT_MIN_SIZE, getTopHatUsableFootprintLimits(params).depth);
+  return clampNumberRange(value, fallback, TOP_HAT_MIN_SIZE, getTopHatTopDepthMax(params));
+}
+
+export function getTopHatBottomWidthMin(params = {}) {
+  const topWidth = clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth);
+  return Math.min(topWidth + getTopHatRequiredDimensionGap(params), getTopHatUsableFootprintLimits(params).width);
+}
+
+export function getTopHatBottomDepthMin(params = {}) {
+  const topDepth = clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth);
+  return Math.min(topDepth + getTopHatRequiredDimensionGap(params), getTopHatUsableFootprintLimits(params).depth);
 }
 
 function clampTopHatBottomWidth(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
-  const limits = getTopHatUsableFootprintLimits(params);
-  const topWidth = clampTopHatTopWidth(params.topHatTopWidth, params, params.topHatTopWidth);
-  return clampNumberRange(value, fallback, topWidth, limits.width);
+  return clampNumberRange(value, fallback, getTopHatBottomWidthMin(params), getTopHatUsableFootprintLimits(params).width);
 }
 
 function clampTopHatBottomDepth(value, params = {}, fallback = TOP_HAT_MIN_SIZE) {
-  const limits = getTopHatUsableFootprintLimits(params);
-  const topDepth = clampTopHatTopDepth(params.topHatTopDepth, params, params.topHatTopDepth);
-  return clampNumberRange(value, fallback, topDepth, limits.depth);
+  return clampNumberRange(value, fallback, getTopHatBottomDepthMin(params), getTopHatUsableFootprintLimits(params).depth);
 }
 
 function getTopHatTopRadiusMax(params = {}) {
@@ -581,8 +602,13 @@ function getTopHatActualShoulderOutset(params = {}) {
   return Math.min(shoulderOutset, height / degTan(shoulderAngle));
 }
 
-function getTopHatHeightMax(params = {}) {
-  const availableOutset = getTopHatShoulderOutset(params);
+export function getTopHatHeightMax(params = {}) {
+  // Dimension edits must not permanently collapse the requested height. Reserve
+  // the shoulder's footprint from the parent, then fit the top and bottom to it.
+  const limits = getTopHatUsableFootprintLimits(params);
+  const availableOutset = isJisEnterTopHatGeometry(params) && ("topHatInset" in params)
+    ? getTopHatShoulderOutset(params)
+    : Math.max((Math.min(limits.width, limits.depth) - TOP_HAT_MIN_SIZE) / 2, 0);
   const shoulderAngle = clampTopHatShoulderAngle(params.topHatShoulderAngle, params.topHatShoulderAngle ?? 45);
 
   return Math.max(availableOutset * degTan(shoulderAngle), TOP_HAT_MIN_HEIGHT);
@@ -898,6 +924,66 @@ function syncLegendFontParams(params = {}, prefix = "legend") {
   return params;
 }
 
+export function syncTopHatParams(params = {}) {
+  const defaults = createDefaultKeycapParams(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
+  if ("topHatEnabled" in defaults || "topHatEnabled" in params) {
+    params.topHatEnabled = typeof params.topHatEnabled === "boolean"
+      ? params.topHatEnabled
+      : Boolean(defaults.topHatEnabled);
+    params.topHatSeparateColorEnabled = typeof params.topHatSeparateColorEnabled === "boolean"
+      ? params.topHatSeparateColorEnabled
+      : Boolean(defaults.topHatSeparateColorEnabled);
+    params.topHatColor = normalizeHexColor(params.topHatColor)
+      ?? normalizeHexColor(defaults.topHatColor)
+      ?? normalizeHexColor(params.bodyColor)
+      ?? "#f8f9fa";
+    params.topHatShoulderAngle = clampTopHatShoulderAngle(params.topHatShoulderAngle, defaults.topHatShoulderAngle ?? 45);
+    if ("topHatInset" in defaults || "topHatInset" in params) {
+      params.topHatInset = clampTopHatInset(params.topHatInset, params, defaults.topHatInset ?? 2.0);
+    }
+    params.topHatHeight = clampTopHatHeight(params.topHatHeight, params, defaults.topHatHeight ?? 1.4);
+    if ("topHatTopWidth" in defaults || "topHatTopWidth" in params) {
+      params.topHatTopWidth = clampTopHatTopWidth(params.topHatTopWidth, params, defaults.topHatTopWidth ?? 10.5);
+    }
+    if ("topHatTopDepth" in defaults || "topHatTopDepth" in params) {
+      params.topHatTopDepth = clampTopHatTopDepth(params.topHatTopDepth, params, defaults.topHatTopDepth ?? 9.5);
+    }
+    if ("topHatBottomWidth" in defaults || "topHatBottomWidth" in params) {
+      params.topHatBottomWidth = clampTopHatBottomWidth(params.topHatBottomWidth, params, defaults.topHatBottomWidth ?? params.topHatTopWidth);
+    }
+    if ("topHatBottomDepth" in defaults || "topHatBottomDepth" in params) {
+      params.topHatBottomDepth = clampTopHatBottomDepth(params.topHatBottomDepth, params, defaults.topHatBottomDepth ?? params.topHatTopDepth);
+    }
+    params.topHatSurfaceShape = resolveTopSurfaceShape(
+      params.topHatSurfaceShape,
+      resolveTopSurfaceShape(defaults.topHatSurfaceShape, "flat"),
+    );
+    params.topHatDishDepth = params.topHatSurfaceShape === "flat"
+      ? 0
+      : clampTopHatDishDepth(params.topHatDishDepth, params, defaults.topHatDishDepth ?? 0);
+    params.topHatShoulderRadius = clampTopHatShoulderRadius(params.topHatShoulderRadius, params, defaults.topHatShoulderRadius ?? 0);
+    params.topHatTopRadius = clampTopHatTopRadius(params.topHatTopRadius, params, defaults.topHatTopRadius ?? 0);
+    params.topHatBottomRadius = clampTopHatBottomRadius(params.topHatBottomRadius, params, defaults.topHatBottomRadius ?? 0);
+    params.topHatTopRadiusIndividualEnabled = typeof params.topHatTopRadiusIndividualEnabled === "boolean"
+      ? params.topHatTopRadiusIndividualEnabled
+      : Boolean(defaults.topHatTopRadiusIndividualEnabled);
+    TOP_HAT_TOP_RADIUS_FIELD_KEYS.forEach((fieldKey) => {
+      params[fieldKey] = params.topHatTopRadiusIndividualEnabled
+        ? clampTopHatTopRadius(params[fieldKey], params, defaults[fieldKey] ?? params.topHatTopRadius)
+        : params.topHatTopRadius;
+    });
+    params.topHatBottomRadiusIndividualEnabled = typeof params.topHatBottomRadiusIndividualEnabled === "boolean"
+      ? params.topHatBottomRadiusIndividualEnabled
+      : Boolean(defaults.topHatBottomRadiusIndividualEnabled);
+    TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS.forEach((fieldKey) => {
+      params[fieldKey] = params.topHatBottomRadiusIndividualEnabled
+        ? clampTopHatBottomRadius(params[fieldKey], params, defaults[fieldKey] ?? params.topHatBottomRadius)
+        : params.topHatBottomRadius;
+    });
+  }
+  return params;
+}
+
 export function syncDerivedKeycapParams(params = {}) {
   const profileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
   const defaults = createDefaultKeycapParams(profileKey);
@@ -973,61 +1059,7 @@ export function syncDerivedKeycapParams(params = {}) {
       defaults.jisEnterNotchDepth ?? 0,
     );
   }
-  if ("topHatEnabled" in defaults || "topHatEnabled" in params) {
-    params.topHatEnabled = typeof params.topHatEnabled === "boolean"
-      ? params.topHatEnabled
-      : Boolean(defaults.topHatEnabled);
-    params.topHatSeparateColorEnabled = typeof params.topHatSeparateColorEnabled === "boolean"
-      ? params.topHatSeparateColorEnabled
-      : Boolean(defaults.topHatSeparateColorEnabled);
-    params.topHatColor = normalizeHexColor(params.topHatColor)
-      ?? normalizeHexColor(defaults.topHatColor)
-      ?? normalizeHexColor(params.bodyColor)
-      ?? "#f8f9fa";
-    params.topHatShoulderAngle = clampTopHatShoulderAngle(params.topHatShoulderAngle, defaults.topHatShoulderAngle ?? 45);
-    if ("topHatInset" in defaults || "topHatInset" in params) {
-      params.topHatInset = clampTopHatInset(params.topHatInset, params, defaults.topHatInset ?? 2.0);
-    }
-    if ("topHatTopWidth" in defaults || "topHatTopWidth" in params) {
-      params.topHatTopWidth = clampTopHatTopWidth(params.topHatTopWidth, params, defaults.topHatTopWidth ?? 10.5);
-    }
-    if ("topHatTopDepth" in defaults || "topHatTopDepth" in params) {
-      params.topHatTopDepth = clampTopHatTopDepth(params.topHatTopDepth, params, defaults.topHatTopDepth ?? 9.5);
-    }
-    if ("topHatBottomWidth" in defaults || "topHatBottomWidth" in params) {
-      params.topHatBottomWidth = clampTopHatBottomWidth(params.topHatBottomWidth, params, defaults.topHatBottomWidth ?? params.topHatTopWidth);
-    }
-    if ("topHatBottomDepth" in defaults || "topHatBottomDepth" in params) {
-      params.topHatBottomDepth = clampTopHatBottomDepth(params.topHatBottomDepth, params, defaults.topHatBottomDepth ?? params.topHatTopDepth);
-    }
-    params.topHatSurfaceShape = resolveTopSurfaceShape(
-      params.topHatSurfaceShape,
-      resolveTopSurfaceShape(defaults.topHatSurfaceShape, "flat"),
-    );
-    params.topHatDishDepth = params.topHatSurfaceShape === "flat"
-      ? 0
-      : clampTopHatDishDepth(params.topHatDishDepth, params, defaults.topHatDishDepth ?? 0);
-    params.topHatHeight = clampTopHatHeight(params.topHatHeight, params, defaults.topHatHeight ?? 1.4);
-    params.topHatShoulderRadius = clampTopHatShoulderRadius(params.topHatShoulderRadius, params, defaults.topHatShoulderRadius ?? 0);
-    params.topHatTopRadius = clampTopHatTopRadius(params.topHatTopRadius, params, defaults.topHatTopRadius ?? 0);
-    params.topHatBottomRadius = clampTopHatBottomRadius(params.topHatBottomRadius, params, defaults.topHatBottomRadius ?? 0);
-    params.topHatTopRadiusIndividualEnabled = typeof params.topHatTopRadiusIndividualEnabled === "boolean"
-      ? params.topHatTopRadiusIndividualEnabled
-      : Boolean(defaults.topHatTopRadiusIndividualEnabled);
-    TOP_HAT_TOP_RADIUS_FIELD_KEYS.forEach((fieldKey) => {
-      params[fieldKey] = params.topHatTopRadiusIndividualEnabled
-        ? clampTopHatTopRadius(params[fieldKey], params, defaults[fieldKey] ?? params.topHatTopRadius)
-        : params.topHatTopRadius;
-    });
-    params.topHatBottomRadiusIndividualEnabled = typeof params.topHatBottomRadiusIndividualEnabled === "boolean"
-      ? params.topHatBottomRadiusIndividualEnabled
-      : Boolean(defaults.topHatBottomRadiusIndividualEnabled);
-    TOP_HAT_BOTTOM_RADIUS_FIELD_KEYS.forEach((fieldKey) => {
-      params[fieldKey] = params.topHatBottomRadiusIndividualEnabled
-        ? clampTopHatBottomRadius(params[fieldKey], params, defaults[fieldKey] ?? params.topHatBottomRadius)
-        : params.topHatBottomRadius;
-    });
-  }
+  syncTopHatParams(params);
   params.rimWidth = clampTypewriterRimWidth(params.rimWidth, params, defaults.rimWidth ?? 0);
   params.rimHeightUp = clampNonNegativeNumber(params.rimHeightUp, defaults.rimHeightUp ?? 0);
   params.rimHeightDown = clampNonNegativeNumber(params.rimHeightDown, defaults.rimHeightDown ?? 0);
@@ -1285,7 +1317,7 @@ export function createExportableKeycapParams(params = {}) {
     ...params,
     shapeProfile: profileKey,
   };
-  const sanitizedContext = { ...paramsContext };
+  const sanitizedContext = syncTopHatParams({ ...paramsContext });
   const exportableParams = {};
 
   for (const key of listEditableParamKeys(profileKey)) {
@@ -1538,7 +1570,7 @@ function parseEditorDataPayloadResult(payload) {
     ...mergedRawParams,
     shapeProfile: rawProfileKey,
   };
-  const sanitizedContext = { ...paramsContext };
+  const sanitizedContext = syncTopHatParams({ ...paramsContext });
   const nextParams = {};
 
   for (const key of listEditableParamKeys(rawProfileKey)) {

@@ -1303,8 +1303,8 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
         ...registry.createDefaultKeycapParams("custom-shell"),
         topHatEnabled: true,
         topHatSeparateColorEnabled: true,
-        topHatTopWidth: 11.2,
-        topHatTopDepth: 9.4,
+        topHatTopWidth: 10.2,
+        topHatTopDepth: 8.4,
         topHatBottomWidth: 12.6,
         topHatBottomDepth: 10.8,
         topHatTopRadius: 1.3,
@@ -1382,8 +1382,8 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
     assert.match(customJobScad, /^user_shape_geometry_type = "shell";/m);
     assert.match(customJobScad, /^user_top_hat_enabled = true;/m);
     assert.match(customJobScad, /^user_top_hat_separate_enabled = true;/m);
-    assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_width"), 11.2);
-    assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_depth"), 9.4);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_width"), 10.2);
+    assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_depth"), 8.4);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_bottom_width"), 12.6);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_bottom_depth"), 10.8);
     assert.equal(readScadDefinition(customJobScad, "user_top_hat_top_radius"), 1.3);
@@ -1410,9 +1410,9 @@ test("対応形状の top-hat パラメータを SCAD wrapper へ渡す", async 
     assert.equal(readScadDefinition(jisJobScad, "user_top_hat_top_radius"), 1.4);
     assert.equal(readRawScadDefinition(jisJobScad, "user_top_hat_top_radius_individual_enabled"), "false");
     assert.equal(readRawScadDefinition(jisJobScad, "user_top_hat_top_radii"), "[1.4, 1.4, 1.4, 1.4]");
-    assert.equal(readScadDefinition(jisJobScad, "user_top_hat_bottom_radius"), 2.8);
+    assert.equal(readScadDefinition(jisJobScad, "user_top_hat_bottom_radius"), 2.25);
     assert.equal(readRawScadDefinition(jisJobScad, "user_top_hat_bottom_radius_individual_enabled"), "false");
-    assert.equal(readRawScadDefinition(jisJobScad, "user_top_hat_bottom_radii"), "[2.8, 2.8, 2.8, 2.8]");
+    assert.equal(readRawScadDefinition(jisJobScad, "user_top_hat_bottom_radii"), "[2.25, 2.25, 2.25, 2.25]");
     assert.equal(readScadDefinition(jisJobScad, "user_top_hat_height"), 1.2);
     assert.equal(readScadDefinition(jisJobScad, "user_top_hat_shoulder_angle"), 55);
     assert.equal(readScadDefinition(jisJobScad, "user_top_hat_shoulder_radius"), 0.5);
