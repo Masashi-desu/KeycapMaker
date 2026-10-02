@@ -17,6 +17,7 @@
 1. [architecture/overview.md](architecture/overview.md)
 2. [architecture/scad-and-export.md](architecture/scad-and-export.md)
 3. [architecture/project-data.md](architecture/project-data.md)
+   キーボード配置については [architecture/keyboard-layout.md](architecture/keyboard-layout.md) を参照する。
 4. [CONTRIBUTING.md](../CONTRIBUTING.md)
 5. [guide/manual-verification.md](guide/manual-verification.md)
 6. [third-party-licenses.md](third-party-licenses.md)

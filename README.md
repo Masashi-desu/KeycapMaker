@@ -10,6 +10,7 @@ KeycapMakerは、キーキャップの形状、印字、homing、stemをブラ�
 
 - ブラウザ内のOpenSCAD WebAssemblyでキーキャップ形状を生成する
 - Three.js previewで形状と部品の配置を確認する
+- キーボードの配置ファイルや公開GitHubリポジトリを読み込み、キーキャップを割り当てて全体の配置を確認・project保存する（[対応形式](docs/architecture/keyboard-layout.md)）
 - body、top-hat、rim、homing、legendを用途に応じて別体積として扱う
 - 印刷向け `3MF`、CAD交換向け `STEP`、単色形状向け `STL`、編集再開向け `JSON`、複数キーを束ねるproject ZIPを書き出す
 - bundled font、icon provider、公式CAD由来の参照meshを静的資源として配信する

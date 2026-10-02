@@ -60,7 +60,7 @@
 ルール:
 
 - `kind` は `keycap-maker/project` 固定です。
-- `schemaVersion` は `1` です。互換性のない変更を入れる場合だけ更新します。
+- `schemaVersion` は `1` です。互換性のない変更を入れる場合だけ更新します。キーボード配置は省略可能な拡張のため version は維持します。
 - `jsonPath`、`previewPath`、`threeMfPath` はプロジェクトディレクトリからの相対パスです。
 - キーキャップ名を変更した場合、`jsonPath`、`previewPath`、`threeMfPath` は現在の保存名に追従します。
 - `displayOrder` はプロジェクトセグメントの表示順です。保存時は現在の一覧順に 0 始まりで振り直します。
@@ -68,6 +68,18 @@
 - キーキャップ本体の編集値は manifest に複製せず、各 `keycaps/*.json` を正とします。
 - `activeKeycapId` が存在する場合は読み込み直後の現在キーキャップとして使います。存在しない場合は一覧の先頭を使います。
 - プロジェクトは常に1件以上のキーキャップを持ちます。初期表示時は現在の編集値から最初のキーキャップを作成して active にし、0件のプロジェクトを読み込んだ場合も同様に1件を補完します。最後の1件は削除できません。
+
+## キーボード配置
+
+manifest の省略可能な `keyboard` に正規化済みの物理レイアウトを、`placements` に配置先とキーキャップの対応を保存します。配置のない既存プロジェクトも読み込めます。GitHub や元ファイルへ再接続せず ZIP だけで復元できます。
+
+- `keyboard`: `kind = keycap-maker/keyboard`、`schemaVersion = 1`、名称、レイアウト名、`pitchMm`、出典（format / path / URL）、キー一覧、外形の線分、読み込み注意事項。
+- キー: `id`、`label`、U 単位の左上 `x / y` と寸法 `w / h`、時計回り角度 `r`、回転原点 `rx / ry`。必要に応じて matrix 座標と ISO Enter 等の補助矩形を持ちます。
+- `placements`: `slotId`、`keycapId`、mm 単位の `offsetX / offsetY / z`、度単位の `rotation`。位置はキー中心を回転させてから mm へ換算し、補正を足します。一つの位置には一つのキーキャップを割り当て、同じキーキャップは複数の位置に使えます。
+- 存在しないキーキャップや位置への割り当ては除去します。配置定義の差し替え・レイアウト変更では割り当てをリセットし、キーキャップ本体は保持します。
+- 1u の換算基準は既定 19.05 mm で、配置 UI では固定表示します。QMK / KLE / ZMK 等から取り込む値はファイルの設定値ではなくこの既定値です。保存済み project / 正規化配置の `pitchMm` はそのまま復元し、単体編集 UI の 1u 表示換算とは独立させます。KiCad の実寸も維持します。
+
+[読み込み形式と制約](keyboard-layout.md)も参照してください。
 
 ## UI 動作
 
@@ -121,3 +133,8 @@
   プロジェクトセグメント UI、ディレクトリ / ZIP drag & drop、ZIP 保存。
 - `test/project-data.test.js`
   manifest round-trip、path 正規化、preview data URL、非プロジェクト JSON の拒否を確認する。
+- `src/lib/keyboard-layout.js`: 物理レイアウトの解析・正規化、配置変換。
+- `src/lib/keyboard-import.js`: ローカル参照ファイル、GitHub URL の解決と候補探索。
+- `src/lib/keyboard-ui.js`: 配置先と割り当ての UI。
+- `src/lib/keyboard-preview.js`: キーボード全体表示用の配置とガイド面。
+- `test/keyboard-layout.test.js`: 各形式、依存定義、座標変換、GitHub 探索と project 保存互換性。

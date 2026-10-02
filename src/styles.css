@@ -3232,6 +3232,27 @@ pre {
   gap: 8px;
 }
 
+.project-keycap-positions {
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--glass-border-control);
+}
+
+.project-keycap-positions__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.project-keycap-positions__heading { display: grid; grid-template-columns: 1fr auto 16px; align-items: center; gap: 8px; min-height: 36px; padding: 4px 0; color: var(--text); font-size: 12px; font-weight: 700; line-height: 1.4; list-style: none; cursor: pointer; border-radius: 6px; }
+.project-keycap-positions__heading::-webkit-details-marker { display: none; }
+.project-keycap-positions__heading:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.project-keycap-positions__count { color: var(--muted); font-size: 11px; font-weight: 600; }
+.project-keycap-positions__heading svg { width: 16px; height: 16px; transition: transform 160ms ease; }
+.project-keycap-positions[open] > summary svg { transform: rotate(180deg); }
+.project-keycap-positions__body { display: grid; gap: 8px; padding-top: 6px; }
+
 .project-keycap-action-button {
   display: inline-flex;
   align-items: center;
@@ -3442,11 +3463,94 @@ pre {
 }
 
 .preview-area {
+  position: relative;
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;
   height: 100%;
   overflow: visible;
+}
+
+.keyboard-preview-toolbar {
+  position: absolute;
+  bottom: 24px;
+  right: 0;
+  width: min(var(--preview-size), 100%);
+  z-index: 3;
+  text-align: center;
+  pointer-events: none;
+}
+.keyboard-preview-toolbar[hidden], .keyboard-preview-note[hidden] { display: none; }
+.keyboard-preview-switch { --segment-gap: 4px; --segment-padding: 4px; width: max-content; max-width: calc(100% - 24px); margin-inline: auto; border-radius: 18px; pointer-events: auto; }
+.keyboard-preview-switch .segment-link { padding: 10px 14px; font: inherit; font-size: 12px; font-weight: 700; }
+.keyboard-preview-note { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: max-content; max-width: min(420px, calc(100% - 24px)); margin: 0; font-size: 11px; color: var(--muted); background: var(--floating-control); border-radius: 8px; padding: 5px 8px; }
+.keyboard-card, .keyboard-project-summary { display: grid; gap: 14px; padding: 20px; }
+.keyboard-stepper { padding: 12px 4px 4px; border-bottom: 1px solid var(--glass-border-surface); }
+.keyboard-stepper ol { --step-gap: 6px; --step-diameter: 28px; position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--step-gap); margin: 0; padding: 0; list-style: none; }
+.keyboard-stepper li { position: relative; min-width: 0; }
+.keyboard-step__connector { position: absolute; top: calc(var(--step-diameter) / 2 - 1px); left: calc(50% + var(--step-diameter) / 2); width: calc(100% + var(--step-gap) - var(--step-diameter)); height: 2px; background: var(--border); pointer-events: none; overflow: hidden; }
+.keyboard-step__connector-fill { display: block; width: 100%; height: 100%; background: var(--solid-segment-indicator); transform: scaleX(var(--connector-progress)); transform-origin: left center; transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1) var(--connector-delay, 0ms); }
+.keyboard-step { display: grid; justify-items: center; align-content: start; gap: 8px; width: 100%; min-height: 80px; padding: 0 2px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
+.keyboard-step__number { position: relative; display: grid; place-items: center; width: var(--step-diameter); height: var(--step-diameter); box-sizing: border-box; border: 1px solid var(--border); border-radius: 50%; background: var(--panel); font-size: 12px; font-weight: 700; transition: background 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.keyboard-step__label { font-size: 11px; line-height: 1.5; text-align: center; white-space: pre-line; }
+.keyboard-step.is-complete { color: var(--solid-segment-indicator); font-weight: 700; }
+.keyboard-step.is-current { color: var(--text); font-weight: 800; }
+.keyboard-step:is(.is-current, .is-complete) .keyboard-step__number { border-color: var(--solid-segment-indicator); background: var(--solid-segment-indicator); color: var(--segment-active-text); }
+.keyboard-step.is-current .keyboard-step__number { box-shadow: 0 0 0 3px color-mix(in srgb, var(--solid-segment-indicator) 24%, transparent); }
+.keyboard-step:disabled { cursor: default; }
+.keyboard-step:disabled:not(.is-complete):not(.is-current) { opacity: 0.5; }
+.keyboard-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.inspector-panel--keyboard > .project-panel-grid.is-step-entering { animation: keyboard-step-content-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes keyboard-step-content-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.keyboard-status[hidden] { display: none; }
+.inspector-panel--keyboard > .project-panel-grid > .keyboard-status { margin: 0; font-size: 12px; color: var(--muted); }
+.inspector-panel--keyboard > .project-panel-grid > .keyboard-status.is-error { color: #c85d4a; }
+.keyboard-card .keyboard-board-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.keyboard-card .keyboard-import-dropzone { padding: 14px 10px; border: 1px dashed var(--border); border-radius: 12px; text-align: center; line-height: 1.6; }
+.keyboard-card h3, .keyboard-card p, .keyboard-project-summary h3, .keyboard-project-summary p { margin: 0; }
+.keyboard-card p, .keyboard-project-summary p { font-size: 12px; color: var(--muted); }
+.keyboard-import-picker-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border: 1px solid color-mix(in srgb, var(--action-fill) 82%, white 18%); border-radius: 14px; background: color-mix(in srgb, var(--action-text) 22%, var(--action-fill)); box-shadow: 0 10px 18px rgba(45, 36, 28, 0.14); }
+.keyboard-import-picker-actions .export-save-button { min-width: 0; border: 0; border-radius: 0; box-shadow: none; }
+.keyboard-import-picker-actions [data-keyboard-picker="files"] { border-radius: 13px 0 0 13px; }
+.keyboard-import-picker-actions [data-keyboard-picker="folder"] { border-radius: 0 13px 13px 0; }
+.keyboard-import-picker-actions .export-save-button span { white-space: normal; }
+.keyboard-field { display: grid; gap: 7px; font-size: 12px; font-weight: 700; color: var(--text); }
+.keyboard-field input { width: 100%; min-width: 0; min-height: 40px; box-sizing: border-box; padding: 8px 10px; font: inherit; color: var(--text); background: var(--glass-control); border: 1px solid var(--border); border-radius: 10px; }
+.keyboard-offset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.keyboard-status { white-space: pre-wrap; overflow-wrap: anywhere; }
+.keyboard-card .keyboard-status.is-error { color: #c85d4a; }
+.keyboard-candidate-picker { min-width: 0; gap: 8px; padding: 10px; background: var(--font-picker-popover-sheen), var(--panel); border-color: var(--floating-control-border); }
+.keyboard-candidate-search { box-sizing: border-box; }
+.keyboard-candidate-search:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.keyboard-candidate-search input[type="search"] { margin: 0; padding: 0; font: inherit; font-weight: 700; }
+.keyboard-candidates { min-width: 0; max-height: 240px; overflow-y: auto; display: grid; gap: 6px; }
+.keyboard-candidate { min-width: 0; font: inherit; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.keyboard-candidates-empty { padding: 12px; }
+.keyboard-map-scroll { min-width: 0; overflow: hidden; padding: 6px; border-radius: 12px; background: var(--glass-control); border: 1px solid var(--border-soft); }
+.keyboard-map { display: block; width: 100%; min-width: 0; height: auto; max-height: 300px; }
+.keyboard-map-key { cursor: pointer; outline: none; }
+.keyboard-map-key polygon { fill: var(--panel); stroke: var(--border); stroke-width: 0.04; stroke-linejoin: round; }
+.keyboard-map-key.is-assigned polygon { fill: color-mix(in srgb, var(--focus-ring) 32%, var(--panel)); }
+.keyboard-map-key.is-selected polygon, .keyboard-map-key:focus-visible polygon { stroke: var(--text); stroke-width: 0.08; }
+.keyboard-map-key.is-highlighted polygon { fill: var(--solid-segment-indicator); stroke: var(--solid-segment-indicator); stroke-width: 0.06; }
+.keyboard-map-key.is-highlighted text { fill: var(--segment-active-text); }
+.keyboard-map--readonly .keyboard-map-key { cursor: default; }
+.keyboard-map-key text { font-size: 0.18px; font-weight: 700; fill: var(--text); pointer-events: none; }
+.keyboard-map-outline { stroke: var(--muted); stroke-width: 0.04; }
+.keyboard-source-link { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.keyboard-remove { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; padding: 10px; cursor: pointer; }
+@media (max-width: 760px) {
+  .keyboard-preview-toolbar { bottom: max(64px, calc(env(safe-area-inset-bottom, 0px) + 48px)); width: 100%; }
+  .keyboard-preview-note { font-size: 10px; }
+  .editor-screen:not(.editor-screen--inspector-hidden) .keyboard-preview-toolbar { visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .keyboard-preview-switch .segment-control__indicator,
+  .keyboard-preview-switch .segment-link,
+  .keyboard-step__connector-fill,
+  .keyboard-step__number,
+  .project-keycap-positions__heading svg { transition: none; }
+  .inspector-panel--keyboard > .project-panel-grid.is-step-entering { animation: none; }
 }
 
 .preview-stage {
@@ -3606,6 +3710,10 @@ pre {
 
 .editor-screen--overlap .preview-area {
   justify-content: flex-end;
+}
+
+.editor-screen--overlap .keyboard-preview-toolbar {
+  width: calc(100% - max(var(--sidebar-width), var(--inspector-card-min-width)) - var(--column-gap));
 }
 
 .editor-screen--overlap .preview-stage {

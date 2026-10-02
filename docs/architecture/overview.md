@@ -10,6 +10,7 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
 - typewriter shape 専用の key rim 追加
 - Three.js によるプレビュー
 - 複数キーキャップをまとめるプロジェクト
+- 物理キーボード配置のファイル / GitHub 読み込み、キーキャップの割り当て、全体プレビュー
 - 3MF の書き出し
 - CAD 交換用 STEP の書き出し
 - 単色形状用 STL の書き出し
@@ -135,6 +136,7 @@ flowchart LR
 
 - [scad-and-export.md](scad-and-export.md)
 - [project-data.md](project-data.md)
+- [keyboard-layout.md](keyboard-layout.md)
 - [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
 - [../guide/manual-verification.md](../guide/manual-verification.md)
 - [../third-party-licenses.md](../third-party-licenses.md)

@@ -4,6 +4,7 @@ import {
   parseEditorDataPayload,
   sanitizeExportBaseName,
 } from "./editor-data.js";
+import { normalizeKeyboardLayout, normalizeKeyboardPlacements } from "./keyboard-layout.js";
 
 export const PROJECT_DATA_KIND = "keycap-maker/project";
 export const PROJECT_DATA_SCHEMA_VERSION = 1;
@@ -271,6 +272,8 @@ export function createEmptyProjectState(options = {}) {
     activeKeycapId,
     directoryHandle: options.directoryHandle ?? null,
     isDirty: Boolean(options.isDirty),
+    keyboard: options.keyboard ? normalizeKeyboardLayout(options.keyboard) : null,
+    placements: normalizeKeyboardPlacements(options.placements, options.keyboard, keycaps),
   };
 }
 
@@ -299,6 +302,10 @@ export function createProjectManifest(project = {}, savedAt = new Date().toISOSt
     name: normalizeProjectName(project.name, DEFAULT_PROJECT_NAME),
     savedAt,
     activeKeycapId,
+    ...(project.keyboard ? {
+      keyboard: normalizeKeyboardLayout(project.keyboard),
+      placements: normalizeKeyboardPlacements(project.placements, project.keyboard, keycaps),
+    } : {}),
     keycaps: keycaps.map((entry) => ({
       id: normalizeProjectKeycapId(entry.id),
       name: sanitizeExportBaseName(entry.name ?? entry.params?.name, DEFAULT_EXPORT_BASE_NAME),
@@ -366,6 +373,8 @@ export function parseProjectManifest(payload, fallbackName = DEFAULT_PROJECT_NAM
     name: normalizeProjectName(manifest.name, fallbackName),
     savedAt: typeof manifest.savedAt === "string" ? manifest.savedAt : "",
     activeKeycapId,
+    keyboard: manifest.keyboard ? normalizeKeyboardLayout(manifest.keyboard) : null,
+    placements: normalizeKeyboardPlacements(manifest.placements, manifest.keyboard, keycaps),
     keycaps,
   };
 }

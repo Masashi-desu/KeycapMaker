@@ -52,6 +52,10 @@ import {
   transformJStemLp01ReferenceMesh,
 } from "./lib/j-stem-lp01-reference.js";
 import { parseOff } from "./lib/off-parser.js";
+import { collectKeyboardDirectoryFiles, discoverGitHubKeyboardFiles, discoverLocalKeyboardFiles, isKeyboardLayoutJson } from "./lib/keyboard-import.js";
+import { normalizeKeyboardPlacements } from "./lib/keyboard-layout.js";
+import { createKeyboardPreviewLayers } from "./lib/keyboard-preview.js";
+import { getKeyboardWorkflow, syncKeyboardStepBar, renderKeyboardTab, renderKeyboardProjectSummary, renderPreviewModeControl, renderKeyboardCandidates, renderProjectKeycapPlacements } from "./lib/keyboard-ui.js";
 import {
   DEFAULT_PROJECT_NAME,
   PROJECT_MANIFEST_FILENAME,
@@ -368,6 +372,14 @@ let previewSceneModulePromise = null;
 let colorisLoadPromise = null;
 let latestPreviewRequestId = 0;
 let previewViewState = null;
+let keyboardViewState = null;
+let mountedPreviewMode = "keycap";
+let latestViewerRequestId = 0;
+let latestKeyboardImportId = 0;
+let keyboardCatalog = null;
+let pendingKeyboardStepFocus = false;
+const projectMeshCache = new Map();
+const pendingProjectMeshes = new Map();
 let jStemLp01ReferenceMeshPromise = null;
 let viewportLayoutMode = getViewportLayoutMode();
 let hasAttachedEditorDataDropListeners = false;
@@ -571,6 +583,7 @@ const workspaceSections = [
     id: "design",
     labelKey: "navigation.design",
   },
+  { id: "keyboard", labelKey: "keyboard.title" },
 ];
 
 function t(key, values = {}, fallback = key) {
@@ -2959,11 +2972,22 @@ const state = {
   }),
   keycapExportOverlayKeycapId: "",
   keycapDesignOverlayKeycapId: "",
+  projectKeycapPositionsExpanded: new Set(),
   editorStatus: "idle",
   editorSummary: translate(initialLocale, "status.notGenerated"),
   editorLogs: [],
   editorError: "",
   previewLayers: [],
+  previewMode: "keycap",
+  keyboardUrl: "",
+  keyboardCandidates: [],
+  keyboardCandidateQuery: "",
+  keyboardLayouts: [],
+  keyboardSlotId: "",
+  keyboardBusy: false,
+  keyboardStep: 1,
+  keyboardError: false,
+  keyboardMessage: "",
   sidebarTab: "design",
   isMobileInspectorHidden: false,
   isImportDragActive: false,
@@ -3396,6 +3420,7 @@ function renderShell() {
 
         <section class="right-column">
           <div class="preview-area">
+            <div class="keyboard-preview-toolbar" data-preview-toolbar hidden></div>
             <div class="preview-stage">
               <div class="preview-stage__canvas" data-preview-stage></div>
             </div>
@@ -3411,6 +3436,7 @@ function renderShell() {
   app.querySelector("[data-language-control]")?.addEventListener("click", handleLanguageControlClick);
   app.querySelector("[data-mobile-inspector-toggle]")?.addEventListener("click", handleMobileInspectorToggleClick);
   app.querySelector(".inspector-card")?.addEventListener("click", handleInspectorCardClick);
+  app.querySelector(".inspector-card")?.addEventListener("toggle", handleProjectKeycapPositionsToggle, true);
   app.querySelector(".inspector-card")?.addEventListener("input", handleInspectorCardInput);
   app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
   app.querySelector(".inspector-card")?.addEventListener("wheel", handleInspectorCardWheel, { passive: false });
@@ -3420,6 +3446,7 @@ function renderShell() {
   app.querySelector(".inspector-card")?.addEventListener("dragover", handleInspectorCardDragOver);
   app.querySelector(".inspector-card")?.addEventListener("drop", handleInspectorCardDrop);
   app.querySelector(".inspector-card")?.addEventListener("dragend", handleInspectorCardDragEnd);
+  app.querySelector("[data-preview-toolbar]")?.addEventListener("click", handleKeyboardClick);
   attachEditorDataDropListeners();
   renderPersistentShellCopy();
   renderThemeControl();
@@ -3654,6 +3681,21 @@ function renderInspectorPanel() {
     return;
   }
 
+  const keyboardPanel = container.querySelector(".inspector-panel--keyboard");
+  if (state.sidebarTab === "keyboard" && keyboardPanel) {
+    const template = document.createElement("template");
+    template.innerHTML = renderInspectorContent();
+    const nextPanel = template.content.firstElementChild;
+    const bar = keyboardPanel.querySelector(".keyboard-stepper");
+    const stepChanged = Number(bar.dataset.currentStep) !== getKeyboardWorkflow(state).step;
+    syncKeyboardStepBar(bar, state, t);
+    keyboardPanel.querySelector(".panel-intro").replaceWith(nextPanel.querySelector(".panel-intro"));
+    const content = nextPanel.querySelector(".project-panel-grid");
+    if (stepChanged && !reduceMotionQuery?.matches) content.classList.add("is-step-entering");
+    keyboardPanel.querySelector(".project-panel-grid").replaceWith(content);
+    return;
+  }
+
   container.innerHTML = renderInspectorContent();
 }
 
@@ -3670,6 +3712,7 @@ function render(options = {}) {
     renderLanguageControl();
     renderSegmentControl();
     renderInspectorPanel();
+    renderPreviewToolbar();
     renderKeycapExportOverlay();
     configureColoris();
     syncImportDropOverlay();
@@ -3678,9 +3721,12 @@ function render(options = {}) {
     focusLegendFontPickerQuery();
     focusLegendFontSourceInput();
     focusLegendIconPickerQuery();
+    focusKeyboardStep();
   };
 
-  if (animateInspector && isUiMotionEnabled()) {
+  // Keep the live stepper visible while its connector transitions run.
+  const updatesKeyboardPanel = state.sidebarTab === "keyboard" && app.querySelector(".inspector-panel--keyboard");
+  if (animateInspector && isUiMotionEnabled() && !updatesKeyboardPanel) {
     const transition = document.startViewTransition(applyUpdate);
     transition.ready.catch(() => {});
     transition.updateCallbackDone.catch(() => {});
@@ -3692,6 +3738,7 @@ function render(options = {}) {
 }
 
 function renderInspectorContent() {
+  if (state.sidebarTab === "keyboard") return renderKeyboardTab(state, t, escapeHtml, SEARCH_ICON_MARKUP);
   if (state.sidebarTab === "project") {
     return renderProjectTab();
   }
@@ -3991,6 +4038,7 @@ function renderProjectKeycapList() {
           </button>
           ${summaryMarkup}
         </div>
+        ${renderProjectKeycapPlacements(state.project, entry.id, t, escapeHtml, { open: state.projectKeycapPositionsExpanded.has(entry.id) })}
         <div class="project-keycap-item__actions">
           <button
             class="project-keycap-action-button project-keycap-export-button"
@@ -4200,6 +4248,7 @@ function renderProjectTab() {
       ${renderImportBindingNotice()}
 
       <div class="project-panel-grid">
+        ${renderKeyboardProjectSummary(state, t, escapeHtml)}
         <section class="field-group-card project-card" aria-labelledby="project-name-title">
           <div class="field-group-header">
             <div class="field-group-card__header field-group-card__header--plain">
@@ -6582,7 +6631,17 @@ function handleInspectorCardDragEnd() {
   }
 }
 
+function handleProjectKeycapPositionsToggle(event) {
+  const details = event.target;
+  if (!(details instanceof HTMLDetailsElement) || !details.matches("[data-project-keycap-positions]") || !details.isConnected) return;
+  const keycapId = details.dataset.projectKeycapPositions;
+  if (details.open) state.projectKeycapPositionsExpanded.add(keycapId);
+  else state.projectKeycapPositionsExpanded.delete(keycapId);
+}
+
 function handleInspectorCardClick(event) {
+  if (getClosestFromEventTarget(event, "[data-project-keycap-positions]")) return;
+  if (handleKeyboardClick(event)) return;
   const projectKeycapDragHandle = getClosestFromEventTarget(event, "[data-project-keycap-drag]");
   if (projectKeycapDragHandle) {
     return;
@@ -6758,6 +6817,7 @@ function handleInspectorCardClick(event) {
 }
 
 function handleInspectorCardInput(event) {
+  if (handleKeyboardInput(event)) return;
   const projectNameInput = getClosestFromEventTarget(event, "[data-project-name]");
   if (projectNameInput) {
     handleProjectNameInput(projectNameInput);
@@ -6894,6 +6954,7 @@ function handleInspectorCardWheel(event) {
 }
 
 function handleInspectorCardChange(event) {
+  if (handleKeyboardChange(event)) return;
   const userFontInput = getClosestFromEventTarget(event, "[data-user-font-file]");
   if (userFontInput) {
     void handleUserLegendFontFileInput(userFontInput);
@@ -6930,6 +6991,14 @@ function handleInspectorCardCompositionEnd(event) {
 }
 
 function handleInspectorCardKeydown(event) {
+  if (getClosestFromEventTarget(event, "[data-project-keycap-positions]")) return;
+  const keyboardSlot = getClosestFromEventTarget(event, "[data-keyboard-slot]");
+  if (keyboardSlot && (event.key === "Enter" || event.key === " ")) {
+    event.preventDefault(); selectKeyboardSlot(keyboardSlot.dataset.keyboardSlot); return;
+  }
+  if (getClosestFromEventTarget(event, "[data-keyboard-url]") && event.key === "Enter") {
+    event.preventDefault(); void importKeyboardFromGitHub(); return;
+  }
   const projectKeycapDragHandle = getClosestFromEventTarget(event, "[data-project-keycap-drag]");
   if (projectKeycapDragHandle && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
     event.preventDefault();
@@ -7352,6 +7421,7 @@ function handleSidebarTabChange(event) {
     return;
   }
 
+  flushPendingActiveProjectKeycapSync();
   state.sidebarTab = nextTab;
   render({ animateInspector: false });
 }
@@ -8420,10 +8490,15 @@ function flushPendingActiveProjectKeycapSync() {
 }
 
 function captureCurrentPreviewViewState() {
+  if (mountedPreviewMode === "keyboard") return clonePreviewViewState(previewViewState);
   return clonePreviewViewState(disposePreviewScene?.captureViewState?.() ?? previewViewState);
 }
 
 function capturePreviewImageDataUrlForViewState(viewState) {
+  if (mountedPreviewMode === "keyboard") {
+    return state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId)?.previewImageDataUrl
+      || createProjectPreviewPlaceholderDataUrl(state.keycapParams);
+  }
   const previewScene = disposePreviewScene;
   const normalizedViewState = clonePreviewViewState(viewState);
   if (!previewScene || !normalizedViewState || typeof previewScene.applyViewState !== "function") {
@@ -8609,6 +8684,13 @@ function recaptureActiveProjectKeycapPreview(entryId) {
     return;
   }
 
+  if (state.previewMode === "keyboard") {
+    state.previewMode = "keycap";
+    renderPreviewToolbar();
+    void renderPreviewViewer().then(() => recaptureActiveProjectKeycapPreview(entryId));
+    return;
+  }
+
   syncActiveProjectKeycapFromCurrent(captureCurrentProjectPreview());
   setProjectStatus("success", t("project.previewRecaptured"));
   render({ animateInspector: true });
@@ -8660,6 +8742,8 @@ async function deleteProjectKeycap(entryId) {
     : nextKeycaps.find((item) => item.id === state.project.activeKeycapId) ?? null;
 
   state.project.keycaps = nextKeycaps;
+  state.projectKeycapPositionsExpanded.delete(entryId);
+  state.project.placements = normalizeKeyboardPlacements(state.project.placements, state.project.keyboard, nextKeycaps);
   state.project.activeKeycapId = nextActiveEntry?.id ?? "";
   state.project.isDirty = true;
   state.keycapDesignOverlayKeycapId = "";
@@ -8677,6 +8761,8 @@ async function deleteProjectKeycap(entryId) {
 
   if (wasActive && nextActiveEntry) {
     await executeKeycapPreview({ silent: true });
+  } else if (state.previewMode === "keyboard") {
+    await renderPreviewViewer();
   }
 }
 
@@ -8969,6 +9055,18 @@ function createWebkitDirectoryHandle(directoryEntry) {
   return {
     kind: "directory",
     name: directoryEntry.name,
+    async *entries() {
+      const reader = directoryEntry.createReader();
+      while (true) {
+        const entries = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+        if (!entries.length) break;
+        for (const entry of entries) {
+          yield [entry.name, entry.isDirectory ? createWebkitDirectoryHandle(entry) : {
+            kind: "file", name: entry.name, getFile: () => getWebkitFile(entry),
+          }];
+        }
+      }
+    },
     async getFileHandle(name, options = {}) {
       if (options.create) {
         throw new Error(t("project.directoryNotWritable"));
@@ -9160,6 +9258,8 @@ async function importProjectDirectory(directoryHandle) {
   const didCreateFallbackKeycap = keycaps.length === 0;
   state.project = createProjectStateWithActiveKeycap({
     name: manifest.name,
+    keyboard: manifest.keyboard,
+    placements: manifest.placements,
     keycaps,
     activeKeycapId: manifest.activeKeycapId,
     directoryHandle,
@@ -9168,6 +9268,8 @@ async function importProjectDirectory(directoryHandle) {
   });
   const activeEntry = state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId);
   activateProjectKeycapEntry(activeEntry);
+
+  resetKeyboardImportUi();
 
   state.sidebarTab = "project";
   state.editorStatus = "dirty";
@@ -9246,6 +9348,8 @@ async function importProjectFiles(files, manifestFile) {
   const didCreateFallbackKeycap = keycaps.length === 0;
   state.project = createProjectStateWithActiveKeycap({
     name: manifest.name,
+    keyboard: manifest.keyboard,
+    placements: manifest.placements,
     keycaps,
     activeKeycapId: manifest.activeKeycapId,
     directoryHandle: null,
@@ -9254,6 +9358,8 @@ async function importProjectFiles(files, manifestFile) {
   });
   const activeEntry = state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId);
   activateProjectKeycapEntry(activeEntry);
+
+  resetKeyboardImportUi();
 
   state.sidebarTab = "project";
   state.editorStatus = "dirty";
@@ -9306,6 +9412,8 @@ async function importProjectArchiveFile(file) {
   const didCreateFallbackKeycap = keycaps.length === 0;
   state.project = createProjectStateWithActiveKeycap({
     name: manifest.name,
+    keyboard: manifest.keyboard,
+    placements: manifest.placements,
     keycaps,
     activeKeycapId: manifest.activeKeycapId,
     directoryHandle: null,
@@ -9314,6 +9422,8 @@ async function importProjectArchiveFile(file) {
   });
   const activeEntry = state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId);
   activateProjectKeycapEntry(activeEntry);
+
+  resetKeyboardImportUi();
 
   state.sidebarTab = "project";
   state.editorStatus = "dirty";
@@ -9337,6 +9447,12 @@ async function importFileTransferFromDrop(dataTransfer) {
   const dropSnapshot = createDroppedTransferSnapshot(dataTransfer);
   const directoryHandle = await getDroppedDirectoryHandle(dropSnapshot);
   if (directoryHandle) {
+    try {
+      await directoryHandle.getFileHandle(PROJECT_MANIFEST_FILENAME);
+    } catch {
+      await importKeyboardCatalog(async (onProgress) => discoverLocalKeyboardFiles(await collectKeyboardDirectoryFiles(directoryHandle), { onProgress }));
+      return;
+    }
     await importProjectDirectory(directoryHandle);
     return;
   }
@@ -9360,6 +9476,16 @@ async function importFileTransferFromDrop(dataTransfer) {
   const projectArchiveFile = files.find((file) => isProjectArchiveFileName(file.name));
   if (projectArchiveFile) {
     await importProjectArchiveFile(projectArchiveFile);
+    return;
+  }
+
+  const layoutFiles = files.filter((file) => /\.(dtsi|dts|overlay|keymap|toml|kicad_pcb)$/i.test(file.name));
+  let hasLayoutJson = false;
+  for (const file of files.filter((item) => /\.json$/i.test(item.name))) {
+    if (isKeyboardLayoutJson(await file.text())) { hasLayoutJson = true; break; }
+  }
+  if (layoutFiles.length || hasLayoutJson) {
+    await importKeyboardFiles(files);
     return;
   }
 
@@ -10295,9 +10421,262 @@ function schedulePreviewRefresh(options = {}) {
   }, 450);
 }
 
+function renderPreviewToolbar() {
+  const toolbar = app.querySelector("[data-preview-toolbar]");
+  if (!toolbar) return;
+  toolbar.hidden = !state.project.keyboard;
+  if (toolbar.hidden) {
+    toolbar.replaceChildren();
+    return;
+  }
+  // Keep the indicator mounted so changing modes animates its position.
+  if (!toolbar.querySelector(".keyboard-preview-switch")) toolbar.innerHTML = renderPreviewModeControl(state, t);
+  const control = toolbar.querySelector(".keyboard-preview-switch");
+  control.setAttribute("aria-label", t("keyboard.previewLabel"));
+  control.style.setProperty("--segment-index", state.previewMode === "keyboard" ? "1" : "0");
+  control.querySelectorAll("[data-preview-mode]").forEach((button) => {
+    const active = button.dataset.previewMode === state.previewMode;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+    button.textContent = t(`keyboard.${button.dataset.previewMode}View`);
+  });
+  const note = toolbar.querySelector(".keyboard-preview-note");
+  note.hidden = state.previewMode !== "keyboard";
+  note.textContent = t("keyboard.previewNote");
+}
+
+function resetKeyboardImportUi() {
+  state.projectKeycapPositionsExpanded.clear();
+  latestKeyboardImportId += 1;
+  keyboardCatalog = null;
+  state.keyboardCandidates = [];
+  state.keyboardLayouts = [];
+  state.keyboardMessage = "";
+  state.keyboardBusy = false;
+  state.keyboardError = false;
+  state.keyboardSlotId = state.project.keyboard?.keys[0]?.id || "";
+  state.keyboardStep = state.project.keyboard ? 3 : 1;
+  pendingKeyboardStepFocus = false;
+  state.previewMode = state.project.keyboard ? "keyboard" : "keycap";
+  keyboardViewState = null;
+  projectMeshCache.clear();
+}
+
+function selectKeyboardSlot(id) {
+  if (!state.project.keyboard?.keys.some((key) => key.id === id)) return;
+  state.keyboardSlotId = id;
+  render();
+  if (state.previewMode === "keyboard") void renderPreviewViewer();
+}
+
+function focusKeyboardStep() {
+  if (!pendingKeyboardStepFocus || state.sidebarTab !== "keyboard") return;
+  pendingKeyboardStepFocus = false;
+  const current = app.querySelector(".keyboard-stepper [aria-current='step']");
+  current?.focus({ preventScroll: true });
+  const bar = current?.closest("nav");
+  if (!bar) return;
+  const card = bar.closest(".inspector-card");
+  const barRect = bar.getBoundingClientRect(), cardRect = card.getBoundingClientRect();
+  if (card.scrollHeight > card.clientHeight && (barRect.top < cardRect.top + 16 || barRect.bottom > cardRect.bottom - 16)) {
+    card.scrollTop += barRect.top - cardRect.top - 16;
+  }
+  const visibleRect = bar.getBoundingClientRect();
+  if (visibleRect.top < 24 || visibleRect.bottom > window.innerHeight - 24) {
+    window.scrollBy({ top: visibleRect.top - 24, behavior: "instant" });
+  }
+}
+
+function setKeyboardStep(step) {
+  if (state.keyboardBusy || !getKeyboardWorkflow(state).steps.some((item) => item.number === step && item.available)) return;
+  state.keyboardStep = step;
+  pendingKeyboardStepFocus = true;
+  render({ animateInspector: true });
+}
+
+function applyKeyboardLayout(board) {
+  flushPendingActiveProjectKeycapSync();
+  // Replacing a definition invalidates old slot identifiers even if the counts match.
+  state.project.keyboard = board;
+  state.project.placements = [];
+  state.project.isDirty = true;
+  state.keyboardSlotId = board.keys[0].id;
+  if (state.keyboardStep !== 3) pendingKeyboardStepFocus = true;
+  state.keyboardStep = 3;
+  state.keyboardError = false;
+  state.keyboardMessage = t("keyboard.loaded", { count: board.keys.length });
+  state.sidebarTab = "keyboard";
+  keyboardViewState = null;
+  state.previewMode = "keyboard";
+  render();
+  void renderPreviewViewer();
+}
+
+async function loadKeyboardCandidate(path) {
+  if (!keyboardCatalog || state.keyboardBusy) return;
+  const catalog = keyboardCatalog, requestId = ++latestKeyboardImportId;
+  state.keyboardBusy = true; state.keyboardError = false; state.keyboardMessage = t("keyboard.loading"); render();
+  try {
+    const layouts = await catalog.load(path);
+    if (requestId !== latestKeyboardImportId) return;
+    state.keyboardLayouts = layouts;
+    state.keyboardBusy = false;
+    applyKeyboardLayout(layouts[0]);
+  } catch (error) {
+    if (requestId !== latestKeyboardImportId) return;
+    state.keyboardError = true; state.keyboardMessage = error.message; state.keyboardBusy = false; render();
+  }
+}
+
+async function importKeyboardCatalog(discover) {
+  if (state.keyboardBusy) return;
+  const requestId = ++latestKeyboardImportId;
+  state.keyboardBusy = true; state.keyboardError = false; state.keyboardMessage = t("keyboard.loading");
+  state.keyboardCandidates = []; state.keyboardCandidateQuery = ""; state.keyboardLayouts = [];
+  keyboardCatalog = null;
+  state.keyboardStep = 1;
+  state.sidebarTab = "keyboard"; render();
+  try {
+    const catalog = await discover(({ checked, total }) => {
+      if (requestId !== latestKeyboardImportId) return;
+      state.keyboardMessage = t("keyboard.checkingFiles", { checked, total });
+      const status = app.querySelector("[data-keyboard-import-status]");
+      if (status) status.textContent = state.keyboardMessage;
+    });
+    if (requestId !== latestKeyboardImportId) return;
+    keyboardCatalog = catalog;
+    state.keyboardCandidates = catalog.candidates;
+    state.keyboardBusy = false;
+    state.keyboardMessage = t("keyboard.chooseFile", { count: catalog.candidates.length });
+    if (catalog.candidates.length === 1) await loadKeyboardCandidate(catalog.candidates[0]);
+    else { state.keyboardStep = 2; pendingKeyboardStepFocus = true; render(); }
+  } catch (error) {
+    if (requestId !== latestKeyboardImportId) return;
+    state.keyboardBusy = false; state.keyboardError = true; state.keyboardMessage = error.message; render();
+  }
+}
+
+function importKeyboardFiles(files) {
+  return importKeyboardCatalog((onProgress) => discoverLocalKeyboardFiles(Array.from(files), { onProgress }));
+}
+
+function importKeyboardFromGitHub() {
+  const url = state.keyboardUrl;
+  return importKeyboardCatalog((onProgress) => discoverGitHubKeyboardFiles(url, { onProgress }));
+}
+
+function assignKeyboardSlot(keycapId) {
+  const slotId = state.keyboardSlotId || state.project.keyboard?.keys[0]?.id;
+  if (!slotId) return;
+  const previous = state.project.placements.find((entry) => entry.slotId === slotId);
+  state.project.placements = state.project.placements.filter((entry) => entry.slotId !== slotId);
+  if (keycapId && state.project.keycaps.some((entry) => entry.id === keycapId)) {
+    state.project.placements.push({ slotId, keycapId, offsetX: previous?.offsetX || 0, offsetY: previous?.offsetY || 0, z: previous?.z || 0, rotation: previous?.rotation || 0 });
+  }
+  state.project.isDirty = true;
+  render();
+  if (state.previewMode === "keyboard") void renderPreviewViewer();
+}
+
+function setPreviewMode(mode) {
+  if (!["keyboard", "keycap"].includes(mode) || (mode === "keyboard" && !state.project.keyboard)) return;
+  flushPendingActiveProjectKeycapSync();
+  state.previewMode = mode;
+  renderPreviewToolbar();
+  void renderPreviewViewer();
+}
+
+function handleKeyboardClick(event) {
+  const button = getClosestFromEventTarget(event, "[data-keyboard-picker], [data-keyboard-step], [data-preview-mode], [data-keyboard-open], [data-keyboard-slot], [data-keyboard-candidate], [data-keyboard-github], [data-keyboard-assign-current], [data-keyboard-edit-assigned], [data-keyboard-remove]");
+  if (!button || button.disabled) return false;
+  if (button.hasAttribute("data-keyboard-picker")) {
+    const input = button.closest(".keyboard-import-picker-actions")?.querySelector(`[data-keyboard-files="${button.dataset.keyboardPicker}"]`);
+    if (input instanceof HTMLInputElement && !input.disabled) {
+      input.value = "";
+      input.click();
+    }
+  } else if (button.hasAttribute("data-keyboard-step")) setKeyboardStep(Number(button.dataset.keyboardStep));
+  else if (button.hasAttribute("data-preview-mode")) setPreviewMode(button.dataset.previewMode);
+  else if (button.hasAttribute("data-keyboard-open")) { state.sidebarTab = "keyboard"; render({ animateInspector: true }); }
+  else if (button.hasAttribute("data-keyboard-slot")) selectKeyboardSlot(button.dataset.keyboardSlot);
+  else if (button.hasAttribute("data-keyboard-candidate")) void loadKeyboardCandidate(button.dataset.keyboardCandidate);
+  else if (button.hasAttribute("data-keyboard-github")) void importKeyboardFromGitHub();
+  else if (button.hasAttribute("data-keyboard-assign-current")) { flushPendingActiveProjectKeycapSync(); assignKeyboardSlot(state.project.activeKeycapId); }
+  else if (button.hasAttribute("data-keyboard-edit-assigned")) {
+    const placement = state.project.placements.find((entry) => entry.slotId === state.keyboardSlotId);
+    if (placement) { setPreviewMode("keycap"); state.sidebarTab = "design"; void applyProjectKeycapSelection(placement.keycapId); }
+  } else if (button.hasAttribute("data-keyboard-remove")) {
+    state.project.keyboard = null; state.project.placements = []; state.project.isDirty = true;
+    resetKeyboardImportUi(); render(); void renderPreviewViewer();
+  }
+  return true;
+}
+
+function handleKeyboardInput(event) {
+  const url = getClosestFromEventTarget(event, "[data-keyboard-url]");
+  if (url) { state.keyboardUrl = url.value; return true; }
+  const query = getClosestFromEventTarget(event, "[data-keyboard-candidate-query]");
+  if (query) {
+    state.keyboardCandidateQuery = query.value;
+    const list = app.querySelector("[data-keyboard-candidates]");
+    if (list) list.innerHTML = renderKeyboardCandidates(state.keyboardCandidates.filter((path) => path.toLowerCase().includes(query.value.toLowerCase())), t, escapeHtml);
+    return true;
+  }
+  return Boolean(getClosestFromEventTarget(event, "[data-keyboard-offset]"));
+}
+
+function handleKeyboardChange(event) {
+  const input = getClosestFromEventTarget(event, "[data-keyboard-files], [data-keyboard-layout], [data-keyboard-slot-select], [data-keyboard-assignment], [data-keyboard-offset]");
+  if (!input) return false;
+  if (input.hasAttribute("data-keyboard-files")) { if (input.files.length) void importKeyboardFiles(input.files); return true; }
+  if (input.hasAttribute("data-keyboard-layout")) { const board = state.keyboardLayouts[Number(input.value)]; if (board) applyKeyboardLayout(board); return true; }
+  if (input.hasAttribute("data-keyboard-slot-select")) { selectKeyboardSlot(input.value); return true; }
+  if (input.hasAttribute("data-keyboard-assignment")) { assignKeyboardSlot(input.value); return true; }
+  const value = Number(input.value);
+  if (!input.value.trim() || !Number.isFinite(value) || !input.checkValidity()) { render(); return true; }
+  const placement = state.project.placements.find((entry) => entry.slotId === state.keyboardSlotId);
+  if (!placement || !["offsetX", "offsetY", "z", "rotation"].includes(input.dataset.keyboardOffset)) return true;
+  placement[input.dataset.keyboardOffset] = value;
+  state.project.isDirty = true; render();
+  if (state.previewMode === "keyboard") void renderPreviewViewer();
+  return true;
+}
+
+async function getProjectKeyboardModel(entry) {
+  const signature = JSON.stringify(entry.params);
+  if (projectMeshCache.get(entry.id)?.signature === signature) return projectMeshCache.get(entry.id);
+  const token = `${entry.id}:${signature}`;
+  if (!pendingProjectMeshes.has(token)) {
+    pendingProjectMeshes.set(token, (async () => {
+      const results = await runKeycapOffJobs(createKeycapOffJobs("preview", entry.params), entry.params);
+      const model = { signature, layers: results.map(({ name, color, mesh }) => ({ name, color, mesh })) };
+      projectMeshCache.set(entry.id, model);
+      return model;
+    })().finally(() => pendingProjectMeshes.delete(token)));
+  }
+  return pendingProjectMeshes.get(token);
+}
+
 async function renderPreviewViewer() {
+  const viewerRequestId = ++latestViewerRequestId;
+  const mode = state.previewMode;
+  let layers = state.previewLayers;
+  if (mode === "keyboard" && state.project.keyboard) {
+    const board = state.project.keyboard;
+    const models = new Map();
+    const assigned = new Set(state.project.placements.map((entry) => entry.keycapId));
+    const modelErrors = [];
+    for (const entry of state.project.keycaps.filter((item) => assigned.has(item.id))) {
+      try { models.set(entry.id, await getProjectKeyboardModel(entry)); }
+      catch (error) { modelErrors.push(`${entry.name}: ${error.message}`); }
+      if (viewerRequestId !== latestViewerRequestId) return;
+    }
+    if (modelErrors.length) { state.keyboardError = true; state.keyboardMessage = modelErrors.join("\n"); render(); }
+    layers = createKeyboardPreviewLayers(board, state.project.placements, models, state.keyboardSlotId);
+  }
   if (disposePreviewScene) {
-    previewViewState = disposePreviewScene.captureViewState();
+    if (mountedPreviewMode === "keyboard") keyboardViewState = disposePreviewScene.captureViewState();
+    else previewViewState = disposePreviewScene.captureViewState();
     disposePreviewScene.dispose();
     disposePreviewScene = null;
   }
@@ -10307,7 +10686,7 @@ async function renderPreviewViewer() {
     return;
   }
 
-  if (state.previewLayers.length === 0) {
+  if (layers.length === 0) {
     container.innerHTML = `
       <div class="preview-placeholder">
         ${t("preview.placeholder")}
@@ -10318,12 +10697,15 @@ async function renderPreviewViewer() {
 
   previewSceneModulePromise ??= import("./lib/preview-scene.js");
   const { mountPreviewScene } = await previewSceneModulePromise;
-  if (!container.isConnected || state.previewLayers.length === 0) {
+  if (!container.isConnected || viewerRequestId !== latestViewerRequestId) {
     return;
   }
 
-  disposePreviewScene = mountPreviewScene(container, state.previewLayers, {
-    initialViewState: previewViewState,
+  mountedPreviewMode = mode;
+  disposePreviewScene = mountPreviewScene(container, layers, {
+    initialViewState: mode === "keyboard" ? keyboardViewState || { direction: [0.5, -0.8, 1.4], distanceScale: 2.8 } : previewViewState,
+    upAxis: mode === "keyboard" ? "z" : "y",
+    onSelectSlot: mode === "keyboard" ? selectKeyboardSlot : null,
   });
 }
 
@@ -10445,6 +10827,7 @@ async function executeKeycapPreview(options = {}) {
   syncDerivedKeycapParams(state.keycapParams);
   syncVisibleTopFieldState();
   const previewParams = { ...state.keycapParams };
+  const previewKeycapId = state.project.activeKeycapId;
   let didGeneratePreview = false;
 
   state.editorStatus = "running";
@@ -10489,6 +10872,7 @@ async function executeKeycapPreview(options = {}) {
       opacity: entry.opacity,
       mesh: entry.mesh,
     }));
+    projectMeshCache.set(previewKeycapId, { signature: JSON.stringify(previewParams), layers: state.previewLayers.filter((entry) => entry.name !== "j-stem-lp01") });
     didGeneratePreview = true;
   } catch (error) {
     if (requestId !== latestPreviewRequestId) {

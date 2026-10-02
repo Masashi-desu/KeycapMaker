@@ -292,6 +292,7 @@ export function mountPreviewScene(container, layers, options = {}) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
+  if (options.upAxis === "z") camera.up.set(0, 0, 1);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.enablePan = true;
@@ -308,8 +309,15 @@ export function mountPreviewScene(container, layers, options = {}) {
   rimLight.position.set(-18, -16, 22);
   scene.add(rimLight);
 
+  const sharedGeometries = new Map();
   const layerEntries = normalizeLayers(layers).map((layer) => {
-    const geometry = createPreviewGeometry(layer.mesh);
+    let geometry;
+    if (layer.transform) {
+      if (!sharedGeometries.has(layer.mesh)) sharedGeometries.set(layer.mesh, createPreviewGeometry(layer.mesh));
+      geometry = sharedGeometries.get(layer.mesh).clone();
+      geometry.rotateZ(layer.transform.rotation);
+      geometry.translate(layer.transform.x, layer.transform.y, layer.transform.z);
+    } else geometry = createPreviewGeometry(layer.mesh);
     const isOverlayLayer = OVERLAY_LAYER_NAMES.has(layer.name);
     const opacity = Number.isFinite(layer.opacity) ? Math.min(Math.max(layer.opacity, 0), 1) : 1;
     const isTransparentLayer = opacity < 1;
@@ -326,6 +334,7 @@ export function mountPreviewScene(container, layers, options = {}) {
       polygonOffsetUnits: isOverlayLayer ? -2 : 0,
     });
     const previewMesh = new THREE.Mesh(geometry, material);
+    previewMesh.userData.slotId = layer.slotId || "";
     previewMesh.renderOrder = REFERENCE_LAYER_NAMES.has(layer.name) ? 2 : (isOverlayLayer ? 1 : 0);
     scene.add(previewMesh);
     geometry.computeBoundingBox();
@@ -340,6 +349,11 @@ export function mountPreviewScene(container, layers, options = {}) {
   });
 
   const sceneScale = Math.max(size.x, size.y, size.z, 1);
+  if (options.upAxis === "z") {
+    camera.near = Math.max(sceneScale / 10000, 0.01);
+    camera.far = Math.max(1000, sceneScale * 20);
+    camera.updateProjectionMatrix();
+  }
   restoreViewState({ camera, controls, sceneScale, viewState: initialViewState });
   const viewOffsetRatio = getViewOffsetRatio(initialViewState);
   const orbitTarget = new THREE.Vector3(0, 0, 0);
@@ -352,6 +366,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   const canvas = renderer.domElement;
   let isHoveringMesh = false;
   let isInteracting = false;
+  let pointerDownPosition = null;
 
   const syncControlsState = (enabled) => {
     controls.enabled = enabled;
@@ -449,8 +464,18 @@ export function mountPreviewScene(container, layers, options = {}) {
   };
 
   const handlePointerDownCapture = (event) => {
+    pointerDownPosition = { x: event.clientX, y: event.clientY };
     const isOverMesh = updateHoverState(event.clientX, event.clientY);
     syncControlsState(isOverMesh);
+  };
+
+  const handlePointerUp = (event) => {
+    if (!options.onSelectSlot || !pointerDownPosition || Math.hypot(event.clientX - pointerDownPosition.x, event.clientY - pointerDownPosition.y) > 4) return;
+    pointerDownPosition = null;
+    if (!updatePointerVector(pointer, canvas, event.clientX, event.clientY)) return;
+    raycaster.setFromCamera(pointer, camera);
+    const slotId = raycaster.intersectObjects(interactiveMeshes, false).find((hit) => hit.object.userData.slotId)?.object.userData.slotId;
+    if (slotId) queueMicrotask(() => options.onSelectSlot(slotId));
   };
 
   const handleWheelCapture = (event) => {
@@ -494,6 +519,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   canvas.addEventListener("pointermove", handlePointerMove);
   canvas.addEventListener("pointerleave", handlePointerLeave);
   canvas.addEventListener("pointerdown", handlePointerDownCapture, { capture: true });
+  canvas.addEventListener("pointerup", handlePointerUp);
   canvas.addEventListener("wheel", handleWheelCapture, { capture: true, passive: true });
   syncCanvasTouchAction();
   syncControlsState(false);
@@ -557,6 +583,7 @@ export function mountPreviewScene(container, layers, options = {}) {
     canvas.removeEventListener("pointermove", handlePointerMove);
     canvas.removeEventListener("pointerleave", handlePointerLeave);
     canvas.removeEventListener("pointerdown", handlePointerDownCapture, { capture: true });
+    canvas.removeEventListener("pointerup", handlePointerUp);
     canvas.removeEventListener("wheel", handleWheelCapture, { capture: true });
     controls.removeEventListener("start", handleControlStart);
     controls.removeEventListener("end", handleControlEnd);
@@ -566,6 +593,7 @@ export function mountPreviewScene(container, layers, options = {}) {
       entry.geometry.dispose();
       entry.material.dispose();
     });
+    sharedGeometries.forEach((geometry) => geometry.dispose());
     renderer.dispose();
     container.replaceChildren();
   };
