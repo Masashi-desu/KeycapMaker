@@ -63,7 +63,7 @@
 
 ## npm lockfile inventory
 
-この区間は `package-lock.json` の全package entryを列挙します。`runtime direct` は公開bundleまたはfallback data、`runtime transitive` はその間接依存、`build` はVite toolchain、`platform optional` はlockfileが保持するOS/CPU別binaryです。
+この区間は `package-lock.json` の全package entryを列挙します。`runtime direct` は公開bundleまたはfallback data、`runtime transitive` はその間接依存、`build` はVite toolchain、`test` はPlaywright browser test、`platform optional` はlockfileが保持するOS/CPU別binaryです。
 
 <!-- lockfile-inventory:start -->
 | Package | Version | Scope / purpose | License text |
@@ -73,6 +73,7 @@
 | [`@iconify-json/material-symbols`](https://www.npmjs.com/package/@iconify-json/material-symbols/v/1.2.79) | `1.2.79` | runtime direct / icon fallback | [Apache-2.0](../public/vendor/material-symbols/LICENSE) |
 | [`@iconify/types`](https://www.npmjs.com/package/@iconify/types/v/2.0.0) | `2.0.0` | runtime transitive | [MIT](https://opensource.org/license/mit) |
 | [`@lucide/icons`](https://www.npmjs.com/package/@lucide/icons/v/1.21.0) | `1.21.0` | runtime direct / icon fallback | [ISC and MIT notices](../public/vendor/lucide/LICENSE) |
+| [`@playwright/test`](https://www.npmjs.com/package/@playwright/test/v/1.63.0) | `1.63.0` | test direct / Playwright runner and assertions | [Apache-2.0](https://github.com/microsoft/playwright/blob/v1.63.0/LICENSE) |
 | [`@types/estree`](https://www.npmjs.com/package/@types/estree/v/1.0.8) | `1.0.8` | build transitive / Rollup types | [MIT](https://opensource.org/license/mit) |
 | [`esbuild`](https://www.npmjs.com/package/esbuild/v/0.27.7) | `0.27.7` | build transitive / Vite transform | [MIT](https://opensource.org/license/mit) |
 | [`fdir`](https://www.npmjs.com/package/fdir/v/6.5.0) | `6.5.0` | build transitive / file traversal | [MIT](https://opensource.org/license/mit) |
@@ -82,6 +83,8 @@
 | [`paper`](https://www.npmjs.com/package/paper/v/0.12.18) | `0.12.18` | runtime direct / SVG path conversion | [MIT](https://opensource.org/license/mit) |
 | [`picocolors`](https://www.npmjs.com/package/picocolors/v/1.1.1) | `1.1.1` | build transitive | [ISC](https://spdx.org/licenses/ISC.html) |
 | [`picomatch`](https://www.npmjs.com/package/picomatch/v/4.0.4) | `4.0.4` | build transitive / glob matching | [MIT](https://opensource.org/license/mit) |
+| [`playwright`](https://www.npmjs.com/package/playwright/v/1.63.0) | `1.63.0` | test transitive / browser automation | [Apache-2.0](https://github.com/microsoft/playwright/blob/v1.63.0/LICENSE) |
+| [`playwright-core`](https://www.npmjs.com/package/playwright-core/v/1.63.0) | `1.63.0` | test transitive / browser protocol client | [Apache-2.0](https://github.com/microsoft/playwright/blob/v1.63.0/LICENSE) |
 | [`postcss`](https://www.npmjs.com/package/postcss/v/8.5.10) | `8.5.10` | build transitive / CSS processing | [MIT](https://opensource.org/license/mit) |
 | [`remixicon`](https://www.npmjs.com/package/remixicon/v/4.9.1) | `4.9.1` | runtime direct / icon fallback | [package metadata: Apache-2.0; distributed notice: Remix Icon License v1.0](../public/vendor/remix-icon/LICENSE) |
 | [`rollup`](https://www.npmjs.com/package/rollup/v/4.60.1) | `4.60.1` | build transitive / bundling | [MIT](https://opensource.org/license/mit) |

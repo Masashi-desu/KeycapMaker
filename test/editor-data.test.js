@@ -417,14 +417,15 @@ test("ステム入口の面取り量は保持し、負数を 0 に丸める", ()
   assert.equal(rounded.stemCrossChamfer, 0);
 });
 
-test("旧 dish 指定だけの入力は spherical として解釈する", () => {
-  const parsed = parseEditorDataPayload({
-    shapeProfile: "custom-shell",
-    dishDepth: 0.8,
-  });
-
-  assert.equal(parsed.topSurfaceShape, "spherical");
-  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight - 0.8);
+test("旧 dish 指定だけの入力は正負とも spherical として解釈する", async (t) => {
+  for (const dishDepth of [0.8, -0.6]) {
+    await t.test(`dishDepth=${dishDepth}`, () => {
+      const parsed = parseEditorDataPayload({ shapeProfile: "custom-shell", dishDepth });
+      assert.equal(parsed.topSurfaceShape, "spherical");
+      assert.equal(parsed.dishDepth, dishDepth);
+      assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight - dishDepth);
+    });
+  }
 });
 
 test("負の深さは現在の曲面を反転して盛り上がりとして扱う", () => {
@@ -489,17 +490,6 @@ test("曲面の深さは既定値を保ちつつ正負とも 1.5mm まで許容�
   assert.equal(wideSpherical.dishDepth, 1.45);
   assert.equal(overMaximum.dishDepth, 1.5);
   assert.equal(belowMinimum.dishDepth, -1.5);
-});
-
-test("旧 dish 指定だけの負値も spherical の盛り上がりとして解釈する", () => {
-  const parsed = parseEditorDataPayload({
-    shapeProfile: "custom-shell",
-    dishDepth: -0.6,
-  });
-
-  assert.equal(parsed.topSurfaceShape, "spherical");
-  assert.equal(parsed.dishDepth, -0.6);
-  assert.equal(parsed.topVisibleCenterHeight, parsed.topCenterHeight + 0.6);
 });
 
 test("typewriter は spherical top を受ける", () => {

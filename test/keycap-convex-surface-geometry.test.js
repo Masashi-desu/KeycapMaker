@@ -3,70 +3,17 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { posix as pathPosix } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createServer } from "vite";
+import { createScadTestContext } from "./support/scad-context.js";
 
 import OpenSCAD from "../public/vendor/openscad/openscad.js";
 import { parseOff } from "../src/lib/off-parser.js";
 
-const PROJECT_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const OPENSCAD_WASM_PATH = fileURLToPath(
   new URL("../public/vendor/openscad/openscad.wasm", import.meta.url),
 );
 const HEIGHT_TOLERANCE_MM = 0.06;
 // At the 1.5mm maximum, the 13-degree side continuation reaches about 0.36mm inward.
 const BOUNDARY_INSET_MM = 0.4;
-
-function installBrowserMocks(textMetrics) {
-  const previousDocument = globalThis.document;
-  const previousFetch = globalThis.fetch;
-  const previousFontFace = globalThis.FontFace;
-  const previousWindow = globalThis.window;
-
-  globalThis.document = {
-    createElement(tagName) {
-      if (tagName !== "canvas") {
-        return {};
-      }
-
-      return {
-        getContext() {
-          return {
-            font: "",
-            measureText() {
-              return textMetrics;
-            },
-          };
-        },
-      };
-    },
-    fonts: {
-      add() {},
-    },
-  };
-  globalThis.fetch = async () => ({
-    ok: true,
-    async arrayBuffer() {
-      return new ArrayBuffer(0);
-    },
-  });
-  globalThis.FontFace = class {
-    async load() {
-      return this;
-    }
-  };
-  globalThis.window = {
-    location: {
-      origin: "http://localhost",
-    },
-  };
-
-  return () => {
-    globalThis.document = previousDocument;
-    globalThis.fetch = previousFetch;
-    globalThis.FontFace = previousFontFace;
-    globalThis.window = previousWindow;
-  };
-}
 
 function makeDirRecursive(fs, absolutePath) {
   const segments = absolutePath.split("/").filter(Boolean);
@@ -281,356 +228,332 @@ async function renderBody({ bundle, wasmBinary, params, exportTarget = "body" })
 }
 
 test("OpenSCAD full body は dishDepth の正負と代表 footprint で曲面契約を保つ", async (t) => {
-  const restoreBrowserMocks = installBrowserMocks({
-    width: 120,
-    actualBoundingBoxLeft: 60,
-    actualBoundingBoxRight: 60,
-    actualBoundingBoxAscent: 70,
-    actualBoundingBoxDescent: 30,
-  });
-  const server = await createServer({
-    root: PROJECT_ROOT,
-    appType: "custom",
-    logLevel: "silent",
-    server: {
-      middlewareMode: true,
-    },
-  });
+  const { bundle, registry } = await createScadTestContext(t, { actualBoundingBoxAscent: 70 });
+  const wasmBinary = await readFile(OPENSCAD_WASM_PATH);
 
-  try {
-    const [bundle, registry, wasmBinary] = await Promise.all([
-      server.ssrLoadModule("/src/lib/keycap-scad-bundle.js"),
-      server.ssrLoadModule("/src/data/keycap-shape-registry.js"),
-      readFile(OPENSCAD_WASM_PATH),
-    ]);
+  await t.test("1u cylindrical / spherical は負値で凸、正値で従来どおり凹む", async () => {
+    const defaults = registry.createDefaultKeycapParams("custom-shell");
+    const flat = await renderBody({
+      bundle,
+      wasmBinary,
+      params: createBodyParams(defaults, {
+        topSurfaceShape: "flat",
+        dishDepth: 0,
+      }),
+    });
+    assertHealthyBody(flat, "1u flat body");
+    const flatCenterZ = sampleTopZ(flat.mesh, 0, 0);
+    assert.ok(Number.isFinite(flatCenterZ), "flat center surface should be sampleable");
 
-    await t.test("1u cylindrical / spherical は負値で凸、正値で従来どおり凹む", async () => {
-      const defaults = registry.createDefaultKeycapParams("custom-shell");
-      const flat = await renderBody({
+    for (const surfaceShape of ["cylindrical", "spherical"]) {
+      const negative = await renderBody({
         bundle,
         wasmBinary,
         params: createBodyParams(defaults, {
-          topSurfaceShape: "flat",
-          dishDepth: 0,
+          topSurfaceShape: surfaceShape,
+          dishDepth: -99,
         }),
       });
-      assertHealthyBody(flat, "1u flat body");
-      const flatCenterZ = sampleTopZ(flat.mesh, 0, 0);
-      assert.ok(Number.isFinite(flatCenterZ), "flat center surface should be sampleable");
-
-      for (const surfaceShape of ["cylindrical", "spherical"]) {
-        const negative = await renderBody({
-          bundle,
-          wasmBinary,
-          params: createBodyParams(defaults, {
-            topSurfaceShape: surfaceShape,
-            dishDepth: -99,
-          }),
-        });
-        const positive = await renderBody({
-          bundle,
-          wasmBinary,
-          params: createBodyParams(defaults, {
-            topSurfaceShape: surfaceShape,
-            dishDepth: 99,
-          }),
-        });
-        assertHealthyBody(negative, `1u ${surfaceShape} convex body`);
-        assertHealthyBody(positive, `1u ${surfaceShape} concave body`);
-        assert.ok(negative.geometry.dishDepth < 0, `${surfaceShape} negative depth should reach SCAD`);
-        assert.ok(positive.geometry.dishDepth > 0, `${surfaceShape} positive depth should reach SCAD`);
-        assertClose(
-          Math.abs(negative.geometry.dishDepth),
-          positive.geometry.dishDepth,
-          1e-9,
-          `${surfaceShape} positive and negative clamp limits should be symmetric`,
-        );
-
-        const negativeCenterZ = sampleTopZ(negative.mesh, 0, 0);
-        const positiveCenterZ = sampleTopZ(positive.mesh, 0, 0);
-        const expectedMagnitude = Math.abs(negative.geometry.dishDepth);
-        assertClose(
-          expectedMagnitude,
-          1.5,
-          1e-9,
-          `${surfaceShape} clamp limit should be 1.5mm`,
-        );
-        assertClose(
-          negativeCenterZ - flatCenterZ,
-          expectedMagnitude,
-          HEIGHT_TOLERANCE_MM,
-          `${surfaceShape} negative depth should raise the center`,
-        );
-        assertClose(
-          flatCenterZ - positiveCenterZ,
-          expectedMagnitude,
-          HEIGHT_TOLERANCE_MM,
-          `${surfaceShape} positive depth should lower the center`,
-        );
-        assertClose(
-          negative.bounds.maxZ - flat.bounds.maxZ,
-          expectedMagnitude,
-          HEIGHT_TOLERANCE_MM,
-          `${surfaceShape} convex maximum should be flat maximum plus the clamped magnitude`,
-        );
-        assert.ok(
-          positive.bounds.maxZ <= flat.bounds.maxZ + 0.02,
-          `${surfaceShape} concave body should not exceed the flat maximum height`,
-        );
-
-        for (const boundName of ["minX", "maxX", "minY", "maxY"]) {
-          assertClose(
-            negative.bounds[boundName],
-            flat.bounds[boundName],
-            0.01,
-            `${surfaceShape} convex body should not add ${boundName} extent`,
-          );
-        }
-
-        const { geometry } = negative;
-        const joinPoints = [
-          { name: "left join", x: geometry.topLeft, y: 0 },
-          { name: "right join", x: geometry.topRight, y: 0 },
-          { name: "front join", x: 0, y: geometry.topFront },
-          { name: "back join", x: 0, y: geometry.topBack },
-        ];
-        for (const point of joinPoints) {
-          const flatJoinZ = sampleTopZ(flat.mesh, point.x, point.y);
-          const convexJoinZ = sampleTopZ(negative.mesh, point.x, point.y);
-          assertClose(
-            convexJoinZ - flatJoinZ,
-            0,
-            HEIGHT_TOLERANCE_MM,
-            `${surfaceShape} ${point.name} should meet the existing side without a raised lip`,
-          );
-        }
-
-        const boundaryPoints = [
-          { name: "left", x: geometry.topLeft + BOUNDARY_INSET_MM, y: 0 },
-          { name: "right", x: geometry.topRight - BOUNDARY_INSET_MM, y: 0 },
-          { name: "front", x: 0, y: geometry.topFront + BOUNDARY_INSET_MM },
-          { name: "back", x: 0, y: geometry.topBack - BOUNDARY_INSET_MM },
-        ];
-        for (const point of boundaryPoints) {
-          const flatBoundaryZ = sampleTopZ(flat.mesh, point.x, point.y);
-          const convexBoundaryZ = sampleTopZ(negative.mesh, point.x, point.y);
-          const expectedOffset = expectedConvexOffset({
-            geometry,
-            surfaceShape,
-            x: point.x,
-            y: point.y,
-          });
-          assertClose(
-            convexBoundaryZ - flatBoundaryZ,
-            expectedOffset,
-            HEIGHT_TOLERANCE_MM,
-            `${surfaceShape} ${point.name} side/top boundary should have no extra height`,
-          );
-        }
-      }
-    });
-
-    await t.test("wide / rounded-edge / JIS の凸 body は空・破綻メッシュにならない", async () => {
-      const coverageCases = [
-        {
-          label: "wide cylindrical convex body",
-          profile: "custom-shell",
-          overrides: {
-            keyWidth: 36,
-            keyDepth: 18,
-            topSurfaceShape: "cylindrical",
-            dishDepth: -99,
-          },
-        },
-        {
-          label: "rounded-edge spherical convex body",
-          profile: "custom-shell",
-          overrides: {
-            keycapEdgeRadius: 1,
-            topSurfaceShape: "spherical",
-            dishDepth: -99,
-          },
-        },
-        {
-          label: "JIS spherical convex body",
-          profile: "jis-enter",
-          overrides: {
-            topSurfaceShape: "spherical",
-            dishDepth: -99,
-          },
-        },
-        {
-          label: "typewriter spherical convex body",
-          profile: "typewriter",
-          overrides: {
-            topSurfaceShape: "spherical",
-            dishDepth: -99,
-          },
-        },
-        {
-          label: "typewriter JIS spherical convex body",
-          profile: "typewriter-jis-enter",
-          overrides: {
-            topSurfaceShape: "spherical",
-            dishDepth: -99,
-          },
-        },
-      ];
-
-      for (const coverageCase of coverageCases) {
-        const rendered = await renderBody({
-          bundle,
-          wasmBinary,
-          params: createBodyParams(
-            registry.createDefaultKeycapParams(coverageCase.profile),
-            coverageCase.overrides,
-          ),
-        });
-        assertHealthyBody(rendered, coverageCase.label);
-        assert.ok(rendered.geometry.dishDepth < 0, `${coverageCase.label} should retain negative depth`);
-        assert.ok(
-          rendered.bounds.maxZ
-            > rendered.geometry.topCenterHeight + (Math.abs(rendered.geometry.dishDepth) * 0.8),
-          `${coverageCase.label} should contain a visible convex peak`,
-        );
-        assert.ok(
-          rendered.bounds.maxZ
-            <= rendered.geometry.topCenterHeight + Math.abs(rendered.geometry.dishDepth) + HEIGHT_TOLERANCE_MM,
-          `${coverageCase.label} should not contain excess peak height`,
-        );
-        assertClose(
-          rendered.bounds.maxX - rendered.bounds.minX,
-          rendered.geometry.keyWidth,
-          0.02,
-          `${coverageCase.label} should preserve key width`,
-        );
-        assertClose(
-          rendered.bounds.maxY - rendered.bounds.minY,
-          rendered.geometry.keyDepth,
-          0.02,
-          `${coverageCase.label} should preserve key depth`,
-        );
-      }
-    });
-
-    await t.test("JIS / typewriter も正の深さを 1.5mm まで保持する", async () => {
-      for (const profile of ["jis-enter", "typewriter", "typewriter-jis-enter"]) {
-        const rendered = await renderBody({
-          bundle,
-          wasmBinary,
-          params: createBodyParams(registry.createDefaultKeycapParams(profile), {
-            topSurfaceShape: "spherical",
-            dishDepth: 99,
-          }),
-        });
-
-        assertHealthyBody(rendered, `${profile} spherical concave body`);
-        assertClose(rendered.geometry.dishDepth, 1.5, 1e-9, `${profile} should retain +1.5mm depth`);
-        assert.ok(
-          rendered.bounds.maxZ <= rendered.geometry.topCenterHeight + HEIGHT_TOLERANCE_MM,
-          `${profile} concave body should not add excess height`,
-        );
-      }
-    });
-
-    await t.test("custom / JIS top-hat も正負 1.5mm の曲面を生成できる", async () => {
-      for (const profile of ["custom-shell", "jis-enter"]) {
-        const convex = await renderBody({
-          bundle,
-          wasmBinary,
-          params: createBodyParams(registry.createDefaultKeycapParams(profile), {
-            topSurfaceShape: "flat",
-            dishDepth: 0,
-            topHatEnabled: true,
-            topHatSurfaceShape: "spherical",
-            topHatDishDepth: -99,
-          }),
-        });
-        const concave = await renderBody({
-          bundle,
-          wasmBinary,
-          params: createBodyParams(registry.createDefaultKeycapParams(profile), {
-            topSurfaceShape: "flat",
-            dishDepth: 0,
-            topHatEnabled: true,
-            topHatSurfaceShape: "spherical",
-            topHatDishDepth: 99,
-          }),
-        });
-        const convexDepth = readScadNumber(convex.jobScad, "user_top_hat_dish_depth");
-        const concaveDepth = readScadNumber(concave.jobScad, "user_top_hat_dish_depth");
-
-        assertHealthyBody(convex, `${profile} spherical convex top-hat body`);
-        assertHealthyBody(concave, `${profile} spherical concave top-hat body`);
-        assertClose(convexDepth, -1.5, 1e-9, `${profile} top-hat should clamp to -1.5mm`);
-        assertClose(concaveDepth, 1.5, 1e-9, `${profile} top-hat should clamp to +1.5mm`);
-        assertClose(
-          convex.bounds.maxX - convex.bounds.minX,
-          convex.geometry.keyWidth,
-          0.02,
-          `${profile} top-hat should preserve key width`,
-        );
-        assertClose(
-          convex.bounds.maxY - convex.bounds.minY,
-          convex.geometry.keyDepth,
-          0.02,
-          `${profile} top-hat should preserve key depth`,
-        );
-      }
-    });
-
-    await t.test("矛盾する top-hat 寸法でも再描画時に高さを保ち、別パーツと一体形状を生成する", async () => {
-      const params = createBodyParams(registry.createDefaultKeycapParams("custom-shell"), {
-        topHatEnabled: true,
-        topHatSeparateColorEnabled: true,
-        topHatTopWidth: 10.5,
-        topHatTopDepth: 13.1,
-        topHatBottomWidth: 0.2,
-        topHatBottomDepth: 13.1,
-        topHatHeight: 1.4,
-      });
-      const original = { ...params };
-      for (const exportTarget of ["top_hat", "single_material_shape"]) {
-        const rendered = await renderBody({ bundle, wasmBinary, params, exportTarget });
-        assertHealthyBody(rendered, `recovered ${exportTarget}`);
-        assertClose(rendered.bounds.maxZ, params.topCenterHeight + 1.4, 0.06, "top-hat height should survive invalid dimensions");
-        assert.equal(readScadNumber(rendered.jobScad, "user_top_hat_height"), 1.4);
-      }
-      assert.deepEqual(params, original, "rendering must not mutate the caller's parameters");
-      const corrected = await renderBody({
+      const positive = await renderBody({
         bundle,
         wasmBinary,
-        params: { ...params, topHatTopDepth: 8, topHatBottomWidth: 13.1 },
-        exportTarget: "top_hat",
+        params: createBodyParams(defaults, {
+          topSurfaceShape: surfaceShape,
+          dishDepth: 99,
+        }),
       });
-      assertHealthyBody(corrected, "top-hat after dimensions are restored");
-      assertClose(corrected.bounds.maxZ, params.topCenterHeight + 1.4, 0.06, "next render should recover without reloading");
-    });
+      assertHealthyBody(negative, `1u ${surfaceShape} convex body`);
+      assertHealthyBody(positive, `1u ${surfaceShape} concave body`);
+      assert.ok(negative.geometry.dishDepth < 0, `${surfaceShape} negative depth should reach SCAD`);
+      assert.ok(positive.geometry.dishDepth > 0, `${surfaceShape} positive depth should reach SCAD`);
+      assertClose(
+        Math.abs(negative.geometry.dishDepth),
+        positive.geometry.dishDepth,
+        1e-9,
+        `${surfaceShape} positive and negative clamp limits should be symmetric`,
+      );
 
-    await t.test("負の spherical でも flush legend の曲面追従 volume は空にならない", async () => {
+      const negativeCenterZ = sampleTopZ(negative.mesh, 0, 0);
+      const positiveCenterZ = sampleTopZ(positive.mesh, 0, 0);
+      const expectedMagnitude = Math.abs(negative.geometry.dishDepth);
+      assertClose(
+        expectedMagnitude,
+        1.5,
+        1e-9,
+        `${surfaceShape} clamp limit should be 1.5mm`,
+      );
+      assertClose(
+        negativeCenterZ - flatCenterZ,
+        expectedMagnitude,
+        HEIGHT_TOLERANCE_MM,
+        `${surfaceShape} negative depth should raise the center`,
+      );
+      assertClose(
+        flatCenterZ - positiveCenterZ,
+        expectedMagnitude,
+        HEIGHT_TOLERANCE_MM,
+        `${surfaceShape} positive depth should lower the center`,
+      );
+      assertClose(
+        negative.bounds.maxZ - flat.bounds.maxZ,
+        expectedMagnitude,
+        HEIGHT_TOLERANCE_MM,
+        `${surfaceShape} convex maximum should be flat maximum plus the clamped magnitude`,
+      );
+      assert.ok(
+        positive.bounds.maxZ <= flat.bounds.maxZ + 0.02,
+        `${surfaceShape} concave body should not exceed the flat maximum height`,
+      );
+
+      for (const boundName of ["minX", "maxX", "minY", "maxY"]) {
+        assertClose(
+          negative.bounds[boundName],
+          flat.bounds[boundName],
+          0.01,
+          `${surfaceShape} convex body should not add ${boundName} extent`,
+        );
+      }
+
+      const { geometry } = negative;
+      const joinPoints = [
+        { name: "left join", x: geometry.topLeft, y: 0 },
+        { name: "right join", x: geometry.topRight, y: 0 },
+        { name: "front join", x: 0, y: geometry.topFront },
+        { name: "back join", x: 0, y: geometry.topBack },
+      ];
+      for (const point of joinPoints) {
+        const flatJoinZ = sampleTopZ(flat.mesh, point.x, point.y);
+        const convexJoinZ = sampleTopZ(negative.mesh, point.x, point.y);
+        assertClose(
+          convexJoinZ - flatJoinZ,
+          0,
+          HEIGHT_TOLERANCE_MM,
+          `${surfaceShape} ${point.name} should meet the existing side without a raised lip`,
+        );
+      }
+
+      const boundaryPoints = [
+        { name: "left", x: geometry.topLeft + BOUNDARY_INSET_MM, y: 0 },
+        { name: "right", x: geometry.topRight - BOUNDARY_INSET_MM, y: 0 },
+        { name: "front", x: 0, y: geometry.topFront + BOUNDARY_INSET_MM },
+        { name: "back", x: 0, y: geometry.topBack - BOUNDARY_INSET_MM },
+      ];
+      for (const point of boundaryPoints) {
+        const flatBoundaryZ = sampleTopZ(flat.mesh, point.x, point.y);
+        const convexBoundaryZ = sampleTopZ(negative.mesh, point.x, point.y);
+        const expectedOffset = expectedConvexOffset({
+          geometry,
+          surfaceShape,
+          x: point.x,
+          y: point.y,
+        });
+        assertClose(
+          convexBoundaryZ - flatBoundaryZ,
+          expectedOffset,
+          HEIGHT_TOLERANCE_MM,
+          `${surfaceShape} ${point.name} side/top boundary should have no extra height`,
+        );
+      }
+    }
+  });
+
+  await t.test("wide / rounded-edge / JIS の凸 body は空・破綻メッシュにならない", async () => {
+    const coverageCases = [
+      {
+        label: "wide cylindrical convex body",
+        profile: "custom-shell",
+        overrides: {
+          keyWidth: 36,
+          keyDepth: 18,
+          topSurfaceShape: "cylindrical",
+          dishDepth: -99,
+        },
+      },
+      {
+        label: "rounded-edge spherical convex body",
+        profile: "custom-shell",
+        overrides: {
+          keycapEdgeRadius: 1,
+          topSurfaceShape: "spherical",
+          dishDepth: -99,
+        },
+      },
+      {
+        label: "JIS spherical convex body",
+        profile: "jis-enter",
+        overrides: {
+          topSurfaceShape: "spherical",
+          dishDepth: -99,
+        },
+      },
+      {
+        label: "typewriter spherical convex body",
+        profile: "typewriter",
+        overrides: {
+          topSurfaceShape: "spherical",
+          dishDepth: -99,
+        },
+      },
+      {
+        label: "typewriter JIS spherical convex body",
+        profile: "typewriter-jis-enter",
+        overrides: {
+          topSurfaceShape: "spherical",
+          dishDepth: -99,
+        },
+      },
+    ];
+
+    for (const coverageCase of coverageCases) {
       const rendered = await renderBody({
         bundle,
         wasmBinary,
-        exportTarget: "legend",
-        params: createBodyParams(registry.createDefaultKeycapParams("custom-shell"), {
+        params: createBodyParams(
+          registry.createDefaultKeycapParams(coverageCase.profile),
+          coverageCase.overrides,
+        ),
+      });
+      assertHealthyBody(rendered, coverageCase.label);
+      assert.ok(rendered.geometry.dishDepth < 0, `${coverageCase.label} should retain negative depth`);
+      assert.ok(
+        rendered.bounds.maxZ
+          > rendered.geometry.topCenterHeight + (Math.abs(rendered.geometry.dishDepth) * 0.8),
+        `${coverageCase.label} should contain a visible convex peak`,
+      );
+      assert.ok(
+        rendered.bounds.maxZ
+          <= rendered.geometry.topCenterHeight + Math.abs(rendered.geometry.dishDepth) + HEIGHT_TOLERANCE_MM,
+        `${coverageCase.label} should not contain excess peak height`,
+      );
+      assertClose(
+        rendered.bounds.maxX - rendered.bounds.minX,
+        rendered.geometry.keyWidth,
+        0.02,
+        `${coverageCase.label} should preserve key width`,
+      );
+      assertClose(
+        rendered.bounds.maxY - rendered.bounds.minY,
+        rendered.geometry.keyDepth,
+        0.02,
+        `${coverageCase.label} should preserve key depth`,
+      );
+    }
+  });
+
+  await t.test("JIS / typewriter も正の深さを 1.5mm まで保持する", async () => {
+    for (const profile of ["jis-enter", "typewriter", "typewriter-jis-enter"]) {
+      const rendered = await renderBody({
+        bundle,
+        wasmBinary,
+        params: createBodyParams(registry.createDefaultKeycapParams(profile), {
           topSurfaceShape: "spherical",
-          dishDepth: -99,
-          legendEnabled: true,
-          legendContentType: "icon",
-          legendIconSet: "lucide",
-          legendIconName: "circle",
-          legendHeight: 0,
+          dishDepth: 99,
         }),
       });
 
-      assertHealthyBody(rendered, "spherical convex flush legend");
+      assertHealthyBody(rendered, `${profile} spherical concave body`);
+      assertClose(rendered.geometry.dishDepth, 1.5, 1e-9, `${profile} should retain +1.5mm depth`);
       assert.ok(
-        rendered.bounds.maxZ > rendered.geometry.topCenterHeight + (Math.abs(rendered.geometry.dishDepth) * 0.8),
-        "flush legend should reach the convex surface",
+        rendered.bounds.maxZ <= rendered.geometry.topCenterHeight + HEIGHT_TOLERANCE_MM,
+        `${profile} concave body should not add excess height`,
       );
+    }
+  });
+
+  await t.test("custom / JIS top-hat も正負 1.5mm の曲面を生成できる", async () => {
+    for (const profile of ["custom-shell", "jis-enter"]) {
+      const convex = await renderBody({
+        bundle,
+        wasmBinary,
+        params: createBodyParams(registry.createDefaultKeycapParams(profile), {
+          topSurfaceShape: "flat",
+          dishDepth: 0,
+          topHatEnabled: true,
+          topHatSurfaceShape: "spherical",
+          topHatDishDepth: -99,
+        }),
+      });
+      const concave = await renderBody({
+        bundle,
+        wasmBinary,
+        params: createBodyParams(registry.createDefaultKeycapParams(profile), {
+          topSurfaceShape: "flat",
+          dishDepth: 0,
+          topHatEnabled: true,
+          topHatSurfaceShape: "spherical",
+          topHatDishDepth: 99,
+        }),
+      });
+      const convexDepth = readScadNumber(convex.jobScad, "user_top_hat_dish_depth");
+      const concaveDepth = readScadNumber(concave.jobScad, "user_top_hat_dish_depth");
+
+      assertHealthyBody(convex, `${profile} spherical convex top-hat body`);
+      assertHealthyBody(concave, `${profile} spherical concave top-hat body`);
+      assertClose(convexDepth, -1.5, 1e-9, `${profile} top-hat should clamp to -1.5mm`);
+      assertClose(concaveDepth, 1.5, 1e-9, `${profile} top-hat should clamp to +1.5mm`);
+      assertClose(
+        convex.bounds.maxX - convex.bounds.minX,
+        convex.geometry.keyWidth,
+        0.02,
+        `${profile} top-hat should preserve key width`,
+      );
+      assertClose(
+        convex.bounds.maxY - convex.bounds.minY,
+        convex.geometry.keyDepth,
+        0.02,
+        `${profile} top-hat should preserve key depth`,
+      );
+    }
+  });
+
+  await t.test("矛盾する top-hat 寸法でも再描画時に高さを保ち、別パーツと一体形状を生成する", async () => {
+    const params = createBodyParams(registry.createDefaultKeycapParams("custom-shell"), {
+      topHatEnabled: true,
+      topHatSeparateColorEnabled: true,
+      topHatTopWidth: 10.5,
+      topHatTopDepth: 13.1,
+      topHatBottomWidth: 0.2,
+      topHatBottomDepth: 13.1,
+      topHatHeight: 1.4,
     });
-  } finally {
-    await server.close();
-    restoreBrowserMocks();
-  }
+    const original = { ...params };
+    for (const exportTarget of ["top_hat", "single_material_shape"]) {
+      const rendered = await renderBody({ bundle, wasmBinary, params, exportTarget });
+      assertHealthyBody(rendered, `recovered ${exportTarget}`);
+      assertClose(rendered.bounds.maxZ, params.topCenterHeight + 1.4, 0.06, "top-hat height should survive invalid dimensions");
+      assert.equal(readScadNumber(rendered.jobScad, "user_top_hat_height"), 1.4);
+    }
+    assert.deepEqual(params, original, "rendering must not mutate the caller's parameters");
+    const corrected = await renderBody({
+      bundle,
+      wasmBinary,
+      params: { ...params, topHatTopDepth: 8, topHatBottomWidth: 13.1 },
+      exportTarget: "top_hat",
+    });
+    assertHealthyBody(corrected, "top-hat after dimensions are restored");
+    assertClose(corrected.bounds.maxZ, params.topCenterHeight + 1.4, 0.06, "next render should recover without reloading");
+  });
+
+  await t.test("負の spherical でも flush legend の曲面追従 volume は空にならない", async () => {
+    const rendered = await renderBody({
+      bundle,
+      wasmBinary,
+      exportTarget: "legend",
+      params: createBodyParams(registry.createDefaultKeycapParams("custom-shell"), {
+        topSurfaceShape: "spherical",
+        dishDepth: -99,
+        legendEnabled: true,
+        legendContentType: "icon",
+        legendIconSet: "lucide",
+        legendIconName: "circle",
+        legendHeight: 0,
+      }),
+    });
+
+    assertHealthyBody(rendered, "spherical convex flush legend");
+    assert.ok(
+      rendered.bounds.maxZ > rendered.geometry.topCenterHeight + (Math.abs(rendered.geometry.dishDepth) * 0.8),
+      "flush legend should reach the convex surface",
+    );
+  });
 });

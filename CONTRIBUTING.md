@@ -21,6 +21,7 @@ npm run preview
 - `npm run test:docs`: Markdownのlocal link、文書化したnpm script、全lockfile dependency、利用中Web font/CDN package、bundled font/vendor、READMEのOpen Graph画像を検証する
 - `npm run lint:workflows`: actionlintでGitHub Actionsの構文、式、権限、shellを検証する
 - `npm test`: 上記文書・font検証を含むNode test suiteを実行する
+- `npm run test:browser`: Page Object Modelを使う主要UI flowとWebMCP同期のPlaywright testを、専用Vite serverと隔離されたheadless Chromiumで実行する。初回は `npx playwright install chromium` が必要。構成と追加方針は [自動テスト](docs/guide/automated-testing.md) を参照する
 - `npm run build`: ViteでGitHub Pages向けの `dist/` を生成する
 
 `npm run lint:workflows` にはactionlint 1.7.12を使います。CIはversion固定の公式containerを使い、ローカルでは同versionのbinaryをPATHへ置きます。
@@ -62,9 +63,9 @@ gitGraph
 | Class | 代表例 | ローカル / CI gate | Build / deploy |
 | --- | --- | --- | --- |
 | `documentation` | root README、`docs/`、Agent向けMarkdown | `npm run test:docs` | しない |
-| `validation` | `test/`、`scripts/`、workflow、validation script | `npm ci`、`npm test`、`npm run lint:workflows` | しない |
+| `validation` | `test/`、`scripts/`、workflow、validation script | `npm ci`、`npm test`、`npm run test:browser`、`npm run lint:workflows` | しない |
 | `metadata` | `package.json` のdescription等だけ、dependency graph不変のlockfile root metadata | change classificationのみ | しない |
-| `artifact` | `src/`実装、SCAD、`index.html`、Vite/build設定、`public/`配信物、dependency graph | `npm ci`、`npm test`、`npm run lint:workflows`、`npm run build` | release branchだけdeploy |
+| `artifact` | `src/`実装、SCAD、`index.html`、Vite/build設定、`public/`配信物、dependency graph | `npm ci`、`npm test`、`npm run test:browser`、`npm run lint:workflows`、`npm run build` | release branchだけdeploy |
 
 `package.json` はfield差分を、`package-lock.json` はroot metadataを除いたdependency graphを比較します。build script、runtime/build dependency、lockfile package entryが変われば `artifact` です。test/lint scriptだけの変更は `validation` です。専用workflowが所有する資源は `.github/change-policy.json` の `dedicatedWorkflowOwnership` へ登録し、通常workflowとの重複実行を避けます。現在、その対象はありません。
 
@@ -79,7 +80,7 @@ build jobは必須test jobの成功後だけ実行し、deploy jobはbuild成功
 - 3MF part構造を変えた: Bambu Studio等の実slicer
 - macOS、codec、GPU、real-time frameに依存する処理を変えた: 対応する実環境
 
-root overviewや `docs/` だけの変更では静的な文書gateだけを実行し、本番build、目視、実ブラウザ、Simulator確認は行いません。testやworkflowだけの変更ではCI相当のtest/lintまでに留めます。`public/` のnoticeやREADMEはPages artifactへコピーされるためbuildまでは通しますが、app-visibleな挙動が変わらないためブラウザ確認は不要です。
+root overviewや `docs/` だけの変更では静的な文書gateだけを実行し、本番build、目視、実ブラウザ、Simulator確認は行いません。testやworkflowだけの変更ではCI相当のNode/browser testとlintまでに留めます。`public/` のnoticeやREADMEはPages artifactへコピーされるためbuildまでは通しますが、app-visibleな挙動が変わらないためブラウザ確認は不要です。
 
 ## directoryと資源の責務
 

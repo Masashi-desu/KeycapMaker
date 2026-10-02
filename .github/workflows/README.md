@@ -6,7 +6,7 @@
 
 - `Classify changes`: `.github/change-policy.json` とpackage/lockfileのsemantic diffから最強classを出力する
 - `Validate documentation`: repository documentationだけのpushで `npm run test:docs` を実行する
-- `Run required tests`: validation/artifact changeで `npm test` とactionlintを実行する
+- `Run required tests`: validation/artifact changeで `npm test`、隔離されたheadless Chromiumでの `npm run test:browser`、actionlintを実行する
 - `Build Pages artifact`: artifact changeかつtest成功時だけVite buildとartifact uploadを実行する
 - `Deploy GitHub Pages`: build成功後、`main` pushまたは明示的manual runだけdeployする
 

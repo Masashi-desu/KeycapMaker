@@ -10,14 +10,6 @@ async function readArchive(blob) {
   );
 }
 
-async function readModelXml(blob) {
-  const archive = await readArchive(blob);
-  const model = archive["3D/3dmodel.model"];
-
-  assert.ok(model, "3D model payload should exist");
-  return model;
-}
-
 function createMesh(name, colorHex, zOffset = 0) {
   return {
     name,
@@ -37,12 +29,13 @@ function createMesh(name, colorHex, zOffset = 0) {
   };
 }
 
-test("3MF export はpartをcomponents親オブジェクトに束ねる", async () => {
-  const blob = create3mfBlob([
+test("3MF export はpartを親オブジェクトに束ね、主要スライサ向けメタデータを含める", async () => {
+  const archive = await readArchive(create3mfBlob([
     createMesh("keycap-body", "#f8f9fa"),
     createMesh("keycap-legend", "#212529", 1),
-  ]);
-  const xml = await readModelXml(blob);
+  ]));
+  const xml = archive["3D/3dmodel.model"];
+  assert.ok(xml, "3D model payload should exist");
 
   assert.match(xml, /<model unit="millimeter"/);
   assert.match(
@@ -60,13 +53,6 @@ test("3MF export はpartをcomponents親オブジェクトに束ねる", async (
   assert.match(xml, /<build><item objectid="3" \/><\/build>/);
   assert.doesNotMatch(xml, /<build>.*objectid="1".*<\/build>/);
   assert.doesNotMatch(xml, /<build>.*objectid="2".*<\/build>/);
-});
-
-test("3MF export は主要スライサ向けのpart名メタデータを含める", async () => {
-  const archive = await readArchive(create3mfBlob([
-    createMesh("keycap-body", "#f8f9fa"),
-    createMesh("keycap-legend", "#212529", 1),
-  ]));
 
   assert.match(
     archive["Metadata/model_settings.config"],

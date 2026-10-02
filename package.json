@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test",
+    "test": "node --test test/*.test.js",
+    "test:browser": "playwright test --config test/e2e/playwright.config.js",
     "test:docs": "node scripts/validate-documentation.mjs && node .codex/skills/keycap-font-addition/scripts/validate-font-assets.mjs",
     "lint:workflows": "actionlint"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "vite": "^7.1.10"
   },
   "dependencies": {
