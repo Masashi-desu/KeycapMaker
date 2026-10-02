@@ -14,6 +14,7 @@ KeycapMakerは、キーキャップの形状、印字、homing、stemをブラ�
 - body、top-hat、rim、homing、legendを用途に応じて別体積として扱う
 - 印刷向け `3MF`、CAD交換向け `STEP`、単色形状向け `STL`、編集再開向け `JSON`、複数キーを束ねるproject ZIPを書き出す
 - bundled font、icon provider、公式CAD由来の参照meshを静的資源として配信する
+- WebMCP対応ブラウザのエージェントから編集・project・keyboard割当・exportを実行できる（[利用ガイド](docs/guide/webmcp.md)）
 
 ## 開発・保守
 
@@ -22,6 +23,7 @@ KeycapMakerは、キーキャップの形状、印字、homing、stemをブラ�
 - [アプリ全体像](docs/architecture/overview.md)
 - [SCAD / export契約](docs/architecture/scad-and-export.md)
 - [プロジェクトデータ仕様](docs/architecture/project-data.md)
+- [WebMCP操作契約](docs/architecture/webmcp.md)
 
 ## 第三者資源
 

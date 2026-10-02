@@ -397,3 +397,12 @@
   読み込んだ物理配置は共通の `keyboard` データに正規化し、各スロットへのキーキャップ割り当てと位置補正は `placements` に保存する。既存の単体編集を維持し、同じキーキャップ定義を複数の位置で共有できるようにする。両フィールドは project schema 1 の任意フィールドとし、復元時に元ファイルやGitHubへの再アクセスを要求しない
 - 理由:
   QMK、ZMK、KLE、PCBなどの座標表現の差を読み込み時に吸収し、形状編集と配置編集を独立させるため。配置をprojectに内包することで旧projectの互換性とオフラインでの編集再開を保つ
+
+## 2026-10-03 - WebMCPはUIと同じ処理をブラウザ内toolとして公開する
+
+- 結論:
+  WebMCPのimperative APIで編集、project、keyboard割当、preview/exportを公開する。schemaとcatalogはUIフィールド定義から生成し、UIとtoolは同じ編集処理を通す。現行document APIを優先し、初期navigator APIだけを互換対応する。未対応ブラウザでは通常UIを継続する
+- 理由:
+  エージェントが座標やDOM構造へ依存せず、ユーザーと同じ編集stateと結果を共有できるようにするため。別サーバーやSDKを増やさず、今後のフィールド追加とtool保守を同じ実装規約・品質gateに含める
+- 現行契約:
+  [WebMCP操作契約](../architecture/webmcp.md)、[WebMCPガイド](../guide/webmcp.md)、[開発・貢献規約](../../CONTRIBUTING.md)

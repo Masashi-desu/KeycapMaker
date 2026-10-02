@@ -105,9 +105,25 @@ root overviewや `docs/` だけの変更では静的な文書gateだけを実行
 - user inputの長文全般へ一律の改行規則を課さない。現在の折返し契約は、`.font-attribution-card__body` の改行保持とURL折返し、`.import-binding-notice__name` / `__value` の長いJSON path/value、`.preview-color-option__label` の選択肢labelに限定する。export dialog titleのようにellipsisを契約とする箇所は変更しない
 - 新しい外部資源は、公式source、version、license本文、必要なnotice、利用箇所を確認してから追加する
 
+## WebMCPを維持する実装規約
+
+WebMCPは通常UIと同じアプリ機能の入口です。現行のtool、対象範囲、ブラウザ互換、結果形式は [WebMCP操作契約](docs/architecture/webmcp.md)、利用と実環境確認は [WebMCPガイド](docs/guide/webmcp.md) を正とします。
+
+- ユーザー操作を追加・変更・削除するchangeでは、対応するtoolまたはcatalogも同じchangeで更新する。公開しない操作は対象外にする理由とUI経路を操作契約に記録する。画面の一時的なpopover操作そのものをtoolにする必要はない
+- UIとtoolを同じsemantic commandにつなぎ、toolからDOM click、selector、疑似input eventで機能を実行しない。shapeのreset、preset、連動値、派生値、project同期をtool側で複製しない
+- 編集項目はshape fieldGroups、UI field configとcomposite control定義を正とし、parameter schemaとfield catalogをそこから生成する。新しいフィールドには型、単位、説明、選択肢、制約を用意する。schema用の手書きパラメータ一覧や初期font一覧を別管理しない
+- profile/font/他の値に依存する制約は実行時のdraftから解決する。部分updateは全項目を検証してから反映し、未知key、型違い、不正なIDを成功扱いにしない。toolの成功結果は実際の適用値・現在状態を返す
+- tool名とJSON Schema、必須入力、description、readOnly/untrusted/consequential annotation、結果の `contractVersion` とerror codeは公開契約として扱う。互換を壊す変更はversion、利用例、testを同時に更新する。user/import由来の文面をtoolの指示として扱わない
+- preview/export/import等の非同期処理は必要な完了を待ち、失敗をtool結果に反映する。長時間処理の重複、古いpreview結果、AbortSignal、download直前のキャンセルを考慮する。ローカル保存の完了や未検証のブラウザ機能を保証しない
+- ブラウザAPIの差は `src/lib/webmcp.js` に閉じ込める。公式ドラフトを確認してfeature detectionし、未対応ブラウザの通常UIを保つ。HMR/登録失敗では自分が所有するtoolだけを解除する
+- 対応testに正常系、意味のある無効入力、失敗/排他/キャンセル、UIとの同期のうち変更した責務を追加する。browser smokeでは実際の編集・project/exportへの反映を確認する。mock APIによる確認とネイティブAPIの確認を区別する
+
+review時には「機能変更がWebMCP経由でも利用可能か」「追加フィールドがcatalog/schemaへ反映されるか」「既存UIと同じ結果になるか」「操作契約とtestが同期しているか」を確認します。既存toolで表現できる機能はそのcommand/catalogを拡張し、不要にtool数を増やしません。
+
 ## 文書・実装・test・workflowの同期
 
 - 構造またはcontractを変える: `docs/architecture/` と対応testを更新する
+- ユーザー操作、編集項目、import/exportを変える: WebMCP command/catalog/schema、`docs/architecture/webmcp.md`、`docs/guide/webmcp.md` と対応testを同期する
 - operator手順または品質gateを変える: `CONTRIBUTING.md`、`docs/guide/`、npm script、workflow、分類testを更新する
 - 採用済みの長期判断を変える: `docs/decisions/decision-log.md` に追記し、現行仕様はarchitecture/guideへ反映する
 - 未採用案を実装した: backlogを現行仕様へ統合し、backlog側へ採用済み状態と参照先を残すか削除する

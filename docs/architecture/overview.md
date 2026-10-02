@@ -15,6 +15,7 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
 - CAD 交換用 STEP の書き出し
 - 単色形状用 STL の書き出し
 - 編集再開用 JSON の保存とドラッグ & ドロップ読み込み
+- WebMCP対応ブラウザのエージェントによる編集、project、keyboard割当、preview / export操作
 
 ## 実装上の固定前提
 
@@ -33,6 +34,8 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
   アプリ状態、フォーム、プレビュー更新、export、JSON 入出力の中心
 - `src/lib/editor-data.js`
   編集データ JSON の canonical export と、欠損を defaults で補う互換入力 JSON の import を扱う
+- `src/lib/webmcp.js`
+  WebMCP tool、入力schema / 検証、結果契約、変更操作の排他、ブラウザ互換と登録解除を扱う。`main.js` のUI共通編集処理と既存のproject / preview / export処理へ接続する
 - `src/lib/project-data.js`
   複数キーキャップを束ねる project manifest と project 内 keycap entry の正規化を扱う
 - `src/data/keycap-shape-registry.js`
@@ -137,6 +140,7 @@ flowchart LR
 - [scad-and-export.md](scad-and-export.md)
 - [project-data.md](project-data.md)
 - [keyboard-layout.md](keyboard-layout.md)
+- [webmcp.md](webmcp.md)
 - [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
 - [../guide/manual-verification.md](../guide/manual-verification.md)
 - [../third-party-licenses.md](../third-party-licenses.md)

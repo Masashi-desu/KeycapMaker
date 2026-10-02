@@ -1,4 +1,5 @@
 import "./styles.css";
+import { createEditorParameterSchema, createKeycapWebMcpTools, registerKeycapWebMcp, validateToolInput, WebMcpError } from "./lib/webmcp.js";
 import { strToU8, unzipSync, zipSync } from "fflate";
 import {
   LOCALE_OPTIONS,
@@ -53,7 +54,7 @@ import {
 } from "./lib/j-stem-lp01-reference.js";
 import { parseOff } from "./lib/off-parser.js";
 import { collectKeyboardDirectoryFiles, discoverGitHubKeyboardFiles, discoverLocalKeyboardFiles, isKeyboardLayoutJson } from "./lib/keyboard-import.js";
-import { normalizeKeyboardPlacements } from "./lib/keyboard-layout.js";
+import { normalizeKeyboardPlacements, parseKeyboardLayouts } from "./lib/keyboard-layout.js";
 import { createKeyboardPreviewLayers } from "./lib/keyboard-preview.js";
 import { getKeyboardWorkflow, syncKeyboardStepBar, renderKeyboardTab, renderKeyboardProjectSummary, renderPreviewModeControl, renderKeyboardCandidates, renderProjectKeycapPlacements } from "./lib/keyboard-ui.js";
 import {
@@ -8123,8 +8124,7 @@ function applyLegendFontSelection(font, options = {}) {
     return false;
   }
 
-  state.keycapParams[fieldKey] = font.key;
-  syncDerivedKeycapParams(state.keycapParams);
+  state.keycapParams = applyEditorFieldValue(state.keycapParams, fieldKey, font.key);
   syncActiveProjectKeycapFromCurrent();
   state.editorStatus = "dirty";
   state.editorSummary = t("status.dirty");
@@ -8164,9 +8164,7 @@ function applyLegendIconSelection(icon, options = {}) {
     return false;
   }
 
-  state.keycapParams[fieldKey] = nextIconName;
-  state.keycapParams[iconFillFieldKey] = nextIconFill;
-  syncDerivedKeycapParams(state.keycapParams);
+  state.keycapParams = applyEditorFieldValue(state.keycapParams, fieldKey, nextIconName);
   syncActiveProjectKeycapFromCurrent();
   state.editorStatus = "dirty";
   state.editorSummary = t("status.dirty");
@@ -8867,7 +8865,7 @@ function prepareProjectForSave() {
   return state.project;
 }
 
-async function downloadProjectZip(project) {
+async function downloadProjectZip(project, options = {}) {
   const projectDirectoryName = normalizeProjectName(project.name, DEFAULT_PROJECT_NAME);
   const manifest = createProjectManifest(project);
   const files = {
@@ -8875,6 +8873,7 @@ async function downloadProjectZip(project) {
   };
 
   for (const entry of project.keycaps) {
+    options.signal?.throwIfAborted();
     files[`${projectDirectoryName}/${entry.jsonPath}`] = strToU8(JSON.stringify(entry.editorDataPayload, null, 2));
     files[`${projectDirectoryName}/${entry.previewPath}`] = await dataUrlToUint8Array(
       entry.previewImageDataUrl || createProjectPreviewPlaceholderDataUrl(entry.params),
@@ -8884,18 +8883,25 @@ async function downloadProjectZip(project) {
   }
 
   const zipBytes = zipSync(files, { level: 6 });
-  downloadBlob(new Blob([zipBytes], { type: "application/zip" }), `${projectDirectoryName}.zip`);
+  const filename = `${projectDirectoryName}.zip`;
+  downloadBlob(new Blob([zipBytes], { type: "application/zip" }), filename, options);
+  return { filename, byteLength: zipBytes.length };
 }
 
-async function saveProject() {
+async function saveProject(options = {}) {
   setProjectStatus("running", t("project.saving"));
   render();
 
   try {
-    const project = prepareProjectForSave();
-    await downloadProjectZip(project);
-    state.project.isDirty = false;
+    const prepared = prepareProjectForSave();
+    const signature = JSON.stringify({ ...prepared, directoryHandle: null, isDirty: undefined });
+    const project = JSON.parse(signature);
+    const result = await downloadProjectZip(project, options);
+    // Edits made while geometry is generated belong to a later save.
+    if (signature === JSON.stringify({ ...state.project, directoryHandle: null, isDirty: undefined })) state.project.isDirty = false;
     setProjectStatus("success", t("project.saved"));
+    render({ animateInspector: true });
+    return result;
   } catch (error) {
     setProjectStatus("error", t("project.saveFailed", { message: `${error}` }));
   }
@@ -8903,10 +8909,10 @@ async function saveProject() {
   render({ animateInspector: true });
 }
 
-function applyShapeProfileParams(profileKey) {
+function applyShapeProfileParams(profileKey, params = state.keycapParams) {
   const defaults = createDefaultKeycapParams(profileKey);
   const defaultParams = createInitialKeycapParams(profileKey);
-  const previousProfileKey = state.keycapParams.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  const previousProfileKey = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
   const previousGeometryType = resolveShapeGeometryType(previousProfileKey);
   const nextGeometryType = resolveShapeGeometryType(profileKey);
   const previousVisibleFieldKeys = getShapeProfileVisibleFieldKeys(previousProfileKey);
@@ -8920,20 +8926,21 @@ function applyShapeProfileParams(profileKey) {
       || footprintTypeChanged && FOOTPRINT_RESET_FIELDS.has(key)
       || !previousVisibleFieldKeys.has(key)
       || !nextVisibleFieldKeys.has(key);
-    const sourceValue = shouldResetToProfileDefault ? defaultParams[key] : state.keycapParams[key];
+    const sourceValue = shouldResetToProfileDefault ? defaultParams[key] : params[key];
     nextParams[key] = sanitizeEditorParamValue(key, sourceValue, defaults[key], {
-      ...state.keycapParams,
+      ...params,
       ...nextParams,
       shapeProfile: profileKey,
     });
   }
 
-  nextParams.name = state.keycapParams.name ?? defaultParams.name ?? defaults.name;
+  nextParams.name = params.name ?? defaultParams.name ?? defaults.name;
   nextParams.shapeProfile = profileKey;
-  state.keycapParams = syncDerivedKeycapParams(nextParams);
+  return syncDerivedKeycapParams(nextParams);
 }
 
-function downloadBlob(blob, filename) {
+function downloadBlob(blob, filename, { signal } = {}) {
+  signal?.throwIfAborted();
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -9980,38 +9987,28 @@ function isTopEdgeHeightField(field) {
     || field === "topRightHeight";
 }
 
-function applyTopEdgeHeightChange(field, value) {
-  const geometry = resolveTopPlaneGeometry(state.keycapParams);
+function applyTopEdgeHeightChange(field, value, params = state.keycapParams) {
+  const geometry = resolveTopPlaneGeometry(params);
   const centerHeight = geometry.topCenterHeight;
 
   if (field === "topFrontHeight" && Math.abs(geometry.topFront) > 1e-6) {
-    state.keycapParams.topPitchDeg = atanDeg((value - centerHeight) / geometry.topFront);
+    params.topPitchDeg = atanDeg((value - centerHeight) / geometry.topFront);
     return;
   }
 
   if (field === "topBackHeight" && Math.abs(geometry.topBack) > 1e-6) {
-    state.keycapParams.topPitchDeg = atanDeg((value - centerHeight) / geometry.topBack);
+    params.topPitchDeg = atanDeg((value - centerHeight) / geometry.topBack);
     return;
   }
 
   if (field === "topLeftHeight" && Math.abs(geometry.topLeft) > 1e-6) {
-    state.keycapParams.topRollDeg = atanDeg((value - centerHeight) / geometry.topLeft);
+    params.topRollDeg = atanDeg((value - centerHeight) / geometry.topLeft);
     return;
   }
 
   if (field === "topRightHeight" && Math.abs(geometry.topRight) > 1e-6) {
-    state.keycapParams.topRollDeg = atanDeg((value - centerHeight) / geometry.topRight);
+    params.topRollDeg = atanDeg((value - centerHeight) / geometry.topRight);
   }
-}
-
-function applyTopSurfaceShapePreset(surfaceShape) {
-  const preset = getTopSurfaceShapePreset(surfaceShape);
-  state.keycapParams.dishDepth = preset.dishDepth;
-}
-
-function applyTopHatSurfaceShapePreset(surfaceShape) {
-  const preset = getTopSurfaceShapePreset(surfaceShape);
-  state.keycapParams.topHatDishDepth = preset.dishDepth;
 }
 
 function findCornerRadiusFieldSetByIndividualField(fieldKey) {
@@ -10061,124 +10058,76 @@ function syncCornerRadiusFieldDom(fieldKey) {
   return true;
 }
 
-function syncCornerRadiusFieldsToSharedValue(fieldSet) {
-  const sharedRadius = Number(state.keycapParams[fieldSet.sharedFieldKey] ?? 0);
-  fieldSet.fieldKeys.forEach((fieldKey) => {
-    state.keycapParams[fieldKey] = sharedRadius;
-  });
+// Shared semantic mutation path for UI fields and WebMCP draft transactions.
+function applyEditorFieldValue(params, field, value, { normalize = true } = {}) {
+  const fieldConfig = getFieldConfig(field, params.shapeProfile);
+  const previousStemType = resolveStemType(params);
+  if (field === "shapeProfile") return applyShapeProfileParams(value, params);
+  if (field in LINKED_SIZE_UNIT_FIELDS) {
+    params[LINKED_SIZE_UNIT_FIELDS[field]] = value * getKeyUnitMm();
+  } else if (isTopEdgeHeightField(field)) {
+    applyTopEdgeHeightChange(field, value, params);
+  } else {
+    params[field] = value;
+    if (field === "stemType") {
+      params.stemCrossMargin = resolveStemCrossMarginAfterStemTypeChange(value, params.stemCrossMargin, previousStemType);
+    } else if (field === "topSurfaceShape" || field === "topHatSurfaceShape") {
+      params[field === "topSurfaceShape" ? "dishDepth" : "topHatDishDepth"] = getTopSurfaceShapePreset(value).dishDepth;
+    } else if (field === "topHatSeparateColorEnabled" && value && params.topHatColor === DEFAULT_KEYCAP_COLORS.topHatColor) {
+      params.topHatColor = normalizeHexColor(params.bodyColor) ?? DEFAULT_KEYCAP_COLORS.bodyColor;
+    }
+    const radiusSet = findCornerRadiusFieldSetByIndividualField(field)
+      ?? findCornerRadiusFieldSetBySharedField(field);
+    if (radiusSet && (field === radiusSet.individualFieldKey || !params[radiusSet.individualFieldKey])) {
+      radiusSet.fieldKeys.forEach((key) => { params[key] = Number(params[radiusSet.sharedFieldKey] ?? 0); });
+    }
+    if (isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.iconSet) || fieldConfig?.type === "icon-search") {
+      const prefix = findLegendParamPrefixByFieldKey(field,
+        fieldConfig?.type === "icon-search" ? LEGEND_FIELD_SUFFIXES.iconName : LEGEND_FIELD_SUFFIXES.iconSet);
+      const setKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.iconSet);
+      const nameKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.iconName);
+      const fillKey = legendParamKey(prefix, LEGEND_FIELD_SUFFIXES.iconFill);
+      params[setKey] = resolveLegendIconSet(params[setKey]);
+      params[nameKey] = resolveLegendIconName(params[nameKey], params[setKey]);
+      params[fillKey] = isLegendIconFillAvailable(params[nameKey], params[setKey]) ? Boolean(params[fillKey]) : false;
+    }
+  }
+  return normalize ? syncDerivedKeycapParams(params) : params;
 }
 
 function handleFieldChange(event) {
-  const field = event.currentTarget.dataset.field;
   const input = event.currentTarget;
+  const field = input?.dataset.field;
   const deferPreview = event.deferPreview === true;
-  const deferContinuousSync = event.deferContinuousSync === true && (input.type === "number" || input.type === "range");
+  const deferContinuousSync = event.deferContinuousSync === true && (input?.type === "number" || input?.type === "range");
   const fieldConfig = getFieldConfig(field);
-  const previousStemType = resolveStemType(state.keycapParams);
-  if (!field || !input) {
-    return;
-  }
+  if (!field || !input) return;
 
-  if (field in LINKED_SIZE_UNIT_FIELDS) {
-    const nextValue = parseNumericInputValue(input, field, fieldConfig);
-    if (nextValue == null) {
-      return;
+  let value;
+  if (input.type === "checkbox") {
+    value = input.checked;
+  } else if (input.tagName === "SELECT" || input.type === "text" || input.type === "radio") {
+    if (input.type === "radio" && !input.checked) return;
+    value = input.value;
+    if (fieldConfig?.type === "color") {
+      value = normalizeHexColor(value);
+      setColorInputValidity(input, Boolean(value));
+      if (!value) return;
+      input.value = value;
+      syncColorChip(field, value);
     }
-
-    state.keycapParams[LINKED_SIZE_UNIT_FIELDS[field]] = nextValue * getKeyUnitMm();
-    if (deferContinuousSync) {
-      queueLinkedSizeInputSync(field);
-    } else {
-      syncLinkedSizeInputs(field);
-    }
-  } else if (input.type === "checkbox") {
-    state.keycapParams[field] = input.checked;
-    if (
-      field === "topHatSeparateColorEnabled"
-      && input.checked
-      && getColorFieldValue("topHatColor") === DEFAULT_KEYCAP_COLORS.topHatColor
-    ) {
-      state.keycapParams.topHatColor = getColorFieldValue("bodyColor");
-    }
-    const cornerRadiusFieldSet = findCornerRadiusFieldSetByIndividualField(field);
-    if (cornerRadiusFieldSet) {
-      syncCornerRadiusFieldsToSharedValue(cornerRadiusFieldSet);
-    }
-  } else if (input.tagName === "SELECT") {
-    if (field === "shapeProfile") {
-      applyShapeProfileParams(input.value);
-    } else {
-      state.keycapParams[field] = input.value;
-      if (field === "stemType") {
-        state.keycapParams.stemCrossMargin = resolveStemCrossMarginAfterStemTypeChange(
-          input.value,
-          state.keycapParams.stemCrossMargin,
-          previousStemType,
-        );
-      }
-      if (field === "topSurfaceShape") {
-        applyTopSurfaceShapePreset(input.value);
-      } else if (field === "topHatSurfaceShape") {
-        applyTopHatSurfaceShapePreset(input.value);
-      }
-      if (isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.contentType)) {
-        state.legendFontPickerFieldKey = "";
-        state.legendFontPickerQuery = "";
-        state.legendIconPickerFieldKey = "";
-        state.legendIconPickerQuery = "";
-      } else if (isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.iconSet)) {
-        const legendPrefix = findLegendParamPrefixByFieldKey(field, LEGEND_FIELD_SUFFIXES.iconSet);
-        const iconNameKey = legendPrefix ? legendParamKey(legendPrefix, LEGEND_FIELD_SUFFIXES.iconName) : "legendIconName";
-        const iconFillKey = legendPrefix ? legendParamKey(legendPrefix, LEGEND_FIELD_SUFFIXES.iconFill) : "legendIconFill";
-        state.keycapParams[field] = resolveLegendIconSet(input.value);
-        state.keycapParams[iconNameKey] = resolveLegendIconName(state.keycapParams[iconNameKey], state.keycapParams[field]);
-        state.keycapParams[iconFillKey] = isLegendIconFillAvailable(state.keycapParams[iconNameKey], state.keycapParams[field])
-          ? Boolean(state.keycapParams[iconFillKey])
-          : false;
-        state.legendIconPickerQuery = "";
-      }
-    }
-  } else if (input.type === "radio") {
-    if (!input.checked) {
-      return;
-    }
-    state.keycapParams[field] = input.value;
-  } else if (fieldConfig?.type === "color") {
-    const normalizedColor = normalizeHexColor(input.value);
-    if (!normalizedColor) {
-      setColorInputValidity(input, false);
-      return;
-    }
-
-    state.keycapParams[field] = normalizedColor;
-    input.value = normalizedColor;
-    setColorInputValidity(input, true);
-    syncColorChip(field, normalizedColor);
-  } else if (input.type === "text") {
-    state.keycapParams[field] = input.value;
   } else {
-    const nextValue = parseNumericInputValue(input, field, fieldConfig);
-    if (nextValue == null) {
-      return;
-    }
-
-    if (isTopEdgeHeightField(field)) {
-      applyTopEdgeHeightChange(field, nextValue);
-    } else {
-      state.keycapParams[field] = nextValue;
-      const cornerRadiusFieldSet = findCornerRadiusFieldSetBySharedField(field);
-      if (cornerRadiusFieldSet && !state.keycapParams[cornerRadiusFieldSet.individualFieldKey]) {
-        syncCornerRadiusFieldsToSharedValue(cornerRadiusFieldSet);
-      }
-    }
-
-    if (Object.values(LINKED_SIZE_UNIT_FIELDS).includes(field)) {
-      if (deferContinuousSync) {
-        queueLinkedSizeInputSync(field);
-      } else {
-        syncLinkedSizeInputs(field);
-      }
-    }
+    value = parseNumericInputValue(input, field, fieldConfig);
+    if (value == null) return;
+  }
+  state.keycapParams = applyEditorFieldValue(state.keycapParams, field, value);
+  if (isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.contentType)) {
+    state.legendFontPickerFieldKey = "";
+    state.legendFontPickerQuery = "";
+    state.legendIconPickerFieldKey = "";
+    state.legendIconPickerQuery = "";
+  } else if (isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.iconSet)) {
+    state.legendIconPickerQuery = "";
   }
 
   syncDerivedKeycapParams(state.keycapParams);
@@ -10909,7 +10858,7 @@ async function executeExport(format, options = {}) {
       const payload = editorDataPayload ?? createEditorDataPayload(params);
       const json = JSON.stringify(payload, null, 2);
       const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-      downloadBlob(blob, buildEditorDataFilename(payload.params));
+      downloadBlob(blob, buildEditorDataFilename(payload.params), options);
       setExportStatus(
         "success",
         t("importExport.savedEditorData", { byteLength: blob.size }),
@@ -10924,7 +10873,7 @@ async function executeExport(format, options = {}) {
     } else if (format === "3mf") {
       const { blob, offResults } = await create3mfExportBlob(params);
       const savedPartLabels = describePartLabels(offResults.map((entry) => entry.name));
-      downloadBlob(blob, build3mfFilename(params));
+      downloadBlob(blob, build3mfFilename(params), options);
 
       setExportStatus(
         "success",
@@ -10939,7 +10888,7 @@ async function executeExport(format, options = {}) {
       );
     } else if (format === "step") {
       const { blob, result, mesh } = await createStepExportBlob(params);
-      downloadBlob(blob, buildStepFilename(params));
+      downloadBlob(blob, buildStepFilename(params), options);
 
       setExportStatus(
         "success",
@@ -10966,7 +10915,7 @@ async function executeExport(format, options = {}) {
       });
       const [output] = result.outputs;
       const blob = new Blob([output.bytes], { type: "model/stl" });
-      downloadBlob(blob, buildStlFilename(params));
+      downloadBlob(blob, buildStlFilename(params), options);
 
       setExportStatus(
         "success",
@@ -11003,7 +10952,211 @@ async function executeExport(format, options = {}) {
   }
 
   render();
+  if (didSucceed) {
+    const filename = format === "editor-data" ? buildEditorDataFilename(params) : format === "3mf" ? build3mfFilename(params)
+      : format === "step" ? buildStepFilename(params) : buildStlFilename(params);
+    return { filename, ...state.exportHistory[0] };
+  }
 }
+
+// WebMCP catalogs reuse the UI definitions, including composite corner controls.
+function getWebMcpFields(params = state.keycapParams) {
+  const profile = params.shapeProfile;
+  const keys = getShapeProfileVisibleFieldKeys(profile);
+  keys.add("name");
+  for (const set of CORNER_RADIUS_FIELD_SETS) {
+    if (keys.has(set.sharedFieldKey)) {
+      keys.add(set.individualFieldKey);
+      set.fieldKeys.forEach((key) => keys.add(key));
+    }
+  }
+  const orderedKeys = [...new Set([...fieldConfigByKey.keys(), ...keys])].filter((key) => keys.has(key));
+  return orderedKeys.filter((key) => !Object.hasOwn(LINKED_SIZE_UNIT_FIELDS, key)).map((key) => {
+    const radiusSet = CORNER_RADIUS_FIELD_SETS.find((set) => set.individualFieldKey === key || set.fieldKeys.includes(key));
+    const field = getFieldConfig(key, profile) ?? (radiusSet ? {
+      ...getFieldConfig(radiusSet.sharedFieldKey, profile), key,
+      type: key === radiusSet.individualFieldKey ? "checkbox" : "number",
+      label: `${resolveDynamicCopy(getFieldConfig(radiusSet.sharedFieldKey, profile)?.label, params)} (${key})`,
+      min: key === radiusSet.individualFieldKey ? undefined : 0,
+      max: key === radiusSet.individualFieldKey ? undefined : getFieldConfig(radiusSet.sharedFieldKey, profile)?.max,
+    } : null);
+    if (!field) throw new Error(`WebMCP field metadata missing: ${key}`);
+    const type = field.type === "checkbox" ? "boolean"
+      : ["text", "color", "select", "font-search", "icon-search", "preview-color-swatch"].includes(field.type) ? "string" : "number";
+    const schema = { type };
+    if (type === "number") {
+      for (const [attribute, keyword] of [["min", "minimum"], ["max", "maximum"]]) {
+        const value = resolveFieldAttribute(field[attribute], params);
+        if (value != null && Number.isFinite(Number(value))) schema[keyword] = Number(value);
+      }
+    } else if (type === "string") {
+      schema.maxLength = field.maxLength ?? 500;
+      if (field.type === "color") schema.pattern = "^#[0-9a-fA-F]{6}$";
+      if (field.type === "select" || field.type === "preview-color-swatch") schema.enum = resolveFieldOptions(field, params).map((option) => option.value);
+      if (field.type === "font-search") schema.enum = listAvailableKeycapLegendFonts().filter((font) => !font.isMissing).map((font) => font.key);
+    }
+    return {
+      key, label: resolveDynamicCopy(field.label, params), description: resolveDynamicCopy(field.hint, params),
+      unit: field.unit ?? "", schema, value: params[key],
+      visible: typeof field.visibleWhen !== "function" || Boolean(field.visibleWhen(params)),
+      disabled: isFieldDisabled(field, params),
+    };
+  });
+}
+
+function getWebMcpState() {
+  return cloneJsonValue({
+    locale: state.locale, tab: state.sidebarTab, previewMode: state.previewMode,
+    params: state.keycapParams,
+    preview: { status: state.editorStatus, summary: state.editorSummary, message: state.editorError,
+      parts: state.previewLayers.map((layer) => ({ name: layer.name, vertices: layer.mesh.vertices.length, faces: layer.mesh.faces.length })) },
+    export: { status: state.exportsStatus, summary: state.exportsSummary, latest: state.exportHistory[0] ?? null },
+    project: { name: state.project.name, isDirty: state.project.isDirty, status: state.projectStatus, summary: state.projectSummary,
+      activeKeycapId: state.project.activeKeycapId,
+      keycaps: state.project.keycaps.map((entry) => ({ id: entry.id, name: entry.name, shapeProfile: entry.params.shapeProfile, displayOrder: entry.displayOrder })),
+      keyboard: state.project.keyboard ?? null, placements: state.project.placements ?? [] },
+    importBindingReport: state.lastImportBindingReport,
+  });
+}
+
+function requireWebMcpKeycap(id) {
+  const entry = state.project.keycaps.find((keycap) => keycap.id === id);
+  if (!entry) throw new WebMcpError("not_found", `Unknown keycapId: ${id}`);
+  return entry;
+}
+
+function updateKeycapFromWebMcp(patch) {
+  // Stage every field on a draft; invalid input cannot partially mutate the UI.
+  let draft = { ...state.keycapParams };
+  const priority = (key) => key === "shapeProfile" ? 0 : /IconFill$/.test(key) ? 4 : ["keyWidth", "keyDepth", "topCenterHeight"].includes(key) ? 1
+    : typeof patch[key] === "boolean" || getFieldConfig(key)?.type === "select" || /FontKey$/.test(key) ? 2 : 3;
+  const fieldOrder = [...fieldConfigByKey.keys()];
+  const order = (key) => fieldOrder.includes(key) ? fieldOrder.indexOf(key) : fieldOrder.length;
+  const entries = Object.entries(patch).sort(([a], [b]) => priority(a) - priority(b) || order(a) - order(b) || a.localeCompare(b));
+  for (const [key, value] of entries) {
+    const metadata = getWebMcpFields(draft).find((field) => field.key === key);
+    if (!metadata) throw new WebMcpError("invalid_input", `${key} is unavailable for ${draft.shapeProfile}`);
+    // Validate the shape before its reset logic. Other constraints depend on the
+    // complete proposed draft, e.g. bottom width + top-hat height in one patch.
+    if (key === "shapeProfile") validateToolInput(value, metadata.schema, `params.${key}`);
+    draft = applyEditorFieldValue(draft, key, value, { normalize: false });
+  }
+  for (const [key, value] of entries) {
+    const metadata = getWebMcpFields(draft).find((field) => field.key === key);
+    validateToolInput(value, metadata.schema, `params.${key}`);
+    const field = getFieldConfig(key, draft.shapeProfile);
+    if (field?.type === "icon-search") {
+      const iconSet = draft[getLegendIconSetFieldKey(key)];
+      if (resolveLegendIconName(value, iconSet) !== value) throw new WebMcpError("invalid_input", `Unknown icon: ${value}. Search keycap_get_catalog first.`);
+    }
+  }
+  state.keycapParams = syncDerivedKeycapParams(draft);
+  state.legendFontPickerFieldKey = "";
+  state.legendIconPickerFieldKey = "";
+  state.editorStatus = "dirty";
+  state.editorSummary = t("status.dirty");
+  syncActiveProjectKeycapFromCurrent();
+  render();
+  schedulePreviewRefresh();
+  return getWebMcpState();
+}
+
+const webMcpCommands = {
+  isBusy: () => state.exportsStatus === "running" || state.projectStatus === "running" || state.keyboardBusy,
+  getState: getWebMcpState,
+  getParameterSchema: () => createEditorParameterSchema(keycapEditorProfiles.profiles.flatMap((profile) => getWebMcpFields(createInitialKeycapParams(profile.key)))),
+  getCatalog({ section, shapeProfile, query = "", iconSet, keys, limit = 40 }) {
+    if (section === "shapes") return getShapeProfileOptions();
+    if (section === "fields") {
+      if (shapeProfile && !keycapEditorProfiles.profiles.some((profile) => profile.key === shapeProfile)) throw new WebMcpError("invalid_input", `Unknown shapeProfile: ${shapeProfile}`);
+      const fields = getWebMcpFields(!shapeProfile || shapeProfile === state.keycapParams.shapeProfile ? state.keycapParams : createInitialKeycapParams(shapeProfile));
+      if (keys?.some((key) => !fields.some((field) => field.key === key))) throw new WebMcpError("invalid_input", "Unknown field key in requested shapeProfile");
+      return fields.filter((field) => (!keys || keys.includes(field.key)) && `${field.key} ${field.label}`.toLowerCase().includes(query.toLowerCase()));
+    }
+    if (section === "fonts") return listAvailableKeycapLegendFonts().filter((font) => !font.isMissing && `${font.key} ${font.label}`.toLowerCase().includes(query.toLowerCase())).slice(0, limit)
+      .map((font) => ({ key: font.key, label: font.label, styles: getKeycapLegendFontStyleOptions(font.key) }));
+    const sets = listLegendIconSets();
+    if (iconSet && !sets.some((set) => set.key === iconSet)) throw new WebMcpError("invalid_input", `Unknown iconSet: ${iconSet}`);
+    const selectedSet = iconSet ?? state.keycapParams.legendIconSet;
+    return { sets: sets.map((set) => ({ key: set.key, label: set.label })), iconSet: selectedSet,
+      icons: searchLegendIcons(query, selectedSet, limit).map((icon) => ({ name: icon.name, label: icon.label, supportsFill: isLegendIconFillAvailable(icon.name, selectedSet) })) };
+  },
+  updateKeycap: updateKeycapFromWebMcp,
+  async project({ action, keycapId, name, offset }) {
+    if (["select", "delete", "move"].includes(action)) requireWebMcpKeycap(keycapId);
+    if (action === "delete" && state.project.keycaps.length <= 1) throw new WebMcpError("invalid_input", "Cannot delete the last keycap.");
+    if (action === "rename" && !name) throw new WebMcpError("invalid_input", "rename requires name");
+    if (action === "move" && offset == null) throw new WebMcpError("invalid_input", "move requires offset");
+    flushPendingActiveProjectKeycapSync();
+    if (action === "add") await addCurrentKeycapToProject();
+    if (action === "select") await applyProjectKeycapSelection(keycapId);
+    if (action === "delete") await deleteProjectKeycap(keycapId);
+    if (action === "move") moveProjectKeycapByOffset(keycapId, offset);
+    if (action === "rename") { handleProjectNameInput({ value: normalizeProjectName(name) }); render(); }
+    return getWebMcpState();
+  },
+  async importEditor(payload, { signal }) {
+    const json = JSON.stringify(payload);
+    if (json.length > 8 * 1024 * 1024) throw new WebMcpError("invalid_input", "Editor data must be at most 8 MiB.");
+    parseEditorDataPayloadWithReport(payload);
+    signal?.throwIfAborted();
+    await importEditorDataFile(new File([json], "webmcp-editor.json", { type: "application/json" }));
+    return getWebMcpState();
+  },
+  setKeyboard({ layout, layoutIndex = 0 }) {
+    const layouts = parseKeyboardLayouts(JSON.stringify(layout));
+    if (!layouts[layoutIndex]) throw new WebMcpError("invalid_input", "layoutIndex is out of range");
+    applyKeyboardLayout(layouts[layoutIndex]);
+    return getWebMcpState();
+  },
+  assign({ slotId, keycapId }) {
+    if (!state.project.keyboard?.keys.some((key) => key.id === slotId)) throw new WebMcpError("not_found", `Unknown slotId: ${slotId}`);
+    if (keycapId) requireWebMcpKeycap(keycapId);
+    state.keyboardSlotId = slotId;
+    assignKeyboardSlot(keycapId ?? "");
+    return getWebMcpState();
+  },
+  setView({ tab, previewMode }) {
+    if (previewMode === "keyboard" && !state.project.keyboard) throw new WebMcpError("invalid_input", "Load a keyboard before selecting keyboard preview.");
+    if (tab) { state.sidebarTab = tab; render(); }
+    if (previewMode) setPreviewMode(previewMode);
+    return getWebMcpState();
+  },
+  async preview({ signal }) {
+    window.clearTimeout(previewDebounceTimer);
+    const paramsSignature = JSON.stringify(state.keycapParams);
+    const keycapId = state.project.activeKeycapId;
+    await executeKeycapPreview({ silent: false, refreshActiveProjectPreview: true });
+    signal?.throwIfAborted();
+    if (keycapId !== state.project.activeKeycapId || paramsSignature !== JSON.stringify(state.keycapParams)) {
+      throw new WebMcpError("preview_failed", "Preview was superseded by an editor change. Retry keycap_preview.");
+    }
+    if (state.editorStatus !== "success") throw new WebMcpError("preview_failed", state.editorError || "Preview did not complete. Retry keycap_preview.");
+    return getWebMcpState();
+  },
+  async export(format, { signal }) {
+    flushPendingActiveProjectKeycapSync();
+    if (format === "project-zip") {
+      const result = await saveProject({ signal });
+      if (!result) throw new WebMcpError("export_failed", state.projectSummary);
+      return { ...result, state: getWebMcpState() };
+    }
+    const activeEntry = state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId);
+    const editorDataPayload = format === "editor-data" && activeEntry ? cloneJsonValue(getProjectEntryEditorDataPayload(activeEntry)) : null;
+    const result = await executeExport(format, { params: { ...state.keycapParams }, editorDataPayload, signal });
+    if (!result) throw new WebMcpError("export_failed", state.exportHistory[0]?.notes ?? state.exportsSummary);
+    return { ...result, state: getWebMcpState() };
+  },
+};
+
+const webMcpTools = createKeycapWebMcpTools(webMcpCommands);
+let webMcpRegistration = registerKeycapWebMcp(webMcpTools);
+// Extensions may inject the early API around load. Retry once if initially absent.
+window.addEventListener("load", async () => {
+  const result = await webMcpRegistration.ready;
+  if (result.status === "unsupported") webMcpRegistration = registerKeycapWebMcp(webMcpTools);
+}, { once: true });
+if (import.meta.hot) import.meta.hot.dispose(() => webMcpRegistration.dispose());
 
 syncVisualViewportMetrics();
 render();

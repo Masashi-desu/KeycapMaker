@@ -8,6 +8,8 @@ geometry contract、runtime、export を変更したときに、ブラウザ上�
 
 ## ブラウザ確認
 
+WebMCP command、フィールド定義、import/exportを変えた場合は [WebMCPガイドの回帰確認](webmcp.md) も対応する範囲で行います。
+
 ### 1. 初期表示
 
 - アプリがエラーなしで開く

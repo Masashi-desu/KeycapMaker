@@ -7,6 +7,8 @@
 - `main.js`: app state、UI、import/exportのorchestration
 - `data/`: shape registry、shape defaults、icon fallback data
 - `i18n/`: locale dictionaryとlocale切替
-- `lib/`: project data、preview、export、font/icon、OpenSCAD bridge等の独立責務
+- `lib/`: project data、preview、export、font/icon、OpenSCAD bridge、WebMCP tool登録等の独立責務
+
+WebMCPのUI共通command、schemaと保守範囲は [WebMCP操作契約](../docs/architecture/webmcp.md) を参照します。
 
 `src/README.md` は案内だけを担い、実装規約やrelease手順を重複記載しません。
