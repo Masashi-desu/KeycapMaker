@@ -6,6 +6,8 @@
 
 GitHub Actionsと同じNode.js 24系を使います。依存関係は `package-lock.json` を正として再現するため、通常の検証では `npm ci` を使います。依存を意図的に更新するときだけnpmでmanifestとlockfileを同時に更新します。
 
+GitHub Actionsのrunnerは `ubuntu-24.04` に固定します。OS更新はworkflowの変更として明示的に検証し、`ubuntu-latest` の自動移行でrelease環境を変えません（[GitHubの移行案内](https://github.com/actions/runner-images/issues/14748)）。
+
 ```sh
 npm ci
 npm run dev
