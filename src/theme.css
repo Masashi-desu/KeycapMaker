@@ -1,0 +1,163 @@
+/* UI color values live here. Every token has a light and dark definition. */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page-start: #f4f1ea;
+  --page-end: #e7e0d2;
+  --panel: #fcfaf6;
+  --panel-soft: #f3ece1;
+  --panel-softer: #f5efe5;
+  --panel-warm: #fff8ee;
+  --panel-dark: #2d241c;
+  --glass-panel: rgba(252, 250, 246, 0.14);
+  --glass-panel-soft: rgba(243, 236, 225, 0.18);
+  --glass-panel-softer: rgba(245, 239, 229, 0.2);
+  --glass-panel-warm: rgba(255, 248, 238, 0.22);
+  --glass-outline: rgba(255, 255, 255, 0.12);
+  --glass-surface: rgba(244, 236, 225, 0.16);
+  --glass-control: rgba(255, 255, 255, 0.24);
+  --glass-control-strong: rgba(255, 255, 255, 0.32);
+  --glass-dark: rgba(45, 36, 28, 0.36);
+  --glass-border-panel: rgba(216, 204, 184, 0.28);
+  --glass-border-surface: rgba(216, 204, 184, 0.24);
+  --glass-border-control: rgba(216, 204, 184, 0.34);
+  --solid-segment-surface: rgba(239, 231, 218, 0.74);
+  --solid-segment-border: rgba(216, 204, 184, 0.56);
+  --solid-segment-indicator: rgba(45, 36, 28, 0.92);
+  --solid-action: rgba(90, 78, 65, 0.9);
+  --solid-action-border: rgba(233, 223, 210, 0.12);
+  --border: #d8ccb8;
+  --border-soft: #e0d5c3;
+  --text: #2d241c;
+  --muted: #7c6a58;
+  --muted-soft: #cdbfae;
+  --focus-ring: rgba(123, 155, 191, 0.58);
+  --floating-control: rgba(252, 250, 246, 0.88);
+  --floating-control-border: color-mix(in srgb, var(--border) 56%, white 44%);
+  --floating-control-shadow:
+    0 10px 22px rgba(45, 36, 28, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --popover-shadow:
+    0 18px 32px rgba(45, 36, 28, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
+  --control-hover: rgba(45, 36, 28, 0.06);
+  --control-selected: rgba(45, 36, 28, 0.1);
+  --segment-text: #6f5e4d;
+  --segment-active-text: #fff9f0;
+  --action-fill: var(--panel-dark);
+  --action-fill-hover: #3a2d22;
+  --action-text: #fff9f0;
+  --font-attribution-body-surface: rgba(255, 248, 238, 0.92);
+  --font-attribution-body-border: color-mix(in srgb, var(--border) 40%, white 60%);
+  --font-attribution-body-text: var(--text);
+  --font-attribution-copy-surface: rgba(45, 36, 28, 0.08);
+  --font-attribution-copy-surface-hover: rgba(45, 36, 28, 0.12);
+  --font-picker-popover-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08) 28%, transparent);
+  --font-picker-option-surface: color-mix(in srgb, var(--panel) 88%, white 12%);
+  --font-picker-option-surface-hover: color-mix(in srgb, var(--panel-soft) 86%, white 14%);
+  --font-picker-option-selected: color-mix(in srgb, rgba(236, 243, 251, 0.98) 72%, var(--font-picker-option-surface) 28%);
+  --shadow-rgb: 45 36 28;
+  --surface-tint-rgb: 45 36 28;
+  --border-tint-rgb: 216 204 184;
+  --highlight-rgb: 255 255 255;
+  --highlight-strength: 1;
+  --raised-surface: #ffffff;
+  --input-surface: rgba(255, 255, 255, 0.66);
+  --control-thumb: #ffffff;
+  --overlay-backdrop: rgba(45, 36, 28, 0.2);
+  --focus-border: rgba(123, 155, 191, 0.42);
+  --focus-glow: rgba(123, 155, 191, 0.12);
+  --danger-text: #94392d;
+  --danger-accent: #b54132;
+  --danger-border: #b9655e;
+  --danger-fill: #8f352d;
+  --danger-fill-hover: #762c26;
+  --danger-fill-disabled: #965e56;
+  --danger-on-fill: #fff9f5;
+  --warning-accent: #b8884c;
+  --warning-surface: color-mix(in srgb, var(--panel-warm) 78%, var(--warning-accent) 22%);
+  --warning-border: color-mix(in srgb, var(--warning-accent) 42%, var(--glass-border-surface) 58%);
+  --swatch-accent-border: rgba(111, 46, 0, 0.26);
+  --ui-icon-filter: none;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page-start: #15120f;
+  --page-end: #272019;
+  --panel: #26211c;
+  --panel-soft: #302920;
+  --panel-softer: #372e24;
+  --panel-warm: #332719;
+  --panel-dark: #f1dfc4;
+  --glass-panel: rgba(38, 33, 28, 0.62);
+  --glass-panel-soft: rgba(48, 41, 32, 0.66);
+  --glass-panel-softer: rgba(55, 46, 36, 0.7);
+  --glass-panel-warm: rgba(51, 39, 25, 0.72);
+  --glass-outline: rgba(255, 244, 222, 0.08);
+  --glass-surface: rgba(255, 239, 213, 0.08);
+  --glass-control: rgba(255, 239, 213, 0.1);
+  --glass-control-strong: rgba(255, 239, 213, 0.16);
+  --glass-dark: rgba(0, 0, 0, 0.34);
+  --glass-border-panel: rgba(202, 170, 124, 0.18);
+  --glass-border-surface: rgba(202, 170, 124, 0.16);
+  --glass-border-control: rgba(202, 170, 124, 0.24);
+  --solid-segment-surface: rgba(34, 29, 24, 0.86);
+  --solid-segment-border: rgba(202, 170, 124, 0.28);
+  --solid-segment-indicator: #d8b77d;
+  --solid-action: #d8b77d;
+  --solid-action-border: rgba(255, 244, 222, 0.18);
+  --border: #5c4c38;
+  --border-soft: #4b4032;
+  --text: #f4ede3;
+  --muted: #c7b69f;
+  --muted-soft: #8f806d;
+  --focus-ring: rgba(141, 180, 211, 0.62);
+  --floating-control: rgba(39, 34, 28, 0.9);
+  --floating-control-border: rgba(202, 170, 124, 0.26);
+  --floating-control-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 244, 222, 0.08);
+  --popover-shadow:
+    0 20px 36px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 244, 222, 0.08);
+  --control-hover: rgba(255, 239, 213, 0.08);
+  --control-selected: rgba(216, 183, 125, 0.2);
+  --segment-text: #c7b69f;
+  --segment-active-text: #1c1711;
+  --action-fill: #d8b77d;
+  --action-fill-hover: #e4c993;
+  --action-text: #1c1711;
+  --font-attribution-body-surface: rgba(18, 15, 12, 0.72);
+  --font-attribution-body-border: color-mix(in srgb, var(--border) 54%, transparent);
+  --font-attribution-body-text: var(--text);
+  --font-attribution-copy-surface: rgba(216, 183, 125, 0.12);
+  --font-attribution-copy-surface-hover: rgba(216, 183, 125, 0.18);
+  --font-picker-popover-sheen: linear-gradient(180deg, rgba(255, 239, 213, 0.08), rgba(255, 239, 213, 0.03) 28%, transparent);
+  --font-picker-option-surface: color-mix(in srgb, var(--glass-control-strong) 62%, var(--panel-soft) 38%);
+  --font-picker-option-surface-hover: color-mix(in srgb, var(--glass-control-strong) 78%, var(--panel-softer) 22%);
+  --font-picker-option-selected: color-mix(in srgb, var(--control-selected) 72%, var(--font-picker-option-surface) 28%);
+  --shadow-rgb: 0 0 0;
+  --surface-tint-rgb: 255 239 213;
+  --border-tint-rgb: 202 170 124;
+  --highlight-rgb: 255 244 222;
+  --highlight-strength: 0.22;
+  --raised-surface: #453a2d;
+  --input-surface: var(--glass-control);
+  --control-thumb: #bba584;
+  --overlay-backdrop: rgba(0, 0, 0, 0.46);
+  --focus-border: rgba(141, 180, 211, 0.48);
+  --focus-glow: rgba(141, 180, 211, 0.2);
+  --danger-text: #ffb4a6;
+  --danger-accent: #db7b66;
+  --danger-border: #e29a89;
+  --danger-fill: #a34437;
+  --danger-fill-hover: #b95042;
+  --danger-fill-disabled: #743e36;
+  --danger-on-fill: #fff4ec;
+  --warning-accent: #c69a62;
+  --warning-surface: color-mix(in srgb, var(--panel-warm) 78%, var(--warning-accent) 22%);
+  --warning-border: color-mix(in srgb, var(--warning-accent) 42%, var(--glass-border-surface) 58%);
+  --swatch-accent-border: rgba(237, 189, 121, 0.42);
+  --ui-icon-filter: invert(1);
+}

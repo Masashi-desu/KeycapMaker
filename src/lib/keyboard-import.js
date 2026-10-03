@@ -1,4 +1,5 @@
 import { isKeyboardLayoutFileName, MAX_LAYOUT_FILE_BYTES, parseKeyboardLayouts } from "./keyboard-layout.js";
+import { applyZmkGroups, hasZmkSplitDeclaration, readZmkGroupDescriptions } from "./keyboard-groups.js";
 
 class KeyboardFileReadError extends Error {}
 const NO_VALID_FILES = "読み込み可能な物理配置の定義が見つかりません。キー位置の座標を含む配置ファイルを指定してください。";
@@ -10,8 +11,9 @@ function isIgnoredLayoutPath(path) {
 
 async function createValidatedCatalog({ paths, candidates, readText, sourceUrl = () => "", onProgress }) {
   const layoutCache = new Map();
+  const structureCache = new Map();
   const getLayouts = (path) => {
-    if (!layoutCache.has(path)) layoutCache.set(path, loadKeyboardFileLayouts(path, { paths, readText, url: sourceUrl(path) }));
+    if (!layoutCache.has(path)) layoutCache.set(path, loadKeyboardFileLayouts(path, { paths, readText, structureCache, url: sourceUrl(path) }));
     return layoutCache.get(path);
   };
   const valid = new Set();
@@ -70,25 +72,71 @@ export function isKeyboardLayoutJson(source) {
   }
 }
 
-export async function loadKeyboardFileLayouts(path, { readText, paths = [], url = "" }) {
-  const content = await readText(path);
-  if (/\.(dtsi|dts|overlay|keymap)$/i.test(path)) {
-    const visited = new Set();
-    async function expand(currentPath, source, depth = 0) {
-      if (visited.has(currentPath)) return "";
-      if (depth > 20 || visited.size > 64) throw new Error("ZMK include が多すぎます。展開済みの配置を指定してください。");
-      visited.add(currentPath);
-      let included = "";
-      for (const match of source.matchAll(/^\s*#include\s*[<"]([^>"]+)[>"]/gm)) {
-        const relative = normalizePath(`${currentPath.split("/").slice(0, -1).join("/")}/${match[1]}`);
-        const exact = paths.includes(relative) ? relative : paths.includes(match[1]) ? match[1] : "";
-        const suffixes = paths.filter((p) => p.endsWith(`/${match[1]}`));
-        const target = exact || (suffixes.length === 1 ? suffixes[0] : "");
-        if (target && !visited.has(target)) included += await expand(target, await readText(target), depth + 1);
-      }
-      return `${included}\n${source}`;
+// These standard ZMK includes define attrs/macros or input processors, not a
+// board's scan membership. Any other unresolved include prevents ownership.
+const ZMK_STRUCTURE_INCLUDES = new Set([
+  "dt-bindings/zmk/matrix_transform.h", "physical_layouts.dtsi",
+  "dt-bindings/zmk/input_transform.h", "input/processors.dtsi",
+]);
+
+async function expandZmkFile(path, content, paths, readText, { structural = false } = {}) {
+  const visited = new Set();
+  let unresolved = false;
+  async function expand(currentPath, source, depth = 0) {
+    if (visited.has(currentPath)) return "";
+    if (depth > 20 || visited.size > 64) throw new Error("ZMK include が多すぎます。展開済みの配置を指定してください。");
+    visited.add(currentPath);
+    let included = "";
+    for (const match of source.matchAll(/^\s*#include\s*[<"]([^>"]+)[>"]/gm)) {
+      const relative = normalizePath(`${currentPath.split("/").slice(0, -1).join("/")}/${match[1]}`);
+      const exact = paths.includes(relative) ? relative : paths.includes(match[1]) ? match[1] : "";
+      const suffixes = paths.filter((p) => p.endsWith(`/${match[1]}`));
+      const target = exact || (suffixes.length === 1 ? suffixes[0] : "");
+      if (!target && !ZMK_STRUCTURE_INCLUDES.has(match[1])) unresolved = true;
+      if (target && !visited.has(target)) included += await expand(target, await readText(target), depth + 1);
     }
-    return parseKeyboardLayouts(await expand(path, content), { path, url });
+    return `${included}\n${source}`;
+  }
+  const expanded = await expand(path, content);
+  return structural && unresolved ? null : expanded;
+}
+
+async function getZmkGroups(paths, readText, cache) {
+  if (!cache.has("zmk")) cache.set("zmk", (async () => {
+    const sidePaths = paths.filter((path) => /\.(overlay|dts)$/i.test(path));
+    if (sidePaths.length > 64) return [];
+    const descriptions = [];
+    for (const path of sidePaths) {
+      const directory = path.split("/").slice(0, -1).join("/");
+      if (sidePaths.filter((other) => other.split("/").slice(0, -1).join("/") === directory).length < 2) continue;
+      const configPath = path.replace(/\.(overlay|dts)$/i, ".conf");
+      const defconfigPath = directory ? `${directory}/Kconfig.defconfig` : "Kconfig.defconfig";
+      const config = paths.includes(configPath) ? await readText(configPath) : "";
+      const defconfig = paths.includes(defconfigPath) ? await readText(defconfigPath) : "";
+      if (!hasZmkSplitDeclaration(config, defconfig, path)) continue;
+      const expanded = await expandZmkFile(path, await readText(path), paths, readText, { structural: true });
+      if (expanded === null) return [];
+      const side = readZmkGroupDescriptions(expanded, path);
+      if (!side.length) return [];
+      descriptions.push(...side);
+    }
+    return descriptions;
+  })().catch((error) => {
+    if (error instanceof KeyboardFileReadError) throw error;
+    // Unsupported structural dependencies do not invalidate physical positions.
+    return [];
+  }));
+  return cache.get("zmk");
+}
+
+export async function loadKeyboardFileLayouts(path, { readText, paths = [], url = "", structureCache = new Map() }) {
+  const content = await readText(path);
+  const enrich = async (layouts) => {
+    const descriptions = await getZmkGroups(paths, readText, structureCache);
+    return layouts.map((board) => board.groups.length ? board : applyZmkGroups(board, descriptions));
+  };
+  if (/\.(dtsi|dts|overlay|keymap)$/i.test(path)) {
+    return enrich(parseKeyboardLayouts(await expandZmkFile(path, content, paths, readText), { path, url }));
   }
   if (/\.json$/i.test(path)) {
     const original = JSON.parse(content.replace(/^\uFEFF/, ""));
@@ -117,7 +165,7 @@ export async function loadKeyboardFileLayouts(path, { readText, paths = [], url 
         layouts = [selected];
       }
     }
-    return layouts;
+    return enrich(layouts);
   }
   return parseKeyboardLayouts(content, { path, url });
 }

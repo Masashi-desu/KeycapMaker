@@ -1,4 +1,4 @@
-import { ChevronDown, FileUp, FolderOpen } from "@lucide/icons";
+import { ChevronDown, Download, FileUp, FolderOpen, Trash2, TriangleAlert } from "@lucide/icons";
 import { getKeyboardBounds, getKeyboardKeyCenter, getKeyboardKeyCorners } from "./keyboard-layout.js";
 
 function renderIcon(icon, escape) {
@@ -42,13 +42,15 @@ export function renderProjectKeycapPlacements(project, keycapId, t, escape, { op
   </details>`;
 }
 
-function renderKeyboardSelect({ label, attribute, options, value, disabled = false }, escape) {
-  return `<label class="field">
+function renderKeyboardSelect({ label, attribute, options, value, disabled = false, action = "" }, escape) {
+  const contents = `
     <span class="field-copy"><span class="field-label">${escape(label)}</span></span>
     <span class="field-control field-control--select">
       <select ${attribute} ${disabled ? "disabled" : ""}>${options.map((option) => `<option value="${escape(String(option.value))}" ${String(option.value) === String(value) ? "selected" : ""}>${escape(option.label)}</option>`).join("")}</select>
-    </span>
-  </label>`;
+    </span>`;
+  return action
+    ? `<div class="field keyboard-assignment-card" data-keyboard-assignment-card><label>${contents}</label>${action}</div>`
+    : `<label class="field">${contents}</label>`;
 }
 
 function renderMap(state, t, escape, { keycapId = "", readOnly = false } = {}) {
@@ -136,8 +138,12 @@ export function renderKeyboardTab(state, t, escape, searchIconMarkup) {
   const board = state.project.keyboard;
   const slot = board?.keys.find((key) => key.id === state.keyboardSlotId) || board?.keys[0];
   const placement = state.project.placements.find((entry) => entry.slotId === slot?.id);
+  const group = board?.groups?.find((item) => item.id === slot?.groupId);
+  const groupName = group ? group.side ? t(`keyboard.group${group.side === "left" ? "Left" : "Right"}`) : group.name : t("keyboard.groupUnknown");
   const center = slot && getKeyboardKeyCenter(slot, board.pitchMm);
   const busy = state.keyboardBusy;
+  const exporting = state.exportsStatus === "running";
+  const exportResult = state.exportHistory?.[0]?.format === "keyboard-3mf" ? state.exportHistory[0] : null;
   const disabled = busy ? "disabled" : "";
   const workflow = getKeyboardWorkflow(state);
   const candidates = state.keyboardCandidates.filter((path) => path.toLowerCase().includes(state.keyboardCandidateQuery.toLowerCase()));
@@ -146,6 +152,7 @@ export function renderKeyboardTab(state, t, escape, searchIconMarkup) {
     ${renderKeyboardStepBar(state, workflow, t)}
     <div class="project-panel-grid">
       <p class="keyboard-status ${state.keyboardError ? "is-error" : ""}" data-keyboard-import-status role="status" ${state.keyboardMessage ? "" : "hidden"}>${escape(state.keyboardMessage)}</p>
+      <p class="keyboard-status is-error" data-keyboard-preview-status role="status" ${state.keyboardPreviewErrors?.length ? "" : "hidden"}>${escape((state.keyboardPreviewErrors ?? []).map((entry) => entry.message).join("\n"))}</p>
       ${workflow.step === 1 ? `
       <section class="field-group-card keyboard-card">
         <h3>${t("keyboard.import")}</h3>
@@ -154,7 +161,7 @@ export function renderKeyboardTab(state, t, escape, searchIconMarkup) {
         <div class="keyboard-import-picker-actions" role="group" aria-label="${t("keyboard.chooseLocal")}">
           <button type="button" class="export-save-button project-secondary-button" data-keyboard-picker="files" ${disabled}>${renderIcon(FileUp, escape)}<span>${t("keyboard.files")}</span></button>
           <button type="button" class="export-save-button project-secondary-button" data-keyboard-picker="folder" ${disabled}>${renderIcon(FolderOpen, escape)}<span>${t("keyboard.folder")}</span></button>
-          <input type="file" data-keyboard-files="files" multiple accept=".json,.dtsi,.dts,.overlay,.keymap,.toml,.kicad_pcb" hidden ${disabled}/>
+          <input type="file" data-keyboard-files="files" multiple accept=".json,.dtsi,.dts,.overlay,.keymap,.toml,.kicad_pcb,.conf,.defconfig" hidden ${disabled}/>
           <input type="file" data-keyboard-files="folder" webkitdirectory multiple hidden ${disabled}/>
         </div>
         <label class="keyboard-field">${t("keyboard.url")}<input type="url" data-keyboard-url value="${escape(state.keyboardUrl)}" placeholder="https://github.com/owner/keyboard" ${disabled}/></label>
@@ -192,15 +199,24 @@ export function renderKeyboardTab(state, t, escape, searchIconMarkup) {
           options: board.keys.map((key, i) => ({ value: key.id, label: `${i + 1} · ${key.label} (${key.w} × ${key.h}u)` })),
         }, escape)}
         <p>${t("keyboard.coordinates", { x: center.x.toFixed(2), y: center.y.toFixed(2), r: slot.r })}</p>
+        <p data-keyboard-group>${t("keyboard.groupLabel")}: ${escape(groupName)}</p>
         ${renderKeyboardSelect({ label: t("keyboard.assign"), attribute: "data-keyboard-assignment", value: placement?.keycapId || "",
           options: [{ value: "", label: t("keyboard.unassigned") }, ...state.project.keycaps.map((entry) => ({ value: entry.id, label: entry.name }))],
+          action: `<button type="button" class="export-save-button project-secondary-button" data-keyboard-assign-current>${t("keyboard.assignCurrent")}</button>
+            ${placement ? `<div class="keyboard-offset-grid">${["offsetX", "offsetY", "z", "rotation"].map((field) => `<label class="keyboard-field">${t(`keyboard.${field}`)}<input type="number" data-keyboard-offset="${field}" value="${placement[field]}" min="-10000" max="10000" step="${field === "rotation" ? "1" : "0.1"}"/></label>`).join("")}</div>
+              <button type="button" class="export-save-button project-secondary-button" data-keyboard-edit-assigned>${t("keyboard.editAssigned")}</button>` : ""}`,
         }, escape)}
-        <button type="button" class="export-save-button project-secondary-button" data-keyboard-assign-current>${t("keyboard.assignCurrent")}</button>
-        ${placement ? `<div class="keyboard-offset-grid">${["offsetX", "offsetY", "z", "rotation"].map((field) => `<label class="keyboard-field">${t(`keyboard.${field}`)}<input type="number" data-keyboard-offset="${field}" value="${placement[field]}" min="-10000" max="10000" step="${field === "rotation" ? "1" : "0.1"}"/></label>`).join("")}</div>
-          <button type="button" class="export-save-button project-secondary-button" data-keyboard-edit-assigned>${t("keyboard.editAssigned")}</button>` : ""}
-        <button type="button" class="export-save-button project-secondary-button" data-preview-mode="keyboard">${t("keyboard.keyboardView")}</button>
-        <button type="button" class="keyboard-remove" data-keyboard-remove>${t("keyboard.remove")}</button>
-      </section>` : ""}
+        <button type="button" class="export-save-button project-secondary-button keyboard-export-button" data-keyboard-export ${!state.project.placements.length || exporting || state.projectStatus === "running" ? "disabled" : ""}>${renderIcon(Download, escape)}<span>${t(exporting ? "actions.saving" : "keyboard.export3mf")}</span></button>
+        <p class="keyboard-status ${state.exportsStatus === "error" ? "is-error" : ""}" data-keyboard-export-status role="status" ${state.exportsSummary && (exporting || exportResult) ? "" : "hidden"}>${escape(state.exportsSummary || "")}${!exporting && exportResult && state.exportsStatus === "error" ? ` ${escape(exportResult.notes)}` : ""}</p>
+        <p class="keyboard-status">${t("keyboard.exportNote")}</p>
+      </section>
+      <details class="field-group-card keyboard-card keyboard-danger-zone" aria-labelledby="keyboard-danger-title" data-keyboard-danger-zone ${state.keyboardDangerZoneExpanded ? "open" : ""}>
+        <summary class="keyboard-danger-title" id="keyboard-danger-title">${renderIcon(TriangleAlert, escape)}<span>${t("keyboard.dangerZone")}</span>${renderIcon(ChevronDown, escape)}</summary>
+        <div class="keyboard-danger-body">
+          <p>${t("keyboard.removeHint")}</p>
+          <button type="button" class="export-save-button project-danger-button" data-keyboard-remove ${busy || exporting || state.projectStatus === "running" ? "disabled" : ""}>${renderIcon(Trash2, escape)}<span>${t("keyboard.remove")}</span></button>
+        </div>
+      </details>` : ""}
     </div>
   </div>`;
 }

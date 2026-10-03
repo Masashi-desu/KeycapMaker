@@ -188,12 +188,12 @@ export function createProjectPreviewPlaceholderDataUrl(params = {}) {
   const rimColor = /^#[0-9a-f]{6}$/i.test(params.rimColor) ? params.rimColor : "#d8ccb8";
   const legendColor = /^#[0-9a-f]{6}$/i.test(params.legendColor) ? params.legendColor : "#212529";
   const label = legend || name.slice(0, 10);
+  // Keep only the model's real colors in this saved image. The surrounding UI
+  // supplies the theme background and the keycap name outside the image.
   const svg = [
     "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 320 220\">",
-    "<rect width=\"320\" height=\"220\" rx=\"24\" fill=\"#fcfaf6\"/>",
     `<path d="M76 72h168l24 82c2 8-4 16-13 16H65c-9 0-15-8-13-16z" fill="${escapeXml(bodyColor)}" stroke="${escapeXml(rimColor)}" stroke-width="10" stroke-linejoin="round"/>`,
     `<text x="160" y="127" text-anchor="middle" dominant-baseline="middle" fill="${escapeXml(legendColor)}" font-family="Noto Sans JP, Noto Sans, sans-serif" font-size="42" font-weight="800">${escapeXml(label)}</text>`,
-    `<text x="160" y="196" text-anchor="middle" fill="#7c6a58" font-family="Noto Sans JP, Noto Sans, sans-serif" font-size="18" font-weight="700">${escapeXml(name)}</text>`,
     "</svg>",
   ].join("");
 

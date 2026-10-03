@@ -14,7 +14,9 @@ npm run lint:workflows
 
 `npm test` は `test/*.test.js` のNode testだけを実行します。純粋関数、import/export形式、SCAD bridge、実WASMでのgeometry、文書、変更分類を担当します。`test/support/scad-context.js` はSCAD testのbrowser mockとVite SSR環境を用意し、各caseの終了時にmodule cacheとglobalを片付けます。テスト間で可変状態を共有しません。
 
-`npm run test:browser` は `test/e2e/` 以下の `*.spec.js` のPlaywright testを実行します。suiteの開始・終了時に専用の `127.0.0.1:4175` のVite serverを起動・終了し、各caseではPlaywrightのfixtureが新しいbrowser contextを用意します。同じportにある既存serverは再利用しません。通常のbrowser profile、window、download folderを使いません。外部CDNを遮断し、同梱font、icon fallback、OpenSCAD worker/WASMをローカル配信します。
+[theme policy test](../../test/theme-policy.test.js) は `src/theme.css` のlight / darkのtoken集合・参照を照合し、他の部品CSSへの固定色の混入やpalette tokenの再定義を検出します。両テーマの実際の表示、hover時の文字と背景のコントラスト、テーマ切り替えによる製造色の保持はbrowser testで確認します。固定色チェックの対象はUI stylesheetであり、3D材質やユーザーの製造色データを検査・変更しません。
+
+`npm run test:browser` は `test/e2e/` 以下の `*.spec.js` のPlaywright testを実行します。suiteの開始・終了時に専用の `127.0.0.1:4175` のVite serverを起動・終了し、各caseではPlaywrightのfixtureが新しいbrowser contextを用意します。同じportにある既存serverは再利用しません。他の作業とportが重なる場合は `KEYCAP_BROWSER_TEST_PORT=4185 npm run test:browser` のように空いているportを指定します。通信の許可先も設定されたapp originへ追従します。通常のbrowser profile、window、download folderを使いません。外部CDNを遮断し、同梱font、icon fallback、OpenSCAD worker/WASMをローカル配信します。
 
 CIはrequired test jobでNode/browser testとworkflow lintを実行します。ChromiumとLinux用system dependencyは `npx playwright install --with-deps chromium` で導入します。失敗時のscreenshotとtraceは `.tmp/playwright-results/` に保存します。ローカルのtraceは `npx playwright show-trace <trace.zipのパス>` で確認できます。
 
@@ -22,13 +24,15 @@ CIはrequired test jobでNode/browser testとworkflow lintを実行します。C
 
 UIの構造と操作は `test/e2e/pages/` に集約します。
 
-- `EditorPage`: 初期表示、デザイン名・寸法の編集、デザインtabへの移動
+- `EditorPage`: 初期表示、デザイン名・寸法の編集、デザインtabへの移動、テーマ切り替えと入力欄の配色取得、preview stageの要求番号・状態・canvasフレームの取得
 - `ProjectPanel`: project tab、キーの追加・選択、export dialogを開く操作
 - `ExportDialog`: 書き出し操作とdownloadの取得
+- `KeyboardPanel`: 配置ファイルの読み込み、配置先の選択・割り当て・位置補正・割り当て済みキーキャップの編集、分割所属の表示、配置全体の3MF download、危険ゾーンの展開・削除確認・キャンセル、手動プレビュー切り替え
+- `ImportBindingNotice`: JSONの未反映項目・値、開閉・項目削除、両テーマの文字と背景のコントラスト確認
 
 `fixtures.js` がcontextとPage Objectを用意し、specはユーザー操作と期待結果を記述します。selectorはPage Objectに閉じ込め、`expect` はspecに置きます。複数ページに共通する処理がない段階ではBase Pageを追加しません。新しいUI flowも必要な画面・componentに操作を追加し、巨大なPage Objectに全機能を集めません。
 
-現行のbrowser testは、UI編集値のJSON書き出し、project内のキー切り替えによる編集値保持、WebMCPとUIの双方向同期・不正な部分更新の拒否・実worker/WASMでのpreview完了を確認します。WebMCPの登録APIだけをmockし、toolの実行には実アプリのcommandを使います。ネイティブWebMCP APIの互換性、全export形式、全shapeのgeometry、モバイルの目視品質を保証するtestではありません。環境固有の確認は [手動確認](manual-verification.md) と [WebMCPガイド](webmcp.md) を参照します。
+現行のbrowser testは、UI編集値のJSON書き出し、project内のキー切り替えによる編集値保持、WebMCPとUIの双方向同期・不正な部分更新の拒否・実worker/WASMでのpreview完了、構造からの分割所属と配置全体3MFのUI/WebMCP同期、危険ゾーンの初期折りたたみ・展開状態の保持・配置削除のキャンセルと承認後のデザイン保持、UI/WebMCPのタブ移動時のプレビュー選択と手動切り替えの維持を確認します。WebMCPの登録APIだけをmockし、toolの実行には実アプリのcommandを使います。再入力用データの再適用とcanonical複製、一括作成・共有割当・末尾不正入力の全件拒否、全体previewのcanvas描画完了とUI切り替え時の旧要求拒否、runtime配信失敗時の部分表示を成功扱いしないことも確認します。Node testはbatch proposalの参照・重複・補正保持と待機の期限 / キャンセルを担当します。ネイティブWebMCP APIの互換性、全export形式、全shapeのgeometry、モバイルの目視品質を保証するtestではありません。環境固有の確認は [手動確認](manual-verification.md) と [WebMCPガイド](webmcp.md) を参照します。
 
 ## テストを追加・変更する手順
 

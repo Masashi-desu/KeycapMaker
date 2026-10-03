@@ -192,7 +192,7 @@ flowchart TD
 
 - 出力元は OFF メッシュ
 - 3MF 内では part ごとに object resource を分ける
-- `build` には part 直列ではなく、body / top-hat / rim / homing / legend 系 part を `components` として束ねた親 object を 1 件だけ置く
+- 単体出力の `build` には part 直列ではなく、body / top-hat / rim / homing / legend 系 part を `components` として束ねた親 object を 1 件だけ置く
 - 親 object の `name` には UI の `名称` を使う
 - 現在の part 候補は `body`、`top-hat`、`rim`、`homing`、`legend`、`legend-left-top`、`legend-right-top`、`legend-left-bottom`、`legend-right-bottom`、`legend-front`、`legend-back`、`legend-left`、`legend-right`
 - top-hat 分離色が無効、または top-hat が凹み形状の場合、`top-hat` object は含まれない
@@ -204,6 +204,7 @@ flowchart TD
 - 親 object には material / color を付けず、子 part object の material / color を維持する
 - Bambu Studio / OrcaSlicer 向けに `Metadata/model_settings.config`、PrusaSlicer / Slic3r PE 向けに `Metadata/Slic3r_PE_model.config` を追加し、part 表示名を `body` / `rim` / `homing` / `legend` / `legend-*` として保持する
 - Cura など標準3MF中心の importer 向けには、子 object の `name` と `partnumber` を保持する
+- 配置全体の出力は [キーボード配置の契約](keyboard-layout.md#プレビューと保存) に従い、確定グループと所属不明の各キーを独立した親objectとして `build` に置く。各子partは共通の配置変換後のOFF meshを持ち、色を維持する。Bambu / Orca向けの各親object・part名と、Prusa / Slic3r向けの各親object内のpartのtriangle範囲も保存する。resource IDはpart数に応じて割り当て、1000partを超えても色resourceと衝突させない
 
 ### STEP
 

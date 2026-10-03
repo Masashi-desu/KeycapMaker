@@ -415,3 +415,27 @@
   selectorと画面操作の重複を防ぎ、UI変更時の修正箇所をまとめるため。Node testとbrowser testの責務を分けることで、固有の回帰検証を維持しながら重複したcaseを増やさない
 - 現行規約と手順:
   [開発・貢献規約](../../CONTRIBUTING.md)、[自動テストガイド](../guide/automated-testing.md)
+
+## 2026-10-03 - 分割所属は構造の確定情報だけを使い、配置全体3MFでグループ化する
+
+- 結論:
+  物理座標や空白から所属を推定せず、scan matrixとtransform等で一意に確定した所属だけを保存する。情報が足りないキーは `groupId: null` とする。配置全体の3MFでは確定グループごとに独立した親objectを作り、不明のキーは個別objectとする。相対配置と部品分離を保持し、プリンタのベースプレートへの配置調整はスライサに任せる
+- 理由:
+  特殊な形状や回転clusterを左右分割と誤認することを避け、左右などのまとまりをスライサで動かせるようにするため
+- 確認:
+  隔離されたheadless browserから実際のOFF meshを使った3MFを出力し、Bambu StudioのCLIで独立object・部品所属・再保存後の名前を確認した
+- 現行契約:
+  [キーボード配置](../architecture/keyboard-layout.md#分割所属)、[SCADとexport](../architecture/scad-and-export.md#3mf)
+
+## 2026-10-03 - UIの配色は指定がなくても両テーマの役割別paletteで管理する
+
+- 結論:
+  UI配色は常にライト／ダークの組として `src/theme.css` に定義し、部品は役割別tokenを参照する。1色だけ指定された場合も対応するもう一方の色を用意する。キーキャップの製造色や実色を表示するユーザーデータはテーマで変更しない
+- 理由:
+  JSON読み込みレポートの背景だけがライト用の固定色だったため、ダークモードの文字が読めなくなった。同じ問題を警告・危険操作・入力・影などで繰り返さないよう、共通paletteへ集約し、両テーマ定義と固定色混入を自動検証する
+- 現行規約:
+  [配色とテーマの規約](../../CONTRIBUTING.md#uiの配色とテーマを維持する実装規約)、[アプリ全体像](../architecture/overview.md#uiの配色)、[自動テスト](../guide/automated-testing.md)
+
+## 2026-10-03: WebMCPの観測・再入力・全体表示を分ける
+
+状態paramsをそのままimportしたときに派生値が未反映レポートへ出る問題と、単体geometry成功だけでは全体表示完了を確認できない問題を受け、契約をversion 2へ更新した。観測専用observedParamsと、UI metadata / canonical serializerから生成するget_inputを分離する。一括作成・割当はproposalを全検証して一度だけ反映し、共有refと既存IDを扱う。previewは全割り当てのモデルとcanvasフレームを待ち、途中変更・部分失敗・期限切れを成功にしない。現行契約と利用例は [WebMCP操作契約](../architecture/webmcp.md) と [ガイド](../guide/webmcp.md) を正とする。

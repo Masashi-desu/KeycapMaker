@@ -1,5 +1,7 @@
 import "./styles.css";
 import { createEditorParameterSchema, createKeycapWebMcpTools, registerKeycapWebMcp, validateToolInput, WebMcpError } from "./lib/webmcp.js";
+import { applyKeyboardAssignments, prepareProjectBatch } from "./lib/project-batch.js";
+import { waitForPreviewCompletion } from "./lib/preview-completion.js";
 import { strToU8, unzipSync, zipSync } from "fflate";
 import {
   LOCALE_OPTIONS,
@@ -21,6 +23,8 @@ import { runOpenScad } from "./lib/openscad-client.js";
 import { hexColorToNumber, normalizeHexColor } from "./lib/color-utils.js";
 import {
   DEFAULT_EXPORT_BASE_NAME,
+  EDITOR_DATA_KIND,
+  EDITOR_DATA_SCHEMA_VERSION,
   createEditorDataPayload,
   deleteEditorDataPayloadPath,
   createInitialKeycapParams,
@@ -43,6 +47,7 @@ import {
   syncDerivedKeycapParams,
 } from "./lib/editor-data.js";
 import { create3mfBlob } from "./lib/export-3mf.js";
+import { createKeyboard3mfExport } from "./lib/keyboard-export.js";
 import { createStepBlob } from "./lib/export-step.js";
 import { resolveUserFontSource } from "./lib/font-source-resolver.js";
 import {
@@ -372,10 +377,13 @@ let previewDebounceTimer = 0;
 let previewSceneModulePromise = null;
 let colorisLoadPromise = null;
 let latestPreviewRequestId = 0;
+let previewGeometrySignature = "";
 let previewViewState = null;
 let keyboardViewState = null;
 let mountedPreviewMode = "keycap";
 let latestViewerRequestId = 0;
+let previewDisplay = { status: "idle", requestId: 0, mode: "keycap", rendered: false };
+let previewDisplaySignature = "";
 let latestKeyboardImportId = 0;
 let keyboardCatalog = null;
 let pendingKeyboardStepFocus = false;
@@ -2986,9 +2994,11 @@ const state = {
   keyboardLayouts: [],
   keyboardSlotId: "",
   keyboardBusy: false,
+  keyboardDangerZoneExpanded: false,
   keyboardStep: 1,
   keyboardError: false,
   keyboardMessage: "",
+  keyboardPreviewErrors: [],
   sidebarTab: "design",
   isMobileInspectorHidden: false,
   isImportDragActive: false,
@@ -3438,6 +3448,7 @@ function renderShell() {
   app.querySelector("[data-mobile-inspector-toggle]")?.addEventListener("click", handleMobileInspectorToggleClick);
   app.querySelector(".inspector-card")?.addEventListener("click", handleInspectorCardClick);
   app.querySelector(".inspector-card")?.addEventListener("toggle", handleProjectKeycapPositionsToggle, true);
+  app.querySelector(".inspector-card")?.addEventListener("toggle", handleKeyboardDangerZoneToggle, true);
   app.querySelector(".inspector-card")?.addEventListener("input", handleInspectorCardInput);
   app.querySelector(".inspector-card")?.addEventListener("change", handleInspectorCardChange);
   app.querySelector(".inspector-card")?.addEventListener("wheel", handleInspectorCardWheel, { passive: false });
@@ -3714,6 +3725,7 @@ function render(options = {}) {
     renderSegmentControl();
     renderInspectorPanel();
     renderPreviewToolbar();
+    syncPreviewDisplayMarker();
     renderKeycapExportOverlay();
     configureColoris();
     syncImportDropOverlay();
@@ -6640,6 +6652,12 @@ function handleProjectKeycapPositionsToggle(event) {
   else state.projectKeycapPositionsExpanded.delete(keycapId);
 }
 
+function handleKeyboardDangerZoneToggle(event) {
+  const details = event.target;
+  if (!(details instanceof HTMLDetailsElement) || !details.matches("[data-keyboard-danger-zone]") || !details.isConnected) return;
+  state.keyboardDangerZoneExpanded = details.open;
+}
+
 function handleInspectorCardClick(event) {
   if (getClosestFromEventTarget(event, "[data-project-keycap-positions]")) return;
   if (handleKeyboardClick(event)) return;
@@ -7417,14 +7435,21 @@ function handleKeycapExportOverlayClick(event) {
 }
 
 function handleSidebarTabChange(event) {
-  const nextTab = event.currentTarget.dataset.sidebarTab;
+  setSidebarTab(event.currentTarget.dataset.sidebarTab);
+}
+
+function setSidebarTab(nextTab, { animateInspector = false } = {}) {
   if (!nextTab || nextTab === state.sidebarTab) {
     return;
   }
 
   flushPendingActiveProjectKeycapSync();
   state.sidebarTab = nextTab;
-  render({ animateInspector: false });
+  if (state.project.keyboard) {
+    const mode = nextTab === "design" ? "keycap" : nextTab === "keyboard" ? "keyboard" : null;
+    if (mode && mode !== state.previewMode) setPreviewMode(mode);
+  }
+  render({ animateInspector });
 }
 
 function toggleFieldGroup(groupId) {
@@ -10396,6 +10421,7 @@ function renderPreviewToolbar() {
 
 function resetKeyboardImportUi() {
   state.projectKeycapPositionsExpanded.clear();
+  state.keyboardDangerZoneExpanded = false;
   latestKeyboardImportId += 1;
   keyboardCatalog = null;
   state.keyboardCandidates = [];
@@ -10403,6 +10429,7 @@ function resetKeyboardImportUi() {
   state.keyboardMessage = "";
   state.keyboardBusy = false;
   state.keyboardError = false;
+  state.keyboardPreviewErrors = [];
   state.keyboardSlotId = state.project.keyboard?.keys[0]?.id || "";
   state.keyboardStep = state.project.keyboard ? 3 : 1;
   pendingKeyboardStepFocus = false;
@@ -10447,6 +10474,7 @@ function applyKeyboardLayout(board) {
   flushPendingActiveProjectKeycapSync();
   // Replacing a definition invalidates old slot identifiers even if the counts match.
   state.project.keyboard = board;
+  state.keyboardDangerZoneExpanded = false;
   state.project.placements = [];
   state.project.isDirty = true;
   state.keyboardSlotId = board.keys[0].id;
@@ -10454,6 +10482,7 @@ function applyKeyboardLayout(board) {
   state.keyboardStep = 3;
   state.keyboardError = false;
   state.keyboardMessage = t("keyboard.loaded", { count: board.keys.length });
+  state.keyboardPreviewErrors = [];
   state.sidebarTab = "keyboard";
   keyboardViewState = null;
   state.previewMode = "keyboard";
@@ -10517,11 +10546,8 @@ function importKeyboardFromGitHub() {
 function assignKeyboardSlot(keycapId) {
   const slotId = state.keyboardSlotId || state.project.keyboard?.keys[0]?.id;
   if (!slotId) return;
-  const previous = state.project.placements.find((entry) => entry.slotId === slotId);
-  state.project.placements = state.project.placements.filter((entry) => entry.slotId !== slotId);
-  if (keycapId && state.project.keycaps.some((entry) => entry.id === keycapId)) {
-    state.project.placements.push({ slotId, keycapId, offsetX: previous?.offsetX || 0, offsetY: previous?.offsetY || 0, z: previous?.z || 0, rotation: previous?.rotation || 0 });
-  }
+  const assignedId = state.project.keycaps.some((entry) => entry.id === keycapId) ? keycapId : "";
+  state.project.placements = applyKeyboardAssignments(state.project.placements, [{ slotId, keycapId: assignedId }]);
   state.project.isDirty = true;
   render();
   if (state.previewMode === "keyboard") void renderPreviewViewer();
@@ -10536,7 +10562,13 @@ function setPreviewMode(mode) {
 }
 
 function handleKeyboardClick(event) {
-  const button = getClosestFromEventTarget(event, "[data-keyboard-picker], [data-keyboard-step], [data-preview-mode], [data-keyboard-open], [data-keyboard-slot], [data-keyboard-candidate], [data-keyboard-github], [data-keyboard-assign-current], [data-keyboard-edit-assigned], [data-keyboard-remove]");
+  const dangerSummary = getClosestFromEventTarget(event, "[data-keyboard-danger-zone] > summary");
+  if (dangerSummary) {
+    // Native toggle is queued; remember the next state before another action rerenders the panel.
+    state.keyboardDangerZoneExpanded = !dangerSummary.parentElement.open;
+    return true;
+  }
+  const button = getClosestFromEventTarget(event, "[data-keyboard-picker], [data-keyboard-step], [data-preview-mode], [data-keyboard-open], [data-keyboard-slot], [data-keyboard-candidate], [data-keyboard-github], [data-keyboard-assign-current], [data-keyboard-edit-assigned], [data-keyboard-remove], [data-keyboard-export]");
   if (!button || button.disabled) return false;
   if (button.hasAttribute("data-keyboard-picker")) {
     const input = button.closest(".keyboard-import-picker-actions")?.querySelector(`[data-keyboard-files="${button.dataset.keyboardPicker}"]`);
@@ -10546,17 +10578,20 @@ function handleKeyboardClick(event) {
     }
   } else if (button.hasAttribute("data-keyboard-step")) setKeyboardStep(Number(button.dataset.keyboardStep));
   else if (button.hasAttribute("data-preview-mode")) setPreviewMode(button.dataset.previewMode);
-  else if (button.hasAttribute("data-keyboard-open")) { state.sidebarTab = "keyboard"; render({ animateInspector: true }); }
+  else if (button.hasAttribute("data-keyboard-open")) setSidebarTab("keyboard", { animateInspector: true });
   else if (button.hasAttribute("data-keyboard-slot")) selectKeyboardSlot(button.dataset.keyboardSlot);
   else if (button.hasAttribute("data-keyboard-candidate")) void loadKeyboardCandidate(button.dataset.keyboardCandidate);
   else if (button.hasAttribute("data-keyboard-github")) void importKeyboardFromGitHub();
   else if (button.hasAttribute("data-keyboard-assign-current")) { flushPendingActiveProjectKeycapSync(); assignKeyboardSlot(state.project.activeKeycapId); }
+  else if (button.hasAttribute("data-keyboard-export")) void executeExport("keyboard-3mf");
   else if (button.hasAttribute("data-keyboard-edit-assigned")) {
     const placement = state.project.placements.find((entry) => entry.slotId === state.keyboardSlotId);
-    if (placement) { setPreviewMode("keycap"); state.sidebarTab = "design"; void applyProjectKeycapSelection(placement.keycapId); }
+    if (placement) { setSidebarTab("design"); void applyProjectKeycapSelection(placement.keycapId); }
   } else if (button.hasAttribute("data-keyboard-remove")) {
+    if (!state.project.keyboard || !window.confirm(t("keyboard.removeConfirm", { name: state.project.keyboard.name, count: state.project.placements.length }))) return true;
+    flushPendingActiveProjectKeycapSync();
     state.project.keyboard = null; state.project.placements = []; state.project.isDirty = true;
-    resetKeyboardImportUi(); render(); void renderPreviewViewer();
+    resetKeyboardImportUi(); pendingKeyboardStepFocus = true; render(); void renderPreviewViewer();
   }
   return true;
 }
@@ -10606,56 +10641,108 @@ async function getProjectKeyboardModel(entry) {
   return pendingProjectMeshes.get(token);
 }
 
+function getPreviewDisplaySignature() {
+  if (state.previewMode === "keycap") return JSON.stringify({ mode: "keycap", id: state.project.activeKeycapId, params: state.keycapParams });
+  const assigned = new Set(state.project.placements.map((entry) => entry.keycapId));
+  return JSON.stringify({ mode: "keyboard", keyboard: state.project.keyboard, placements: state.project.placements,
+    selectedSlotId: state.keyboardSlotId,
+    keycaps: state.project.keycaps.filter((entry) => assigned.has(entry.id)).map((entry) => ({ id: entry.id,
+      params: entry.id === state.project.activeKeycapId ? state.keycapParams : entry.params })) });
+}
+
+function getKeycapGeometrySignature(keycapId = state.project.activeKeycapId, params = state.keycapParams) {
+  return JSON.stringify({ keycapId, params });
+}
+
+function getPreviewDisplayState() {
+  return previewDisplaySignature && previewDisplaySignature !== getPreviewDisplaySignature()
+    ? { ...previewDisplay, status: "stale", rendered: false } : previewDisplay;
+}
+
+function syncPreviewDisplayMarker() {
+  const stage = app.querySelector("[data-preview-stage]");
+  if (!stage) return;
+  const display = getPreviewDisplayState();
+  stage.dataset.previewStatus = display.status;
+  stage.dataset.previewRequestId = String(display.requestId);
+  stage.dataset.previewMode = display.mode;
+  stage.dataset.previewRendered = String(display.rendered);
+  stage.setAttribute("aria-busy", String(["running", "stale"].includes(display.status)));
+}
+
 async function renderPreviewViewer() {
-  const viewerRequestId = ++latestViewerRequestId;
+  const requestId = ++latestViewerRequestId;
   const mode = state.previewMode;
-  let layers = state.previewLayers;
-  if (mode === "keyboard" && state.project.keyboard) {
-    const board = state.project.keyboard;
-    const models = new Map();
-    const assigned = new Set(state.project.placements.map((entry) => entry.keycapId));
-    const modelErrors = [];
-    for (const entry of state.project.keycaps.filter((item) => assigned.has(item.id))) {
-      try { models.set(entry.id, await getProjectKeyboardModel(entry)); }
-      catch (error) { modelErrors.push(`${entry.name}: ${error.message}`); }
-      if (viewerRequestId !== latestViewerRequestId) return;
+  const signature = getPreviewDisplaySignature();
+  const board = cloneJsonValue(state.project.keyboard);
+  const placements = cloneJsonValue(state.project.placements);
+  const assigned = new Set(placements.map((entry) => entry.keycapId));
+  const entries = state.project.keycaps.filter((entry) => assigned.has(entry.id)).map((entry) => ({ ...entry,
+    params: cloneJsonValue(entry.id === state.project.activeKeycapId ? state.keycapParams : entry.params) }));
+  const selectedSlotId = state.keyboardSlotId;
+  let display = { status: "running", requestId, mode, rendered: false,
+    keyCount: mode === "keyboard" ? board?.keys.length ?? 0 : 1,
+    assignedCount: mode === "keyboard" ? placements.length : 0, renderedAssignedCount: 0, modelCount: 0, partCount: 0, errors: [] };
+  const isCurrent = () => requestId === latestViewerRequestId && signature === getPreviewDisplaySignature();
+  const publish = () => {
+    if (requestId !== latestViewerRequestId) return;
+    previewDisplay = display; previewDisplaySignature = signature; syncPreviewDisplayMarker();
+  };
+  const superseded = () => ({ ...display, status: "superseded", rendered: false });
+  publish();
+  try {
+    if (mode === "keycap" && previewGeometrySignature !== getKeycapGeometrySignature()) {
+      display = { ...display, status: "stale" }; publish(); return display;
     }
-    if (modelErrors.length) { state.keyboardError = true; state.keyboardMessage = modelErrors.join("\n"); render(); }
-    layers = createKeyboardPreviewLayers(board, state.project.placements, models, state.keyboardSlotId);
+    let layers = state.previewLayers;
+    if (mode === "keyboard" && board) {
+      const models = new Map();
+      for (const entry of entries) {
+        try {
+          const model = await getProjectKeyboardModel(entry);
+          if (!model.layers.some((layer) => layer.name === "body" && layer.mesh.faces.length > 0)) throw new Error("Empty keycap body");
+          models.set(entry.id, model);
+        } catch (error) { display.errors.push({ keycapId: entry.id, message: `${entry.name}: ${error.message}` }); }
+        if (!isCurrent()) return superseded();
+      }
+      display.modelCount = models.size;
+      display.renderedAssignedCount = placements.filter((entry) => models.has(entry.keycapId)).length;
+      // Generation feedback must not overwrite or clear file-import feedback.
+      const hadPreviewErrors = state.keyboardPreviewErrors.length > 0;
+      state.keyboardPreviewErrors = display.errors;
+      if (hadPreviewErrors || display.errors.length) render();
+      layers = createKeyboardPreviewLayers(board, placements, models, selectedSlotId);
+    }
+    if (!isCurrent()) return superseded();
+    if (disposePreviewScene) {
+      if (mountedPreviewMode === "keyboard") keyboardViewState = disposePreviewScene.captureViewState();
+      else previewViewState = disposePreviewScene.captureViewState();
+      disposePreviewScene.dispose(); disposePreviewScene = null;
+    }
+    const container = app.querySelector("[data-preview-stage]");
+    if (!container) { display = { ...display, status: "error", errors: [{ message: "Preview canvas is unavailable" }] }; publish(); return display; }
+    if (layers.length === 0) {
+      container.innerHTML = `<div class="preview-placeholder">${t("preview.placeholder")}</div>`;
+      display = { ...display, status: "empty" }; publish(); return display;
+    }
+    previewSceneModulePromise ??= import("./lib/preview-scene.js");
+    const { mountPreviewScene } = await previewSceneModulePromise;
+    if (!container.isConnected || !isCurrent()) return superseded();
+    mountedPreviewMode = mode;
+    const scene = mountPreviewScene(container, layers, {
+      initialViewState: mode === "keyboard" ? keyboardViewState || { direction: [0.5, -0.8, 1.4], distanceScale: 2.8 } : previewViewState,
+      upAxis: mode === "keyboard" ? "z" : "y", onSelectSlot: mode === "keyboard" ? selectKeyboardSlot : null,
+    });
+    disposePreviewScene = scene;
+    const frame = await scene.firstFrame;
+    if (!frame.rendered || !container.isConnected || !isCurrent()) return superseded();
+    display = { ...display, status: display.errors.length ? "error" : "ready", rendered: true, partCount: layers.length };
+    publish(); return display;
+  } catch (error) {
+    if (!isCurrent()) return superseded();
+    display = { ...display, status: "error", rendered: false, errors: [...display.errors, { message: String(error.message ?? error) }] };
+    publish(); return display;
   }
-  if (disposePreviewScene) {
-    if (mountedPreviewMode === "keyboard") keyboardViewState = disposePreviewScene.captureViewState();
-    else previewViewState = disposePreviewScene.captureViewState();
-    disposePreviewScene.dispose();
-    disposePreviewScene = null;
-  }
-
-  const container = app.querySelector("[data-preview-stage]");
-  if (!container) {
-    return;
-  }
-
-  if (layers.length === 0) {
-    container.innerHTML = `
-      <div class="preview-placeholder">
-        ${t("preview.placeholder")}
-      </div>
-    `;
-    return;
-  }
-
-  previewSceneModulePromise ??= import("./lib/preview-scene.js");
-  const { mountPreviewScene } = await previewSceneModulePromise;
-  if (!container.isConnected || viewerRequestId !== latestViewerRequestId) {
-    return;
-  }
-
-  mountedPreviewMode = mode;
-  disposePreviewScene = mountPreviewScene(container, layers, {
-    initialViewState: mode === "keyboard" ? keyboardViewState || { direction: [0.5, -0.8, 1.4], distanceScale: 2.8 } : previewViewState,
-    upAxis: mode === "keyboard" ? "z" : "y",
-    onSelectSlot: mode === "keyboard" ? selectKeyboardSlot : null,
-  });
 }
 
 function createColorLayerJob({ name, exportTarget, outputPath, colorFieldKey, params = state.keycapParams }) {
@@ -10743,10 +10830,11 @@ function createKeycapOffJobs(purpose, params = state.keycapParams) {
   throw new Error(t("errors.unsupportedOffPurpose", { purpose }));
 }
 
-async function runKeycapOffJobs(jobs, params = state.keycapParams) {
+async function runKeycapOffJobs(jobs, params = state.keycapParams, { signal } = {}) {
   const outputs = [];
 
   for (const job of jobs) {
+    signal?.throwIfAborted();
     const result = await runOpenScad({
       files: await createKeycapFiles({
         params,
@@ -10760,6 +10848,7 @@ async function runKeycapOffJobs(jobs, params = state.keycapParams) {
     });
 
     const [output] = result.outputs;
+    signal?.throwIfAborted();
     outputs.push({
       ...job,
       result,
@@ -10791,8 +10880,8 @@ async function executeKeycapPreview(options = {}) {
     const referenceLayer = resolveStemType(previewParams) === "j_stem_lp01"
       ? await createJStemLp01ReferencePreviewLayer(previewParams)
       : null;
-    if (requestId !== latestPreviewRequestId) {
-      return;
+    if (requestId !== latestPreviewRequestId || getKeycapGeometrySignature(previewKeycapId, previewParams) !== getKeycapGeometrySignature()) {
+      return { status: "superseded", rendered: false };
     }
 
     const previewEntries = referenceLayer
@@ -10821,11 +10910,12 @@ async function executeKeycapPreview(options = {}) {
       opacity: entry.opacity,
       mesh: entry.mesh,
     }));
+    previewGeometrySignature = getKeycapGeometrySignature(previewKeycapId, previewParams);
     projectMeshCache.set(previewKeycapId, { signature: JSON.stringify(previewParams), layers: state.previewLayers.filter((entry) => entry.name !== "j-stem-lp01") });
     didGeneratePreview = true;
   } catch (error) {
-    if (requestId !== latestPreviewRequestId) {
-      return;
+    if (requestId !== latestPreviewRequestId || getKeycapGeometrySignature(previewKeycapId, previewParams) !== getKeycapGeometrySignature()) {
+      return { status: "superseded", rendered: false };
     }
 
     state.editorStatus = "error";
@@ -10833,15 +10923,18 @@ async function executeKeycapPreview(options = {}) {
     state.editorLogs = [];
     state.editorError = `${error}`;
     state.previewLayers = [];
+    previewGeometrySignature = getKeycapGeometrySignature(previewKeycapId, previewParams);
   }
 
-  await renderPreviewViewer();
+  const display = await renderPreviewViewer();
   if (didGeneratePreview && refreshActiveProjectPreview) {
     refreshActiveProjectKeycapPreviewFromCurrent();
   }
+  return display;
 }
 
 async function executeExport(format, options = {}) {
+  if (state.exportsStatus === "running" || state.projectStatus === "running") return;
   const {
     params = state.keycapParams,
     editorDataPayload = null,
@@ -10852,8 +10945,25 @@ async function executeExport(format, options = {}) {
   render();
 
   let didSucceed = false;
+  let keyboardFilename = "";
   try {
-    if (format === "editor-data") {
+    if (format === "keyboard-3mf") {
+      flushPendingActiveProjectKeycapSync();
+      const project = cloneJsonValue({ name: state.project.name, keyboard: state.project.keyboard,
+        keycaps: state.project.keycaps.map(({ id, name, params }) => ({ id, name, params })), placements: state.project.placements });
+      const startedAt = performance.now();
+      const result = await createKeyboard3mfExport(project, { signal: options.signal,
+        unknownName: t("keyboard.groupUnknown"), groupName: (group) => group.side ? t(`keyboard.group${group.side === "left" ? "Left" : "Right"}`) : group.name,
+        createMeshes: async (keycapParams, jobOptions) => (await runKeycapOffJobs(createKeycapOffJobs("3mf", keycapParams), keycapParams, jobOptions))
+          .map(({ name, colorHex, mesh }) => ({ name, colorHex, ...mesh })),
+      });
+      keyboardFilename = `${sanitizeExportBaseName(project.name)}-keyboard.3mf`;
+      downloadBlob(result.blob, keyboardFilename, options);
+      setExportStatus("success", t("keyboard.exportSaved", { count: result.keyCount }), {
+        format, label: t("keyboard.export3mf"), elapsedMs: Math.round(performance.now() - startedAt), byteLength: result.blob.size,
+        notes: t("keyboard.exportNote"), keyCount: result.keyCount, groupCount: result.groupCount, unknownCount: result.unknownCount,
+      });
+    } else if (format === "editor-data") {
       const startedAt = performance.now();
       const payload = editorDataPayload ?? createEditorDataPayload(params);
       const json = JSON.stringify(payload, null, 2);
@@ -10953,7 +11063,7 @@ async function executeExport(format, options = {}) {
 
   render();
   if (didSucceed) {
-    const filename = format === "editor-data" ? buildEditorDataFilename(params) : format === "3mf" ? build3mfFilename(params)
+    const filename = format === "keyboard-3mf" ? keyboardFilename : format === "editor-data" ? buildEditorDataFilename(params) : format === "3mf" ? build3mfFilename(params)
       : format === "step" ? buildStepFilename(params) : buildStlFilename(params);
     return { filename, ...state.exportHistory[0] };
   }
@@ -11007,9 +11117,11 @@ function getWebMcpFields(params = state.keycapParams) {
 function getWebMcpState() {
   return cloneJsonValue({
     locale: state.locale, tab: state.sidebarTab, previewMode: state.previewMode,
-    params: state.keycapParams,
-    preview: { status: state.editorStatus, summary: state.editorSummary, message: state.editorError,
+    observedParams: state.keycapParams,
+    preview: { geometry: { status: state.editorStatus, isCurrent: previewGeometrySignature === getKeycapGeometrySignature(),
+      summary: state.editorSummary, message: state.editorError,
       parts: state.previewLayers.map((layer) => ({ name: layer.name, vertices: layer.mesh.vertices.length, faces: layer.mesh.faces.length })) },
+      display: getPreviewDisplayState() },
     export: { status: state.exportsStatus, summary: state.exportsSummary, latest: state.exportHistory[0] ?? null },
     project: { name: state.project.name, isDirty: state.project.isDirty, status: state.projectStatus, summary: state.projectSummary,
       activeKeycapId: state.project.activeKeycapId,
@@ -11025,9 +11137,9 @@ function requireWebMcpKeycap(id) {
   return entry;
 }
 
-function updateKeycapFromWebMcp(patch) {
+function prepareKeycapParameterPatch(baseParams, patch) {
   // Stage every field on a draft; invalid input cannot partially mutate the UI.
-  let draft = { ...state.keycapParams };
+  let draft = { ...baseParams };
   const priority = (key) => key === "shapeProfile" ? 0 : /IconFill$/.test(key) ? 4 : ["keyWidth", "keyDepth", "topCenterHeight"].includes(key) ? 1
     : typeof patch[key] === "boolean" || getFieldConfig(key)?.type === "select" || /FontKey$/.test(key) ? 2 : 3;
   const fieldOrder = [...fieldConfigByKey.keys()];
@@ -11050,7 +11162,11 @@ function updateKeycapFromWebMcp(patch) {
       if (resolveLegendIconName(value, iconSet) !== value) throw new WebMcpError("invalid_input", `Unknown icon: ${value}. Search keycap_get_catalog first.`);
     }
   }
-  state.keycapParams = syncDerivedKeycapParams(draft);
+  return syncDerivedKeycapParams(draft);
+}
+
+function updateKeycapFromWebMcp(patch) {
+  state.keycapParams = prepareKeycapParameterPatch(state.keycapParams, patch);
   state.legendFontPickerFieldKey = "";
   state.legendIconPickerFieldKey = "";
   state.editorStatus = "dirty";
@@ -11064,6 +11180,18 @@ function updateKeycapFromWebMcp(patch) {
 const webMcpCommands = {
   isBusy: () => state.exportsStatus === "running" || state.projectStatus === "running" || state.keyboardBusy,
   getState: getWebMcpState,
+  getInput({ keycapIds = [state.project.activeKeycapId] }) {
+    return cloneJsonValue({ keycaps: keycapIds.map((keycapId) => {
+      const entry = requireWebMcpKeycap(keycapId);
+      const params = keycapId === state.project.activeKeycapId ? state.keycapParams : entry.params;
+      const fields = getWebMcpFields(params).filter((field) => {
+        if (!field.visible || field.disabled) return false;
+        try { validateToolInput(field.value, field.schema); return true; } catch { return false; }
+      });
+      return { keycapId, updateParams: Object.fromEntries(fields.map((field) => [field.key, field.value])),
+        editorPayload: createEditorDataPayload(params) };
+    }) });
+  },
   getParameterSchema: () => createEditorParameterSchema(keycapEditorProfiles.profiles.flatMap((profile) => getWebMcpFields(createInitialKeycapParams(profile.key)))),
   getCatalog({ section, shapeProfile, query = "", iconSet, keys, limit = 40 }) {
     if (section === "shapes") return getShapeProfileOptions();
@@ -11116,22 +11244,59 @@ const webMcpCommands = {
     assignKeyboardSlot(keycapId ?? "");
     return getWebMcpState();
   },
+  batch(input, { signal }) {
+    if (JSON.stringify(input).length > 8 * 1024 * 1024) throw new WebMcpError("invalid_input", "Batch input must be at most 8 MiB.");
+    const project = { ...state.project, keycaps: state.project.keycaps.map((entry) => entry.id === state.project.activeKeycapId
+      ? { ...entry, params: { ...state.keycapParams } } : entry) };
+    const plan = prepareProjectBatch(project, input, ({ ref, params, payload }, base, displayOrder) => {
+      let draft;
+      if (payload) {
+        if (payload.kind !== EDITOR_DATA_KIND || payload.schemaVersion !== EDITOR_DATA_SCHEMA_VERSION
+          || !payload.selectors || typeof payload.selectors !== "object" || Array.isArray(payload.selectors)
+          || !payload.params || typeof payload.params !== "object" || Array.isArray(payload.params)) {
+          throw new WebMcpError("invalid_input", `${ref}: payload must be current canonical editor data from keycap_get_input.`);
+        }
+        const parsed = parseEditorDataPayloadWithReport(payload);
+        if (parsed.bindingReport.unboundParams.length) throw new WebMcpError("invalid_input", `${ref}: payload contains unbound fields. Use keycap_get_input.editorPayload.`);
+        draft = parsed.params;
+      } else {
+        draft = prepareKeycapParameterPatch(base?.params ?? createInitialKeycapParams(), params);
+      }
+      return createProjectKeycapEntry(draft, { displayOrder });
+    });
+    signal?.throwIfAborted();
+    flushPendingActiveProjectKeycapSync();
+    // Keep the freshly synchronized active entry (including its canonical JSON).
+    const existing = new Map(state.project.keycaps.map((entry) => [entry.id, entry]));
+    state.project.keycaps = plan.keycaps.map((entry) => existing.get(entry.id) ?? entry);
+    state.project.placements = plan.placements;
+    state.project.isDirty = true;
+    render();
+    if (state.previewMode === "keyboard") void renderPreviewViewer();
+    return { created: plan.created, assignedCount: plan.assignedCount, clearedCount: plan.clearedCount, state: getWebMcpState() };
+  },
   setView({ tab, previewMode }) {
     if (previewMode === "keyboard" && !state.project.keyboard) throw new WebMcpError("invalid_input", "Load a keyboard before selecting keyboard preview.");
-    if (tab) { state.sidebarTab = tab; render(); }
+    if (tab) setSidebarTab(tab);
     if (previewMode) setPreviewMode(previewMode);
     return getWebMcpState();
   },
-  async preview({ signal }) {
+  async preview({ mode = state.previewMode, timeoutMs }, { signal }) {
+    if (mode === "keyboard" && !state.project.keyboard) throw new WebMcpError("invalid_input", "Load a keyboard before requesting its preview.");
+    flushPendingActiveProjectKeycapSync();
     window.clearTimeout(previewDebounceTimer);
-    const paramsSignature = JSON.stringify(state.keycapParams);
-    const keycapId = state.project.activeKeycapId;
-    await executeKeycapPreview({ silent: false, refreshActiveProjectPreview: true });
+    // Select without launching a competing viewer request through setPreviewMode.
+    state.previewMode = mode;
+    renderPreviewToolbar();
+    const signature = getPreviewDisplaySignature();
+    const display = await waitForPreviewCompletion(mode === "keyboard" ? renderPreviewViewer()
+      : executeKeycapPreview({ silent: false, refreshActiveProjectPreview: true }), { signal, timeoutMs });
     signal?.throwIfAborted();
-    if (keycapId !== state.project.activeKeycapId || paramsSignature !== JSON.stringify(state.keycapParams)) {
-      throw new WebMcpError("preview_failed", "Preview was superseded by an editor change. Retry keycap_preview.");
+    if (signature !== getPreviewDisplaySignature() || display?.status === "superseded") throw new WebMcpError("preview_superseded", "Preview was superseded by a UI change. Retry keycap_preview.");
+    if (display?.status !== "ready" || !display.rendered || (mode === "keyboard" && display.renderedAssignedCount !== display.assignedCount)
+      || (mode === "keycap" && state.editorStatus !== "success")) {
+      throw new WebMcpError("preview_failed", display?.errors?.map((entry) => entry.message).join("\n") || state.editorError || "Preview did not complete.");
     }
-    if (state.editorStatus !== "success") throw new WebMcpError("preview_failed", state.editorError || "Preview did not complete. Retry keycap_preview.");
     return getWebMcpState();
   },
   async export(format, { signal }) {

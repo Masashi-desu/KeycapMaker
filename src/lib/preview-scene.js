@@ -567,13 +567,28 @@ export function mountPreviewScene(container, layers, options = {}) {
   window.visualViewport?.addEventListener("scroll", handleResize, { passive: true });
 
   let frameId = 0;
+  let completeFirstFrame;
+  let failFirstFrame;
+  let firstFramePending = true;
+  const firstFrame = new Promise((resolve, reject) => { completeFirstFrame = resolve; failFirstFrame = reject; });
   const renderFrame = () => {
-    renderScene();
+    try {
+      renderScene();
+      if (firstFramePending) {
+        firstFramePending = false;
+        canvas.dataset.previewFrame = "1";
+        completeFirstFrame({ rendered: true });
+      }
+    } catch (error) {
+      if (firstFramePending) { firstFramePending = false; failFirstFrame(error); }
+      return;
+    }
     frameId = requestAnimationFrame(renderFrame);
   };
-  renderFrame();
+  frameId = requestAnimationFrame(renderFrame);
 
   const dispose = () => {
+    if (firstFramePending) { firstFramePending = false; completeFirstFrame({ rendered: false }); }
     cancelAnimationFrame(frameId);
     resizeObserver.disconnect();
     window.removeEventListener("resize", handleResize);
@@ -599,6 +614,7 @@ export function mountPreviewScene(container, layers, options = {}) {
   };
 
   return {
+    firstFrame,
     applyViewState,
     captureViewState: () => captureViewState({ camera, controls, sceneScale, viewOffsetRatio }),
     dispose,

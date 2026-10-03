@@ -7,10 +7,11 @@ export class ProjectPanel {
     this.cards = page.locator("[data-project-keycap-card]");
     this.activeCard = page.locator("[data-project-keycap-card].is-active");
     this.addButton = page.locator("[data-project-add-current]");
+    this.configureKeyboardButton = page.locator(".keyboard-project-summary [data-keyboard-open]");
   }
 
   entry(name) {
-    return this.cards.filter({ has: this.page.getByText(name, { exact: true }) });
+    return this.cards.filter({ has: this.page.getByText(name, { exact: true }).and(this.page.locator('.project-keycap-item__title-row strong')) });
   }
 
   async open() {
@@ -22,6 +23,10 @@ export class ProjectPanel {
     const count = await this.cards.count();
     await this.addButton.click();
     await this.cards.nth(count).waitFor({ state: "visible" });
+  }
+
+  async openKeyboardConfiguration() {
+    await this.configureKeyboardButton.click();
   }
 
   async select(name) {

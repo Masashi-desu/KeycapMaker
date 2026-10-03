@@ -26,6 +26,8 @@ npm run preview
 
 `npm run lint:workflows` にはactionlint 1.7.12を使います。CIはversion固定の公式containerを使い、ローカルでは同versionのbinaryをPATHへ置きます。
 
+ブラウザテスト用のport 4175が他の作業で使用中の場合は、`KEYCAP_BROWSER_TEST_PORT=4185 npm run test:browser` のように空いているportを指定できます。既存serverは再利用せず、指定したportに検証専用serverを起動します。
+
 ## branchとrelease
 
 リモート設定、既存workflow、履歴を照合した現在の責務は次のとおりです。
@@ -110,6 +112,17 @@ root overviewや `docs/` だけの変更では静的な文書gateだけを実行
 - user inputの長文全般へ一律の改行規則を課さない。現在の折返し契約は、`.font-attribution-card__body` の改行保持とURL折返し、`.import-binding-notice__name` / `__value` の長いJSON path/value、`.preview-color-option__label` の選択肢labelに限定する。export dialog titleのようにellipsisを契約とする箇所は変更しない
 - 新しい外部資源は、公式source、version、license本文、必要なnotice、利用箇所を確認してから追加する
 
+## UIの配色とテーマを維持する実装規約
+
+UIの配色を追加・変更するときは、明示的な指定がなくてもライトモードとダークモードの両方を対象にします。1色だけ指定された場合も、その色を基準にもう一方のテーマで読める対応色を定義し、切り替え可能な配色として実装します。
+
+- UIの色値は `src/theme.css` に集約し、文字、背景、境界、フォーカス、警告、危険操作、塗り上の文字、影などの役割を表すCSS custom propertyで管理する。すべてのtokenをlight / darkの両selectorで定義し、片方だけの定義や部品内の固定色を追加しない
+- 部品のCSS、HTML、JavaScriptではtheme tokenを参照する。`color-mix()` はtoken同士で合成し、透過色は `rgb(var(--役割-rgb) / alpha)` で表す。`transparent`、`currentColor`、`inherit`、動的なユーザーデータの表示は使える。hex、固定RGB/HSL、名前付きの実色を部品へ直接書かない
+- 通常、hover、focus、disabled、選択状態を両テーマで確認する。背景と文字・アイコンを組で設計し、小さな有効文字は4.5:1以上、操作を識別する主要アイコン・境界・フォーカスは3:1以上を目安とする。警告や危険操作は専用の役割を使い、個別部品のdark overrideで補修しない
+- キーキャップの製造色、ユーザーが指定した部品色、実色を選ぶswatch、3Dの材質・照明・exportの色情報はUIテーマと区別する。テーマ切り替えで編集データや製造色を変更しない。UI上のswatchの枠やpopoverはtheme tokenを使う
+- UIとWebMCPで変更したstateの表示に同じstylesheetを使う。配色だけの変更は新しいtoolやschemaを追加しない。既存のtheme操作の公開範囲は [WebMCP操作契約](docs/architecture/webmcp.md) に従う
+- `npm test` のtheme policy testで、paletteの両テーマ定義と部品CSSへの固定色混入を確認する。影響する部品のbrowser test・目視確認も両テーマで行い、対応するPOMと [手動確認](docs/guide/manual-verification.md) を同じ変更で維持する
+
 ## 自動テストとPOMを維持する実装規約
 
 新規・変更するUIのbrowser testは、Page Object Model（POM）で保守します。構成、追加手順、実行方法の詳細は [自動テストガイド](docs/guide/automated-testing.md) を参照してください。
@@ -131,7 +144,9 @@ WebMCPは通常UIと同じアプリ機能の入口です。現行のtool、対�
 - UIとtoolを同じsemantic commandにつなぎ、toolからDOM click、selector、疑似input eventで機能を実行しない。shapeのreset、preset、連動値、派生値、project同期をtool側で複製しない
 - 編集項目はshape fieldGroups、UI field configとcomposite control定義を正とし、parameter schemaとfield catalogをそこから生成する。新しいフィールドには型、単位、説明、選択肢、制約を用意する。schema用の手書きパラメータ一覧や初期font一覧を別管理しない
 - profile/font/他の値に依存する制約は実行時のdraftから解決する。部分updateは全項目を検証してから反映し、未知key、型違い、不正なIDを成功扱いにしない。toolの成功結果は実際の適用値・現在状態を返す
+- 状態の観測値と再入力可能なデータを別契約にする。派生値や表示状態を入力payloadへ混ぜず、再入力データはUI metadata / canonical serializerから生成する。一括変更は全入力と参照を検証してから一度だけ反映し、同じplacement / editor処理を使う
 - tool名とJSON Schema、必須入力、description、readOnly/untrusted/consequential annotation、結果の `contractVersion` とerror codeは公開契約として扱う。互換を壊す変更はversion、利用例、testを同時に更新する。user/import由来の文面をtoolの指示として扱わない
+- previewのモデル生成完了とcanvas描画完了を分けて返し、全体表示は全割り当ての描画を確認する。request / 対象snapshotの一致を検証し、古い完了、部分失敗、待機期限切れを成功扱いしない
 - preview/export/import等の非同期処理は必要な完了を待ち、失敗をtool結果に反映する。長時間処理の重複、古いpreview結果、AbortSignal、download直前のキャンセルを考慮する。ローカル保存の完了や未検証のブラウザ機能を保証しない
 - ブラウザAPIの差は `src/lib/webmcp.js` に閉じ込める。公式ドラフトを確認してfeature detectionし、未対応ブラウザの通常UIを保つ。HMR/登録失敗では自分が所有するtoolだけを解除する
 - 対応testに正常系、意味のある無効入力、失敗/排他/キャンセル、UIとの同期のうち変更した責務を追加する。browser smokeでは実際の編集・project/exportへの反映を確認する。mock APIによる確認とネイティブAPIの確認を区別する

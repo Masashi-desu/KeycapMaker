@@ -1,5 +1,6 @@
 // Physical layouts use key units, top-left origins and clockwise rotation.
 // Firmware matrix coordinates are identifiers, never physical coordinates.
+import { applyRmkGroups } from "./keyboard-groups.js";
 export const KEYBOARD_LAYOUT_KIND = "keycap-maker/keyboard";
 export const DEFAULT_KEYBOARD_PITCH_MM = 19.05;
 export const MAX_LAYOUT_KEYS = 1000;
@@ -24,6 +25,17 @@ export function normalizeKeyboardLayout(value) {
     throw new Error("キーボード配置の形式が不正です。");
   }
   if (!value.keys.length || value.keys.length > MAX_LAYOUT_KEYS) throw new Error("配置のキー数は 1〜1000 件にしてください。");
+  const groupIds = new Set();
+  if (value.groups != null && !Array.isArray(value.groups)) throw new Error("分割グループの形式が不正です。");
+  const groups = (value.groups ?? []).map((group) => {
+    const id = text(group.id);
+    if (!id || groupIds.has(id)) throw new Error("分割グループの ID が不正または重複しています。");
+    groupIds.add(id);
+    return { id, name: text(group.name, id),
+      ...(group.side === "left" || group.side === "right" ? { side: group.side } : {}),
+      source: { format: text(group.source?.format), path: text(group.source?.path) } };
+  });
+  if (groups.length > MAX_LAYOUT_KEYS) throw new Error("分割グループが多すぎます。");
   const seen = new Set();
   const keys = value.keys.map((key, index) => {
     const id = text(key.id, `key-${index}`);
@@ -33,7 +45,9 @@ export function normalizeKeyboardLayout(value) {
       id, label: text(key.label, `${index + 1}`),
       x: number(key.x), y: number(key.y), w: number(key.w, 1), h: number(key.h, 1),
       r: number(key.r, 0), rx: number(key.rx, 0), ry: number(key.ry, 0),
+      groupId: key.groupId == null ? null : text(key.groupId),
     };
+    if (result.groupId !== null && !groupIds.has(result.groupId)) throw new Error("キーの分割グループが存在しません。");
     if (result.w <= 0 || result.h <= 0 || result.w > 100 || result.h > 100) throw new Error("キーの幅・高さが不正です。");
     if (Array.isArray(key.matrix) && key.matrix.length === 2) result.matrix = key.matrix.map((v) => number(v));
     if (key.secondary) {
@@ -48,7 +62,7 @@ export function normalizeKeyboardLayout(value) {
     kind: KEYBOARD_LAYOUT_KIND, schemaVersion: 1,
     name: text(value.name, "Keyboard"), layoutName: text(value.layoutName, "Default"), pitchMm,
     source: { format: text(value.source?.format), path: text(value.source?.path), url: /^https:\/\//i.test(value.source?.url || "") ? text(value.source.url) : "" },
-    keys,
+    keys, groups,
     outline: Array.isArray(value.outline) ? value.outline.slice(0, 4000).map((segment) => {
       if (!Array.isArray(segment) || segment.length !== 4) throw new Error("基板外形が不正です。");
       return segment.map((v) => number(v));
@@ -270,7 +284,7 @@ function parseKicad(source, options) {
 }
 
 export function isKeyboardLayoutFileName(path) {
-  return /\.(json|dtsi|dts|overlay|keymap|toml|kicad_pcb)$/i.test(path);
+  return /\.(json|dtsi|dts|overlay|keymap|toml|kicad_pcb|conf)$/i.test(path) || /(?:^|\/)Kconfig\.defconfig$/i.test(path);
 }
 
 export function parseKeyboardLayouts(source, options = {}) {
@@ -278,7 +292,7 @@ export function parseKeyboardLayouts(source, options = {}) {
   const path = options.path || "layout.json";
   if (/\.kicad_pcb$/i.test(path) || source.trimStart().startsWith("(kicad_pcb")) return parseKicad(source, options);
   if (/\.(dtsi|dts|overlay|keymap)$/i.test(path)) return parseZmk(source, options);
-  if (/\.toml$/i.test(path)) return parseRmk(source, options);
+  if (/\.toml$/i.test(path)) return parseRmk(source, options).map((board) => applyRmkGroups(board, source, path));
   const payload = JSON.parse(source.replace(/^\uFEFF/, ""));
   if (payload?.kind === KEYBOARD_LAYOUT_KIND) return [normalizeKeyboardLayout(payload)];
   if (Array.isArray(payload)) return parseKle(payload, { ...options, name: payload[0]?.name || options.name });
@@ -288,6 +302,7 @@ export function parseKeyboardLayouts(source, options = {}) {
   const layouts = Object.entries(payload?.layouts || {}).filter(([, value]) => Array.isArray(value?.layout));
   if (layouts.length) return layouts.map(([name, value]) => layout(value.layout.map((key, index) => ({
     id: `key-${index}`, label: key.label || `${index + 1}`, ...key,
+    ...(Array.isArray(key.matrix) ? {} : Number.isInteger(key.row) && Number.isInteger(key.col) ? { matrix: [key.row, key.col] } : {}),
   })), "QMK", { ...options, name: payload.keyboard_name || options.name }, name));
   throw new Error(NO_POSITIONS);
 }

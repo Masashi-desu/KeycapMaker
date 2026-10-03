@@ -25,4 +25,10 @@ export class WebMcpClient {
     await this.page.waitForFunction((toolName) => globalThis.__keycapTestTools?.has(toolName), `keycap_${name}`);
     return this.page.evaluate(({ name, input }) => globalThis.__keycapTestTools.get(`keycap_${name}`).execute(input), { name, input });
   }
+
+  async executeWithDownload(name, input = {}) {
+    const pendingDownload = this.page.waitForEvent("download");
+    const result = await this.execute(name, input);
+    return { result, download: await pendingDownload };
+  }
 }

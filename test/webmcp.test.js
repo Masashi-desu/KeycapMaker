@@ -8,8 +8,8 @@ function fixture(overrides = {}) {
   const commands = {
     isBusy: () => false,
     getParameterSchema: () => ({ keyWidth: { type: "number" }, legendEnabled: { type: "boolean" } }),
-    getState: () => ({ params: { keyWidth: 18 }, userText: "user content" }),
-    ...Object.fromEntries(["getCatalog", "updateKeycap", "project", "importEditor", "setKeyboard", "assign", "setView", "preview", "export"].map((name) => [name, async (...args) => { calls.push({ name, args }); return { completed: true }; }])),
+    getState: () => ({ observedParams: { keyWidth: 18 }, userText: "user content" }),
+    ...Object.fromEntries(["getInput", "batch", "getCatalog", "updateKeycap", "project", "importEditor", "setKeyboard", "assign", "setView", "preview", "export"].map((name) => [name, async (...args) => { calls.push({ name, args }); return { completed: true }; }])),
     ...overrides,
   };
   const tools = createKeycapWebMcpTools(commands);
@@ -27,20 +27,24 @@ test("tools route typed arguments to commands and return serializable completed 
     ["set_keyboard", { layout: [["A", "B"]] }, "setKeyboard"],
     ["assign", { slotId: "key-0", keycapId: "a" }, "assign"],
     ["set_view", { tab: "project" }, "setView"],
-    ["preview", {}, "preview"],
+    ["get_input", { keycapIds: ["a", "b"] }, "getInput"],
+    ["batch", { keycaps: [{ ref: "a", params: { keyWidth: 20 } }], assignments: [{ slotId: "key-0", keycapRef: "a" }] }, "batch"],
+    ["preview", { mode: "keyboard", timeoutMs: 10000 }, "preview"],
     ["export", { format: "3mf" }, "export"],
   ];
   for (const [name, input, command] of cases) {
     const result = await run(name, input);
-    assert.deepEqual(result, { ok: true, contractVersion: 1, data: { completed: true } });
+    assert.deepEqual(result, { ok: true, contractVersion: 2, data: { completed: true } });
     assert.equal(calls.at(-1).name, command);
     assert.deepEqual(JSON.parse(JSON.stringify(result)), result);
   }
   assert.deepEqual(calls[1].args[0], cases[1][1].params);
   assert.equal(calls.at(-1).args[0], "3mf");
+  assert.equal((await run("export", { format: "keyboard-3mf" })).ok, true);
+  assert.equal(calls.at(-1).args[0], "keyboard-3mf");
   const read = await run("get_state", {});
-  assert.equal(read.data.params.keyWidth, 18);
-  for (const name of ["keycap_get_state", "keycap_get_catalog"]) {
+  assert.equal(read.data.observedParams.keyWidth, 18);
+  for (const name of ["keycap_get_state", "keycap_get_input", "keycap_get_catalog"]) {
     assert.equal(tools.find((tool) => tool.name === name).annotations.readOnlyHint, true);
     assert.equal(tools.find((tool) => tool.name === name).annotations.untrustedContentHint, true);
   }
@@ -62,6 +66,10 @@ test("invalid, unknown, oversized and mistyped inputs never reach commands", asy
     ["update", { params: {} }], ["update", { params: { keyWidth: 19 }, extra: true }],
     ["get_catalog", { section: "fonts", query: "x".repeat(201) }],
     ["get_catalog", { section: "icons", limit: 101 }], ["get_catalog", { section: "icons", limit: 1.5 }],
+    ["batch", {}], ["batch", { keycaps: [] }], ["batch", { assignments: [{ slotId: "a", extra: true }] }],
+    ["batch", { keycaps: [{ ref: "a", params: { unknown: true } }] }],
+    ["get_input", { keycapIds: [] }], ["get_input", { keycapIds: Array(257).fill("a") }],
+    ["preview", { mode: "whole" }], ["preview", { timeoutMs: 0 }],
     ["export", { format: "obj" }], ["export", {}], ["set_view", {}],
     ["set_keyboard", { layout: null }], ["set_keyboard", { layout: "file:///private" }],
     ["import_editor", { payload: [] }], ["get_state", null], ["get_state", { accidental: true }],

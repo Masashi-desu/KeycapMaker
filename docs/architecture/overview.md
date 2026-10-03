@@ -30,6 +30,10 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
 
 ### UI と状態管理
 
+- `src/theme.css`
+  UIの役割別paletteをlight / darkの両テーマで定義する。固定の色値はこのファイルに集約する
+- `src/styles.css`
+  theme tokenを参照して各UI部品と状態の表示を組み立てる。製造色などのユーザーデータは実色で表示する
 - `src/main.js`
   アプリ状態、フォーム、プレビュー更新、export、JSON 入出力の中心
 - `src/lib/editor-data.js`
@@ -46,6 +50,10 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
   CDNを利用できない場合のoffline icon fallback catalog。生成済みcatalogを初期bundleへ含めるため、Viteのchunk warning baselineは現在のbundle実測値に合わせる
 - `src/lib/keycap-fonts.js`
   legend font の選択肢と style 解決を UI / export / import で共有する
+
+### UIの配色
+
+明示的な指定がなくても両テーマに対応し、警告、危険操作、入力、フォーカス、影、アイコンまで同じpaletteから参照します。1色だけ指定されたときもtheme tokenのlight / darkの組として扱います。テーマ切り替えは表示だけを変更し、キーキャップの部品色や保存・exportする製造色は維持します。実装・検証の正本は [配色とテーマの規約](../../CONTRIBUTING.md#uiの配色とテーマを維持する実装規約) です。
 
 ### OpenSCAD 実行
 

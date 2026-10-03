@@ -260,11 +260,18 @@ test("プレビュー画像 data URL の拡張子を解決し、placeholder は 
     name: "あ",
     legendText: "A",
     bodyColor: "#abcdef",
+    rimColor: "#123456",
+    legendColor: "#654321",
   });
 
   assert.equal(getProjectPreviewImageExtension("data:image/webp;base64,AA=="), "webp");
   assert.equal(getProjectPreviewImageExtension(placeholder), "svg");
-  assert.match(decodeURIComponent(placeholder), /<svg/);
+  const svg = decodeURIComponent(placeholder);
+  assert.match(svg, /<svg/);
+  assert.doesNotMatch(svg, /<rect/); // Let the UI's theme background show through.
+  assert.match(svg, /fill="#abcdef" stroke="#123456"/);
+  assert.match(svg, /fill="#654321"[^>]*>A<\/text>/);
+  assert.doesNotMatch(svg, />あ<\/text>/); // The name belongs to the themed UI card.
 });
 
 test("プロジェクト ZIP / ZLP 名と archive 内 manifest path を解決する", () => {

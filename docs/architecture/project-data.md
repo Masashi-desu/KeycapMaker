@@ -23,7 +23,7 @@
 - `keycaps/*.json`
   既存の編集再開用 JSON と同じ canonical editor data です。
 - `keycaps/*.(png|svg|webp|jpg)`
-  プロジェクトセグメントの一覧に表示するプレビュー画像です。通常は現在の Three.js preview を縮小した PNG を保存し、preview が取得できない場合は SVG placeholder を保存します。
+  プロジェクトセグメントの一覧に表示するプレビュー画像です。通常は現在の Three.js preview を縮小した PNG を保存し、preview が取得できない場合は SVG placeholder を保存します。placeholderは透明な背景に部品の実色を描き、背景と名称表示は一覧カードのtheme tokenに任せます。保存済み画像そのものはテーマ切り替えで書き換えません。
 - `3mf/*.3mf`
   各キーキャップの印刷用 3MF です。プロジェクト保存時に各 `keycaps/*.json` の編集値から生成し、ZIP に同梱します。
 
@@ -72,6 +72,8 @@
 ## キーボード配置
 
 manifest の省略可能な `keyboard` に正規化済みの物理レイアウトを、`placements` に配置先とキーキャップの対応を保存します。配置のない既存プロジェクトも読み込めます。GitHub や元ファイルへ再接続せず ZIP だけで復元できます。
+
+`keyboard.groups` は構造から確定した分割グループの `id` / `name` / 出典 `source`、任意の `side`（`left` / `right`）を保持します。キーの `groupId` はこのIDまたは所属不明を示す `null` です。旧projectにこの情報がない場合は空のgroupsとnullを補い、座標から補完しません。詳細は [分割所属](keyboard-layout.md#分割所属) を参照してください。配置全体の3MFは配置パネルから別途ダウンロードし、project ZIPの個別 `3mf/*.3mf` の契約は維持します。
 
 - `keyboard`: `kind = keycap-maker/keyboard`、`schemaVersion = 1`、名称、レイアウト名、`pitchMm`、出典（format / path / URL）、キー一覧、外形の線分、読み込み注意事項。
 - キー: `id`、`label`、U 単位の左上 `x / y` と寸法 `w / h`、時計回り角度 `r`、回転原点 `rx / ry`。必要に応じて matrix 座標と ISO Enter 等の補助矩形を持ちます。
