@@ -65,6 +65,7 @@ import { getKeyboardWorkflow, syncKeyboardStepBar, renderKeyboardTab, renderKeyb
 import {
   DEFAULT_PROJECT_NAME,
   PROJECT_MANIFEST_FILENAME,
+  PROJECT_KEYBOARD_THREE_MF_PATH,
   assignProjectKeycapDisplayOrder,
   createProjectStateWithActiveKeycap,
   createProjectKeycapEntriesForSave,
@@ -8834,8 +8835,8 @@ async function blobToUint8Array(blob) {
   return new Uint8Array(await blob.arrayBuffer());
 }
 
-async function create3mfExportBlob(params = state.keycapParams) {
-  const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf", params), params);
+async function create3mfExportBlob(params = state.keycapParams, options = {}) {
+  const offResults = await runKeycapOffJobs(createKeycapOffJobs("3mf", params), params, options);
   const blob = create3mfBlob(
     offResults.map((entry) => ({
       name: `keycap-${entry.name}`,
@@ -8851,6 +8852,17 @@ async function create3mfExportBlob(params = state.keycapParams) {
     blob,
     offResults,
   };
+}
+
+function createProjectKeyboard3mfExport(project, options = {}) {
+  return createKeyboard3mfExport(project, {
+    signal: options.signal,
+    unknownName: t("keyboard.groupUnknown"),
+    groupName: (group) => group.side ? t(`keyboard.group${group.side === "left" ? "Left" : "Right"}`) : group.name,
+    createMeshes: options.createMeshes ?? (async (params, jobOptions) =>
+      (await runKeycapOffJobs(createKeycapOffJobs("3mf", params), params, jobOptions))
+        .map(({ name, colorHex, mesh }) => ({ name, colorHex, ...mesh }))),
+  });
 }
 
 async function createStepExportBlob(params = state.keycapParams) {
@@ -8896,6 +8908,8 @@ async function downloadProjectZip(project, options = {}) {
   const files = {
     [`${projectDirectoryName}/${PROJECT_MANIFEST_FILENAME}`]: strToU8(JSON.stringify(manifest, null, 2)),
   };
+  const keyboardMeshes = new Map();
+  const assignedKeycapIds = new Set(project.placements.map((placement) => placement.keycapId));
 
   for (const entry of project.keycaps) {
     options.signal?.throwIfAborted();
@@ -8903,8 +8917,21 @@ async function downloadProjectZip(project, options = {}) {
     files[`${projectDirectoryName}/${entry.previewPath}`] = await dataUrlToUint8Array(
       entry.previewImageDataUrl || createProjectPreviewPlaceholderDataUrl(entry.params),
     );
-    const { blob } = await create3mfExportBlob(entry.params);
+    const { blob, offResults } = await create3mfExportBlob(entry.params, options);
+    if (assignedKeycapIds.has(entry.id)) {
+      keyboardMeshes.set(JSON.stringify(entry.params), offResults.map(({ name, colorHex, mesh }) => ({ name, colorHex, ...mesh })));
+    }
     files[`${projectDirectoryName}/${entry.threeMfPath}`] = await blobToUint8Array(blob);
+  }
+
+  if (project.keyboard && project.placements.length > 0) {
+    // Reuse the individual exports' meshes so the complete layout needs no
+    // additional OpenSCAD jobs and uses the same saved project snapshot.
+    const { blob } = await createProjectKeyboard3mfExport(project, {
+      ...options,
+      createMeshes: async (params) => keyboardMeshes.get(JSON.stringify(params)),
+    });
+    files[`${projectDirectoryName}/${PROJECT_KEYBOARD_THREE_MF_PATH}`] = await blobToUint8Array(blob);
   }
 
   const zipBytes = zipSync(files, { level: 6 });
@@ -10952,11 +10979,7 @@ async function executeExport(format, options = {}) {
       const project = cloneJsonValue({ name: state.project.name, keyboard: state.project.keyboard,
         keycaps: state.project.keycaps.map(({ id, name, params }) => ({ id, name, params })), placements: state.project.placements });
       const startedAt = performance.now();
-      const result = await createKeyboard3mfExport(project, { signal: options.signal,
-        unknownName: t("keyboard.groupUnknown"), groupName: (group) => group.side ? t(`keyboard.group${group.side === "left" ? "Left" : "Right"}`) : group.name,
-        createMeshes: async (keycapParams, jobOptions) => (await runKeycapOffJobs(createKeycapOffJobs("3mf", keycapParams), keycapParams, jobOptions))
-          .map(({ name, colorHex, mesh }) => ({ name, colorHex, ...mesh })),
-      });
+      const result = await createProjectKeyboard3mfExport(project, options);
       keyboardFilename = `${sanitizeExportBaseName(project.name)}-keyboard.3mf`;
       downloadBlob(result.blob, keyboardFilename, options);
       setExportStatus("success", t("keyboard.exportSaved", { count: result.keyCount }), {

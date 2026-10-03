@@ -31,6 +31,10 @@ export async function readDownloadedJson(download) {
 }
 
 export async function readDownloaded3mf(download) {
-  return Object.fromEntries(Object.entries(unzipSync(new Uint8Array(await readFile(await download.path()))))
+  return Object.fromEntries(Object.entries(await readDownloadedArchive(download))
     .map(([path, bytes]) => [path, strFromU8(bytes)]));
+}
+
+export async function readDownloadedArchive(download) {
+  return unzipSync(new Uint8Array(await readFile(await download.path())));
 }

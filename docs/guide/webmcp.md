@@ -8,7 +8,7 @@ WebMCP対応ブラウザ・拡張のエージェントでKeycapMakerを開くと
 2. `keycap_get_catalog({ section: "shapes" })`、`keycap_get_catalog({ section: "fields" })` でshapeとパラメータを調べる。fontは `section: "fonts"`、iconは `section: "icons", query: "volume"` で検索する。
 3. `keycap_update({ params: { name: "Esc", keyWidth: 18, legendEnabled: true, legendText: "Esc" } })` でactive keycapを編集する。単位はmm。
 4. `keycap_preview({ mode: "keycap" })` で生成と描画完了を確認する。
-5. `keycap_export({ format: "3mf" })` でdownloadを開始する。編集再開用JSONは `format: "editor-data"`、全projectは `format: "project-zip"`。
+5. `keycap_export({ format: "3mf" })` でdownloadを開始する。編集再開用JSONは `format: "editor-data"`、全projectは `format: "project-zip"`。ZIPはルートにKeycapMaker.json、keycaps/<キーキャップ名>/にJSON・preview・個別3MFを格納し、配置済みキーがあればcommon/keyboard.3mfも含む。旧構成のZIPは従来どおりUIから読み込める。
 
 配置したキーを並んだ状態で印刷する場合は、`keycap_export({ format: "keyboard-3mf" })` を使います。割り当て済みキーだけを開始時のproject snapshotから出力し、構造から確定したグループごとにスライサで動かせる親objectを作ります。`keycap_get_state` の `project.keyboard.groups` と各キーの `groupId` で所属を確認できます。`groupId: null` は所属不明で、出力でも各キーを個別objectにします。色と部品分離を保持し、プリンタのベースプレートへの配置調整はスライサで行います。配置がない場合は `export_failed` を返します。
 

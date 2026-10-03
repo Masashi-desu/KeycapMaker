@@ -25,14 +25,14 @@ CIはrequired test jobでNode/browser testとworkflow lintを実行します。C
 UIの構造と操作は `test/e2e/pages/` に集約します。
 
 - `EditorPage`: 初期表示、デザイン名・寸法の編集、デザインtabへの移動、テーマ切り替えと入力欄の配色取得、preview stageの要求番号・状態・canvasフレームの取得
-- `ProjectPanel`: project tab、キーの追加・選択、export dialogを開く操作
+- `ProjectPanel`: project tab、キーの追加・選択、export dialogを開く操作、project ZIPの保存とZIP・ディレクトリ・ファイル一覧dropの読み込み
 - `ExportDialog`: 書き出し操作とdownloadの取得
 - `KeyboardPanel`: 配置ファイルの読み込み、配置先の選択・割り当て・位置補正・割り当て済みキーキャップの編集、分割所属の表示、配置全体の3MF download、危険ゾーンの展開・削除確認・キャンセル、手動プレビュー切り替え
 - `ImportBindingNotice`: JSONの未反映項目・値、開閉・項目削除、両テーマの文字と背景のコントラスト確認
 
 `fixtures.js` がcontextとPage Objectを用意し、specはユーザー操作と期待結果を記述します。selectorはPage Objectに閉じ込め、`expect` はspecに置きます。複数ページに共通する処理がない段階ではBase Pageを追加しません。新しいUI flowも必要な画面・componentに操作を追加し、巨大なPage Objectに全機能を集めません。
 
-現行のbrowser testは、UI編集値のJSON書き出し、project内のキー切り替えによる編集値保持、WebMCPとUIの双方向同期・不正な部分更新の拒否・実worker/WASMでのpreview完了、構造からの分割所属と配置全体3MFのUI/WebMCP同期、危険ゾーンの初期折りたたみ・展開状態の保持・配置削除のキャンセルと承認後のデザイン保持、UI/WebMCPのタブ移動時のプレビュー選択と手動切り替えの維持を確認します。WebMCPの登録APIだけをmockし、toolの実行には実アプリのcommandを使います。再入力用データの再適用とcanonical複製、一括作成・共有割当・末尾不正入力の全件拒否、全体previewのcanvas描画完了とUI切り替え時の旧要求拒否、runtime配信失敗時の部分表示を成功扱いしないことも確認します。Node testはbatch proposalの参照・重複・補正保持と待機の期限 / キャンセルを担当します。ネイティブWebMCP APIの互換性、全export形式、全shapeのgeometry、モバイルの目視品質を保証するtestではありません。環境固有の確認は [手動確認](manual-verification.md) と [WebMCPガイド](webmcp.md) を参照します。
+現行のbrowser testは、UI編集値のJSON書き出し、project内のキー切り替えによる編集値保持、WebMCPとUIの双方向同期・不正な部分更新の拒否・実worker/WASMでのpreview完了、構造からの分割所属と配置全体3MFのUI/WebMCP同期、危険ゾーンの初期折りたたみ・展開状態の保持・配置削除のキャンセルと承認後のデザイン保持、UI/WebMCPのタブ移動時のプレビュー選択と手動切り替えの維持を確認します。WebMCPの登録APIだけをmockし、toolの実行には実アプリのcommandを使います。再入力用データの再適用とcanonical複製、一括作成・共有割当・末尾不正入力の全件拒否、全体previewのcanvas描画完了とUI切り替え時の旧要求拒否、runtime配信失敗時の部分表示を成功扱いしないことも確認します。旧構成ZIPからの読み込み・新構成のUI/WebMCP保存・同名キーの格納先・commonの全体3MFと単独出力の一致・ZIPとディレクトリからの編集値と配置の復元も確認します。ディレクトリdropではOSのfile handle境界だけを模擬し、実importerの階層参照を通します。Node testはbatch proposalの参照・重複・補正保持と待機の期限 / キャンセルを担当します。ネイティブWebMCP APIの互換性、全export形式、全shapeのgeometry、モバイルの目視品質を保証するtestではありません。環境固有の確認は [手動確認](manual-verification.md) と [WebMCPガイド](webmcp.md) を参照します。
 
 ## テストを追加・変更する手順
 

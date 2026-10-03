@@ -10,7 +10,7 @@ export const PROJECT_DATA_KIND = "keycap-maker/project";
 export const PROJECT_DATA_SCHEMA_VERSION = 1;
 export const PROJECT_MANIFEST_FILENAME = "KeycapMaker.json";
 export const PROJECT_KEYCAPS_DIRNAME = "keycaps";
-export const PROJECT_THREE_MF_DIRNAME = "3mf";
+export const PROJECT_KEYBOARD_THREE_MF_PATH = "common/keyboard.3mf";
 export const DEFAULT_PROJECT_NAME = "Keycap Project";
 
 const PROJECT_IMAGE_EXTENSION_BY_MIME = Object.freeze({
@@ -102,18 +102,6 @@ export function getProjectAssetMimeType(path) {
     ?.toLowerCase();
 
   return PROJECT_ASSET_MIME_BY_EXTENSION[extension] ?? "application/octet-stream";
-}
-
-function createProjectKeycapFileBaseName(name, id) {
-  const baseName = sanitizeExportBaseName(name, DEFAULT_EXPORT_BASE_NAME);
-  const idSuffix = String(id ?? "")
-    .replace(/^keycap-/, "")
-    .replace(/[^a-zA-Z0-9]+/g, "")
-    .slice(0, 8);
-
-  return idSuffix
-    ? sanitizeExportBaseName(`${baseName}-${idSuffix}`, baseName)
-    : baseName;
 }
 
 function isFiniteNumber(value) {
@@ -211,21 +199,23 @@ export function createProjectKeycapEntry(params = {}, options = {}) {
     options.name ?? manifestEntry.name ?? keycapParams.name,
     DEFAULT_EXPORT_BASE_NAME,
   );
-  const fileBaseName = createProjectKeycapFileBaseName(name, id);
+  const fileBaseName = sanitizeExportBaseName(name).trim();
+  const directoryName = sanitizeExportBaseName(options.assetDirectoryName ?? fileBaseName).trim();
+  const assetDirectory = `${PROJECT_KEYCAPS_DIRNAME}/${directoryName}`;
   const previewImageDataUrl = options.previewImageDataUrl || createProjectPreviewPlaceholderDataUrl(keycapParams);
   const previewExtension = getProjectPreviewImageExtension(previewImageDataUrl);
   const previewViewState = normalizeProjectPreviewViewState(options.previewViewState ?? manifestEntry.previewViewState);
   const jsonPath = normalizeProjectAssetPath(
     options.jsonPath ?? manifestEntry.jsonPath,
-    `${PROJECT_KEYCAPS_DIRNAME}/${fileBaseName}.json`,
+    `${assetDirectory}/${fileBaseName}.json`,
   );
   const previewPath = normalizeProjectAssetPath(
     options.previewPath ?? manifestEntry.previewPath,
-    `${PROJECT_KEYCAPS_DIRNAME}/${fileBaseName}.${previewExtension}`,
+    `${assetDirectory}/${fileBaseName}.${previewExtension}`,
   );
   const threeMfPath = normalizeProjectAssetPath(
     options.threeMfPath ?? manifestEntry.threeMfPath,
-    `${PROJECT_THREE_MF_DIRNAME}/${fileBaseName}.3mf`,
+    `${assetDirectory}/${fileBaseName}.3mf`,
   );
   const displayOrder = normalizeProjectKeycapDisplayOrder(
     options.displayOrder ?? manifestEntry.displayOrder,
@@ -247,15 +237,28 @@ export function createProjectKeycapEntry(params = {}, options = {}) {
 }
 
 export function createProjectKeycapEntriesForSave(keycaps = []) {
+  const usedDirectories = new Set();
   return assignProjectKeycapDisplayOrder(Array.isArray(keycaps) ? keycaps : [])
-    .map((entry) => createProjectKeycapEntry(entry.params, {
-      id: entry.id,
-      name: entry.name,
-      displayOrder: entry.displayOrder,
-      editorDataPayload: entry.editorDataPayload,
-      previewImageDataUrl: entry.previewImageDataUrl,
-      previewViewState: entry.previewViewState,
-    }));
+    .map((entry) => {
+      const baseName = sanitizeExportBaseName(entry.name ?? entry.params?.name).trim();
+      let directoryName = baseName;
+      let suffix = 2;
+      // Names may repeat, including after sanitizing, Unicode normalization or
+      // case folding on the filesystem where the ZIP will be extracted.
+      while (usedDirectories.has(directoryName.normalize("NFC").toLowerCase())) {
+        directoryName = `${baseName}-${suffix++}`;
+      }
+      usedDirectories.add(directoryName.normalize("NFC").toLowerCase());
+      return createProjectKeycapEntry(entry.params, {
+        id: entry.id,
+        name: entry.name,
+        assetDirectoryName: directoryName,
+        displayOrder: entry.displayOrder,
+        editorDataPayload: entry.editorDataPayload,
+        previewImageDataUrl: entry.previewImageDataUrl,
+        previewViewState: entry.previewViewState,
+      });
+    });
 }
 
 export function createEmptyProjectState(options = {}) {

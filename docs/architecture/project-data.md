@@ -12,20 +12,26 @@
 プロジェクト名/
 ├── KeycapMaker.json
 ├── keycaps/
-│   ├── <keycap>.json
-│   └── <keycap>.png または <keycap>.svg
-└── 3mf/
-    └── <keycap>.3mf
+│   └── <キーキャップ名>/
+│       ├── <キーキャップ名>.json
+│       ├── <キーキャップ名>.3mf
+│       └── <キーキャップ名>.png または <キーキャップ名>.svg
+└── common/
+    └── keyboard.3mf（配置済みキーがある場合）
 ```
 
 - `KeycapMaker.json`
   プロジェクト manifest。プロジェクト名、キーキャップ一覧、現在選択中のキーキャップ ID、各キーキャップの JSON / preview path を保持します。
-- `keycaps/*.json`
+- `keycaps/<キーキャップ名>/*.json`
   既存の編集再開用 JSON と同じ canonical editor data です。
-- `keycaps/*.(png|svg|webp|jpg)`
+- `keycaps/<キーキャップ名>/*.(png|svg|webp|jpg)`
   プロジェクトセグメントの一覧に表示するプレビュー画像です。通常は現在の Three.js preview を縮小した PNG を保存し、preview が取得できない場合は SVG placeholder を保存します。placeholderは透明な背景に部品の実色を描き、背景と名称表示は一覧カードのtheme tokenに任せます。保存済み画像そのものはテーマ切り替えで書き換えません。
-- `3mf/*.3mf`
-  各キーキャップの印刷用 3MF です。プロジェクト保存時に各 `keycaps/*.json` の編集値から生成し、ZIP に同梱します。
+- `keycaps/<キーキャップ名>/*.3mf`
+  各キーキャップの印刷用 3MF です。プロジェクト保存時に各 `keycaps/<キーキャップ名>/*.json` の編集値から生成し、ZIP に同梱します。
+- `common/keyboard.3mf`
+  配置済みキーを、位置・色・確定した分割グループを保持してまとめた印刷用3MFです。配置または割り当てがない場合は格納しません。未割り当て位置のガイド面は含めません。
+
+キーキャップ名はファイル名として使える文字へ正規化します。同名、大文字小文字だけが異なる名前、Unicode正規化後に同じ名前になる場合は、後続のディレクトリに `-2`、`-3` 等を付けて区別します。キーキャップID・表示名・割り当ては変更しません。
 
 ## Manifest
 
@@ -42,9 +48,9 @@
     {
       "id": "keycap-...",
       "name": "Esc",
-      "jsonPath": "keycaps/Esc.json",
-      "previewPath": "keycaps/Esc.png",
-      "threeMfPath": "3mf/Esc.3mf",
+      "jsonPath": "keycaps/Esc/Esc.json",
+      "previewPath": "keycaps/Esc/Esc.png",
+      "threeMfPath": "keycaps/Esc/Esc.3mf",
       "displayOrder": 0,
       "previewViewState": {
         "direction": [0.62, 0.52, 0.58],
@@ -60,12 +66,12 @@
 ルール:
 
 - `kind` は `keycap-maker/project` 固定です。
-- `schemaVersion` は `1` です。互換性のない変更を入れる場合だけ更新します。キーボード配置は省略可能な拡張のため version は維持します。
+- `schemaVersion` は `1` です。互換性のない変更を入れる場合だけ更新します。キーボード配置と保存ディレクトリ構成は相対パスで表現できる互換拡張のため version は維持します。
 - `jsonPath`、`previewPath`、`threeMfPath` はプロジェクトディレクトリからの相対パスです。
 - キーキャップ名を変更した場合、`jsonPath`、`previewPath`、`threeMfPath` は現在の保存名に追従します。
 - `displayOrder` はプロジェクトセグメントの表示順です。保存時は現在の一覧順に 0 始まりで振り直します。
 - `previewViewState` は一覧用 preview を撮影したときのカメラ方向、距離、表示オフセットです。省略可能です。
-- キーキャップ本体の編集値は manifest に複製せず、各 `keycaps/*.json` を正とします。
+- キーキャップ本体の編集値は manifest に複製せず、各 `keycaps/<キーキャップ名>/*.json` を正とします。
 - `activeKeycapId` が存在する場合は読み込み直後の現在キーキャップとして使います。存在しない場合は一覧の先頭を使います。
 - プロジェクトは常に1件以上のキーキャップを持ちます。初期表示時は現在の編集値から最初のキーキャップを作成して active にし、0件のプロジェクトを読み込んだ場合も同様に1件を補完します。最後の1件は削除できません。
 
@@ -73,7 +79,7 @@
 
 manifest の省略可能な `keyboard` に正規化済みの物理レイアウトを、`placements` に配置先とキーキャップの対応を保存します。配置のない既存プロジェクトも読み込めます。GitHub や元ファイルへ再接続せず ZIP だけで復元できます。
 
-`keyboard.groups` は構造から確定した分割グループの `id` / `name` / 出典 `source`、任意の `side`（`left` / `right`）を保持します。キーの `groupId` はこのIDまたは所属不明を示す `null` です。旧projectにこの情報がない場合は空のgroupsとnullを補い、座標から補完しません。詳細は [分割所属](keyboard-layout.md#分割所属) を参照してください。配置全体の3MFは配置パネルから別途ダウンロードし、project ZIPの個別 `3mf/*.3mf` の契約は維持します。
+`keyboard.groups` は構造から確定した分割グループの `id` / `name` / 出典 `source`、任意の `side`（`left` / `right`）を保持します。キーの `groupId` はこのIDまたは所属不明を示す `null` です。旧projectにこの情報がない場合は空のgroupsとnullを補い、座標から補完しません。詳細は [分割所属](keyboard-layout.md#分割所属) を参照してください。配置全体の3MFは配置パネルから単独ダウンロードでき、project ZIPにも `common/keyboard.3mf` として同梱します。個別3MFは各キーキャップのディレクトリに格納します。
 
 - `keyboard`: `kind = keycap-maker/keyboard`、`schemaVersion = 1`、名称、レイアウト名、`pitchMm`、出典（format / path / URL）、キー一覧、外形の線分、読み込み注意事項。
 - キー: `id`、`label`、U 単位の左上 `x / y` と寸法 `w / h`、時計回り角度 `r`、回転原点 `rx / ry`。必要に応じて matrix 座標と ISO Enter 等の補助矩形を持ちます。
@@ -108,7 +114,7 @@ manifest の省略可能な `keyboard` に正規化済みの物理レイアウ�
 
 1. `KeycapMaker.json` を探す
 2. manifest を検証する
-3. `keycaps/*.json` を既存の編集データ JSON と同じ parser で読み込む
+3. manifest の `jsonPath` を解決し、既存の編集データ JSON と同じ parser で読み込む
 4. `previewPath` の画像を一覧表示用に読み込む
 5. active keycap または先頭の keycap を現在の編集対象にする
 
@@ -121,11 +127,11 @@ manifest の省略可能な `keyboard` に正規化済みの物理レイアウ�
 
 ## 保存
 
-プロジェクト保存は常に ZIP ダウンロードとして扱います。ZIP 内部には同じディレクトリ構成で `KeycapMaker.json`、`keycaps/`、`3mf/` を格納します。各キーキャップについて、編集再開用 JSON、一覧用 preview、印刷用 3MF を同梱します。
+プロジェクト保存は常に ZIP ダウンロードとして扱います。ZIP 内部にはルート直下の `KeycapMaker.json`、キーキャップ別の `keycaps/`、配置全体を収める `common/` を格納します。各キーキャップについて、編集再開用 JSON、一覧用 preview、印刷用 3MF を同じディレクトリへ格納します。配置済みキーがあれば、同じproject snapshotと個別出力のmeshを使って配置全体3MFも生成します。生成やキャンセルで失敗した場合は部分ZIPをダウンロードしません。
 
 ディレクトリへの直接書き込みは行いません。GitHub Pages 上の静的配信アプリとして、保存時のブラウザ差分や File System Access API の権限差分を避けるためです。
 
-保存済み ZIP はドラッグ & ドロップで直接読み込めます。読み込み時は archive 内から `KeycapMaker.json` を探し、同じ root 配下の `keycaps/` を展開してプロジェクトとして復元します。拡張子は `.zip` と、誤って `.zlp` になったファイル名も受け付けます。
+保存済み ZIP はドラッグ & ドロップで直接読み込めます。読み込み時は archive 内から `KeycapMaker.json` を探し、manifest の相対パスを解決してプロジェクトとして復元します。ディレクトリdrop、ファイル一覧dropも同じ相対パスを使うため、旧形式の `keycaps/*.json` と `3mf/*.3mf` を持つプロジェクトも読み込めます。旧形式の読み込みだけではパスを書き換えず、次の保存時に新しい構成へ揃えます。個別・全体3MFは編集値から生成した派生ファイルなので、読み込み時の復元入力には使いません。拡張子は `.zip` と、誤って `.zlp` になったファイル名も受け付けます。
 
 ## 実装位置
 

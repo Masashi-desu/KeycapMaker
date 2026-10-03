@@ -30,7 +30,7 @@ KeycapMakerはブラウザ内のアプリ操作をWebMCPのimperative APIで公�
 | `keycap_batch` | `keycaps`（1〜256個）と/または `assignments`（1〜4096個）。新規キーは `ref` と `params` または `payload`、任意の `baseKeycapId`。割り当ては `slotId` と `keycapRef` または既存 `keycapId`、両方省略で解除。`created` のref / keycapId対応、assignedCount / clearedCount、stateを返す |
 | `keycap_set_view` | `tab`: `design` / `project` / `keyboard`、または `previewMode`: `keycap` / `keyboard`。boardがある場合、designへの移動でkeycap、keyboardへの移動でkeyboard previewを選ぶ。同じtabの再指定とprojectへの移動は現在表示を保持し、明示したpreviewModeを優先する。keyboard previewにはboardが必要 |
 | `keycap_preview` | 任意の `mode`: `keycap` / `keyboard`（省略時は現在表示）、`timeoutMs`: 100〜300000（既定120000）。モデル生成とcanvasフレームの描画完了を待ち、geometryとdisplayを含むstateを返す |
-| `keycap_export` | `format`: `editor-data` / `3mf` / `keyboard-3mf` / `step` / `stl` / `project-zip`。生成とdownload開始後、filename、byteLength、stateを返す。keyboard-3mfは配置済みキーを出力し、keyCount / groupCount / unknownCountも返す |
+| `keycap_export` | `format`: `editor-data` / `3mf` / `keyboard-3mf` / `step` / `stl` / `project-zip`。生成とdownload開始後、filename、byteLength、stateを返す。keyboard-3mfは配置済みキーを出力し、keyCount / groupCount / unknownCountも返す。project-zipはUIと同じキーキャップ別ディレクトリと、配置済みキーがある場合のcommon/keyboard.3mfを格納する |
 
 shape固有フィールド、font style、iconはcatalogから現在の値と選択肢を確認して指定します。field catalogはkey、typeを含むschema、label、説明、単位、value、UIのvisible/disabledを返します。表示条件によって隠れた設定も事前編集できます。UIのu補助入力と基準幅のブラウザ設定はmmによる編集と重なるブラウザ設定なのでtoolに含めず、長さはmm、角度はdegreeで指定します。
 

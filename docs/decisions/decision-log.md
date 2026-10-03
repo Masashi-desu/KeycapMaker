@@ -439,3 +439,12 @@
 ## 2026-10-03: WebMCPの観測・再入力・全体表示を分ける
 
 状態paramsをそのままimportしたときに派生値が未反映レポートへ出る問題と、単体geometry成功だけでは全体表示完了を確認できない問題を受け、契約をversion 2へ更新した。観測専用observedParamsと、UI metadata / canonical serializerから生成するget_inputを分離する。一括作成・割当はproposalを全検証して一度だけ反映し、共有refと既存IDを扱う。previewは全割り当てのモデルとcanvasフレームを待ち、途中変更・部分失敗・期限切れを成功にしない。現行契約と利用例は [WebMCP操作契約](../architecture/webmcp.md) と [ガイド](../guide/webmcp.md) を正とする。
+
+## 2026-10-04 - プロジェクト保存はキーキャップごとに編集・印刷データをまとめる
+
+- 結論:
+  ルートの `KeycapMaker.json` を維持し、JSON・preview・個別3MFを `keycaps/<キーキャップ名>/` にまとめる。同名は後続ディレクトリに番号を付けて区別する。配置済みキーがある場合は同じsnapshotと個別出力meshから全体3MFを生成し、`common/keyboard.3mf` に同梱する
+- 理由:
+  編集用と印刷用のファイルをキーキャップ単位で扱いやすくし、全体配置も1つのZIPで保管できるようにするため。manifestの相対パスで旧構成と新構成を読み込めるので、project schema 1を維持し、再保存時に新構成へ揃える
+- 現行契約:
+  [プロジェクトデータ仕様](../architecture/project-data.md)、[WebMCP操作契約](../architecture/webmcp.md)

@@ -49,9 +49,9 @@ test("現在のキーキャップからプロジェクト内キーキャップ�
 
   assert.equal(entry.id, "keycap-test");
   assert.equal(entry.name, "ESC");
-  assert.equal(entry.jsonPath, "keycaps/ESC-test.json");
-  assert.equal(entry.previewPath, "keycaps/ESC-test.png");
-  assert.equal(entry.threeMfPath, "3mf/ESC-test.3mf");
+  assert.equal(entry.jsonPath, "keycaps/ESC/ESC.json");
+  assert.equal(entry.previewPath, "keycaps/ESC/ESC.png");
+  assert.equal(entry.threeMfPath, "keycaps/ESC/ESC.3mf");
   assert.equal(entry.displayOrder, 0);
   assert.equal(entry.params.name, "ESC");
   assert.equal(entry.editorDataPayload.params.legendText, "Esc");
@@ -195,7 +195,7 @@ test("プロジェクト保存前のキーキャップ定義は現在の一覧�
   assert.deepEqual(normalized.map((entry) => entry.id), ["keycap-first", "keycap-second"]);
   assert.deepEqual(normalized.map((entry) => entry.displayOrder), [0, 1]);
   assert.deepEqual(normalized.map((entry) => entry.previewViewState?.direction), [[1, 0, 0], [0, 1, 0]]);
-  assert.deepEqual(normalized.map((entry) => entry.threeMfPath), ["3mf/First-first.3mf", "3mf/Second-second.3mf"]);
+  assert.deepEqual(normalized.map((entry) => entry.threeMfPath), ["keycaps/First/First.3mf", "keycaps/Second/Second.3mf"]);
   assert.deepEqual(normalized.map((entry) => entry.editorDataPayload.params.name), ["First", "Second"]);
 });
 
@@ -212,9 +212,9 @@ test("プロジェクト保存前に名称変更済みキーキャップの asse
   const [normalized] = createProjectKeycapEntriesForSave([renamedEntry]);
 
   assert.equal(normalized.name, "Renamed");
-  assert.equal(normalized.jsonPath, "keycaps/Renamed-sync.json");
-  assert.equal(normalized.previewPath, "keycaps/Renamed-sync.png");
-  assert.equal(normalized.threeMfPath, "3mf/Renamed-sync.3mf");
+  assert.equal(normalized.jsonPath, "keycaps/Renamed/Renamed.json");
+  assert.equal(normalized.previewPath, "keycaps/Renamed/Renamed.png");
+  assert.equal(normalized.threeMfPath, "keycaps/Renamed/Renamed.3mf");
   assert.equal(normalized.editorDataPayload.params.name, "Renamed");
 });
 
@@ -242,9 +242,9 @@ test("過去保存の stale asset path を持つプロジェクトも読み込�
 
   const [normalized] = createProjectKeycapEntriesForSave([legacyEntry]);
 
-  assert.equal(normalized.jsonPath, "keycaps/Renamed-legacy.json");
-  assert.equal(normalized.previewPath, "keycaps/Renamed-legacy.png");
-  assert.equal(normalized.threeMfPath, "3mf/Renamed-legacy.3mf");
+  assert.equal(normalized.jsonPath, "keycaps/Renamed/Renamed.json");
+  assert.equal(normalized.previewPath, "keycaps/Renamed/Renamed.png");
+  assert.equal(normalized.threeMfPath, "keycaps/Renamed/Renamed.3mf");
 });
 
 test("プロジェクト manifest 以外の JSON は拒否する", () => {
@@ -253,6 +253,26 @@ test("プロジェクト manifest 以外の JSON は拒否する", () => {
     () => parseProjectManifest({ kind: "keycap-maker/editor-params", schemaVersion: 5 }),
     /プロジェクト JSON/,
   );
+});
+
+test("保存時の同名・正規化後の同名ディレクトリを区別し、すべてのデータを保持する", () => {
+  const names = ["Esc", "Esc", "esc", "Esc-2", "A/B", "A:B", "é", "e\u0301"];
+  const entries = names.map((name, index) => createProjectKeycapEntry({
+    ...createDefaultKeycapParams("custom-shell"), name, keyWidth: 18 + index,
+  }, { id: `keycap-${index}` }));
+  const saved = createProjectKeycapEntriesForSave(entries);
+  const folders = saved.map((entry) => entry.jsonPath.split("/")[1]);
+  assert.deepEqual(folders, ["Esc", "Esc-2", "esc-3", "Esc-2-2", "A-B", "A-B-2", "é", "e\u0301-2"]);
+  assert.equal(new Set(folders.map((name) => name.normalize("NFC").toLowerCase())).size, names.length);
+  for (const [index, entry] of saved.entries()) {
+    for (const path of [entry.jsonPath, entry.previewPath, entry.threeMfPath]) {
+      assert.equal(path.slice(0, path.lastIndexOf("/")), `keycaps/${folders[index]}`);
+    }
+    assert.equal(entry.params.keyWidth, 18 + index);
+    assert.equal(entry.id, entries[index].id);
+  }
+  assert.deepEqual(parseProjectManifest(createProjectManifest({ keycaps: saved })).keycaps,
+    createProjectManifest({ keycaps: saved }).keycaps.map((entry) => ({ ...entry, previewViewState: null })));
 });
 
 test("プレビュー画像 data URL の拡張子を解決し、placeholder は SVG として扱う", () => {
