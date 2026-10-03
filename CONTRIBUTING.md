@@ -16,7 +16,7 @@ npm run build
 npm run preview
 ```
 
-個別の静的gateは次のとおりです。
+個別の検証コマンドは次のとおりです。
 
 - `npm run test:docs`: Markdownのlocal link、文書化したnpm script、全lockfile dependency、利用中Web font/CDN package、bundled font/vendor、READMEのOpen Graph画像を検証する
 - `npm run lint:workflows`: actionlintでGitHub Actionsの構文、式、権限、shellを検証する
@@ -90,7 +90,9 @@ root overviewや `docs/` だけの変更では静的な文書gateだけを実行
 - `scad/presets/`: SCAD固有のnominal constant
 - `scad/samples/`: geometry regression用の明示的fixture
 - `public/`: Viteが加工せず公開物へコピーするruntime、font、image、license/provenance
-- `test/`: Nodeで再現できるbehavior、geometry、文書、分類の自動test
+- `test/*.test.js`: Nodeで再現できるbehavior、geometry、文書、分類の自動test
+- `test/support/`: Node testの共通fixture
+- `test/e2e/`: Playwright browser test、Page Object・component、browser fixture
 - `docs/architecture/`: 現行の構造とcontract
 - `docs/guide/`: 手動確認と個別の運用ガイド
 - `docs/decisions/`: 歴史的な判断記録。現行仕様と衝突する場合はarchitecture/guideを優先する
@@ -107,6 +109,19 @@ root overviewや `docs/` だけの変更では静的な文書gateだけを実行
 - font/icon attributionはdata定義から実文を表示し、抽象的な警告文を別実装しない
 - user inputの長文全般へ一律の改行規則を課さない。現在の折返し契約は、`.font-attribution-card__body` の改行保持とURL折返し、`.import-binding-notice__name` / `__value` の長いJSON path/value、`.preview-color-option__label` の選択肢labelに限定する。export dialog titleのようにellipsisを契約とする箇所は変更しない
 - 新しい外部資源は、公式source、version、license本文、必要なnotice、利用箇所を確認してから追加する
+
+## 自動テストとPOMを維持する実装規約
+
+新規・変更するUIのbrowser testは、Page Object Model（POM）で保守します。構成、追加手順、実行方法の詳細は [自動テストガイド](docs/guide/automated-testing.md) を参照してください。
+
+- UIのlocator、DOM操作、画面遷移、UI状態を待つ処理は `test/e2e/pages/` のPage Object・componentに集約する。specへselector、`page.locator` / `page.getByRole`、直接のclick/fill、DOM評価処理を書かない
+- specは `test/e2e/fixtures.js` の `test` / `expect` とPage Objectを使い、ユーザーの操作と期待結果を記述する。Page Objectは操作と状態取得を担当し、成功・失敗のassertionを持たない。検証にはPage Objectが公開するlocatorまたは戻り値を使う
+- 追加時は既存のPage Object・componentを拡張する。別の画面・componentは責務ごとに分け、共通化の必要がないBase Pageや、複数画面を抱える巨大なPage Objectを追加しない
+- browser起動、隔離、通信制御、mock登録、cleanupはconfig / fixture / supportで管理する。WebMCPのtool実行は `WebMcpClient` を使い、UIの操作検証をWebMCP呼び出しだけで代替しない。mock登録APIによる確認とnative APIの互換性確認を区別する
+- ユーザー操作を追加・変更した場合は、UIの連携・保存結果・非同期完了を既存browser caseで検証できるか確認し、必要なPOMとspecを同じ変更で追加・更新する。境界値、入力正規化、形式互換、geometryの網羅はNode testで確認し、browser testへ同じ組み合わせを重複させない
+- 各caseを独立させる。固定時間のsleepで待たず、locatorのauto-waitや完了eventを使う。UI変更時は該当Page Objectを修正し、既存flowの期待結果と独自のassertionを維持する
+
+reviewでは「specにUI実装の詳細が漏れていないか」「POMがユーザー操作を表しているか」「画面・WebMCP・保存結果の必要な回帰検証があるか」「重複を増やしていないか」「変更classのgateが成功したか」を確認します。
 
 ## WebMCPを維持する実装規約
 

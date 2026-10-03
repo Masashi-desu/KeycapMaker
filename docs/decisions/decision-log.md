@@ -406,3 +406,12 @@
   エージェントが座標やDOM構造へ依存せず、ユーザーと同じ編集stateと結果を共有できるようにするため。別サーバーやSDKを増やさず、今後のフィールド追加とtool保守を同じ実装規約・品質gateに含める
 - 現行契約:
   [WebMCP操作契約](../architecture/webmcp.md)、[WebMCPガイド](../guide/webmcp.md)、[開発・貢献規約](../../CONTRIBUTING.md)
+
+## 2026-10-03 - UIのbrowser testはPage Object Modelで保守する
+
+- 結論:
+  新規・変更するPlaywrightのUI testはPage Object・componentへlocatorと操作を集約し、specは操作の意図と期待結果を記述する。初期化・隔離・mockは共通fixtureで管理し、UIの変更時は対応するPOMとspecを同じ変更で更新する。境界値、データ形式、geometryの網羅はNode testに置く
+- 理由:
+  selectorと画面操作の重複を防ぎ、UI変更時の修正箇所をまとめるため。Node testとbrowser testの責務を分けることで、固有の回帰検証を維持しながら重複したcaseを増やさない
+- 現行規約と手順:
+  [開発・貢献規約](../../CONTRIBUTING.md)、[自動テストガイド](../guide/automated-testing.md)
