@@ -3315,6 +3315,113 @@ pre {
   display: none;
 }
 
+html.is-download-consent-open {
+  overflow: hidden;
+}
+
+.download-consent-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(var(--visual-viewport-height) - 32px);
+  margin: auto;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  color: var(--text);
+  background: var(--panel);
+  box-shadow: 0 24px 60px rgb(var(--shadow-rgb) / 0.2);
+  overflow: auto;
+}
+
+.download-consent-dialog::backdrop {
+  background: var(--overlay-backdrop);
+  backdrop-filter: blur(14px);
+}
+
+.download-consent-dialog form,
+.download-consent-body {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.download-consent-dialog form {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  max-height: calc(var(--visual-viewport-height) - 74px);
+}
+
+.download-consent-body {
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.download-consent-filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.download-consent-resources {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.download-consent-resource {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--raised-surface);
+}
+
+.download-consent-resource a {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.download-consent-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.download-consent-check input {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--action-fill);
+}
+
+.download-consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.download-consent-actions button {
+  flex: 1 1 150px;
+}
+
+.download-consent-actions button:disabled {
+  cursor: not-allowed;
+}
+
+.download-consent-dialog :focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
 .project-keycap-design-dialog {
   width: min(460px, calc(100vw - 48px));
 }

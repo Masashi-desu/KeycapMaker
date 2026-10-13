@@ -34,7 +34,7 @@ test("tools route typed arguments to commands and return serializable completed 
   ];
   for (const [name, input, command] of cases) {
     const result = await run(name, input);
-    assert.deepEqual(result, { ok: true, contractVersion: 2, data: { completed: true } });
+    assert.deepEqual(result, { ok: true, contractVersion: 3, data: { completed: true } });
     assert.equal(calls.at(-1).name, command);
     assert.deepEqual(JSON.parse(JSON.stringify(result)), result);
   }
@@ -70,7 +70,7 @@ test("invalid, unknown, oversized and mistyped inputs never reach commands", asy
     ["batch", { keycaps: [{ ref: "a", params: { unknown: true } }] }],
     ["get_input", { keycapIds: [] }], ["get_input", { keycapIds: Array(257).fill("a") }],
     ["preview", { mode: "whole" }], ["preview", { timeoutMs: 0 }],
-    ["export", { format: "obj" }], ["export", {}], ["set_view", {}],
+    ["export", { format: "obj" }], ["export", {}], ["export", { format: "3mf", consent: true }], ["set_view", {}],
     ["set_keyboard", { layout: null }], ["set_keyboard", { layout: "file:///private" }],
     ["import_editor", { payload: [] }], ["get_state", null], ["get_state", { accidental: true }],
   ];

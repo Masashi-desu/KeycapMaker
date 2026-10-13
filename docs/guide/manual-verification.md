@@ -107,6 +107,16 @@ WebMCP command、フィールド定義、import/exportを変えた場合は [Web
 - 角丸外形、dish、stem 外周の曲面で、面ごとの筋が過度に目立たない
 - 稜線が必要な箇所では、輪郭が不自然に丸まって見えない
 
+### 書き出し・ダウンロードの同意
+
+- JSON・3MF・STEP・STL・配置全体3MF・ZIPで、生成・download前に確認画面が開く
+- 出力対象の選択フォント・アイコンのライセンス名と配布元、必要な帰属実文とコピー、知的財産の条件確認が表示される。複数キーでは対象全体の有効な印字だけを集約し、マイフォントは提供元の条件確認を案内する。中央のフォントを変えた後、無効な周辺・側面印字に残った旧フォントが表示されず、有効化した印字の資源は表示されること、空白だけの文字は一覧へ含めないことも確認する。印字を含まないSTEP/STLや全印字を無効にしたデザインは使用資源がない旨を表示する
+- light / darkで通常・hover・focus・disabled・チェック済み状態が読め、mobileで横にはみ出さず下の操作までスクロールできる
+- 初回focusは未選択のcheckboxに入り、Tabは確認画面内で移動する。背景は操作できず、Escは同意画面だけを閉じる。キャンセル後は元の保存ボタンへfocusが戻る
+- 未チェックではdownloadボタンが無効。チェック後の「同意してダウンロード」で保存され、次の保存では未チェックに戻る
+- キャンセル・閉じる・Escではdownloadせず編集を保持し、再度保存できる
+- WebMCPの全形式も同じ同意を待ち、拒否はconsent_declined、待機中の変更はbusy、get_stateのconsentPendingはtrueを返す。AbortSignalで画面と排他を解除する
+
 ### 3. 編集データ JSON
 
 - 設計タブ先頭の `名称` を分かりやすい文字列へ変更する
@@ -233,4 +243,4 @@ geometry や export 契約を変えた場合は、保存した `名称 + .3mf` �
 - 未解決の問題や次の拡張タスク:
   `docs/backlog/`
 
-WebMCP version 2を変更した場合は、native APIでget_inputを読み、異なるデザインのbatch作成・割当と参照IDの返却を確認します。keyboardモードのpreviewを待ち、ready / rendered:true、割当数と描画数の一致、実canvas上の全体表示を照合します。状態のobservedParamsをimportへ流用しないこと、生成途中のget_state、UI切り替えによるpreview_superseded、無効な一括入力の全件拒否も確認します。通常セッションに編集内容がある場合は先に退避し、開発serverの再読込後も内容を保持します。
+WebMCPの再入力・一括配置を変更した場合は、native APIでget_inputを読み、異なるデザインのbatch作成・割当と参照IDの返却を確認します。keyboardモードのpreviewを待ち、ready / rendered:true、割当数と描画数の一致、実canvas上の全体表示を照合します。状態のobservedParamsをimportへ流用しないこと、生成途中のget_state、UI切り替えによるpreview_superseded、無効な一括入力の全件拒否も確認します。通常セッションに編集内容がある場合は先に退避し、開発serverの再読込後も内容を保持します。

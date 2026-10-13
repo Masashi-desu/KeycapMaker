@@ -5,6 +5,13 @@ import { EditorPage } from "./pages/editor-page.js";
 import { installWebMcpRegistration, WebMcpClient } from "./support/webmcp-client.js";
 
 export const test = base.extend({
+  downloads: async ({ page }, use) => {
+    const downloads = [];
+    const record = (download) => downloads.push(download);
+    page.on('download', record);
+    await use(downloads);
+    page.off('download', record);
+  },
   editor: async ({ page, baseURL }, use) => {
     // UI tests remain independent of public CDN availability. Bundled assets,
     // including the real OpenSCAD worker/WASM, are served by the local app.

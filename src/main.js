@@ -2,6 +2,7 @@ import "./styles.css";
 import { createEditorParameterSchema, createKeycapWebMcpTools, registerKeycapWebMcp, validateToolInput, WebMcpError } from "./lib/webmcp.js";
 import { applyKeyboardAssignments, prepareProjectBatch } from "./lib/project-batch.js";
 import { waitForPreviewCompletion } from "./lib/preview-completion.js";
+import { collectDownloadResources, DownloadConsentGate } from "./lib/download-consent.js";
 import { strToU8, unzipSync, zipSync } from "fflate";
 import {
   LOCALE_OPTIONS,
@@ -109,6 +110,7 @@ import {
 } from "./lib/keycap-scad-bundle.js";
 
 const app = document.querySelector("#app");
+const downloadConsentGate = new DownloadConsentGate();
 const LEGEND_FONT_PICKER_SEGMENT_BUILTIN = "builtin";
 const LEGEND_FONT_PICKER_SEGMENT_USER = "user";
 const LEGEND_FONT_PICKER_SEGMENTS = Object.freeze([
@@ -500,12 +502,14 @@ const LEGEND_CARD_DEFINITIONS = Object.freeze([
     id: `legend-card-${config.id}`,
     title: () => t(config.titleKey),
     enabledFieldKey: legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled),
+    isRenderable: (params) => isTopLegendRenderable(config, params),
     fieldKeys: createLegendFieldKeys(config.paramPrefix),
   })),
   ...SIDE_LEGEND_CONFIGS.map((config) => ({
     id: `legend-card-${config.side}`,
     title: () => t("legendCards.sidewall", { side: getSideLegendLabel(config.side) }),
     enabledFieldKey: legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled),
+    isRenderable: (params) => isSideLegendRenderable(config, params),
     fieldKeys: createLegendFieldKeys(config.paramPrefix, { side: config.side }),
   })),
 ]);
@@ -7520,7 +7524,7 @@ function escapeCssIdentifier(value) {
   return identifier.replaceAll("\\", "\\\\").replaceAll("\"", "\\\"");
 }
 
-async function copyTextToClipboard(text) {
+async function copyTextToClipboard(text, container = document.body) {
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text);
@@ -7533,7 +7537,7 @@ async function copyTextToClipboard(text) {
   textarea.setAttribute("readonly", "");
   textarea.style.position = "absolute";
   textarea.style.left = "-9999px";
-  document.body.append(textarea);
+  container.append(textarea);
   textarea.select();
   document.execCommand("copy");
   textarea.remove();
@@ -8941,13 +8945,20 @@ async function downloadProjectZip(project, options = {}) {
 }
 
 async function saveProject(options = {}) {
-  setProjectStatus("running", t("project.saving"));
+  if (state.exportsStatus === "running" || state.projectStatus === "running") return;
+  const returnFocus = captureDownloadButtonFocus();
+  setProjectStatus("running", t("downloadConsent.awaiting"));
   render();
 
   try {
     const prepared = prepareProjectForSave();
     const signature = JSON.stringify({ ...prepared, directoryHandle: null, isDirty: undefined });
     const project = JSON.parse(signature);
+    options = { ...options, downloadConsent: await confirmDownloadConsent(
+      `${normalizeProjectName(project.name, DEFAULT_PROJECT_NAME)}.zip`, project.keycaps.map((entry) => entry.params), options,
+    ) };
+    setProjectStatus("running", t("project.saving"));
+    render();
     const result = await downloadProjectZip(project, options);
     // Edits made while geometry is generated belong to a later save.
     if (signature === JSON.stringify({ ...state.project, directoryHandle: null, isDirty: undefined })) state.project.isDirty = false;
@@ -8955,10 +8966,15 @@ async function saveProject(options = {}) {
     render({ animateInspector: true });
     return result;
   } catch (error) {
-    setProjectStatus("error", t("project.saveFailed", { message: `${error}` }));
+    if (error.code === "consent_declined" || options.signal?.aborted) {
+      setProjectStatus("cancelled", t("downloadConsent.cancelled"));
+    } else {
+      setProjectStatus("error", t("project.saveFailed", { message: `${error}` }));
+    }
   }
 
-  render({ animateInspector: true });
+  render({ animateInspector: state.projectStatus !== "cancelled" });
+  restoreDownloadButtonFocus(returnFocus);
 }
 
 function applyShapeProfileParams(profileKey, params = state.keycapParams) {
@@ -8991,14 +9007,98 @@ function applyShapeProfileParams(profileKey, params = state.keycapParams) {
   return syncDerivedKeycapParams(nextParams);
 }
 
-function downloadBlob(blob, filename, { signal } = {}) {
+function downloadBlob(blob, filename, { signal, downloadConsent } = {}) {
   signal?.throwIfAborted();
+  downloadConsentGate.consume(downloadConsent);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function captureDownloadButtonFocus() {
+  const focused = document.activeElement;
+  const attribute = ["data-keycap-export-format", "data-project-save", "data-keyboard-export"]
+    .find((name) => focused?.hasAttribute(name));
+  return attribute ? { attribute, value: focused.getAttribute(attribute) } : null;
+}
+
+function restoreDownloadButtonFocus(target) {
+  if (target) app.querySelector(`[${target.attribute}="${escapeCssIdentifier(target.value)}"]`)?.focus({ preventScroll: true });
+}
+
+function getDownloadResourceSourceUrl(asset) {
+  const value = asset.landingPageUrl || asset.sourceUrl;
+  try {
+    const url = new URL(value);
+    return ["https:", "http:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function confirmDownloadConsent(filename, paramsList, options) {
+  const legendFields = LEGEND_CARD_DEFINITIONS.map((card) => ({
+    isRenderable: card.isRenderable,
+    font: card.fieldKeys.find((key) => key.endsWith(LEGEND_FIELD_SUFFIXES.fontKey)),
+    contentType: card.fieldKeys.find((key) => key.endsWith(LEGEND_FIELD_SUFFIXES.contentType)),
+    iconSet: card.fieldKeys.find((key) => key.endsWith(LEGEND_FIELD_SUFFIXES.iconSet)),
+  }));
+  const resources = collectDownloadResources(paramsList, legendFields, {
+    resolveFont: resolveLegendFontConfig, resolveIconSet: getLegendIconSetMeta,
+  });
+  const resourceMarkup = resources.map(({ kind, asset }, index) => {
+    const attribution = kind === "font" ? getLegendFontAttributionText(asset) : getLegendIconAttributionText(asset.key);
+    const sourceUrl = getDownloadResourceSourceUrl(asset);
+    return `
+      <li class="download-consent-resource" data-download-consent-resource>
+        <strong>${escapeHtml(asset.label)}</strong>
+        <p>${escapeHtml(asset.licenseLabel || t("downloadConsent.unknownLicense"))}</p>
+        ${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t("downloadConsent.source"))}</a>` : ""}
+        ${attribution ? `
+          <div class="font-attribution-card">
+            <div class="font-attribution-card__header">
+              <strong>${escapeHtml(t("font.attributionTitle"))}</strong>
+              <button class="font-attribution-card__copy" type="button" data-download-consent-copy="${index}">${escapeHtml(t("actions.copy"))}</button>
+            </div>
+            <pre class="font-attribution-card__body" data-download-consent-attribution="${index}">${escapeHtml(attribution)}</pre>
+          </div>` : ""}
+      </li>`;
+  }).join("");
+  return downloadConsentGate.request(`
+    <form>
+      <div class="keycap-export-dialog__header">
+        <span class="keycap-export-dialog__title-stack">
+          <h2 id="download-consent-title">${escapeHtml(t("downloadConsent.title"))}</h2>
+          <span class="download-consent-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
+        </span>
+        <button class="field-group-toggle keycap-export-dialog__close" type="button" data-download-consent-cancel aria-label="${escapeHtml(t("actions.close"))}">×</button>
+      </div>
+      <div class="download-consent-body">
+        <p id="download-consent-description">${escapeHtml(t("downloadConsent.description"))}</p>
+        ${resources.length ? `<h3>${escapeHtml(t("downloadConsent.resources"))}</h3>
+          <ul class="download-consent-resources">${resourceMarkup}</ul>`
+          : `<p>${escapeHtml(t("downloadConsent.noResources"))}</p>`}
+        <p>${escapeHtml(t("downloadConsent.intellectualProperty"))}</p>
+      </div>
+      <label class="download-consent-check">
+        <input type="checkbox" required data-download-consent-check />
+        <span>${escapeHtml(t("downloadConsent.agreement"))}</span>
+      </label>
+      <div class="download-consent-actions">
+        <button class="export-save-button project-secondary-button" type="button" data-download-consent-cancel>${escapeHtml(t("downloadConsent.cancel"))}</button>
+        <button class="export-save-button" type="submit" disabled data-download-consent-accept>${escapeHtml(t("downloadConsent.accept"))}</button>
+      </div>
+    </form>`, {
+    signal: options.signal,
+    onCopy: async (button, dialog) => {
+      const text = dialog.querySelector(`[data-download-consent-attribution="${button.dataset.downloadConsentCopy}"]`).textContent;
+      await copyTextToClipboard(text, dialog);
+      button.textContent = t("actions.copied");
+    },
+  });
 }
 
 function syncImportDropOverlay() {
@@ -10962,25 +11062,37 @@ async function executeKeycapPreview(options = {}) {
 
 async function executeExport(format, options = {}) {
   if (state.exportsStatus === "running" || state.projectStatus === "running") return;
-  const {
-    params = state.keycapParams,
-    editorDataPayload = null,
-    closeOverlayOnSuccess = false,
-  } = options;
+  const returnFocus = captureDownloadButtonFocus();
+  const { closeOverlayOnSuccess = false } = options;
+  const params = cloneJsonValue(options.params ?? state.keycapParams);
+  const editorDataPayload = options.editorDataPayload ? cloneJsonValue(options.editorDataPayload) : null;
   state.exportsStatus = "running";
-  state.exportsSummary = t("importExport.preparing");
+  state.exportsSummary = t("downloadConsent.awaiting");
   render();
 
   let didSucceed = false;
   let keyboardFilename = "";
   try {
+    let project = null;
     if (format === "keyboard-3mf") {
       flushPendingActiveProjectKeycapSync();
-      const project = cloneJsonValue({ name: state.project.name, keyboard: state.project.keyboard,
+      project = cloneJsonValue({ name: state.project.name, keyboard: state.project.keyboard,
         keycaps: state.project.keycaps.map(({ id, name, params }) => ({ id, name, params })), placements: state.project.placements });
+      if (!project.keyboard || !project.placements.length) throw new Error(t("keyboard.empty"));
+      keyboardFilename = `${sanitizeExportBaseName(project.name)}-keyboard.3mf`;
+    }
+    const filename = format === "keyboard-3mf" ? keyboardFilename
+      : format === "editor-data" ? buildEditorDataFilename(editorDataPayload?.params ?? params)
+      : format === "3mf" ? build3mfFilename(params) : format === "step" ? buildStepFilename(params) : buildStlFilename(params);
+    const assignedIds = new Set(project?.placements.map((placement) => placement.keycapId));
+    const consentParams = ["step", "stl"].includes(format) ? []
+      : project ? project.keycaps.filter((entry) => assignedIds.has(entry.id)).map((entry) => entry.params) : [params];
+    options = { ...options, downloadConsent: await confirmDownloadConsent(filename, consentParams, options) };
+    state.exportsSummary = t("importExport.preparing");
+    render();
+    if (format === "keyboard-3mf") {
       const startedAt = performance.now();
       const result = await createProjectKeyboard3mfExport(project, options);
-      keyboardFilename = `${sanitizeExportBaseName(project.name)}-keyboard.3mf`;
       downloadBlob(result.blob, keyboardFilename, options);
       setExportStatus("success", t("keyboard.exportSaved", { count: result.keyCount }), {
         format, label: t("keyboard.export3mf"), elapsedMs: Math.round(performance.now() - startedAt), byteLength: result.blob.size,
@@ -11004,7 +11116,7 @@ async function executeExport(format, options = {}) {
         },
       );
     } else if (format === "3mf") {
-      const { blob, offResults } = await create3mfExportBlob(params);
+      const { blob, offResults } = await create3mfExportBlob(params, options);
       const savedPartLabels = describePartLabels(offResults.map((entry) => entry.name));
       downloadBlob(blob, build3mfFilename(params), options);
 
@@ -11067,17 +11179,21 @@ async function executeExport(format, options = {}) {
 
     didSucceed = true;
   } catch (error) {
-    setExportStatus(
-      "error",
-      t("importExport.saveFailed"),
-      {
-        format,
-        label: t("importExport.saveFailedLabel"),
-        elapsedMs: 0,
-        byteLength: 0,
-        notes: `${error}`,
-      },
-    );
+    if (error.code === "consent_declined" || options.signal?.aborted) {
+      setExportStatus("cancelled", t("downloadConsent.cancelled"));
+    } else {
+      setExportStatus(
+        "error",
+        t("importExport.saveFailed"),
+        {
+          format,
+          label: t("importExport.saveFailedLabel"),
+          elapsedMs: 0,
+          byteLength: 0,
+          notes: `${error}`,
+        },
+      );
+    }
   }
 
   if (didSucceed && closeOverlayOnSuccess) {
@@ -11085,6 +11201,7 @@ async function executeExport(format, options = {}) {
   }
 
   render();
+  restoreDownloadButtonFocus(returnFocus);
   if (didSucceed) {
     const filename = format === "keyboard-3mf" ? keyboardFilename : format === "editor-data" ? buildEditorDataFilename(params) : format === "3mf" ? build3mfFilename(params)
       : format === "step" ? buildStepFilename(params) : buildStlFilename(params);
@@ -11145,7 +11262,7 @@ function getWebMcpState() {
       summary: state.editorSummary, message: state.editorError,
       parts: state.previewLayers.map((layer) => ({ name: layer.name, vertices: layer.mesh.vertices.length, faces: layer.mesh.faces.length })) },
       display: getPreviewDisplayState() },
-    export: { status: state.exportsStatus, summary: state.exportsSummary, latest: state.exportHistory[0] ?? null },
+    export: { status: state.exportsStatus, summary: state.exportsSummary, consentPending: downloadConsentGate.pending, latest: state.exportHistory[0] ?? null },
     project: { name: state.project.name, isDirty: state.project.isDirty, status: state.projectStatus, summary: state.projectSummary,
       activeKeycapId: state.project.activeKeycapId,
       keycaps: state.project.keycaps.map((entry) => ({ id: entry.id, name: entry.name, shapeProfile: entry.params.shapeProfile, displayOrder: entry.displayOrder })),
@@ -11326,13 +11443,16 @@ const webMcpCommands = {
     flushPendingActiveProjectKeycapSync();
     if (format === "project-zip") {
       const result = await saveProject({ signal });
-      if (!result) throw new WebMcpError("export_failed", state.projectSummary);
+      signal?.throwIfAborted();
+      if (!result) throw new WebMcpError(state.projectStatus === "cancelled" ? "consent_declined" : "export_failed", state.projectSummary);
       return { ...result, state: getWebMcpState() };
     }
     const activeEntry = state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId);
     const editorDataPayload = format === "editor-data" && activeEntry ? cloneJsonValue(getProjectEntryEditorDataPayload(activeEntry)) : null;
     const result = await executeExport(format, { params: { ...state.keycapParams }, editorDataPayload, signal });
-    if (!result) throw new WebMcpError("export_failed", state.exportHistory[0]?.notes ?? state.exportsSummary);
+    signal?.throwIfAborted();
+    if (!result) throw new WebMcpError(state.exportsStatus === "cancelled" ? "consent_declined" : "export_failed",
+      state.exportsStatus === "cancelled" ? state.exportsSummary : state.exportHistory[0]?.notes ?? state.exportsSummary);
     return { ...result, state: getWebMcpState() };
   },
 };

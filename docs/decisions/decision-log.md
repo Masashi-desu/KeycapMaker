@@ -448,3 +448,12 @@
   編集用と印刷用のファイルをキーキャップ単位で扱いやすくし、全体配置も1つのZIPで保管できるようにするため。manifestの相対パスで旧構成と新構成を読み込めるので、project schema 1を維持し、再保存時に新構成へ揃える
 - 現行契約:
   [プロジェクトデータ仕様](../architecture/project-data.md)、[WebMCP操作契約](../architecture/webmcp.md)
+
+## 2026-10-13 - ダウンロードごとにライセンス確認と同意を求める
+
+- 結論:
+  全export形式にUIとWebMCP共通の同意画面を設け、フォント・アイコン・知的財産の利用条件確認を求める。資源一覧は生成条件を満たす印字オブジェクトだけに絞り、無効な印字欄や印字を含まないSTEP/STLの資源を含めない。既存のasset registryと帰属実文を再利用し、同意checkboxは保存ごとに未選択へ戻す。生成前にsnapshotと同意を固定し、最終downloadは一回限りのgrantを消費する
+- 理由:
+  ファイルを利用するユーザーが出力対象の条件を確認する機会を保証するため。toolで同意を代行せず、従来の自動downloadから変わるためWebMCP契約をversion 3へ更新する
+- 現行契約:
+  [SCAD / export契約](../architecture/scad-and-export.md)、[WebMCP操作契約](../architecture/webmcp.md#ダウンロードの同意)

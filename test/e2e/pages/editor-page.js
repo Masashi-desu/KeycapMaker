@@ -2,6 +2,7 @@ import { ProjectPanel } from "./project-panel.js";
 import { KeyboardPanel } from "./keyboard-panel.js";
 import { ImportBindingNotice } from "./import-binding-notice.js";
 import { readContrastSamples } from "./color-samples.js";
+import { DownloadConsent } from "./download-consent.js";
 
 export class EditorPage {
   constructor(page) {
@@ -16,6 +17,7 @@ export class EditorPage {
     this.project = new ProjectPanel(page);
     this.keyboard = new KeyboardPanel(page);
     this.importReport = new ImportBindingNotice(page);
+    this.consent = new DownloadConsent(page);
     this.themeOptions = {
       light: page.locator('[data-theme-option="light"]'),
       dark: page.locator('[data-theme-option="dark"]'),
@@ -67,4 +69,6 @@ export class EditorPage {
   async readPreviewFrame() {
     return this.previewCanvas.evaluate((canvas) => ({ width: canvas.width, height: canvas.height, frame: canvas.dataset.previewFrame }));
   }
+
+  async resize(width, height) { await this.page.setViewportSize({ width, height }); }
 }

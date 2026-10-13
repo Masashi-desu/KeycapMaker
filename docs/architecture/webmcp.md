@@ -1,6 +1,6 @@
 # WebMCP 操作契約
 
-KeycapMakerはブラウザ内のアプリ操作をWebMCPのimperative APIで公開します。サーバー、MCP用バックエンド、追加SDK、外部へのstate送信は導入しません。契約versionは `2` です。
+KeycapMakerはブラウザ内のアプリ操作をWebMCPのimperative APIで公開します。サーバー、MCP用バックエンド、追加SDK、外部へのstate送信は導入しません。契約versionは `3` です。version 3では、全exportで画面上のライセンス確認とユーザーの同意を待ちます。version 2の自動downloadから変更するためversionを更新し、入力schemaは維持します。
 
 ## 責務と登録
 
@@ -30,7 +30,7 @@ KeycapMakerはブラウザ内のアプリ操作をWebMCPのimperative APIで公�
 | `keycap_batch` | `keycaps`（1〜256個）と/または `assignments`（1〜4096個）。新規キーは `ref` と `params` または `payload`、任意の `baseKeycapId`。割り当ては `slotId` と `keycapRef` または既存 `keycapId`、両方省略で解除。`created` のref / keycapId対応、assignedCount / clearedCount、stateを返す |
 | `keycap_set_view` | `tab`: `design` / `project` / `keyboard`、または `previewMode`: `keycap` / `keyboard`。boardがある場合、designへの移動でkeycap、keyboardへの移動でkeyboard previewを選ぶ。同じtabの再指定とprojectへの移動は現在表示を保持し、明示したpreviewModeを優先する。keyboard previewにはboardが必要 |
 | `keycap_preview` | 任意の `mode`: `keycap` / `keyboard`（省略時は現在表示）、`timeoutMs`: 100〜300000（既定120000）。モデル生成とcanvasフレームの描画完了を待ち、geometryとdisplayを含むstateを返す |
-| `keycap_export` | `format`: `editor-data` / `3mf` / `keyboard-3mf` / `step` / `stl` / `project-zip`。生成とdownload開始後、filename、byteLength、stateを返す。keyboard-3mfは配置済みキーを出力し、keyCount / groupCount / unknownCountも返す。project-zipはUIと同じキーキャップ別ディレクトリと、配置済みキーがある場合のcommon/keyboard.3mfを格納する |
+| `keycap_export` | `format`: `editor-data` / `3mf` / `keyboard-3mf` / `step` / `stl` / `project-zip`。画面でユーザーが利用条件を確認し、チェックして同意するまで待つ。生成とdownload開始後、filename、byteLength、stateを返す。拒否はconsent_declined。keyboard-3mfは配置済みキーを出力し、keyCount / groupCount / unknownCountも返す。project-zipはUIと同じキーキャップ別ディレクトリと、配置済みキーがある場合のcommon/keyboard.3mfを格納する |
 
 shape固有フィールド、font style、iconはcatalogから現在の値と選択肢を確認して指定します。field catalogはkey、typeを含むschema、label、説明、単位、value、UIのvisible/disabledを返します。表示条件によって隠れた設定も事前編集できます。UIのu補助入力と基準幅のブラウザ設定はmmによる編集と重なるブラウザ設定なのでtoolに含めず、長さはmm、角度はdegreeで指定します。
 
@@ -42,7 +42,7 @@ shape固有フィールド、font style、iconはcatalogから現在の値と選
 
 登録時のparameter schemaは全shapeのUIフィールド定義を集約して生成します。shapeやfontで変わる制約・enumを固定しません。実行時はdraftに対して現在のフィールド制約と選択肢を検証します。shape、主要寸法、制御値を依存値より先に適用します。未知のkey、型違い、非有限number、長すぎるtext、不正な色、存在しないshape/font/icon/IDは失敗を返します。部分編集は全項目をdraft上で処理し、成功時だけstateを置換するので途中で失敗しても一部だけ反映しません。既存の派生値・寸法正規化は保持し、結果のobservedParamsを実際の適用値として扱います。
 
-成功は `{ ok: true, contractVersion: 2, data }`、失敗は `{ ok: false, contractVersion: 2, error: { code, message } }` です。主なcodeは `invalid_input`、`not_found`、`busy`、`preview_failed`、`preview_superseded`、`preview_timeout`、`export_failed`、`operation_failed`。DOM要素、関数、mesh本体、画像data URLを返しません。ユーザー名やimport内の文面はdataとして扱います。読み取りtoolに `readOnlyHint`、ユーザー由来の結果に `untrustedContentHint`、削除・置換・downloadを含むtoolに `consequentialHint` を付けます。
+成功は `{ ok: true, contractVersion: 3, data }`、失敗は `{ ok: false, contractVersion: 3, error: { code, message } }` です。主なcodeは `invalid_input`、`not_found`、`busy`、`preview_failed`、`preview_superseded`、`preview_timeout`、`export_failed`、`consent_declined`、`operation_failed`。DOM要素、関数、mesh本体、画像data URLを返しません。ユーザー名やimport内の文面はdataとして扱います。読み取りtoolに `readOnlyHint`、ユーザー由来の結果に `untrustedContentHint`、削除・置換・downloadを含むtoolに `consequentialHint` を付けます。
 
 ## 観測データと再入力データ
 
@@ -56,9 +56,17 @@ batchは全入力の型、shape依存の制約、参照、配置先を検証し�
 
 paramsは既定shapeの初期値への部分更新です。shapeProfileを指定するとUIと同じresetを適用します。baseKeycapIdがあれば既存デザインを複製して更新します。payloadとbaseKeycapIdは併用できません。新規キーを複数slotから同じkeycapRefで参照でき、割り当てだけのbatchも使えます。単独UI割り当てと共通のplacement処理で既存XY / 高さ / 回転補正を保持し、active keycapを変えません。新規キーのサムネイルは既存placeholderを使い、モデル生成はプレビュー時に行います。`created` は入力refと新しい永続IDの対応、assignedCount / clearedCountは今回の変更件数です。
 
+## ダウンロードの同意
+
+全形式でUIとtool共通の `DownloadConsentGate` を通り、ファイルの生成前に同意画面を開きます。選択されたフォント・アイコンのライセンス名、配布元、既存registryとi18nの帰属実文を表示し、文字・図柄・ロゴ・デザインなどの知的財産の利用条件に従うことを案内します。マイフォントや未読み込みfontは条件を推測せず、提供元の利用条件確認を促します。印字オブジェクトの生成と同じ有効化・内容判定を使い、無効な印字欄や空白だけの文字からフォント・アイコンを収集しません。単体はそのキー、配置3MFは割り当てたキー、ZIPは全キーの使用資源を重複排除して表示します。STEP/STLには印字を含まないため一覧に資源を表示せず、対象がない旨と知的財産の案内・同意確認を表示します。JSON・ZIPが保持する無効な印字設定自体は変更しません。
+
+同意checkboxは毎回未選択です。確認後の「同意してダウンロード」で、そのファイルのdownloadに一度だけ使えるgrantを発行します。キャンセル・閉じる・Escでは生成もdownloadも行わず、状態はcancelled、toolはconsent_declinedを返します。`get_state.export.consentPending` で画面の待機を観測でき、待機中の変更toolはbusyです。AbortSignalで待機を終了し、画面と排他を解除します。
+
+同意を代行するtoolや入力parameterは公開しません。ユーザー自身がライセンス・利用条件を確認する操作なので画面専用とし、エージェントはexportを開始してユーザーの操作を待ちます。背景をinertにするnative dialogでTabのfocusを閉じ込め、Escはこの画面だけを閉じます。アプリの再描画でも確認画面とチェック状態を維持します。同意は保存・再利用せず、次のファイルで改めて求めます。
+
 ## 非同期処理と表示完了
 
-toolによる変更操作は排他で、先行toolやUIのexport / project保存 / keyboard読込が実行中なら `busy` を返します。get_state / get_input / catalogは実行中も利用できます。UIでの通常編集は継続できます。単体exportは呼び出し時のparams、配置全体3MFとproject ZIPは開始時のproject snapshotを使い、保存中の追加編集はdirty状態を維持します。
+toolによる変更操作は排他で、先行toolやUIのexport / project保存 / keyboard読込が実行中なら `busy` を返します。get_state / get_input / catalogは実行中も利用できます。同意画面を閉じた後の生成中はUIでの通常編集を継続できます。単体exportは呼び出し時のparams、配置全体3MFとproject ZIPは開始時のproject snapshotを使い、保存中の追加編集はdirty状態を維持します。
 
 `preview.geometry` はactive keycapの生成状態で、isCurrentは現在の対象・paramsと生成snapshotの一致を示します。`preview.display` は実際の表示要求の状態で、status（idle / running / ready / empty / error / stale）、requestId、mode、rendered、keyCount、assignedCount、renderedAssignedCount、modelCount、partCount、errorsを返します。keyboard表示では全割り当てのモデルをsnapshotから生成し、共有デザインは一度だけ生成します。初回requestAnimationFrameでThree.jsがcanvasへ描画した後だけreadyにし、対応するDOMのpreview stageにもrequestId / status / renderedとaria-busyを反映します。OSの画面提示やGPUの物理的な走査完了は保証しません。
 

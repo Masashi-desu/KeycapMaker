@@ -1,4 +1,5 @@
 import { ExportDialog } from "./export-dialog.js";
+import { DownloadConsent } from "./download-consent.js";
 
 export class ProjectPanel {
   constructor(page) {
@@ -11,6 +12,7 @@ export class ProjectPanel {
     this.saveButton = page.locator('[data-project-save]');
     this.status = page.locator('.project-status');
     this.previewStage = page.locator('[data-preview-stage]');
+    this.consent = new DownloadConsent(page);
   }
 
   entry(name) {
@@ -47,6 +49,7 @@ export class ProjectPanel {
   async save() {
     const pendingDownload = this.page.waitForEvent("download");
     await this.saveButton.click();
+    await this.consent.accept();
     const download = await pendingDownload;
     await this.saveButton.waitFor({ state: "visible" });
     return download;

@@ -1,3 +1,5 @@
+import { DownloadConsent } from "../pages/download-consent.js";
+
 // Capture only registration. Tool execution still uses the real app commands.
 // This is a mock producer API, not a native WebMCP compatibility test.
 export async function installWebMcpRegistration(page) {
@@ -28,7 +30,26 @@ export class WebMcpClient {
 
   async executeWithDownload(name, input = {}) {
     const pendingDownload = this.page.waitForEvent("download");
-    const result = await this.execute(name, input);
+    const pendingResult = this.execute(name, input);
+    await new DownloadConsent(this.page).accept();
+    const result = await pendingResult;
     return { result, download: await pendingDownload };
+  }
+
+  async startAbortableExport(format) {
+    await this.page.waitForFunction(() => globalThis.__keycapTestTools?.has('keycap_export'));
+    await this.page.evaluate((format) => {
+      globalThis.__keycapTestExportController = new AbortController();
+      globalThis.__keycapTestExportResult = null;
+      globalThis.__keycapTestTools.get('keycap_export').execute({ format }, { signal: globalThis.__keycapTestExportController.signal })
+        .then((result) => { globalThis.__keycapTestExportResult = result; },
+          (error) => { globalThis.__keycapTestExportResult = { aborted: true, name: error.name }; });
+    }, format);
+  }
+
+  async abortExport() {
+    await this.page.evaluate(() => globalThis.__keycapTestExportController.abort());
+    await this.page.waitForFunction(() => globalThis.__keycapTestExportResult !== null);
+    return this.page.evaluate(() => globalThis.__keycapTestExportResult);
   }
 }

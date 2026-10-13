@@ -1,6 +1,6 @@
 // WebMCP producer API, reviewed against the 2026-09-30 community draft.
 // Keep browser compatibility here; application commands never depend on this API.
-export const WEBMCP_CONTRACT_VERSION = 2;
+export const WEBMCP_CONTRACT_VERSION = 3;
 
 const objectSchema = (properties = {}, required = []) => ({
   type: "object", properties, required, additionalProperties: false,
@@ -136,7 +136,7 @@ export function createKeycapWebMcpTools(commands) {
       mode: { type: "string", enum: ["keycap", "keyboard"] },
       timeoutMs: { type: "integer", minimum: 100, maximum: 300000 },
     }), (input, options) => commands.preview(input, options), { untrusted: true }),
-    tool("export", "Generate and download the active keycap as editor-data JSON, 3MF, STEP or STL; keyboard-3mf exports assigned keycaps in layout positions as independent structural groups, with unknown slots as individual objects; project-zip downloads the root KeycapMaker.json, JSON/preview/3MF together in keycaps/<name>/ (duplicate names use suffixed directories), and common/keyboard.3mf when slots are assigned. Keyboard export uses a project snapshot, preserves part colors and does not fit a printer bed. Waits for generation and reports failure. STEP/STL contain a single material shape without legends/colors. Downloads remain in the browser; this tool does not return local filesystem paths.", objectSchema({
+    tool("export", "Request an export and wait for the user to review font/icon licenses for renderable legend objects and intellectual property terms in the page overlay, check the agreement and choose Agree and download. Consent is required for every file and cannot be supplied by tool input; cancellation returns consent_declined. No file is generated or downloaded before consent. Generate the active keycap as editor-data JSON, 3MF, STEP or STL; keyboard-3mf exports assigned keycaps in layout positions as independent structural groups, with unknown slots as individual objects; project-zip downloads the root KeycapMaker.json, JSON/preview/3MF together in keycaps/<name>/ (duplicate names use suffixed directories), and common/keyboard.3mf when slots are assigned. Uses a snapshot taken before consent; preserves part colors and does not fit a printer bed. Waits for generation and reports failure. STEP/STL contain a single material shape without legends/colors. Downloads remain in the browser; this tool does not return local filesystem paths.", objectSchema({
       format: { type: "string", enum: ["editor-data", "3mf", "keyboard-3mf", "step", "stl", "project-zip"] },
     }, ["format"]), ({ format }, options) => commands.export(format, options), { untrusted: true, consequential: true }),
   ];

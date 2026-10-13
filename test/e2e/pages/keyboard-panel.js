@@ -1,4 +1,5 @@
 import { readContrastSamples } from "./color-samples.js";
+import { DownloadConsent } from "./download-consent.js";
 
 export class KeyboardPanel {
   constructor(page) {
@@ -24,6 +25,7 @@ export class KeyboardPanel {
     this.dangerZone = page.locator('[data-keyboard-danger-zone]');
     this.dangerZoneToggle = this.dangerZone.locator('summary');
     this.removeButton = this.dangerZone.locator('[data-keyboard-remove]');
+    this.consent = new DownloadConsent(page);
   }
 
   async importFiles(files, selectedPath) {
@@ -71,6 +73,7 @@ export class KeyboardPanel {
   async export3mf() {
     const download = this.page.waitForEvent("download");
     await this.exportButton.click();
+    await this.consent.accept();
     return download;
   }
 

@@ -38,7 +38,7 @@ test("再入力用データと一括作成・割り当てがUIへ同期し、全
   expect(invalidPayload).toMatchObject({ ok: false, error: { code: "invalid_input" } });
   expect((await webMcp.execute("get_state")).data.project).toEqual(replay.data.project);
   const batch = await webMcp.execute("batch", batchInput);
-  expect(batch).toMatchObject({ ok: true, contractVersion: 2, data: { assignedCount: 4, clearedCount: 0 } });
+  expect(batch).toMatchObject({ ok: true, contractVersion: 3, data: { assignedCount: 4, clearedCount: 0 } });
   const { created, state } = batch.data;
   expect(created).toHaveLength(3);
   expect(state.project.activeKeycapId).toBe(before.project.activeKeycapId);
