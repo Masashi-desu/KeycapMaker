@@ -147,7 +147,8 @@ function validateThirdPartyInventory(repoRoot, overviewFile, errors) {
     }
   }
 
-  const sourceFiles = walkFiles(path.join(repoRoot, "src"), (file) => /\.(?:js|mjs)$/u.test(file));
+  const sourceFiles = ["src", "scripts"].flatMap((directory) =>
+    walkFiles(path.join(repoRoot, directory), (file) => /\.(?:js|mjs)$/u.test(file)));
   const sourceText = sourceFiles.map((file) => fs.readFileSync(file, "utf8")).join("\n");
   const jsDelivrPackages = new Map();
   for (const match of sourceText.matchAll(/cdn\.jsdelivr\.net\/npm\/((?:@[^/@]+\/)?[^/@]+)@([^/"']+)/gu)) {

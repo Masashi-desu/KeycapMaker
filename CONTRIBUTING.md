@@ -23,6 +23,7 @@ npm run preview
 - `npm test`: 上記文書・font検証を含むNode test suiteを実行する
 - `npm run test:browser`: Page Object Modelを使う主要UI flowとWebMCP同期のPlaywright testを、専用Vite serverと隔離されたheadless Chromiumで実行する。初回は `npx playwright install chromium` が必要。構成と追加方針は [自動テスト](docs/guide/automated-testing.md) を参照する
 - `npm run build`: ViteでGitHub Pages向けの `dist/` を生成する
+- `npm run generate:og`: CDNから版・SHA-256固定のManropeを取得し、headless Chromiumで公開用Open Graph PNGを再生成する。初回のbrowser導入と編集箇所は [Open Graph画像](docs/guide/open-graph.md) を参照する。通常のbuildでは再生成やCDN取得を行わない
 
 `npm run lint:workflows` にはactionlint 1.7.12を使います。CIはversion固定の公式containerを使い、ローカルでは同versionのbinaryをPATHへ置きます。
 

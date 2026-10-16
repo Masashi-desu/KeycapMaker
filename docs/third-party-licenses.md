@@ -39,6 +39,17 @@
 | `Noto Sans KR` | [Google Fonts](https://fonts.google.com/noto/specimen/Noto+Sans+KR) | 韓国語UI | [SIL Open Font License 1.1](https://github.com/google/fonts/blob/main/ofl/notosanskr/OFL.txt) |
 | `Noto Sans SC` | [Google Fonts](https://fonts.google.com/noto/specimen/Noto+Sans+SC) | 簡体字中国語UI | [SIL Open Font License 1.1](https://github.com/google/fonts/blob/main/ofl/notosanssc/OFL.txt) |
 
+## Open Graph画像の生成用フォント
+
+[Manrope](https://fontsource.org/fonts/manrope/about) は [generate-open-graph.mjs](../scripts/generate-open-graph.mjs) の画像生成専用フォントです。`@fontsource-variable/manrope` の `5.3.0` をjsDelivrから生成時に取得し、元のWOFF2を変換・改変せずheadless Chromiumで文字を描画します。font binaryはリポジトリ・公開物へ同梱せず、公開PNGへも埋め込みません。
+
+- upstream: [Manrope Project](https://github.com/sharanda/manrope)
+- 取得URL: [manrope-latin-wght-normal.woff2](https://cdn.jsdelivr.net/npm/@fontsource-variable/manrope@5.3.0/files/manrope-latin-wght-normal.woff2)
+- SHA-256: `a30ddcd349703aff7464c34bef3fffdff405ee50c113440d7c8693c02d210972`
+- copyright: Copyright 2019 The Manrope Project Authors
+- license: SIL OFL 1.1。配布packageの [OFL本文](../scripts/licenses/Manrope-OFL.txt) を変更せず保存する。画像へ描画した文字はfont softwareの再配布ではなく、画像やアプリUIへの帰属表示は不要
+- 確認日: 2026-10-16
+
 ## 同梱legend font
 
 すべて `public/fonts/` から配信し、preview/exportのOpenSCAD `text()` とブラウザ内計測に使います。正確な取得revision、font metadata、SHA-256は各出典メモに記録しています。
@@ -83,8 +94,8 @@
 | [`paper`](https://www.npmjs.com/package/paper/v/0.12.18) | `0.12.18` | runtime direct / SVG path conversion | [MIT](https://opensource.org/license/mit) |
 | [`picocolors`](https://www.npmjs.com/package/picocolors/v/1.1.1) | `1.1.1` | build transitive | [ISC](https://spdx.org/licenses/ISC.html) |
 | [`picomatch`](https://www.npmjs.com/package/picomatch/v/4.0.4) | `4.0.4` | build transitive / glob matching | [MIT](https://opensource.org/license/mit) |
-| [`playwright`](https://www.npmjs.com/package/playwright/v/1.63.0) | `1.63.0` | test transitive / browser automation | [Apache-2.0](https://github.com/microsoft/playwright/blob/v1.63.0/LICENSE) |
-| [`playwright-core`](https://www.npmjs.com/package/playwright-core/v/1.63.0) | `1.63.0` | test transitive / browser protocol client | [Apache-2.0](https://github.com/microsoft/playwright/blob/v1.63.0/LICENSE) |
+| [`playwright`](https://www.npmjs.com/package/playwright/v/1.63.0) | `1.63.0` | test / image generation direct / browser automation | [Apache-2.0](https://github.com/microsoft/playwright/blob/v1.63.0/LICENSE) |
+| [`playwright-core`](https://www.npmjs.com/package/playwright-core/v/1.63.0) | `1.63.0` | test / image generation transitive / browser protocol client | [Apache-2.0](https://github.com/microsoft/playwright/blob/v1.63.0/LICENSE) |
 | [`postcss`](https://www.npmjs.com/package/postcss/v/8.5.10) | `8.5.10` | build transitive / CSS processing | [MIT](https://opensource.org/license/mit) |
 | [`remixicon`](https://www.npmjs.com/package/remixicon/v/4.9.1) | `4.9.1` | runtime direct / icon fallback | [package metadata: Apache-2.0; distributed notice: Remix Icon License v1.0](../public/vendor/remix-icon/LICENSE) |
 | [`rollup`](https://www.npmjs.com/package/rollup/v/4.60.1) | `4.60.1` | build transitive / bundling | [MIT](https://opensource.org/license/mit) |

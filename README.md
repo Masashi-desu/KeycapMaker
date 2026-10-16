@@ -1,6 +1,6 @@
 # KeycapMaker
 
-![KeycapMaker Open Graph card](public/og-card.png)
+![KeycapMaker — Let's make custom keycaps.](public/og-image.png)
 
 KeycapMakerは、キーキャップの形状、印字、homing、stemをブラウザで調整し、製造・編集用データを書き出すクライアントサイドWebアプリです。
 
@@ -19,6 +19,7 @@ KeycapMakerは、キーキャップの形状、印字、homing、stemをブラ�
 ## 開発・保守
 
 - [開発・貢献規約](CONTRIBUTING.md)
+- [Open Graph画像の再生成](docs/guide/open-graph.md)
 - [文書案内](docs/README.md)
 - [アプリ全体像](docs/architecture/overview.md)
 - [SCAD / export契約](docs/architecture/scad-and-export.md)

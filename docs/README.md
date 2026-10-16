@@ -22,6 +22,7 @@
 4. [CONTRIBUTING.md](../CONTRIBUTING.md)
 5. [guide/manual-verification.md](guide/manual-verification.md)
    自動テストの構成とPage Objectは [guide/automated-testing.md](guide/automated-testing.md) を参照する。
+   Open Graph画像の編集・再生成は [guide/open-graph.md](guide/open-graph.md) を参照する。
 6. [third-party-licenses.md](third-party-licenses.md)
 7. [decisions/decision-log.md](decisions/decision-log.md)
 8. 必要に応じて `backlog/` と `design/`

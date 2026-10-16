@@ -4,6 +4,8 @@
 
 この文書はbundled legend font固有の受入条件とhuman inventoryを担います。第三者資源全体の正本は [第三者コンポーネントとライセンス](../../docs/third-party-licenses.md)、品質gateと同期規則は [開発・貢献規約](../../CONTRIBUTING.md) を参照してください。
 
+Open Graph画像のManropeは、[生成スクリプト](../../scripts/generate-open-graph.mjs) がCDNから一時取得する生成専用フォントです。font binaryは同梱せず、legend fontの登録対象にも含めません。固定版・SHA-256・OFL本文は [第三者コンポーネントとライセンス](../../docs/third-party-licenses.md#open-graph画像の生成用フォント) に記録します。
+
 ## 軽量取り込みルール
 
 - 同梱する font は、再配布と Web 配信が明確に許可されたものだけにする。
