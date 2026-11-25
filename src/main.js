@@ -383,16 +383,20 @@ function createLegendFieldKeys(paramPrefix, { side = null } = {}) {
   return Object.freeze(keys.map((suffix) => legendParamKey(paramPrefix, suffix)));
 }
 
-const LEGEND_CARD_DEFINITIONS = Object.freeze([
+const LEGEND_POSITIONS = Object.freeze([
   ...TOP_LEGEND_CONFIGS.map((config) => ({
-    id: `legend-card-${config.id}`,
+    id: config.id,
+    surface: "top",
+    label: () => t(`legendPositions.${config.id}`),
     title: () => t(config.titleKey),
     enabledFieldKey: legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled),
     isRenderable: (params) => isTopLegendRenderable(config, params),
     fieldKeys: createLegendFieldKeys(config.paramPrefix),
   })),
   ...SIDE_LEGEND_CONFIGS.map((config) => ({
-    id: `legend-card-${config.side}`,
+    id: config.side,
+    surface: "side",
+    label: () => getSideLegendLabel(config.side),
     title: () => t("legendCards.sidewall", { side: getSideLegendLabel(config.side) }),
     enabledFieldKey: legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled),
     isRenderable: (params) => isSideLegendRenderable(config, params),
@@ -1783,7 +1787,7 @@ function getSideLegendLabel(side) {
   return t(`sideLabels.${side}`, {}, side);
 }
 
-function createLegendControlFields({ paramPrefix, side = null, collapseControlled = false }) {
+function createLegendControlFields({ paramPrefix, side = null }) {
   const isSideLegend = side != null;
   const sideLabel = () => getSideLegendLabel(side);
   const enabledKey = legendParamKey(paramPrefix, LEGEND_FIELD_SUFFIXES.enabled);
@@ -1816,30 +1820,13 @@ function createLegendControlFields({ paramPrefix, side = null, collapseControlle
       && isLegendIconContent(params, contentTypeKey)
       && isLegendIconFillAvailable(params[iconNameKey], resolveLegendIconSet(params[iconSetKey])),
   };
-  const enabledDependentFieldKeys = collapseControlled ? [] : [
-    colorKey,
-    contentTypeKey,
-    iconSetKey,
-    iconNameKey,
-    iconFillKey,
-    textKey,
-    fontKey,
-    sizeKey,
-    outlineDeltaKey,
-    heightKey,
-    ...(isSideLegend ? [] : [embedKey]),
-    offsetXKey,
-    offsetYKey,
-  ];
-
   return [
     {
       key: enabledKey,
       label: () => (isSideLegend ? t("fields.sideLegend.enabled.label", sideValues()) : t("fields.legendEnabled.label")),
       hint: () => (isSideLegend ? t("fields.sideLegend.enabled.hint", sideValues()) : t("fields.legendEnabled.hint")),
-      note: collapseControlled ? null : () => t("fields.legendPrintNotice"),
+      note: (params) => params[enabledKey] ? t("fields.legendPrintNotice") : "",
       type: "checkbox",
-      dependentFieldKeys: enabledDependentFieldKeys,
     },
     {
       key: colorKey,
@@ -2614,15 +2601,8 @@ const fieldGroupTemplates = [
     title: () => t("shapeProfiles.custom-shell.fieldGroups.legend.title"),
     description: () => t("shapeProfiles.custom-shell.fieldGroups.legend.description"),
     fields: [
-      ...TOP_LEGEND_CONFIGS.flatMap((config) => createLegendControlFields({
-        paramPrefix: config.paramPrefix,
-        collapseControlled: true,
-      })),
-      ...SIDE_LEGEND_CONFIGS.flatMap((config) => createLegendControlFields({
-        paramPrefix: config.paramPrefix,
-        side: config.side,
-        collapseControlled: true,
-      })),
+      ...TOP_LEGEND_CONFIGS.flatMap(createLegendControlFields),
+      ...SIDE_LEGEND_CONFIGS.flatMap(createLegendControlFields),
     ],
   },
   {
@@ -2763,7 +2743,6 @@ function createFieldGroupCollapseState() {
   const groupIds = keycapEditorProfiles.profiles.flatMap((profile) => (profile.fieldGroups ?? []).map((group) => group.id));
   return {
     ...Object.fromEntries(Array.from(new Set(groupIds)).map((groupId) => [groupId, true])),
-    ...Object.fromEntries(LEGEND_CARD_DEFINITIONS.map((card) => [card.id, true])),
     ...Object.fromEntries(STEM_CARD_DEFINITIONS.map((card) => [card.id, true])),
   };
 }
@@ -2904,6 +2883,7 @@ const state = {
   legendIconPickerQuery: "",
   copiedFontAttributionKey: "",
   copiedIconAttributionKey: "",
+  legendPosition: "center",
   collapsedFieldGroups: createFieldGroupCollapseState(),
   keyUnitMm: readKeyUnitMmPreference(),
   keycapParams: initialKeycapParams,
@@ -4376,13 +4356,7 @@ function renderLegendFieldGroup(group, groupIndex) {
     groupBodyId,
     toggleLabel,
   });
-  const bodyContent = isCollapsed
-    ? ""
-    : `
-        <div class="legend-subcard-list">
-          ${LEGEND_CARD_DEFINITIONS.map((card) => renderLegendSubcard(card, groupFieldByKey)).join("")}
-        </div>
-      `;
+  const bodyContent = isCollapsed ? "" : renderLegendPositionEditor(groupFieldByKey);
 
   return `
     <section class="field-group-card" aria-labelledby="${titleId}" style="view-transition-name: ${groupViewTransitionName};">
@@ -4445,53 +4419,40 @@ function renderStemSubcard(card, groupFieldByKey) {
   `;
 }
 
-function renderLegendSubcard(card, groupFieldByKey) {
-  const cardFields = card.fieldKeys.map((fieldKey) => groupFieldByKey.get(fieldKey)).filter(Boolean);
-  if (cardFields.length === 0) {
-    return "";
-  }
+function renderLegendPositionEditor(groupFieldByKey) {
+  const positions = LEGEND_POSITIONS.filter((position) => groupFieldByKey.has(position.enabledFieldKey));
+  const selected = positions.find((position) => position.id === state.legendPosition) ?? positions[0];
+  if (!selected) return "";
 
-  const cardFieldByKey = new Map(cardFields.map((field) => [field.key, field]));
-  const cardTitle = resolveDynamicCopy(card.title);
-  const cardBodyId = `legend-subcard-body-${card.id}`;
-  const isCollapsed = state.collapsedFieldGroups[card.id] === true;
-  const enabledFieldKey = card.enabledFieldKey;
-  const isLegendEnabled = enabledFieldKey ? Boolean(state.keycapParams[enabledFieldKey]) : true;
-  const toggleLabel = isCollapsed
-    ? t("fieldGroup.expand", { title: cardTitle })
-    : t("fieldGroup.collapse", { title: cardTitle });
-  const cardViewTransitionName = createViewTransitionName("legend-subcard", card.id);
-  const printNotice = isLegendEnabled
-    ? `<p class="field-note">${escapeHtml(t("fields.legendPrintNotice"))}</p>`
-    : "";
-  const bodyContent = isCollapsed
-    ? ""
-    : `
-        ${printNotice}
-        <div class="field-grid">
-          ${renderFieldGridContents(cardFields, cardFieldByKey)}
+  const rows = ["top", "side"].map((surface) => {
+    const options = positions.filter((position) => position.surface === surface);
+    if (!options.length) return "";
+    const surfaceName = t(surface === "top" ? "legendCards.keytop" : "legendPositions.sidewall");
+    return `
+      <div class="legend-position-row" role="group" aria-label="${escapeHtml(surfaceName)}">
+        <span class="legend-position-row__title" aria-hidden="true">${escapeHtml(surfaceName)}</span>
+        <div class="legend-position-segments">
+          ${options.map((position) => `
+            <label class="legend-position-option" title="${escapeHtml(position.title())}">
+              <input type="radio" name="legend-position" value="${position.id}"
+                aria-label="${escapeHtml(position.title())}" aria-controls="legend-position-fields"
+                ${position === selected ? "checked" : ""} />
+              ${renderUiIcon(`legend-${position.id}`)}
+              <span>${escapeHtml(position.label())}</span>
+            </label>
+          `).join("")}
         </div>
-      `;
-
+      </div>
+    `;
+  }).join("");
+  const fields = selected.fieldKeys.map((key) => groupFieldByKey.get(key)).filter(Boolean);
   return `
-    <section class="legend-subcard" style="view-transition-name: ${cardViewTransitionName};">
-      <div class="legend-subcard__header">
-        <h4>${escapeHtml(cardTitle)}</h4>
-        <button
-          class="field-group-toggle"
-          type="button"
-          data-field-group-toggle="${card.id}"
-          aria-expanded="${isCollapsed ? "false" : "true"}"
-          aria-controls="${cardBodyId}"
-          aria-label="${escapeHtml(toggleLabel)}"
-        >
-          ${renderUiIcon("chevron", "field-group-toggle__icon")}
-        </button>
-      </div>
-      <div class="legend-subcard__body" id="${cardBodyId}" ${isCollapsed ? "hidden" : ""}>
-        ${bodyContent}
-      </div>
-    </section>
+    <div class="legend-position-switch" role="radiogroup" aria-label="${escapeHtml(t("legendPositions.label"))}">
+      ${rows}
+    </div>
+    <div class="field-grid" id="legend-position-fields" role="group" aria-label="${escapeHtml(selected.title())}">
+      ${renderFieldGridContents(fields, groupFieldByKey)}
+    </div>
   `;
 }
 
@@ -5608,6 +5569,7 @@ function renderField(field, options = {}) {
         <span class="field-hint">${fieldHint}</span>
       </span>
     `;
+    const noteMarkup = fieldNote ? `<p class="field-note">${escapeHtml(fieldNote)}</p>` : "";
     const checkboxControl = `
       <label class="checkbox-pill checkbox-toggle">
         <input class="checkbox-toggle__input" type="checkbox" data-field="${field.key}" aria-label="${escapeHtml(checkboxAriaLabel)}" ${value ? "checked" : ""} />
@@ -5622,7 +5584,7 @@ function renderField(field, options = {}) {
           ${leadingIcon}
           ${checkboxCopy}
           ${checkboxControl}
-          ${fieldNote ? `<p class="field-note">${escapeHtml(fieldNote)}</p>` : ""}
+          ${noteMarkup}
           ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
         </div>
       `;
@@ -5633,6 +5595,7 @@ function renderField(field, options = {}) {
         ${leadingIcon}
         ${checkboxCopy}
         ${checkboxControl}
+        ${noteMarkup}
       </div>
     `;
   }
@@ -6749,6 +6712,18 @@ function handleInspectorCardWheel(event) {
 }
 
 function handleInspectorCardChange(event) {
+  const position = getClosestFromEventTarget(event, 'input[name="legend-position"]');
+  if (position?.checked) {
+    state.legendPosition = position.value;
+    state.legendFontPickerFieldKey = "";
+    state.legendFontSourceEditorFieldKey = "";
+    state.legendIconPickerFieldKey = "";
+    state.isLanguageMenuOpen = false;
+    render();
+    app.querySelector('input[name="legend-position"]:checked')?.focus({ preventScroll: true });
+    return;
+  }
+
   if (handleKeyboardChange(event)) return;
   const userFontInput = getClosestFromEventTarget(event, "[data-user-font-file]");
   if (userFontInput) {
@@ -6769,8 +6744,11 @@ function handleInspectorCardChange(event) {
 
   if (input.type === "checkbox") {
     syncCheckboxToggleDom(input);
-    scheduleCheckboxFieldChange(input);
-    return;
+    // A position switch can immediately unmount these controls. Commit before switching.
+    if (!input.closest("#legend-position-fields")) {
+      scheduleCheckboxFieldChange(input);
+      return;
+    }
   }
 
   handleFieldChange({ currentTarget: input });
@@ -6928,11 +6906,6 @@ function getFieldGroupToggleTitle(groupId) {
   });
   if (activeGroup) {
     return activeGroup.title;
-  }
-
-  const legendCard = LEGEND_CARD_DEFINITIONS.find((card) => card.id === groupId);
-  if (legendCard) {
-    return resolveDynamicCopy(legendCard.title);
   }
 
   const stemCard = STEM_CARD_DEFINITIONS.find((card) => card.id === groupId);
@@ -7872,8 +7845,8 @@ function removeUserLegendFontAndFallback(fontKey) {
     return;
   }
 
-  const allFontFieldKeys = LEGEND_CARD_DEFINITIONS
-    .flatMap((card) => card.fieldKeys)
+  const allFontFieldKeys = LEGEND_POSITIONS
+    .flatMap((position) => position.fieldKeys)
     .filter((fieldKey) => fieldKey.endsWith(LEGEND_FIELD_SUFFIXES.fontKey));
   const didUseRemovedFont = allFontFieldKeys.some((fieldKey) => state.keycapParams[fieldKey] === font.key);
   if (didUseRemovedFont) {
@@ -8064,6 +8037,8 @@ function handleLegendFontPickerSegmentClick(button) {
 }
 
 function handleWindowPointerDown(event) {
+  // Changing position dismisses pickers in the change handler. Keep the radio mounted until then.
+  if (getClosestFromEventTarget(event, '.legend-position-option')?.querySelector("input")?.checked === false) return;
   let shouldRender = false;
 
   if (
@@ -8805,11 +8780,11 @@ function getDownloadResourceSourceUrl(asset) {
 }
 
 function confirmDownloadConsent(filename, paramsList, options) {
-  const legendFields = LEGEND_CARD_DEFINITIONS.map((card) => ({
-    isRenderable: card.isRenderable,
-    font: card.fieldKeys.find((key) => key.endsWith(LEGEND_FIELD_SUFFIXES.fontKey)),
-    contentType: card.fieldKeys.find((key) => key.endsWith(LEGEND_FIELD_SUFFIXES.contentType)),
-    iconSet: card.fieldKeys.find((key) => key.endsWith(LEGEND_FIELD_SUFFIXES.iconSet)),
+  const legendFields = LEGEND_POSITIONS.map((position) => ({
+    isRenderable: position.isRenderable,
+    font: position.fieldKeys.find((key) => key.endsWith(LEGEND_FIELD_SUFFIXES.fontKey)),
+    contentType: position.fieldKeys.find((key) => key.endsWith(LEGEND_FIELD_SUFFIXES.contentType)),
+    iconSet: position.fieldKeys.find((key) => key.endsWith(LEGEND_FIELD_SUFFIXES.iconSet)),
   }));
   const resources = collectDownloadResources(paramsList, legendFields, {
     resolveFont: resolveLegendFontConfig, resolveIconSet: getLegendIconSetMeta,

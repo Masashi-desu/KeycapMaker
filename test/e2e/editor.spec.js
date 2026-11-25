@@ -119,3 +119,42 @@ test("JSON読み込みレポートは両テーマで読め、開閉と削除の�
   await editor.importReport.deleteParam();
   await expect(editor.importReport.root).toBeHidden();
 });
+
+test("印字位置を切り替えると選んだ設定だけを表示し、他の位置の印字も保持する", async ({ editor, webMcp }) => {
+  await editor.resize(483, 505);
+  await editor.open();
+  await editor.openLegends();
+  await expect(editor.legendPosition("中央の印字")).toBeChecked();
+  await editor.editLegendText("legendText", "Home");
+  const before = await webMcp.execute("get_state");
+  const positions = [
+    ["左上の印字", "topLegendLeftTop"], ["右上の印字", "topLegendRightTop"],
+    ["左下の印字", "topLegendLeftBottom"], ["右下の印字", "topLegendRightBottom"],
+    ["前面サイドウォール", "sideLegendFront"], ["背面サイドウォール", "sideLegendBack"],
+    ["左側サイドウォール", "sideLegendLeft"], ["右側サイドウォール", "sideLegendRight"],
+  ];
+  for (const [label, prefix] of positions) {
+    await editor.selectLegendPosition(label);
+    await expect(editor.legendPosition(label)).toBeChecked();
+    await expect(editor.legendFields).toHaveAccessibleName(label);
+    await expect(editor.legendField(`${prefix}Enabled`)).toBeVisible();
+    await expect(editor.legendField("legendEnabled")).toHaveCount(0);
+  }
+  const selected = await webMcp.execute("get_state");
+  expect(selected.data.observedParams).toEqual(before.data.observedParams);
+  expect(selected.data.project).toEqual(before.data.project);
+
+  await editor.selectLegendPosition("前面サイドウォール");
+  await editor.enableLegend("sideLegendFrontEnabled");
+  await editor.editLegendText("sideLegendFrontText", "Fn");
+  await editor.selectLegendPosition("中央の印字");
+  await expect(editor.legendField("legendText")).toHaveValue("Home");
+  await editor.nextLegendPosition("中央の印字");
+  await expect(editor.legendPosition("左上の印字")).toBeFocused();
+  await expect(editor.legendPosition("左上の印字")).toBeChecked();
+  const updated = await webMcp.execute("update", { params: { topLegendLeftTopEnabled: true, topLegendLeftTopText: "1" } });
+  expect(updated.data.observedParams).toMatchObject({ legendText: "Home", sideLegendFrontText: "Fn" });
+  await expect(editor.legendField("topLegendLeftTopText")).toHaveValue("1");
+  await editor.selectLegendPosition("前面サイドウォール");
+  await expect(editor.legendField("sideLegendFrontText")).toHaveValue("Fn");
+});

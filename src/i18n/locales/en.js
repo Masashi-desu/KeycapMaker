@@ -223,6 +223,15 @@ const en = Object.freeze({
     expand: "Expand {title}",
     collapse: "Collapse {title}",
   },
+  legendPositions: {
+    label: "Legend position",
+    sidewall: "Sidewall",
+    center: "Center",
+    "left-top": "Upper left",
+    "right-top": "Upper right",
+    "left-bottom": "Lower left",
+    "right-bottom": "Lower right",
+  },
   legendCards: {
     center: "Center Legend",
     rightTop: "Upper Right Legend",

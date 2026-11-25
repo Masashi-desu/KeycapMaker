@@ -223,6 +223,15 @@ const zh = Object.freeze({
     expand: "展开{title}",
     collapse: "折叠{title}",
   },
+  legendPositions: {
+    label: "字符位置",
+    sidewall: "侧壁",
+    center: "中央",
+    "left-top": "左上",
+    "right-top": "右上",
+    "left-bottom": "左下",
+    "right-bottom": "右下",
+  },
   legendCards: {
     center: "中央字符",
     rightTop: "右上字符",

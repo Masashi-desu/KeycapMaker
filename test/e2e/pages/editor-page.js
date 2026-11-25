@@ -11,6 +11,9 @@ export class EditorPage {
     this.width = page.locator('input[type="number"][data-field="keyWidth"]');
     this.nameCardIcon = page.locator('[aria-labelledby="design-name-card-title"] .field-group-card__icon-symbol');
     this.shapeToggle = page.locator('[data-field-group-toggle="shape"]');
+    this.legendToggle = page.locator('[data-field-group-toggle="legend"]');
+    this.legendPositions = page.getByRole("radiogroup", { name: "印字位置" });
+    this.legendFields = page.locator("#legend-position-fields");
     this.designTab = page.locator('[data-sidebar-tab="design"]');
     this.designPanel = page.locator('.inspector-panel--design');
     this.previewStage = page.locator('[data-preview-stage]');
@@ -41,6 +44,35 @@ export class EditorPage {
       await this.shapeToggle.click();
     }
     await this.width.waitFor({ state: "visible" });
+  }
+
+  async openLegends() {
+    if (await this.legendToggle.getAttribute("aria-expanded") === "false") await this.legendToggle.click();
+    await this.legendPositions.waitFor({ state: "visible" });
+  }
+
+  legendPosition(label) {
+    return this.legendPositions.getByRole("radio", { name: label, exact: true });
+  }
+
+  async selectLegendPosition(label) {
+    await this.legendPosition(label).check();
+  }
+
+  async nextLegendPosition(label) {
+    await this.legendPosition(label).press("ArrowRight");
+  }
+
+  legendField(key) {
+    return this.legendFields.locator(`[data-field="${key}"]`);
+  }
+
+  async enableLegend(key) {
+    await this.legendField(key).check();
+  }
+
+  async editLegendText(key, text) {
+    await this.legendField(key).fill(text);
   }
 
   async rename(name) {

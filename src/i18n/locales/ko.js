@@ -223,6 +223,15 @@ const ko = Object.freeze({
     expand: "{title} 펼치기",
     collapse: "{title} 접기",
   },
+  legendPositions: {
+    label: "각인 위치",
+    sidewall: "측면",
+    center: "중앙",
+    "left-top": "왼쪽 위",
+    "right-top": "오른쪽 위",
+    "left-bottom": "왼쪽 아래",
+    "right-bottom": "오른쪽 아래",
+  },
   legendCards: {
     center: "중앙 각인",
     rightTop: "오른쪽 위 각인",

@@ -24,6 +24,8 @@ boardがある場合、`keycap_set_view({ tab: "design" })` で設計へ移動�
 
 fieldsの結果を短くしたい場合は `keycap_get_catalog({ section: "fields", keys: ["keyWidth", "legendText"] })` のように項目を指定するか、`query: "legend"` でkey/labelを絞り込めます。
 
+設計画面の「印字」では、上面・側面の位置を選ぶとその位置の設定が表示されます。たとえば前面に `Fn` を印字するには、画面では「側面」の「前面」を選んで印字をオンにし、文字を入力します。WebMCPでは `keycap_update({ params: { sideLegendFrontEnabled: true, sideLegendFrontText: "Fn" } })` で同じ設定を編集できます。
+
 全形式で毎回、画面上のユーザー同意が必要です。toolの入力で同意を渡すことはできません。待機中は `keycap_get_state` の `data.export.consentPending` がtrueになり、変更toolはbusyを返します。キャンセル・閉じる・Escは `consent_declined` です。ユーザーが再度保存を望むときだけexportを再実行します。AbortSignalによる中断も画面と排他を解除します。出力対象は確認画面を開く前のsnapshotです。資源一覧は印字オブジェクトの生成条件に一致する有効な印字だけを対象にし、無効な欄・空白だけの文字を除外します。STEP/STLは印字を含まないため一覧を空にし、知的財産の案内と同意確認を維持します。
 
 ## 再入力と一括配置

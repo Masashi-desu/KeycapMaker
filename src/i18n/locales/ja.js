@@ -223,6 +223,15 @@ const ja = Object.freeze({
     expand: "{title}を展開",
     collapse: "{title}を折りたたむ",
   },
+  legendPositions: {
+    label: "印字位置",
+    sidewall: "側面",
+    center: "中央",
+    "left-top": "左上",
+    "right-top": "右上",
+    "left-bottom": "左下",
+    "right-bottom": "右下",
+  },
   legendCards: {
     center: "中央の印字",
     rightTop: "右上の印字",

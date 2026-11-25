@@ -360,6 +360,87 @@
         "プロジェクト・配置"
       ],
       "path": "icons/warning.svg"
+    },
+    {
+      "id": "legend-center",
+      "name": "上面・中央",
+      "description": "上面を正面から見て、中央の印字位置に短い横印を置く。",
+      "categories": [
+        "印字位置"
+      ],
+      "path": "icons/legend-center.svg"
+    },
+    {
+      "id": "legend-left-top",
+      "name": "上面・左上",
+      "description": "上面を正面から見て、左上の印字位置に短い横印を置く。",
+      "categories": [
+        "印字位置"
+      ],
+      "path": "icons/legend-left-top.svg"
+    },
+    {
+      "id": "legend-right-top",
+      "name": "上面・右上",
+      "description": "上面を正面から見て、右上の印字位置に短い横印を置く。",
+      "categories": [
+        "印字位置"
+      ],
+      "path": "icons/legend-right-top.svg"
+    },
+    {
+      "id": "legend-left-bottom",
+      "name": "上面・左下",
+      "description": "上面を正面から見て、左下の印字位置に短い横印を置く。",
+      "categories": [
+        "印字位置"
+      ],
+      "path": "icons/legend-left-bottom.svg"
+    },
+    {
+      "id": "legend-right-bottom",
+      "name": "上面・右下",
+      "description": "上面を正面から見て、右下の印字位置に短い横印を置く。",
+      "categories": [
+        "印字位置"
+      ],
+      "path": "icons/legend-right-bottom.svg"
+    },
+    {
+      "id": "legend-front",
+      "name": "側面・前面",
+      "description": "上から見たキーの前面を塗って印字面を示す。",
+      "categories": [
+        "印字位置"
+      ],
+      "path": "icons/legend-front.svg"
+    },
+    {
+      "id": "legend-back",
+      "name": "側面・背面",
+      "description": "上から見たキーの背面を塗って印字面を示す。",
+      "categories": [
+        "印字位置"
+      ],
+      "path": "icons/legend-back.svg"
+    },
+    {
+      "id": "legend-left",
+      "name": "側面・左側面",
+      "description": "上から見たキーの左側面を塗って印字面を示す。",
+      "categories": [
+        "印字位置"
+      ],
+      "path": "icons/legend-left.svg"
+    },
+    {
+      "id": "legend-right",
+      "name": "側面・右側面",
+      "description": "上から見たキーの右側面を塗って印字面を示す。",
+      "categories": [
+        "印字位置"
+      ],
+      "path": "icons/legend-right.svg"
     }
   ]
 }
