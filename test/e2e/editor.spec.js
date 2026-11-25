@@ -45,6 +45,8 @@ test("テーマの切り替えは入力欄の配色を変え、キーキャッ�
   let lightColors;
   for (const theme of ["light", "dark"]) {
     await editor.setTheme(theme);
+    await expect(editor.nameCardIcon).toBeVisible();
+    await expect(editor.nameCardIcon).toHaveCSS("mask-image", /keycap-ui\/icons\/name\.svg/);
     const samples = await editor.readInputColors();
     expect(samples).toHaveLength(2);
     for (const sample of samples) {

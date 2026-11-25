@@ -9,6 +9,7 @@ export class EditorPage {
     this.page = page;
     this.name = page.locator('[data-field="name"]');
     this.width = page.locator('input[type="number"][data-field="keyWidth"]');
+    this.nameCardIcon = page.locator('[aria-labelledby="design-name-card-title"] .field-group-card__icon-symbol');
     this.shapeToggle = page.locator('[data-field-group-toggle="shape"]');
     this.designTab = page.locator('[data-sidebar-tab="design"]');
     this.designPanel = page.locator('.inspector-panel--design');

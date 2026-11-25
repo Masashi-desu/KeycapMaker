@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="言語">
+  <title>言語</title>
+  <desc>赤道と経線を描いた地球。</desc>
+  <path d="M 4 16 A 12 12 0 0 1 28 16 A 12 12 0 0 1 4 16 Z"/>
+  <path d="M 16 4 A 16.9 16.9 0 0 0 16 28"/>
+  <path d="M 16 4 A 16.9 16.9 0 0 1 16 28"/>
+  <path d="M 4 16 L 28 16"/>
+</svg>

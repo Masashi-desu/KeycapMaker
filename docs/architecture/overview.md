@@ -19,6 +19,7 @@ KeycapMaker は、GitHub Pages で配信するクライアントサイド完結�
 
 ## 実装上の固定前提
 
+- 画面アイコンは [IconYardの編集プロジェクト](../../keycap-ui.iconyard.json) から書き出したSVGをローカル配信し、CSSマスクでテーマの文字色を適用する。キーに印字するアイコンは選択した素材プロバイダーから取得する
 - 配信は GitHub Pages を使う
 - サーバーサイド処理は前提にしない
 - OpenSCAD 実行、プレビュー、export はブラウザ内で完結させる

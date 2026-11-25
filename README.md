@@ -19,6 +19,7 @@ KeycapMakerは、キーキャップの形状、印字、homing、stemをブラ�
 ## 開発・保守
 
 - [開発・貢献規約](CONTRIBUTING.md)
+- [IconYardで画面アイコンを更新する](CONTRIBUTING.md#画面アイコンの更新)
 - [Open Graph画像の再生成](docs/guide/open-graph.md)
 - [文書案内](docs/README.md)
 - [アプリ全体像](docs/architecture/overview.md)

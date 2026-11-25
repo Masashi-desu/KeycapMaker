@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="デザインを編集">
+  <title>デザインを編集</title>
+  <desc>位置の異なる二つの横スライダー。</desc>
+  <path d="M 4 10 L 10 10"/>
+  <path d="M 16 10 L 28 10"/>
+  <path d="M 10 10 A 3 3 0 0 1 16 10 A 3 3 0 0 1 10 10 Z"/>
+  <path d="M 4 22 L 17 22"/>
+  <path d="M 23 22 L 28 22"/>
+  <path d="M 17 22 A 3 3 0 0 1 23 22 A 3 3 0 0 1 17 22 Z"/>
+</svg>

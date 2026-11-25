@@ -1,3 +1,4 @@
+import { renderUiIcon } from "./lib/ui-icons.js";
 import "./styles.css";
 import { createEditorParameterSchema, createKeycapWebMcpTools, registerKeycapWebMcp, validateToolInput, WebMcpError } from "./lib/webmcp.js";
 import { applyKeyboardAssignments, prepareProjectBatch } from "./lib/project-batch.js";
@@ -245,130 +246,15 @@ const SIDE_LEGEND_CONFIGS = Object.freeze([
     colorFieldKey: "sideLegendRightColor",
   },
 ]);
-const CHEVRON_ICON_URLS = Object.freeze({
-  expanded: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-up.svg",
-  collapsed: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/chevron-down.svg",
+const PARAMETER_GROUP_ICON_IDS = Object.freeze({
+  name: "name",
+  shape: "shape",
+  top: "top",
+  topHat: "key-top-hat",
+  legend: "legend",
+  homing: "homing",
+  stem: "stem",
 });
-const SEARCH_ICON_MARKUP = `
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path
-      d="M10.5 4.5a6 6 0 1 0 0 12a6 6 0 0 0 0-12m0-1.5a7.5 7.5 0 1 1 0 15a7.5 7.5 0 0 1 0-15m8.56 14.94l2.22 2.22a.75.75 0 1 1-1.06 1.06L18 19a.75.75 0 0 1 1.06-1.06"
-      fill="currentColor"
-    />
-  </svg>
-`;
-const GLOBE_ICON_MARKUP = `
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M3 12h18" />
-    <path d="M12 3a13.5 13.5 0 0 1 0 18" />
-    <path d="M12 3a13.5 13.5 0 0 0 0 18" />
-  </svg>
-`;
-const SUN_ICON_MARKUP = `
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <circle cx="12" cy="12" r="4" />
-    <path d="M12 2v2" />
-    <path d="M12 20v2" />
-    <path d="m4.93 4.93 1.41 1.41" />
-    <path d="m17.66 17.66 1.41 1.41" />
-    <path d="M2 12h2" />
-    <path d="M20 12h2" />
-    <path d="m6.34 17.66-1.41 1.41" />
-    <path d="m19.07 4.93-1.41 1.41" />
-  </svg>
-`;
-const MOON_ICON_MARKUP = `
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M20.99 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.78 9.79Z" />
-  </svg>
-`;
-const EXPORT_ICON_MARKUP = Object.freeze({
-  file: `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-    </svg>
-  `,
-  plus: `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M12 5v14" />
-      <path d="M5 12h14" />
-    </svg>
-  `,
-  x: `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  `,
-  package: `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-      <path d="m3.3 7 8.7 5 8.7-5" />
-      <path d="M12 22V12" />
-    </svg>
-  `,
-  download: `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <path d="M7 10l5 5 5-5" />
-      <path d="M12 15V3" />
-    </svg>
-  `,
-  design: `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M4 21v-7" />
-      <path d="M4 10V3" />
-      <path d="M12 21v-9" />
-      <path d="M12 8V3" />
-      <path d="M20 21v-5" />
-      <path d="M20 12V3" />
-      <path d="M2 14h4" />
-      <path d="M10 8h4" />
-      <path d="M18 16h4" />
-    </svg>
-  `,
-  grip: `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <circle cx="9" cy="5" r="1" />
-      <circle cx="15" cy="5" r="1" />
-      <circle cx="9" cy="12" r="1" />
-      <circle cx="15" cy="12" r="1" />
-      <circle cx="9" cy="19" r="1" />
-      <circle cx="15" cy="19" r="1" />
-    </svg>
-  `,
-  trash: `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M3 6h18" />
-      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-    </svg>
-  `,
-});
-const PARAMETER_GROUP_ICON_PATHS = Object.freeze({
-  name: "icons/parameters/name.svg",
-  shape: "icons/parameters/shape.svg",
-  top: "icons/parameters/top.svg",
-  topHat: "icons/parameters/key-top-hat.svg?v=rough-c",
-  legend: "icons/parameters/legend.svg",
-  homing: "icons/parameters/homing.svg",
-  stem: "icons/parameters/stem.svg",
-});
-const KEY_UNIT_BASIS_ICON_PATH = "icons/parameters/key-unit-basis.svg?v=rough-a";
-const KEY_DEPTH_BASIS_ICON_PATH = "icons/parameters/key-depth-basis.svg?v=rough-b";
-const KEY_WALL_THICKNESS_ICON_PATH = "icons/parameters/key-wall-thickness.svg?v=rough-a";
-const KEY_TOP_TAPER_ICON_PATH = "icons/parameters/key-top-taper.svg?v=rough-a";
-const KEYCAP_EDGE_RADIUS_ICON_PATH = "icons/parameters/keycap-edge-radius.svg?v=vtracer-f";
-const KEYCAP_SHOULDER_RADIUS_ICON_PATH = "icons/parameters/keycap-shoulder-radius.svg?v=vtracer-a";
-const KEY_TOP_CENTER_HEIGHT_ICON_PATH = "icons/parameters/key-top-center-height.svg?v=rough-a";
-const KEY_TOP_OFFSET_ICON_PATH = "icons/parameters/key-top-offset.svg?v=rough-e";
-const KEY_TOP_SURFACE_SHAPE_ICON_PATH = "icons/parameters/key-top-surface-shape.svg?v=rough-c";
-const KEY_TOP_HAT_ICON_PATH = "icons/parameters/key-top-hat.svg?v=rough-c";
-const KEY_TOP_SLOPE_INPUT_MODE_ICON_PATH = "icons/parameters/key-top-slope-input-mode.svg?v=vtracer-target-a";
 const PARAMETER_GROUP_CAPTION_KEYS = Object.freeze({
   name: "parameterGroupCaptions.name",
   top: "parameterGroupCaptions.top",
@@ -3140,90 +3026,22 @@ async function createJStemLp01ReferencePreviewLayer(params = state.keycapParams)
   };
 }
 
-function getParameterGroupIconPath(groupId) {
-  return PARAMETER_GROUP_ICON_PATHS[groupId] ?? PARAMETER_GROUP_ICON_PATHS.shape;
-}
-
 function getParameterGroupCaption(groupId) {
   const captionKey = PARAMETER_GROUP_CAPTION_KEYS[groupId];
   return captionKey ? t(captionKey, {}, "") : "";
 }
 
 function renderParameterGroupIcon(groupId) {
-  const iconUrl = resolvePublicAssetUrl(getParameterGroupIconPath(groupId));
-  const iconSymbolClass = groupId === "stem"
-    ? "field-group-card__icon-symbol field-group-card__icon-symbol--stem"
-    : "field-group-card__icon-symbol";
-
-  return `
-    <span class="field-group-card__icon" aria-hidden="true">
-      <span
-        class="${iconSymbolClass}"
-        style="--field-group-icon: url('${escapeHtml(iconUrl)}');"
-      ></span>
-    </span>
-  `;
+  const id = PARAMETER_GROUP_ICON_IDS[groupId] ?? "shape";
+  return `<span class="field-group-card__icon">${renderUiIcon(id, "field-group-card__icon-symbol")}</span>`;
 }
 
-function renderFieldLeadingIcon(iconPath) {
-  const iconUrl = resolvePublicAssetUrl(iconPath);
-
-  return `
-    <span class="field-leading-icon" aria-hidden="true">
-      <span
-        class="field-leading-icon__symbol"
-        style="--field-leading-icon: url('${escapeHtml(iconUrl)}');"
-      ></span>
-    </span>
-  `;
+function renderFieldLeadingIcon(id) {
+  return `<span class="field-leading-icon">${renderUiIcon(id, "field-leading-icon__symbol")}</span>`;
 }
 
 function getLeadingIconFieldClassName(leadingIcon) {
   return leadingIcon ? " field--with-leading-icon" : "";
-}
-
-function renderKeyUnitBasisIcon() {
-  return renderFieldLeadingIcon(KEY_UNIT_BASIS_ICON_PATH);
-}
-
-function renderKeyDepthBasisIcon() {
-  return renderFieldLeadingIcon(KEY_DEPTH_BASIS_ICON_PATH);
-}
-
-function renderKeyWallThicknessIcon() {
-  return renderFieldLeadingIcon(KEY_WALL_THICKNESS_ICON_PATH);
-}
-
-function renderKeyTopTaperIcon() {
-  return renderFieldLeadingIcon(KEY_TOP_TAPER_ICON_PATH);
-}
-
-function renderKeycapEdgeRadiusIcon() {
-  return renderFieldLeadingIcon(KEYCAP_EDGE_RADIUS_ICON_PATH);
-}
-
-function renderKeycapShoulderRadiusIcon() {
-  return renderFieldLeadingIcon(KEYCAP_SHOULDER_RADIUS_ICON_PATH);
-}
-
-function renderKeyTopCenterHeightIcon() {
-  return renderFieldLeadingIcon(KEY_TOP_CENTER_HEIGHT_ICON_PATH);
-}
-
-function renderKeyTopOffsetIcon() {
-  return renderFieldLeadingIcon(KEY_TOP_OFFSET_ICON_PATH);
-}
-
-function renderKeyTopSurfaceShapeIcon() {
-  return renderFieldLeadingIcon(KEY_TOP_SURFACE_SHAPE_ICON_PATH);
-}
-
-function renderKeyTopHatIcon() {
-  return renderFieldLeadingIcon(KEY_TOP_HAT_ICON_PATH);
-}
-
-function renderKeyTopSlopeInputModeIcon() {
-  return renderFieldLeadingIcon(KEY_TOP_SLOPE_INPUT_MODE_ICON_PATH);
 }
 
 function getColorFieldValue(fieldKey, params = state.keycapParams) {
@@ -3383,7 +3201,7 @@ function renderShell() {
     <main class="app-shell">
       <div class="drop-overlay" data-import-drop-overlay aria-hidden="true" hidden>
         <div class="drop-overlay__card">
-          <span class="drop-overlay__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.file}</span>
+          <span class="drop-overlay__icon" aria-hidden="true">${renderUiIcon("file")}</span>
           <span class="drop-overlay__copy">
             <strong data-i18n="dropOverlay.title"></strong>
             <span data-i18n="dropOverlay.body"></span>
@@ -3429,7 +3247,7 @@ function renderShell() {
               type="button"
               data-mobile-inspector-toggle
             >
-              <span data-mobile-inspector-toggle-icon aria-hidden="true">↑</span>
+              ${renderUiIcon("arrow-up")}
             </button>
           </div>
         </aside>
@@ -3485,7 +3303,6 @@ function renderLayout() {
   ].filter(Boolean).join(" ");
 
   const mobileInspectorToggle = app.querySelector("[data-mobile-inspector-toggle]");
-  const mobileInspectorToggleIcon = app.querySelector("[data-mobile-inspector-toggle-icon]");
   if (mobileInspectorToggle) {
     const label = state.isMobileInspectorHidden
       ? t("mobileInspector.show")
@@ -3493,9 +3310,6 @@ function renderLayout() {
     mobileInspectorToggle.setAttribute("aria-label", label);
     mobileInspectorToggle.setAttribute("title", label);
     mobileInspectorToggle.setAttribute("aria-expanded", state.isMobileInspectorHidden ? "false" : "true");
-  }
-  if (mobileInspectorToggleIcon) {
-    mobileInspectorToggleIcon.textContent = state.isMobileInspectorHidden ? "↓" : "↑";
   }
 }
 
@@ -3518,7 +3332,7 @@ function renderThemeControl() {
   const activeThemeIndex = Math.max(THEME_OPTIONS.indexOf(state.theme), 0);
   const buttons = THEME_OPTIONS.map((theme) => {
     const isSelected = theme === state.theme;
-    const iconMarkup = theme === "light" ? SUN_ICON_MARKUP : MOON_ICON_MARKUP;
+    const iconMarkup = renderUiIcon(theme === "light" ? "sun" : "moon");
     const label = t(`theme.options.${theme}`);
 
     return `
@@ -3601,7 +3415,7 @@ function renderLanguageControl() {
         aria-expanded="false"
         aria-controls="language-options"
       >
-        <span class="language-combobox__icon" aria-hidden="true">${GLOBE_ICON_MARKUP}</span>
+        <span class="language-combobox__icon" aria-hidden="true">${renderUiIcon("language")}</span>
         <span class="language-combobox__label"></span>
       </button>
       <div class="language-combobox__menu" id="language-options" role="listbox" aria-hidden="true" inert>
@@ -3756,7 +3570,7 @@ function render(options = {}) {
 }
 
 function renderInspectorContent() {
-  if (state.sidebarTab === "keyboard") return renderKeyboardTab(state, t, escapeHtml, SEARCH_ICON_MARKUP);
+  if (state.sidebarTab === "keyboard") return renderKeyboardTab(state, t, escapeHtml);
   if (state.sidebarTab === "project") {
     return renderProjectTab();
   }
@@ -3870,7 +3684,6 @@ function renderImportBindingNotice() {
   const toggleLabel = isCollapsed
     ? t("importReport.expand")
     : t("importReport.collapse");
-  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const viewTransitionName = createViewTransitionName("import-binding-notice", "report");
 
   return `
@@ -3892,7 +3705,7 @@ function renderImportBindingNotice() {
           aria-label="${escapeHtml(toggleLabel)}"
           title="${escapeHtml(toggleLabel)}"
         >
-          <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+          ${renderUiIcon("chevron", "field-group-toggle__icon")}
         </button>
       </div>
       <div class="import-binding-notice__list" id="${listId}" aria-label="${escapeHtml(t("importReport.unboundListLabel"))}" ${isCollapsed ? "hidden" : ""}>
@@ -3907,7 +3720,7 @@ function renderImportBindingNotice() {
               aria-label="${escapeHtml(t("importReport.deleteParam", { path: entry.path }))}"
               title="${escapeHtml(t("importReport.deleteParam", { path: entry.path }))}"
             >
-              ${EXPORT_ICON_MARKUP.x}
+              ${renderUiIcon("close")}
             </button>
           </span>
         `).join("")}
@@ -4052,7 +3865,7 @@ function renderProjectKeycapList() {
             title="${escapeHtml(t("project.reorderKeycap", { name: entry.name }))}"
           >
             <span class="project-keycap-drag-handle__order">${escapeHtml(orderLabel)}</span>
-            ${EXPORT_ICON_MARKUP.grip}
+            ${renderUiIcon("grip")}
           </button>
           ${summaryMarkup}
         </div>
@@ -4065,7 +3878,7 @@ function renderProjectKeycapList() {
             aria-label="${escapeHtml(t("project.exportKeycap", { name: entry.name }))}"
             title="${escapeHtml(t("project.exportKeycap", { name: entry.name }))}"
           >
-            ${EXPORT_ICON_MARKUP.download}
+            ${renderUiIcon("download")}
             <span>${escapeHtml(t("project.exportAction"))}</span>
           </button>
           <button
@@ -4075,7 +3888,7 @@ function renderProjectKeycapList() {
             aria-label="${escapeHtml(t("project.designKeycap", { name: entry.name }))}"
             title="${escapeHtml(t("project.designKeycap", { name: entry.name }))}"
           >
-            ${EXPORT_ICON_MARKUP.design}
+            ${renderUiIcon("design")}
             <span>${escapeHtml(t("project.designAction"))}</span>
           </button>
         </div>
@@ -4101,7 +3914,7 @@ function renderKeycapExportOverlayOption({ format, chip, title, body, action }) 
   return `
     <section class="export-option-action keycap-export-option" aria-labelledby="keycap-export-${format}-title">
       <div class="export-action-card__header">
-        <span class="export-action-card__icon" aria-hidden="true">${format === "editor-data" ? EXPORT_ICON_MARKUP.file : EXPORT_ICON_MARKUP.package}</span>
+        <span class="export-action-card__icon" aria-hidden="true">${renderUiIcon(format === "editor-data" ? "file" : "package")}</span>
         <span class="export-action-card__title-stack">
           <span class="chip-label">${escapeHtml(chip)}</span>
           <strong id="keycap-export-${format}-title">${escapeHtml(title)}</strong>
@@ -4114,7 +3927,7 @@ function renderKeycapExportOverlayOption({ format, chip, title, body, action }) 
         data-keycap-export-format="${escapeHtml(format)}"
         ${state.exportsStatus === "running" ? "disabled" : ""}
       >
-        ${EXPORT_ICON_MARKUP.download}
+        ${renderUiIcon("download")}
         <span>${state.exportsStatus === "running" ? t("actions.saving") : escapeHtml(action)}</span>
       </button>
     </section>
@@ -4162,7 +3975,7 @@ function renderKeycapExportOverlay() {
             aria-label="${escapeHtml(t("actions.close"))}"
             title="${escapeHtml(t("actions.close"))}"
           >
-            <span aria-hidden="true">×</span>
+            ${renderUiIcon("close")}
           </button>
         </div>
         <div class="keycap-export-dialog__body">
@@ -4223,13 +4036,13 @@ function renderKeycapDesignOverlay(overlayRoot, entry) {
             aria-label="${escapeHtml(t("actions.close"))}"
             title="${escapeHtml(t("actions.close"))}"
           >
-            <span aria-hidden="true">×</span>
+            ${renderUiIcon("close")}
           </button>
         </div>
         <div class="keycap-export-dialog__body">
           <section class="export-option-action keycap-export-option project-keycap-danger-option" aria-labelledby="keycap-design-delete-title">
             <div class="export-action-card__header">
-              <span class="export-action-card__icon" aria-hidden="true">${EXPORT_ICON_MARKUP.trash}</span>
+              <span class="export-action-card__icon" aria-hidden="true">${renderUiIcon("trash")}</span>
               <span class="export-action-card__title-stack">
                 <span class="chip-label">${escapeHtml(t("project.deleteChip"))}</span>
                 <strong id="keycap-design-delete-title">${escapeHtml(t("project.deleteTitle"))}</strong>
@@ -4242,7 +4055,7 @@ function renderKeycapDesignOverlay(overlayRoot, entry) {
               data-keycap-delete="${escapeHtml(entry.id)}"
               ${isOnlyProjectKeycap ? "disabled" : ""}
             >
-              ${EXPORT_ICON_MARKUP.trash}
+              ${renderUiIcon("trash")}
               <span>${escapeHtml(t("project.deleteAction"))}</span>
             </button>
           </section>
@@ -4307,14 +4120,14 @@ function renderProjectTab() {
               ${renderProjectKeycapList()}
             </div>
             <button class="export-save-button project-secondary-button" type="button" data-project-add-current ${isProjectBusy ? "disabled" : ""}>
-              ${EXPORT_ICON_MARKUP.plus}
+              ${renderUiIcon("plus")}
               <span>${t("project.addCurrent")}</span>
             </button>
           </div>
         </section>
 
         <button class="export-save-button project-save-button" type="button" data-project-save ${isProjectBusy ? "disabled" : ""}>
-          ${EXPORT_ICON_MARKUP.download}
+          ${renderUiIcon("download")}
           <span>${isProjectBusy ? t("actions.saving") : t("project.save")}</span>
         </button>
         <p class="project-status" aria-live="polite">${escapeHtml(state.projectSummary)}</p>
@@ -4348,7 +4161,6 @@ function renderFieldGroupToggleButton({
   isCollapsed,
   groupBodyId,
   toggleLabel,
-  toggleIconUrl,
 }) {
   return `
     <button
@@ -4359,7 +4171,7 @@ function renderFieldGroupToggleButton({
       aria-controls="${escapeHtml(groupBodyId)}"
       aria-label="${escapeHtml(toggleLabel)}"
     >
-      <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+      ${renderUiIcon("chevron", "field-group-toggle__icon")}
     </button>
   `;
 }
@@ -4459,14 +4271,12 @@ function renderFieldGroup(group, groupIndex) {
   const toggleLabel = isCollapsed
     ? t("fieldGroup.expand", { title: group.title })
     : t("fieldGroup.collapse", { title: group.title });
-  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const titleId = `field-group-title-${toKebabCase(groupId)}`;
   const toggleButton = renderFieldGroupToggleButton({
     groupId,
     isCollapsed,
     groupBodyId,
     toggleLabel,
-    toggleIconUrl,
   });
   const bodyContent = isCollapsed
     ? ""
@@ -4505,14 +4315,12 @@ function renderStemFieldGroup(group, groupIndex) {
   const toggleLabel = isCollapsed
     ? t("fieldGroup.expand", { title: group.title })
     : t("fieldGroup.collapse", { title: group.title });
-  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const titleId = `field-group-title-${toKebabCase(groupId)}`;
   const toggleButton = renderFieldGroupToggleButton({
     groupId,
     isCollapsed,
     groupBodyId,
     toggleLabel,
-    toggleIconUrl,
   });
   const bodyContent = isCollapsed
     ? ""
@@ -4561,14 +4369,12 @@ function renderLegendFieldGroup(group, groupIndex) {
   const toggleLabel = isCollapsed
     ? t("fieldGroup.expand", { title: group.title })
     : t("fieldGroup.collapse", { title: group.title });
-  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const titleId = `field-group-title-${toKebabCase(groupId)}`;
   const toggleButton = renderFieldGroupToggleButton({
     groupId,
     isCollapsed,
     groupBodyId,
     toggleLabel,
-    toggleIconUrl,
   });
   const bodyContent = isCollapsed
     ? ""
@@ -4608,7 +4414,6 @@ function renderStemSubcard(card, groupFieldByKey) {
   const toggleLabel = isCollapsed
     ? t("fieldGroup.expand", { title: cardTitle })
     : t("fieldGroup.collapse", { title: cardTitle });
-  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const cardViewTransitionName = createViewTransitionName("stem-subcard", card.id);
   const bodyContent = isCollapsed
     ? ""
@@ -4630,7 +4435,7 @@ function renderStemSubcard(card, groupFieldByKey) {
           aria-controls="${cardBodyId}"
           aria-label="${escapeHtml(toggleLabel)}"
         >
-          <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+          ${renderUiIcon("chevron", "field-group-toggle__icon")}
         </button>
       </div>
       <div class="parameter-subcard__body" id="${cardBodyId}" ${isCollapsed ? "hidden" : ""}>
@@ -4655,7 +4460,6 @@ function renderLegendSubcard(card, groupFieldByKey) {
   const toggleLabel = isCollapsed
     ? t("fieldGroup.expand", { title: cardTitle })
     : t("fieldGroup.collapse", { title: cardTitle });
-  const toggleIconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
   const cardViewTransitionName = createViewTransitionName("legend-subcard", card.id);
   const printNotice = isLegendEnabled
     ? `<p class="field-note">${escapeHtml(t("fields.legendPrintNotice"))}</p>`
@@ -4681,7 +4485,7 @@ function renderLegendSubcard(card, groupFieldByKey) {
           aria-controls="${cardBodyId}"
           aria-label="${escapeHtml(toggleLabel)}"
         >
-          <img class="field-group-toggle__icon" src="${toggleIconUrl}" alt="" aria-hidden="true" />
+          ${renderUiIcon("chevron", "field-group-toggle__icon")}
         </button>
       </div>
       <div class="legend-subcard__body" id="${cardBodyId}" ${isCollapsed ? "hidden" : ""}>
@@ -4762,9 +4566,9 @@ function renderFieldWithDependentFields(field, dependentFields, fieldByKey = nul
   const isDisabled = isFieldDisabled(field);
   const inputId = `field-control-${field.key}`;
   const leadingIcon = field.key === "topSurfaceShape" || field.key === "topHatSurfaceShape"
-    ? renderKeyTopSurfaceShapeIcon()
+    ? renderFieldLeadingIcon("key-top-surface-shape")
     : field.key === "topSlopeInputMode"
-      ? renderKeyTopSlopeInputModeIcon()
+      ? renderFieldLeadingIcon("key-top-slope-input-mode")
       : "";
   const leadingIconClassName = getLeadingIconFieldClassName(leadingIcon);
 
@@ -4785,6 +4589,7 @@ function renderFieldWithDependentFields(field, dependentFields, fieldByKey = nul
             )
             .join("")}
         </select>
+        ${renderUiIcon("chevron", "select-chevron")}
       </span>
       ${renderDependentFieldList(dependentFields, fieldByKey)}
     </div>
@@ -5344,21 +5149,6 @@ function renderLegendFontLandingPageLink(font) {
   }
 
   const pageName = getLegendFontLandingPageName(font);
-  const pageIconUrl = String(font.landingPageIconUrl ?? "").trim();
-  const pageIcon = pageIconUrl
-    ? `
-      <img
-        class="font-picker-landing-page-link__icon"
-        src="${escapeHtml(pageIconUrl)}"
-        alt=""
-        loading="lazy"
-        decoding="async"
-        referrerpolicy="no-referrer"
-        aria-hidden="true"
-        onerror="this.hidden=true"
-      />
-    `
-    : "";
   const ariaLabel = t("font.landingPageLinkAriaLabel", { font: font.label, page: pageName }, pageName);
 
   return `
@@ -5370,21 +5160,9 @@ function renderLegendFontLandingPageLink(font) {
       data-font-landing-page-url="${escapeHtml(font.landingPageUrl)}"
       aria-label="${escapeHtml(ariaLabel)}"
     >
-      ${pageIcon}
+      ${renderUiIcon("external-link", "font-picker-landing-page-link__icon")}
       <span class="font-picker-landing-page-link__label">${escapeHtml(pageName)}</span>
     </a>
-  `;
-}
-
-function renderCornerRadiusIcon(corner = "all") {
-  const corners = corner === "all"
-    ? ["left-top", "right-top", "right-bottom", "left-bottom"]
-    : [corner];
-
-  return `
-    <span class="corner-radius-icon corner-radius-icon--${escapeHtml(corner)}" aria-hidden="true">
-      ${corners.map((cornerName) => `<span class="corner-radius-icon__mark corner-radius-icon__mark--${escapeHtml(cornerName)}"></span>`).join("")}
-    </span>
   `;
 }
 
@@ -5399,7 +5177,7 @@ function renderCornerRadiusNumberControl(fieldKey, corner = "all") {
 
   return `
     <span class="corner-radius-control">
-      ${renderCornerRadiusIcon(corner)}
+      ${renderUiIcon(`corner-${corner}`, "corner-radius-icon")}
       ${sliderMarkup}
       <span class="field-control corner-radius-control__input">
         <input
@@ -5587,7 +5365,7 @@ function renderLegendFontPickerOptions(fieldKey = state.legendFontPickerFieldKey
 function renderLegendFontPickerSearchContent(fieldKey = state.legendFontPickerFieldKey || "legendFontKey") {
   return `
     <label class="field-control font-picker-search-input">
-      <span class="font-picker-search-input__icon">${SEARCH_ICON_MARKUP}</span>
+      <span class="font-picker-search-input__icon">${renderUiIcon("search")}</span>
       <input
         type="text"
         data-font-picker-query="${fieldKey}"
@@ -5671,7 +5449,7 @@ function renderLegendIconPickerContent(fieldKey = state.legendIconPickerFieldKey
 
   return `
     <label class="field-control font-picker-search-input icon-picker-search-input">
-      <span class="font-picker-search-input__icon">${SEARCH_ICON_MARKUP}</span>
+      <span class="font-picker-search-input__icon">${renderUiIcon("search")}</span>
       <input
         type="text"
         data-icon-picker-query="${escapeHtml(fieldKey)}"
@@ -5788,7 +5566,7 @@ function renderField(field, options = {}) {
 
   if (field.type === "key-unit-basis") {
     const inputId = `field-control-${field.key}`;
-    const leadingIcon = renderKeyUnitBasisIcon();
+    const leadingIcon = renderFieldLeadingIcon("key-unit-basis");
     const leadingIconClassName = getLeadingIconFieldClassName(leadingIcon);
     const keyUnitSliderMarkup = renderSliderRangeControl(field.key, field, getKeyUnitMm(), fieldLabel, {
       inputAttributes: "data-key-unit-mm data-key-unit-slider",
@@ -5820,7 +5598,7 @@ function renderField(field, options = {}) {
   }
 
   if (field.type === "checkbox") {
-    const leadingIcon = field.key === "topHatEnabled" ? renderKeyTopHatIcon() : "";
+    const leadingIcon = field.key === "topHatEnabled" ? renderFieldLeadingIcon("key-top-hat") : "";
     const checkboxIconClassName = getLeadingIconFieldClassName(leadingIcon);
     const checkboxStatusLabel = getCheckboxStatusLabel(Boolean(value));
     const checkboxAriaLabel = getCheckboxAriaLabel(field.key, Boolean(value));
@@ -5899,7 +5677,7 @@ function renderField(field, options = {}) {
                 aria-controls="${pickerId}"
                 aria-label="${escapeHtml(t("font.searchAriaLabel"))}"
               >
-                ${SEARCH_ICON_MARKUP}
+                ${renderUiIcon("search")}
               </button>
             </span>
             ${isPickerOpen ? `
@@ -5935,7 +5713,6 @@ function renderField(field, options = {}) {
       && Boolean(state.keycapParams[iconFillFieldKey]);
     const selectedIconSetLabel = t(`options.legendIconSet.${selectedIconSet}`, {}, selectedIconSetMeta.label);
     const selectedIconCatalogUrl = selectedIconSetMeta.catalogUrl || selectedIconSetMeta.sourceUrl;
-    const selectedIconFaviconUrl = selectedIconSetMeta.faviconUrl || "";
     const selectedIconAttributionCard = renderLegendIconAttributionCard(selectedIconSet);
     const pickerId = `icon-picker-${field.key}`;
     const isPickerOpen = state.legendIconPickerFieldKey === field.key;
@@ -5964,7 +5741,7 @@ function renderField(field, options = {}) {
                 aria-controls="${pickerId}"
                 aria-label="${escapeHtml(t("icons.searchAriaLabel"))}"
               >
-                ${SEARCH_ICON_MARKUP}
+                ${renderUiIcon("search")}
               </button>
             </span>
             ${selectedIconCatalogUrl ? `<a
@@ -5973,14 +5750,7 @@ function renderField(field, options = {}) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              ${selectedIconFaviconUrl ? `<img
-                class="icon-picker-catalog-link__favicon"
-                src="${escapeHtml(selectedIconFaviconUrl)}"
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-              />` : ""}
+              ${renderUiIcon("external-link", "icon-picker-catalog-link__icon")}
               <span class="icon-picker-catalog-link__label">${escapeHtml(t("icons.openCatalog", { set: selectedIconSetLabel }))}</span>
             </a>` : ""}
             ${isPickerOpen ? `
@@ -6019,6 +5789,7 @@ function renderField(field, options = {}) {
               )
               .join("")}
           </select>
+          ${renderUiIcon("chevron", "select-chevron")}
         </span>
       </label>
     `;
@@ -6085,9 +5856,9 @@ function renderField(field, options = {}) {
 
   if (field.type === "linked-size") {
     const leadingIcon = field.key === "keyWidth"
-      ? renderKeyUnitBasisIcon()
+      ? renderFieldLeadingIcon("key-unit-basis")
       : field.key === "keyDepth"
-        ? renderKeyDepthBasisIcon()
+        ? renderFieldLeadingIcon("key-depth-basis")
         : "";
     const linkedSizeIconClassName = getLeadingIconFieldClassName(leadingIcon);
     const linkedSizeSliderMarkup = renderSliderRangeControl(field.key, field, value, fieldLabel);
@@ -6143,9 +5914,9 @@ function renderField(field, options = {}) {
     const secondaryMaxValue = resolveFieldAttribute(field.secondaryMax ?? secondaryFieldConfig?.max);
     const secondaryStepValue = resolveFieldAttribute(field.secondaryStep ?? secondaryFieldConfig?.step);
     const leadingIcon = field.key === "topOffsetX"
-      ? renderKeyTopOffsetIcon()
+      ? renderFieldLeadingIcon("key-top-offset")
       : field.key === "wallThickness"
-        ? renderKeyWallThicknessIcon()
+        ? renderFieldLeadingIcon("key-wall-thickness")
         : "";
     const numberPairIconClassName = getLeadingIconFieldClassName(leadingIcon);
     const primarySliderMarkup = renderSliderRangeControl(field.key, field, value, primaryMiniLabel || fieldLabel);
@@ -6254,15 +6025,15 @@ function renderField(field, options = {}) {
   }
 
   const leadingIcon = field.key === "topCenterHeight"
-    ? renderKeyTopCenterHeightIcon()
+    ? renderFieldLeadingIcon("key-top-center-height")
     : field.key === "wallThickness" || field.key === "topThickness"
-      ? renderKeyWallThicknessIcon()
+      ? renderFieldLeadingIcon("key-wall-thickness")
       : field.key === "topScale"
-        ? renderKeyTopTaperIcon()
+        ? renderFieldLeadingIcon("key-top-taper")
         : field.key === "keycapEdgeRadius"
-          ? renderKeycapEdgeRadiusIcon()
+          ? renderFieldLeadingIcon("keycap-edge-radius")
           : field.key === "keycapShoulderRadius"
-            ? renderKeycapShoulderRadiusIcon()
+            ? renderFieldLeadingIcon("keycap-shoulder-radius")
             : "";
   const numberIconClassName = leadingIcon ? `${getLeadingIconFieldClassName(leadingIcon)} field--single-number` : "";
 
@@ -7184,16 +6955,10 @@ function syncFieldGroupToggleButton(toggleButton, groupId, isCollapsed) {
         ? t("fieldGroup.expand", { title })
         : t("fieldGroup.collapse", { title }))
     : "";
-  const iconUrl = isCollapsed ? CHEVRON_ICON_URLS.collapsed : CHEVRON_ICON_URLS.expanded;
 
   toggleButton.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
   if (toggleLabel) {
     toggleButton.setAttribute("aria-label", toggleLabel);
-  }
-
-  const icon = toggleButton.querySelector(".field-group-toggle__icon");
-  if (icon instanceof HTMLImageElement) {
-    icon.src = iconUrl;
   }
 }
 
@@ -9074,7 +8839,7 @@ function confirmDownloadConsent(filename, paramsList, options) {
           <h2 id="download-consent-title">${escapeHtml(t("downloadConsent.title"))}</h2>
           <span class="download-consent-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
         </span>
-        <button class="field-group-toggle keycap-export-dialog__close" type="button" data-download-consent-cancel aria-label="${escapeHtml(t("actions.close"))}">×</button>
+        <button class="field-group-toggle keycap-export-dialog__close" type="button" data-download-consent-cancel aria-label="${escapeHtml(t("actions.close"))}">${renderUiIcon("close")}</button>
       </div>
       <div class="download-consent-body">
         <p id="download-consent-description">${escapeHtml(t("downloadConsent.description"))}</p>

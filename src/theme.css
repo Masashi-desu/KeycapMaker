@@ -78,7 +78,6 @@
   --warning-surface: color-mix(in srgb, var(--panel-warm) 78%, var(--warning-accent) 22%);
   --warning-border: color-mix(in srgb, var(--warning-accent) 42%, var(--glass-border-surface) 58%);
   --swatch-accent-border: rgba(111, 46, 0, 0.26);
-  --ui-icon-filter: none;
 }
 
 :root[data-theme="dark"] {
@@ -159,5 +158,4 @@
   --warning-surface: color-mix(in srgb, var(--panel-warm) 78%, var(--warning-accent) 22%);
   --warning-border: color-mix(in srgb, var(--warning-accent) 42%, var(--glass-border-surface) 58%);
   --swatch-accent-border: rgba(237, 189, 121, 0.42);
-  --ui-icon-filter: invert(1);
 }

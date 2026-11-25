@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="検索">
+  <title>検索</title>
+  <desc>斜めに柄を付けた丸いレンズ。</desc>
+  <path d="M 5 13 A 8 8 0 0 1 21 13 A 8 8 0 0 1 5 13 Z"/>
+  <path d="M 19 19 L 27 27"/>
+  <path d="M 23 25 L 25 23"/>
+</svg>

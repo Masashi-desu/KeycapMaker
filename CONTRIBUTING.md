@@ -113,6 +113,16 @@ root overviewや `docs/` だけの変更では静的な文書gateだけを実行
 - user inputの長文全般へ一律の改行規則を課さない。現在の折返し契約は、`.font-attribution-card__body` の改行保持とURL折返し、`.import-binding-notice__name` / `__value` の長いJSON path/value、`.preview-color-option__label` の選択肢labelに限定する。export dialog titleのようにellipsisを契約とする箇所は変更しない
 - 新しい外部資源は、公式source、version、license本文、必要なnotice、利用箇所を確認してから追加する
 
+## 画面アイコンの更新
+
+設計カード、詳細パラメーター、各画面の操作アイコンは [keycap-ui.iconyard.json](keycap-ui.iconyard.json) を編集元にします。
+
+1. [IconYard](https://masashi-desu.github.io/IconYard/) を開き、ヘッダーのプロジェクト名 →「JSONから読み込む」で編集元を開きます。
+2. 既存の絵柄は同じIDのまま編集します。新規の絵柄には用途が分かる名前とカテゴリを付け、プロジェクト共通のグリッド・線幅に合わせて描きます。
+3. 「保存」→「JSONをダウンロード」で編集元を更新します。同じ状態で「アイコンライブラリをダウンロード（ZIP）」を実行し、展開した `keycap-ui/` フォルダーで [public/keycap-ui/](public/keycap-ui/) を置き換えます。削除したSVGもこのとき取り除きます。
+4. 画面では [renderUiIcon](src/lib/ui-icons.js) に [icons.json](public/keycap-ui/icons.json) の `path` にあるSVGのファイル名（拡張子を除く）を渡します。色は配置先の文字色に追従します。操作名はボタンのテキストまたは `aria-label` で指定します。
+5. `npm test` でプロジェクト・一覧・SVGの一致を確認し、ライト・ダークの実際の表示サイズで形と向きを確認します。編集元と書き出し結果を一緒にコミットします。
+
 ## UIの配色とテーマを維持する実装規約
 
 UIの配色を追加・変更するときは、明示的な指定がなくてもライトモードとダークモードの両方を対象にします。1色だけ指定された場合も、その色を基準にもう一方のテーマで読める対応色を定義し、切り替え可能な配色として実装します。

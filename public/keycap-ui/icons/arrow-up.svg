@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="パネルの表示切替">
+  <title>パネルの表示切替</title>
+  <desc>パネルの移動方向を示す縦矢印。</desc>
+  <path d="M 16 27 L 16 5"/>
+  <path d="M 6.22218 13.22218 L 10.72218 8.72218 L 12.27782 10.27782 L 7.77782 14.77782 Z M 5.9 14 A 1.1 1.1 0 0 1 8.1 14 A 1.1 1.1 0 0 1 5.9 14 Z M 10.72218 8.72218 L 14.51508 4.92929 A 2.1 2.1 0 0 1 17.48492 4.92929 L 21.27782 8.72218 L 19.72218 10.27782 L 16.21213 6.76777 A 0.3 0.3 0 0 0 15.78787 6.76777 L 12.27782 10.27782 Z M 21.27782 8.72218 L 25.77782 13.22218 L 24.22218 14.77782 L 19.72218 10.27782 Z M 23.9 14 A 1.1 1.1 0 0 1 26.1 14 A 1.1 1.1 0 0 1 23.9 14 Z" fill="currentColor" stroke="none"/>
+</svg>

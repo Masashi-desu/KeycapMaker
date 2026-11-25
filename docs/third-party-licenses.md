@@ -13,9 +13,10 @@
 | [fflate](https://www.npmjs.com/package/fflate/v/0.8.2) | `0.8.2` | project ZIPと3MF packageの生成・展開。Vite bundleへ含める | [MIT](https://opensource.org/license/mit) |
 | [Coloris](https://github.com/mdbassit/Coloris/tree/v0.25.0) | `0.25.0` | `public/vendor/coloris/` の色選択UI。JS/CSSをそのまま配信 | [MIT](../public/vendor/coloris/LICENSE) |
 | [OpenSCAD WebAssembly runtime](https://github.com/openscad/openscad-wasm) | `OpenSCAD-2025.03.25.wasm24456-WebAssembly-web` | `public/vendor/openscad/` からブラウザ内形状生成を実行 | [GPL-2.0-only](../public/vendor/openscad/COPYING) |
-| [Bootstrap Icons](https://icons.getbootstrap.com/) (`bootstrap-icons`) | jsDelivr `bootstrap-icons@1.11.3` | section開閉用chevron SVGを `src/main.js` が読み込む | [MIT](https://github.com/twbs/icons/blob/v1.11.3/LICENSE.md) |
 
-## アイコンprovider
+画面の操作・設計カードに使う図案は、このプロジェクト用に作成した[オリジナルの画面アイコン](../public/keycap-ui/icons.json)です。
+
+## 印字用アイコンprovider
 
 いずれもブラウザ実行時はjsDelivrの `latest` を試し、失敗時はlockfileに固定したpackage由来データを使います。生成したSVGはOpenSCADへ渡すlegend資源であり、providerのnoticeは公開物にも同梱します。
 

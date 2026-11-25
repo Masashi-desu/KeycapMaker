@@ -14,7 +14,7 @@ export class KeyboardPanel {
     this.offsetInputs = this.assignmentCard.locator('[data-keyboard-offset]');
     this.editAssignedButton = this.assignmentCard.locator('[data-keyboard-edit-assigned]');
     this.exportButton = page.locator('[data-keyboard-export]');
-    this.exportIcon = this.exportButton.locator('svg');
+    this.exportIcon = this.exportButton.locator('.ui-icon');
     this.exportStatus = page.locator('[data-keyboard-export-status]');
     this.importStatus = page.locator('[data-keyboard-import-status]');
     this.previewStatus = page.locator('[data-keyboard-preview-status]');

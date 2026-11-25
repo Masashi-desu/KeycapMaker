@@ -36,6 +36,16 @@
   box-sizing: border-box;
 }
 
+.ui-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex: none;
+  background-color: currentColor;
+  -webkit-mask: var(--ui-icon) center / contain no-repeat;
+  mask: var(--ui-icon) center / contain no-repeat;
+}
+
 html,
 body,
 #app {
@@ -216,18 +226,10 @@ pre {
 }
 
 .theme-switch__icon,
-.theme-switch__icon svg {
+.theme-switch__icon .ui-icon {
   display: block;
   width: 17px;
   height: 17px;
-}
-
-.theme-switch__icon svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .theme-switch__button.is-activating .theme-switch__icon {
@@ -305,18 +307,10 @@ pre {
 }
 
 .language-combobox__icon,
-.language-combobox__icon svg {
+.language-combobox__icon .ui-icon {
   display: block;
   width: 17px;
   height: 17px;
-}
-
-.language-combobox__icon svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .language-combobox__label {
@@ -442,14 +436,9 @@ pre {
   color: var(--text);
 }
 
-.drop-overlay__icon svg {
+.drop-overlay__icon .ui-icon {
   width: 26px;
   height: 26px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .drop-overlay__copy {
@@ -761,14 +750,6 @@ pre {
   display: block;
   width: 44px;
   height: 44px;
-  background: currentColor;
-  -webkit-mask: var(--field-group-icon) center / contain no-repeat;
-  mask: var(--field-group-icon) center / contain no-repeat;
-}
-
-.field-group-card__icon-symbol--stem {
-  width: 54px;
-  height: 54px;
 }
 
 .field-group-card__title-stack {
@@ -843,11 +824,15 @@ pre {
 }
 
 .field-group-toggle__icon {
-  filter: var(--ui-icon-filter);
   display: block;
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
+}
+
+.field-group-toggle[aria-expanded="true"] .field-group-toggle__icon,
+.mobile-inspector-toggle[aria-expanded="false"] .ui-icon {
+  transform: rotate(180deg);
 }
 
 .field-group-body {
@@ -1047,9 +1032,6 @@ pre {
   display: block;
   width: 34px;
   height: 34px;
-  background: currentColor;
-  -webkit-mask: var(--field-leading-icon) center / contain no-repeat;
-  mask: var(--field-leading-icon) center / contain no-repeat;
 }
 
 .field--checkbox {
@@ -1378,49 +1360,9 @@ pre {
 }
 
 .corner-radius-icon {
-  position: relative;
-  display: inline-block;
   width: 24px;
   height: 24px;
-  flex: 0 0 auto;
   color: var(--muted);
-}
-
-.corner-radius-icon__mark {
-  position: absolute;
-  width: 11px;
-  height: 11px;
-  border-color: currentColor;
-  border-style: solid;
-  opacity: 0.82;
-}
-
-.corner-radius-icon__mark--left-top {
-  top: 2px;
-  left: 2px;
-  border-width: 2px 0 0 2px;
-  border-top-left-radius: 7px;
-}
-
-.corner-radius-icon__mark--right-top {
-  top: 2px;
-  right: 2px;
-  border-width: 2px 2px 0 0;
-  border-top-right-radius: 7px;
-}
-
-.corner-radius-icon__mark--right-bottom {
-  right: 2px;
-  bottom: 2px;
-  border-width: 0 2px 2px 0;
-  border-bottom-right-radius: 7px;
-}
-
-.corner-radius-icon__mark--left-bottom {
-  bottom: 2px;
-  left: 2px;
-  border-width: 0 0 2px 2px;
-  border-bottom-left-radius: 7px;
 }
 
 .checkbox-toggle {
@@ -1575,8 +1517,6 @@ pre {
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
-  border-radius: 3px;
-  object-fit: contain;
 }
 
 .font-picker-landing-page-link__label {
@@ -2031,8 +1971,8 @@ pre {
     inset 0 1px 0 rgb(var(--highlight-rgb) / calc(0.14 * var(--highlight-strength)));
 }
 
-.font-picker-search-button svg,
-.font-picker-search-input__icon svg {
+.font-picker-search-button .ui-icon,
+.font-picker-search-input__icon .ui-icon {
   width: 18px;
   height: 18px;
   display: block;
@@ -2259,12 +2199,10 @@ pre {
   text-decoration: none;
 }
 
-.icon-picker-catalog-link__favicon {
+.icon-picker-catalog-link__icon {
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
-  border-radius: 3px;
-  object-fit: contain;
 }
 
 .icon-picker-catalog-link__label {
@@ -2580,7 +2518,24 @@ pre {
 }
 
 .field-control--select {
-  justify-content: space-between;
+  position: relative;
+}
+
+.field-control--select select {
+  appearance: none;
+  padding-inline-end: 22px;
+}
+
+.select-chevron {
+  position: absolute;
+  inset-inline-end: 10px;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.field-control--select:has(select:disabled) .select-chevron {
+  opacity: 0.56;
 }
 
 .field-unit {
@@ -2713,14 +2668,10 @@ pre {
   transform: translateY(1px);
 }
 
-.import-binding-notice__delete svg {
+.import-binding-notice__delete .ui-icon {
   display: block;
   width: 15px;
   height: 15px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.4;
-  stroke-linecap: round;
 }
 
 .import-binding-notice__more {
@@ -2763,17 +2714,7 @@ pre {
   color: var(--text);
 }
 
-.export-action-card__icon svg,
-.export-save-button svg {
-  display: block;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.export-action-card__icon svg {
+.export-action-card__icon .ui-icon {
   width: 22px;
   height: 22px;
 }
@@ -2882,7 +2823,7 @@ pre {
   box-shadow: inset 0 1px 0 rgb(var(--highlight-rgb) / calc(0.08 * var(--highlight-strength)));
 }
 
-.export-save-button svg {
+.export-save-button .ui-icon {
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
@@ -2993,12 +2934,10 @@ pre {
   line-height: 1;
 }
 
-.project-keycap-drag-handle svg {
+.project-keycap-drag-handle .ui-icon {
   display: block;
   width: 16px;
   height: 16px;
-  fill: currentColor;
-  stroke: none;
 }
 
 .project-keycap-action-button:active {
@@ -3138,8 +3077,8 @@ pre {
 .project-keycap-positions__heading::-webkit-details-marker { display: none; }
 .project-keycap-positions__heading:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .project-keycap-positions__count { color: var(--muted); font-size: 11px; font-weight: 600; }
-.project-keycap-positions__heading svg { width: 16px; height: 16px; transition: transform 160ms ease; }
-.project-keycap-positions[open] > summary svg { transform: rotate(180deg); }
+.project-keycap-positions__heading .ui-icon { width: 16px; height: 16px; transition: transform 160ms ease; }
+.project-keycap-positions[open] > summary .ui-icon { transform: rotate(180deg); }
 .project-keycap-positions__body { display: grid; gap: 8px; padding-top: 6px; }
 
 .project-keycap-action-button {
@@ -3186,16 +3125,11 @@ pre {
   white-space: nowrap;
 }
 
-.project-keycap-action-button svg {
+.project-keycap-action-button .ui-icon {
   display: block;
   width: 15px;
   height: 15px;
   flex: 0 0 auto;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .project-empty {
@@ -3542,9 +3476,9 @@ html.is-download-consent-open {
 .keyboard-danger-zone .keyboard-danger-title { display: grid; grid-template-columns: 18px 1fr 16px; align-items: center; gap: 8px; color: var(--danger-text); font-size: 20px; font-weight: 700; list-style: none; cursor: pointer; border-radius: 6px; }
 .keyboard-danger-title::-webkit-details-marker { display: none; }
 .keyboard-danger-title:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; }
-.keyboard-danger-title svg { width: 18px; height: 18px; flex: 0 0 auto; }
-.keyboard-danger-title svg:last-child { width: 16px; height: 16px; transition: transform 160ms ease; }
-.keyboard-danger-zone[open] > summary svg:last-child { transform: rotate(180deg); }
+.keyboard-danger-title .ui-icon { width: 18px; height: 18px; flex: 0 0 auto; }
+.keyboard-danger-title .ui-icon:last-child { width: 16px; height: 16px; transition: transform 160ms ease; }
+.keyboard-danger-zone[open] > summary .ui-icon:last-child { transform: rotate(180deg); }
 .keyboard-danger-body { display: grid; gap: 14px; padding-top: 14px; }
 .keyboard-danger-zone p { color: var(--danger-text); line-height: 1.6; }
 @media (max-width: 760px) {
@@ -3557,7 +3491,7 @@ html.is-download-consent-open {
   .keyboard-preview-switch .segment-link,
   .keyboard-step__connector-fill,
   .keyboard-step__number,
-  .project-keycap-positions__heading svg { transition: none; }
+  .project-keycap-positions__heading .ui-icon { transition: none; }
   .inspector-panel--keyboard > .project-panel-grid.is-step-entering { animation: none; }
 }
 
@@ -3934,11 +3868,6 @@ html.is-download-consent-open {
   .field-group-card__icon-symbol {
     width: 38px;
     height: 38px;
-  }
-
-  .field-group-card__icon-symbol--stem {
-    width: 48px;
-    height: 48px;
   }
 
   .field-group-card__title-stack h3 {

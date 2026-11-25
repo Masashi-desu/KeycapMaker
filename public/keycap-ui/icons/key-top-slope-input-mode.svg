@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="傾斜の指定">
+  <title>傾斜の指定</title>
+  <desc>傾いた天面と水平基準がなす角。</desc>
+  <path d="M 15 25.1 L 4.10968 25.1 A 1.4 1.4 0 0 1 3.40426 22.49071 L 14.44574 16.04984 L 15.55426 17.95016 L 7.06881 22.9 L 15 22.9 Z M 14.44574 16.04984 L 25.99458 9.31302 A 1.4 1.4 0 0 1 28.1 10.52231 L 28.1 17 L 25.9 17 L 25.9 11.91514 L 15.55426 17.95016 Z M 28.1 17 L 28.1 23 A 2.1 2.1 0 0 1 26 25.1 L 15 25.1 L 15 22.9 L 25.6 22.9 A 0.3 0.3 0 0 0 25.9 22.6 L 25.9 17 Z" fill="currentColor" stroke="none"/>
+  <path d="M 13 18 A 4.47214 4.47214 0 0 1 15 24"/>
+  <path d="M 3 28 L 27 28"/>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="閉じる">
+  <title>閉じる</title>
+  <desc>対角方向に交わる二本の線。</desc>
+  <path d="M 7 7 L 25 25"/>
+  <path d="M 7 25 L 25 7"/>
+</svg>

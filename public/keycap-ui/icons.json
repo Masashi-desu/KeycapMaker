@@ -1,0 +1,365 @@
+{
+  "name": "keycap-ui",
+  "icons": [
+    {
+      "id": "name",
+      "name": "名称",
+      "description": "保存するデザインに付ける荷札。",
+      "categories": [
+        "設計カード"
+      ],
+      "path": "icons/name.svg"
+    },
+    {
+      "id": "shape",
+      "name": "キーキャップの形",
+      "description": "正面から見た外形と横幅の寸法線。",
+      "categories": [
+        "設計カード"
+      ],
+      "path": "icons/shape.svg"
+    },
+    {
+      "id": "top",
+      "name": "キートップ",
+      "description": "中央がくぼんだ天面と手前の壁。",
+      "categories": [
+        "設計カード"
+      ],
+      "path": "icons/top.svg"
+    },
+    {
+      "id": "key-top-hat",
+      "name": "トップハット",
+      "description": "本体の肩に載る小さな上段。",
+      "categories": [
+        "設計カード"
+      ],
+      "path": "icons/key-top-hat.svg"
+    },
+    {
+      "id": "legend",
+      "name": "印字",
+      "description": "キーの天面に置いた文字 A。",
+      "categories": [
+        "設計カード"
+      ],
+      "path": "icons/legend.svg"
+    },
+    {
+      "id": "homing",
+      "name": "指の目印",
+      "description": "天面に浮き上がった触覚用のバー。",
+      "categories": [
+        "設計カード"
+      ],
+      "path": "icons/homing.svg"
+    },
+    {
+      "id": "stem",
+      "name": "ステム",
+      "description": "裏から見た丸いボスと十字の取り付け穴。",
+      "categories": [
+        "設計カード"
+      ],
+      "path": "icons/stem.svg"
+    },
+    {
+      "id": "key-unit-basis",
+      "name": "1u の基準と横幅",
+      "description": "左上の一単位と隣接キーのピッチ。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/key-unit-basis.svg"
+    },
+    {
+      "id": "key-depth-basis",
+      "name": "キーの奥行き",
+      "description": "真上から見たキーに沿って前後の寸法を測る。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/key-depth-basis.svg"
+    },
+    {
+      "id": "key-wall-thickness",
+      "name": "壁の厚み",
+      "description": "殻の断面に現れる内壁と外壁。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/key-wall-thickness.svg"
+    },
+    {
+      "id": "key-top-taper",
+      "name": "キートップの絞り",
+      "description": "外側から細くなる天面を指す二つの矢印。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/key-top-taper.svg"
+    },
+    {
+      "id": "keycap-edge-radius",
+      "name": "上端の丸み",
+      "description": "側壁から天面へ滑らかにつながる縁。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/keycap-edge-radius.svg"
+    },
+    {
+      "id": "keycap-shoulder-radius",
+      "name": "肩の丸み",
+      "description": "上段の側壁と下段の肩がつくる内側の曲線。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/keycap-shoulder-radius.svg"
+    },
+    {
+      "id": "key-top-center-height",
+      "name": "中央の高さ",
+      "description": "断面の中央から天面に向かう高さの矢印。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/key-top-center-height.svg"
+    },
+    {
+      "id": "key-top-offset",
+      "name": "キートップのずれ",
+      "description": "底面の中心線から右へずらした天面。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/key-top-offset.svg"
+    },
+    {
+      "id": "key-top-surface-shape",
+      "name": "天面の形状",
+      "description": "幅のある凹面を示す二本の断面曲線。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/key-top-surface-shape.svg"
+    },
+    {
+      "id": "key-top-slope-input-mode",
+      "name": "傾斜の指定",
+      "description": "傾いた天面と水平基準がなす角。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/key-top-slope-input-mode.svg"
+    },
+    {
+      "id": "corner-all",
+      "name": "四隅",
+      "description": "四隅をまとめて設定。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/corner-all.svg"
+    },
+    {
+      "id": "corner-left-top",
+      "name": "左上の角",
+      "description": "左上の角の半径を設定。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/corner-left-top.svg"
+    },
+    {
+      "id": "corner-right-top",
+      "name": "右上の角",
+      "description": "右上の角の半径を設定。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/corner-right-top.svg"
+    },
+    {
+      "id": "corner-right-bottom",
+      "name": "右下の角",
+      "description": "右下の角の半径を設定。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/corner-right-bottom.svg"
+    },
+    {
+      "id": "corner-left-bottom",
+      "name": "左下の角",
+      "description": "左下の角の半径を設定。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/corner-left-bottom.svg"
+    },
+    {
+      "id": "chevron",
+      "name": "開閉",
+      "description": "パネルを開く山形の印。",
+      "categories": [
+        "共通操作"
+      ],
+      "path": "icons/chevron.svg"
+    },
+    {
+      "id": "arrow-up",
+      "name": "パネルの表示切替",
+      "description": "パネルの移動方向を示す縦矢印。",
+      "categories": [
+        "共通操作"
+      ],
+      "path": "icons/arrow-up.svg"
+    },
+    {
+      "id": "search",
+      "name": "検索",
+      "description": "斜めに柄を付けた丸いレンズ。",
+      "categories": [
+        "共通操作"
+      ],
+      "path": "icons/search.svg"
+    },
+    {
+      "id": "language",
+      "name": "言語",
+      "description": "赤道と経線を描いた地球。",
+      "categories": [
+        "共通操作"
+      ],
+      "path": "icons/language.svg"
+    },
+    {
+      "id": "sun",
+      "name": "ライトテーマ",
+      "description": "朝日を囲む八本の短い光線。",
+      "categories": [
+        "共通操作"
+      ],
+      "path": "icons/sun.svg"
+    },
+    {
+      "id": "moon",
+      "name": "ダークテーマ",
+      "description": "三日月と夜空の小さな星。",
+      "categories": [
+        "共通操作"
+      ],
+      "path": "icons/moon.svg"
+    },
+    {
+      "id": "external-link",
+      "name": "外部ページ",
+      "description": "開いた枠から右上へ抜ける矢印。",
+      "categories": [
+        "共通操作"
+      ],
+      "path": "icons/external-link.svg"
+    },
+    {
+      "id": "plus",
+      "name": "追加",
+      "description": "中央で交わる二本の線。",
+      "categories": [
+        "共通操作"
+      ],
+      "path": "icons/plus.svg"
+    },
+    {
+      "id": "close",
+      "name": "閉じる",
+      "description": "対角方向に交わる二本の線。",
+      "categories": [
+        "共通操作"
+      ],
+      "path": "icons/close.svg"
+    },
+    {
+      "id": "file",
+      "name": "編集ファイル",
+      "description": "折った右肩と見出し線のある用紙。",
+      "categories": [
+        "プロジェクト・配置"
+      ],
+      "path": "icons/file.svg"
+    },
+    {
+      "id": "package",
+      "name": "立体データ",
+      "description": "梱包した立方体と天面の継ぎ目。",
+      "categories": [
+        "プロジェクト・配置"
+      ],
+      "path": "icons/package.svg"
+    },
+    {
+      "id": "download",
+      "name": "保存",
+      "description": "受け皿へ下ろす矢印。",
+      "categories": [
+        "プロジェクト・配置"
+      ],
+      "path": "icons/download.svg"
+    },
+    {
+      "id": "design",
+      "name": "デザインを編集",
+      "description": "位置の異なる二つの横スライダー。",
+      "categories": [
+        "プロジェクト・配置"
+      ],
+      "path": "icons/design.svg"
+    },
+    {
+      "id": "grip",
+      "name": "並べ替え",
+      "description": "指を掛ける三段の短い溝。",
+      "categories": [
+        "プロジェクト・配置"
+      ],
+      "path": "icons/grip.svg"
+    },
+    {
+      "id": "trash",
+      "name": "削除",
+      "description": "ふたを載せた細身のごみ箱。",
+      "categories": [
+        "プロジェクト・配置"
+      ],
+      "path": "icons/trash.svg"
+    },
+    {
+      "id": "file-up",
+      "name": "ファイル読み込み",
+      "description": "用紙の中で上を指す矢印。",
+      "categories": [
+        "プロジェクト・配置"
+      ],
+      "path": "icons/file-up.svg"
+    },
+    {
+      "id": "folder",
+      "name": "フォルダー読み込み",
+      "description": "背表紙と開いた手前の面。",
+      "categories": [
+        "プロジェクト・配置"
+      ],
+      "path": "icons/folder.svg"
+    },
+    {
+      "id": "warning",
+      "name": "危険な操作",
+      "description": "感嘆符を収めた三角形。",
+      "categories": [
+        "プロジェクト・配置"
+      ],
+      "path": "icons/warning.svg"
+    }
+  ]
+}

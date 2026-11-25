@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="追加">
+  <title>追加</title>
+  <desc>中央で交わる二本の線。</desc>
+  <path d="M 16 5 L 16 27"/>
+  <path d="M 5 16 L 27 16"/>
+</svg>

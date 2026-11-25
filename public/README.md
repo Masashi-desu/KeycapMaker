@@ -5,7 +5,7 @@
 - `vendor/`: OpenSCAD、Coloris、icon providerのruntimeまたはnotice
 - `fonts/`: legend font本体、OFL/terms、取得revisionとSHA-256を含むsource note
 - `assets/j-stem-lp01/`: 公式STEPと派生preview OFF
-- `icons/parameters/`: parameter UI用SVG
+- [keycap-ui/](keycap-ui/): IconYardで作成した画面アイコンのSVGと一覧。編集元と更新手順は[開発・貢献規約](../CONTRIBUTING.md#画面アイコンの更新)を参照する
 - `og-image.png`: `index.html` のOpen Graph / Twitter画像。`scripts/generate-open-graph.mjs` から生成する
 - `favicon.svg`: パレットを天面に収めた一体型キーキャップのpage icon
 

@@ -1,9 +1,5 @@
-import { ChevronDown, Download, FileUp, FolderOpen, Trash2, TriangleAlert } from "@lucide/icons";
+import { renderUiIcon } from "./ui-icons.js";
 import { getKeyboardBounds, getKeyboardKeyCenter, getKeyboardKeyCorners } from "./keyboard-layout.js";
-
-function renderIcon(icon, escape) {
-  return `<svg viewBox="0 0 ${icon.size} ${icon.size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${icon.node.map(([tag, attributes]) => `<${tag} ${Object.entries(attributes).filter(([name]) => name !== "key").map(([name, value]) => `${name}="${escape(String(value))}"`).join(" ")}/>`).join("")}</svg>`;
-}
 
 export function renderPreviewModeControl(state, t) {
   if (!state.project.keyboard) return "";
@@ -33,7 +29,7 @@ export function renderProjectKeycapPlacements(project, keycapId, t, escape, { op
     <summary class="project-keycap-positions__heading" aria-label="${escape(`${t("keyboard.slot")} · ${name} · ${count}`)}">
       <span>${t("keyboard.slot")}</span>
       <span class="project-keycap-positions__count">${escape(count)}</span>
-      ${renderIcon(ChevronDown, escape)}
+      ${renderUiIcon("chevron")}
     </summary>
     <div class="project-keycap-positions__body">
       ${renderMap({ project }, t, escape, { keycapId, readOnly: true })}
@@ -47,6 +43,7 @@ function renderKeyboardSelect({ label, attribute, options, value, disabled = fal
     <span class="field-copy"><span class="field-label">${escape(label)}</span></span>
     <span class="field-control field-control--select">
       <select ${attribute} ${disabled ? "disabled" : ""}>${options.map((option) => `<option value="${escape(String(option.value))}" ${String(option.value) === String(value) ? "selected" : ""}>${escape(option.label)}</option>`).join("")}</select>
+      ${renderUiIcon("chevron", "select-chevron")}
     </span>`;
   return action
     ? `<div class="field keyboard-assignment-card" data-keyboard-assignment-card><label>${contents}</label>${action}</div>`
@@ -134,7 +131,7 @@ export function syncKeyboardStepBar(bar, state, t) {
   }
 }
 
-export function renderKeyboardTab(state, t, escape, searchIconMarkup) {
+export function renderKeyboardTab(state, t, escape) {
   const board = state.project.keyboard;
   const slot = board?.keys.find((key) => key.id === state.keyboardSlotId) || board?.keys[0];
   const placement = state.project.placements.find((entry) => entry.slotId === slot?.id);
@@ -159,8 +156,8 @@ export function renderKeyboardTab(state, t, escape, searchIconMarkup) {
         <p>${t("keyboard.importHint")}</p>
         <p class="keyboard-import-dropzone">${t("keyboard.dropHint")}</p>
         <div class="keyboard-import-picker-actions" role="group" aria-label="${t("keyboard.chooseLocal")}">
-          <button type="button" class="export-save-button project-secondary-button" data-keyboard-picker="files" ${disabled}>${renderIcon(FileUp, escape)}<span>${t("keyboard.files")}</span></button>
-          <button type="button" class="export-save-button project-secondary-button" data-keyboard-picker="folder" ${disabled}>${renderIcon(FolderOpen, escape)}<span>${t("keyboard.folder")}</span></button>
+          <button type="button" class="export-save-button project-secondary-button" data-keyboard-picker="files" ${disabled}>${renderUiIcon("file-up")}<span>${t("keyboard.files")}</span></button>
+          <button type="button" class="export-save-button project-secondary-button" data-keyboard-picker="folder" ${disabled}>${renderUiIcon("folder")}<span>${t("keyboard.folder")}</span></button>
           <input type="file" data-keyboard-files="files" multiple accept=".json,.dtsi,.dts,.overlay,.keymap,.toml,.kicad_pcb,.conf,.defconfig" hidden ${disabled}/>
           <input type="file" data-keyboard-files="folder" webkitdirectory multiple hidden ${disabled}/>
         </div>
@@ -171,7 +168,7 @@ export function renderKeyboardTab(state, t, escape, searchIconMarkup) {
         <h3>${t("keyboard.selectFile")}</h3>
         <div class="field keyboard-candidate-picker" role="group" aria-label="${t("keyboard.filter")}">
           <label class="field-control font-picker-search-input keyboard-candidate-search">
-            <span class="font-picker-search-input__icon">${searchIconMarkup}</span>
+            <span class="font-picker-search-input__icon">${renderUiIcon("search")}</span>
             <input type="search" data-keyboard-candidate-query value="${escape(state.keyboardCandidateQuery)}" placeholder="${t("keyboard.filter")}" aria-label="${t("keyboard.filter")}" aria-controls="keyboard-file-candidates" spellcheck="false" autocomplete="off"/>
           </label>
           <div class="keyboard-candidates" id="keyboard-file-candidates" data-keyboard-candidates>
@@ -206,15 +203,15 @@ export function renderKeyboardTab(state, t, escape, searchIconMarkup) {
             ${placement ? `<div class="keyboard-offset-grid">${["offsetX", "offsetY", "z", "rotation"].map((field) => `<label class="keyboard-field">${t(`keyboard.${field}`)}<input type="number" data-keyboard-offset="${field}" value="${placement[field]}" min="-10000" max="10000" step="${field === "rotation" ? "1" : "0.1"}"/></label>`).join("")}</div>
               <button type="button" class="export-save-button project-secondary-button" data-keyboard-edit-assigned>${t("keyboard.editAssigned")}</button>` : ""}`,
         }, escape)}
-        <button type="button" class="export-save-button project-secondary-button keyboard-export-button" data-keyboard-export ${!state.project.placements.length || exporting || state.projectStatus === "running" ? "disabled" : ""}>${renderIcon(Download, escape)}<span>${t(exporting ? "actions.saving" : "keyboard.export3mf")}</span></button>
+        <button type="button" class="export-save-button project-secondary-button keyboard-export-button" data-keyboard-export ${!state.project.placements.length || exporting || state.projectStatus === "running" ? "disabled" : ""}>${renderUiIcon("download")}<span>${t(exporting ? "actions.saving" : "keyboard.export3mf")}</span></button>
         <p class="keyboard-status ${state.exportsStatus === "error" ? "is-error" : ""}" data-keyboard-export-status role="status" ${state.exportsSummary && (exporting || exportResult) ? "" : "hidden"}>${escape(state.exportsSummary || "")}${!exporting && exportResult && state.exportsStatus === "error" ? ` ${escape(exportResult.notes)}` : ""}</p>
         <p class="keyboard-status">${t("keyboard.exportNote")}</p>
       </section>
       <details class="field-group-card keyboard-card keyboard-danger-zone" aria-labelledby="keyboard-danger-title" data-keyboard-danger-zone ${state.keyboardDangerZoneExpanded ? "open" : ""}>
-        <summary class="keyboard-danger-title" id="keyboard-danger-title">${renderIcon(TriangleAlert, escape)}<span>${t("keyboard.dangerZone")}</span>${renderIcon(ChevronDown, escape)}</summary>
+        <summary class="keyboard-danger-title" id="keyboard-danger-title">${renderUiIcon("warning")}<span>${t("keyboard.dangerZone")}</span>${renderUiIcon("chevron")}</summary>
         <div class="keyboard-danger-body">
           <p>${t("keyboard.removeHint")}</p>
-          <button type="button" class="export-save-button project-danger-button" data-keyboard-remove ${busy || exporting || state.projectStatus === "running" ? "disabled" : ""}>${renderIcon(Trash2, escape)}<span>${t("keyboard.remove")}</span></button>
+          <button type="button" class="export-save-button project-danger-button" data-keyboard-remove ${busy || exporting || state.projectStatus === "running" ? "disabled" : ""}>${renderUiIcon("trash")}<span>${t("keyboard.remove")}</span></button>
         </div>
       </details>` : ""}
     </div>
