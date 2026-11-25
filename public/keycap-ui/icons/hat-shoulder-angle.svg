@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="トップハットの肩角度">
+  <title>トップハットの肩角度</title>
+  <desc>段の肩と水平面のなす角を弧で表す。</desc>
+  <path d="M 3 22.9 L 7 22.9 L 7 25.1 L 3 25.1 Z M 1.9 24 A 1.1 1.1 0 0 1 4.1 24 A 1.1 1.1 0 0 1 1.9 24 Z M 7 22.9 L 10.18121 22.9 A 0.3 0.3 0 0 0 10.44269 22.74708 L 14.54127 15.46071 L 16.45873 16.53929 L 12.24546 24.02955 A 2.1 2.1 0 0 1 10.41515 25.1 L 7 25.1 Z M 14.54127 15.46071 L 18.75454 7.97045 A 2.1 2.1 0 0 1 20.58485 6.9 L 24 6.9 L 24 9.1 L 20.81879 9.1 A 0.3 0.3 0 0 0 20.55731 9.25292 L 16.45873 16.53929 Z M 24 6.9 L 28 6.9 L 28 9.1 L 24 9.1 Z M 26.9 8 A 1.1 1.1 0 0 1 29.1 8 A 1.1 1.1 0 0 1 26.9 8 Z" fill="currentColor" stroke="none"/>
+  <path d="M 11 24 L 28 24"/>
+  <path d="M 19 24 A 7.83511 7.83511 0 0 0 15 17"/>
+</svg>

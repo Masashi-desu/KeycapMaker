@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="欠き込みの幅">
+  <title>欠き込みの幅</title>
+  <desc>JIS Enter の左下の欠き込みに水平寸法線を合わせる。</desc>
+  <path d="M 2.9 8.5 L 2.9 5 A 2.1 2.1 0 0 1 5 2.9 L 14 2.9 L 14 5.1 L 5.4 5.1 A 0.3 0.3 0 0 0 5.1 5.4 L 5.1 8.5 Z M 14 2.9 L 23 2.9 A 2.1 2.1 0 0 1 25.1 5 L 25.1 13.5 L 22.9 13.5 L 22.9 5.4 A 0.3 0.3 0 0 0 22.6 5.1 L 14 5.1 Z M 25.1 13.5 L 25.1 22 A 2.1 2.1 0 0 1 23 24.1 L 18.5 24.1 L 18.5 21.9 L 22.6 21.9 A 0.3 0.3 0 0 0 22.9 21.6 L 22.9 13.5 Z M 18.5 24.1 L 14 24.1 A 2.1 2.1 0 0 1 11.9 22 L 11.9 18 L 14.1 18 L 14.1 21.6 A 0.3 0.3 0 0 0 14.4 21.9 L 18.5 21.9 Z M 11.9 18 L 11.9 14.4 A 0.3 0.3 0 0 0 11.6 14.1 L 8.5 14.1 L 8.5 11.9 L 12 11.9 A 2.1 2.1 0 0 1 14.1 14 L 14.1 18 Z M 8.5 14.1 L 5 14.1 A 2.1 2.1 0 0 1 2.9 12 L 2.9 8.5 L 5.1 8.5 L 5.1 11.6 A 0.3 0.3 0 0 0 5.4 11.9 L 8.5 11.9 Z" fill="currentColor" stroke="none"/>
+  <path d="M 4 27 L 13 27"/>
+  <path d="M 4 25 L 4 29"/>
+  <path d="M 13 25 L 13 29"/>
+</svg>

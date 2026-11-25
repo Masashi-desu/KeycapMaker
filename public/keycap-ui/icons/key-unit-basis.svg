@@ -1,10 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="1u の基準と横幅">
-  <title>1u の基準と横幅</title>
-  <desc>左上の一単位と隣接キーのピッチ。</desc>
-  <path d="M 2.9 12.5 L 2.9 8 A 2.1 2.1 0 0 1 5 5.9 L 9.5 5.9 L 9.5 8.1 L 5.4 8.1 A 0.3 0.3 0 0 0 5.1 8.4 L 5.1 12.5 Z M 9.5 5.9 L 14 5.9 A 2.1 2.1 0 0 1 16.1 8 L 16.1 12.5 L 13.9 12.5 L 13.9 8.4 A 0.3 0.3 0 0 0 13.6 8.1 L 9.5 8.1 Z M 16.1 12.5 L 16.1 17 A 2.1 2.1 0 0 1 14 19.1 L 9.5 19.1 L 9.5 16.9 L 13.6 16.9 A 0.3 0.3 0 0 0 13.9 16.6 L 13.9 12.5 Z M 9.5 19.1 L 5 19.1 A 2.1 2.1 0 0 1 2.9 17 L 2.9 12.5 L 5.1 12.5 L 5.1 16.6 A 0.3 0.3 0 0 0 5.4 16.9 L 9.5 16.9 Z" fill="currentColor" stroke="none"/>
-  <path d="M 18.9 12.5 L 18.9 8 A 2.1 2.1 0 0 1 21 5.9 L 24 5.9 L 24 8.1 L 21.4 8.1 A 0.3 0.3 0 0 0 21.1 8.4 L 21.1 12.5 Z M 24 5.9 L 27 5.9 A 2.1 2.1 0 0 1 29.1 8 L 29.1 12.5 L 26.9 12.5 L 26.9 8.4 A 0.3 0.3 0 0 0 26.6 8.1 L 24 8.1 Z M 29.1 12.5 L 29.1 17 A 2.1 2.1 0 0 1 27 19.1 L 24 19.1 L 24 16.9 L 26.6 16.9 A 0.3 0.3 0 0 0 26.9 16.6 L 26.9 12.5 Z M 24 19.1 L 21 19.1 A 2.1 2.1 0 0 1 18.9 17 L 18.9 12.5 L 21.1 12.5 L 21.1 16.6 A 0.3 0.3 0 0 0 21.4 16.9 L 24 16.9 Z" fill="currentColor" stroke="none"/>
-  <path d="M 4 24 L 28 24"/>
-  <path d="M 4 21 L 4 27"/>
-  <path d="M 15 22 L 15 26"/>
-  <path d="M 28 21 L 28 27"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.2 -0.2 32.4 32.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="1u の基準">
+  <title>1u の基準</title>
+  <desc>隣り合う二つのキーの中心を結ぶ寸法線で1uのピッチを示す。</desc>
+  <path d="M 0.9 11 L 0.9 6 A 2.1 2.1 0 0 1 3 3.9 L 8 3.9 L 8 6.1 L 3.4 6.1 A 0.3 0.3 0 0 0 3.1 6.4 L 3.1 11 Z M 8 3.9 L 13 3.9 A 2.1 2.1 0 0 1 15.1 6 L 15.1 11 L 12.9 11 L 12.9 6.4 A 0.3 0.3 0 0 0 12.6 6.1 L 8 6.1 Z M 15.1 11 L 15.1 16 A 2.1 2.1 0 0 1 13 18.1 L 8 18.1 L 8 15.9 L 12.6 15.9 A 0.3 0.3 0 0 0 12.9 15.6 L 12.9 11 Z M 8 18.1 L 3 18.1 A 2.1 2.1 0 0 1 0.9 16 L 0.9 11 L 3.1 11 L 3.1 15.6 A 0.3 0.3 0 0 0 3.4 15.9 L 8 15.9 Z" fill="currentColor" stroke="none"/>
+  <path d="M 16.9 11 L 16.9 6 A 2.1 2.1 0 0 1 19 3.9 L 24 3.9 L 24 6.1 L 19.4 6.1 A 0.3 0.3 0 0 0 19.1 6.4 L 19.1 11 Z M 24 3.9 L 29 3.9 A 2.1 2.1 0 0 1 31.1 6 L 31.1 11 L 28.9 11 L 28.9 6.4 A 0.3 0.3 0 0 0 28.6 6.1 L 24 6.1 Z M 31.1 11 L 31.1 16 A 2.1 2.1 0 0 1 29 18.1 L 24 18.1 L 24 15.9 L 28.6 15.9 A 0.3 0.3 0 0 0 28.9 15.6 L 28.9 11 Z M 24 18.1 L 19 18.1 A 2.1 2.1 0 0 1 16.9 16 L 16.9 11 L 19.1 11 L 19.1 15.6 A 0.3 0.3 0 0 0 19.4 15.9 L 24 15.9 Z" fill="currentColor" stroke="none"/>
+  <path d="M 8 13 L 8 15"/>
+  <path d="M 24 13 L 24 15"/>
+  <path d="M 8 22 L 8 26"/>
+  <path d="M 8 24 L 24 24"/>
+  <path d="M 24 22 L 24 26"/>
 </svg>

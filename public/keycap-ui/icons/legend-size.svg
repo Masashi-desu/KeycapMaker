@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="印字サイズ">
+  <title>印字サイズ</title>
+  <desc>文字の横に高さの寸法線を置く。</desc>
+  <path d="M 1.99481 24.55325 L 5.99481 15.55325 L 8.00519 16.44675 L 4.00519 25.44675 Z M 1.9 25 A 1.1 1.1 0 0 1 4.1 25 A 1.1 1.1 0 0 1 1.9 25 Z M 5.99481 15.55325 L 9.72066 7.17007 A 1.4 1.4 0 0 1 12.27934 7.17007 L 16.00519 15.55325 L 13.99481 16.44675 L 11 9.70844 L 8.00519 16.44675 Z M 16.00519 15.55325 L 20.00519 24.55325 L 17.99481 25.44675 L 13.99481 16.44675 Z M 17.9 25 A 1.1 1.1 0 0 1 20.1 25 A 1.1 1.1 0 0 1 17.9 25 Z" fill="currentColor" stroke="none"/>
+  <path d="M 6 18 L 16 18"/>
+  <path d="M 26 7 L 26 25"/>
+  <path d="M 24 7 L 28 7"/>
+  <path d="M 24 25 L 28 25"/>
+</svg>

@@ -24,7 +24,7 @@ CIはrequired test jobでNode/browser testとworkflow lintを実行します。C
 
 UIの構造と操作は `test/e2e/pages/` に集約します。
 
-- `EditorPage`: 初期表示、デザイン名・寸法の編集、印字位置の選択と表示中の印字の編集、デザインtabへの移動、テーマ切り替えと入力欄の配色取得、preview stageの要求番号・状態・canvasフレームの取得
+- `EditorPage`: 初期表示、デザイン名・寸法の編集、設計項目の見出しアイコンの取得、印字位置の選択と表示中の印字の編集、デザインtabへの移動、テーマ切り替えと入力欄の配色取得、preview stageの要求番号・状態・canvasフレームの取得
 - `ProjectPanel`: project tab、キーの追加・選択、export dialogを開く操作、project ZIPの保存とZIP・ディレクトリ・ファイル一覧dropの読み込み
 - `ExportDialog`: 書き出し操作、共通の同意画面を通したdownloadの取得
 - `DownloadConsent`: 同意checkbox・確認ボタン・帰属コピー・キャンセル・Esc、両テーマの配色とmobileのレイアウト確認

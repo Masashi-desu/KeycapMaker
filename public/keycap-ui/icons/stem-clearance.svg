@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="ステムのクリアランス">
+  <title>ステムのクリアランス</title>
+  <desc>取り付け穴と軸の間にできる隙間の断面。</desc>
+  <path d="M 5.1 5 L 5.1 16 L 2.9 16 L 2.9 5 Z M 2.9 5 A 1.1 1.1 0 0 1 5.1 5 A 1.1 1.1 0 0 1 2.9 5 Z M 5.1 16 L 5.1 25.6 A 0.3 0.3 0 0 0 5.4 25.9 L 16 25.9 L 16 28.1 L 5 28.1 A 2.1 2.1 0 0 1 2.9 26 L 2.9 16 Z M 16 25.9 L 26.6 25.9 A 0.3 0.3 0 0 0 26.9 25.6 L 26.9 16 L 29.1 16 L 29.1 26 A 2.1 2.1 0 0 1 27 28.1 L 16 28.1 Z M 26.9 16 L 26.9 5 L 29.1 5 L 29.1 16 Z M 26.9 5 A 1.1 1.1 0 0 1 29.1 5 A 1.1 1.1 0 0 1 26.9 5 Z" fill="currentColor" stroke="none"/>
+  <path d="M 12.1 5 L 12.1 12.5 L 9.9 12.5 L 9.9 5 Z M 9.9 5 A 1.1 1.1 0 0 1 12.1 5 A 1.1 1.1 0 0 1 9.9 5 Z M 12.1 12.5 L 12.1 18.6 A 0.3 0.3 0 0 0 12.4 18.9 L 16 18.9 L 16 21.1 L 12 21.1 A 2.1 2.1 0 0 1 9.9 19 L 9.9 12.5 Z M 16 18.9 L 19.6 18.9 A 0.3 0.3 0 0 0 19.9 18.6 L 19.9 12.5 L 22.1 12.5 L 22.1 19 A 2.1 2.1 0 0 1 20 21.1 L 16 21.1 Z M 19.9 12.5 L 19.9 5 L 22.1 5 L 22.1 12.5 Z M 19.9 5 A 1.1 1.1 0 0 1 22.1 5 A 1.1 1.1 0 0 1 19.9 5 Z" fill="currentColor" stroke="none"/>
+  <path d="M 12 23 L 20 23"/>
+</svg>

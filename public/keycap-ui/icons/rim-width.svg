@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="リムの幅">
+  <title>リムの幅</title>
+  <desc>二重枠の片側の帯を横切る寸法線。</desc>
+  <path d="M 2.9 25 L 2.9 16 L 5.1 16 L 5.1 25 Z M 2.9 25 A 1.1 1.1 0 0 1 5.1 25 A 1.1 1.1 0 0 1 2.9 25 Z M 2.9 16 L 2.9 8 A 2.1 2.1 0 0 1 5 5.9 L 15.5 5.9 L 15.5 8.1 L 5.4 8.1 A 0.3 0.3 0 0 0 5.1 8.4 L 5.1 16 Z M 15.5 5.9 L 26 5.9 A 2.1 2.1 0 0 1 28.1 8 L 28.1 16 L 25.9 16 L 25.9 8.4 A 0.3 0.3 0 0 0 25.6 8.1 L 15.5 8.1 Z M 28.1 16 L 28.1 25 L 25.9 25 L 25.9 16 Z M 25.9 25 A 1.1 1.1 0 0 1 28.1 25 A 1.1 1.1 0 0 1 25.9 25 Z" fill="currentColor" stroke="none"/>
+  <path d="M 9.9 25 L 9.9 19.5 L 12.1 19.5 L 12.1 25 Z M 9.9 25 A 1.1 1.1 0 0 1 12.1 25 A 1.1 1.1 0 0 1 9.9 25 Z M 9.9 19.5 L 9.9 15 A 2.1 2.1 0 0 1 12 12.9 L 16 12.9 L 16 15.1 L 12.4 15.1 A 0.3 0.3 0 0 0 12.1 15.4 L 12.1 19.5 Z M 16 12.9 L 20 12.9 A 2.1 2.1 0 0 1 22.1 15 L 22.1 19.5 L 19.9 19.5 L 19.9 15.4 A 0.3 0.3 0 0 0 19.6 15.1 L 16 15.1 Z M 22.1 19.5 L 22.1 25 L 19.9 25 L 19.9 19.5 Z M 19.9 25 A 1.1 1.1 0 0 1 22.1 25 A 1.1 1.1 0 0 1 19.9 25 Z" fill="currentColor" stroke="none"/>
+  <path d="M 4 21 L 11 21"/>
+  <path d="M 4 19 L 4 23"/>
+  <path d="M 11 19 L 11 23"/>
+</svg>

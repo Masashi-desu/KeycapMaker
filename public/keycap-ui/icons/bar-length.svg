@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="目印の長さ">
+  <title>目印の長さ</title>
+  <desc>横長の突起と両端を結ぶ寸法線。</desc>
+  <path d="M 7 14 L 25 14 A 4 4 0 0 1 25 22 L 7 22 A 4 4 0 0 1 7 14 Z"/>
+  <path d="M 3 7 L 29 7"/>
+  <path d="M 3 5 L 3 9"/>
+  <path d="M 29 5 L 29 9"/>
+</svg>

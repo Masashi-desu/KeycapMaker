@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="印字の高さ">
+  <title>印字の高さ</title>
+  <desc>水平な表面から盛り上がる印字の断面と、その高さの寸法。</desc>
+  <path d="M 3 20.9 L 5.5 20.9 L 5.5 23.1 L 3 23.1 Z M 1.9 22 A 1.1 1.1 0 0 1 4.1 22 A 1.1 1.1 0 0 1 1.9 22 Z M 5.5 20.9 L 6.6 20.9 A 0.3 0.3 0 0 0 6.9 20.6 L 6.9 16 L 9.1 16 L 9.1 21 A 2.1 2.1 0 0 1 7 23.1 L 5.5 23.1 Z M 6.9 16 L 6.9 11 A 2.1 2.1 0 0 1 9 8.9 L 11.5 8.9 L 11.5 11.1 L 9.4 11.1 A 0.3 0.3 0 0 0 9.1 11.4 L 9.1 16 Z M 11.5 8.9 L 14 8.9 A 2.1 2.1 0 0 1 16.1 11 L 16.1 16 L 13.9 16 L 13.9 11.4 A 0.3 0.3 0 0 0 13.6 11.1 L 11.5 11.1 Z M 16.1 16 L 16.1 20.6 A 0.3 0.3 0 0 0 16.4 20.9 L 18 20.9 L 18 23.1 L 16 23.1 A 2.1 2.1 0 0 1 13.9 21 L 13.9 16 Z M 18 20.9 L 21 20.9 L 21 23.1 L 18 23.1 Z M 19.9 22 A 1.1 1.1 0 0 1 22.1 22 A 1.1 1.1 0 0 1 19.9 22 Z" fill="currentColor" stroke="none"/>
+  <path d="M 3 27 L 21 27"/>
+  <path d="M 24 10 L 28 10"/>
+  <path d="M 26 10 L 26 22"/>
+  <path d="M 24 22 L 28 22"/>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="左右の移動">
+  <title>左右の移動</title>
+  <desc>垂直な基準線から右へ向かう矢印。</desc>
+  <path d="M 6 5 L 6 27"/>
+  <path d="M 10 16 L 28 16"/>
+  <path d="M 21.77782 8.22218 L 25.27782 11.72218 L 23.72218 13.27782 L 20.22218 9.77782 Z M 19.9 9 A 1.1 1.1 0 0 1 22.1 9 A 1.1 1.1 0 0 1 19.9 9 Z M 25.27782 11.72218 L 28.07071 14.51508 A 2.1 2.1 0 0 1 28.07071 17.48492 L 25.27782 20.27782 L 23.72218 18.72218 L 26.23223 16.21213 A 0.3 0.3 0 0 0 26.23223 15.78787 L 23.72218 13.27782 Z M 25.27782 20.27782 L 21.77782 23.77782 L 20.22218 22.22218 L 23.72218 18.72218 Z M 19.9 23 A 1.1 1.1 0 0 1 22.1 23 A 1.1 1.1 0 0 1 19.9 23 Z" fill="currentColor" stroke="none"/>
+</svg>

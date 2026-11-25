@@ -122,7 +122,7 @@ root overviewや `docs/` だけの変更では静的な文書gateだけを実行
 1. [IconYard](https://masashi-desu.github.io/IconYard/) を開き、ヘッダーのプロジェクト名 →「JSONから読み込む」で編集元を開きます。
 2. 既存の絵柄は同じIDのまま編集します。新規の絵柄には用途が分かる名前とカテゴリを付け、プロジェクト共通のグリッド・線幅に合わせて描きます。
 3. 「保存」→「JSONをダウンロード」で編集元を更新します。同じ状態で「アイコンライブラリをダウンロード（ZIP）」を実行し、展開した `keycap-ui/` フォルダーで [public/keycap-ui/](public/keycap-ui/) を置き換えます。削除したSVGもこのとき取り除きます。
-4. 画面では [renderUiIcon](src/lib/ui-icons.js) に [icons.json](public/keycap-ui/icons.json) の `path` にあるSVGのファイル名（拡張子を除く）を渡します。色は配置先の文字色に追従します。操作名はボタンのテキストまたは `aria-label` で指定します。
+4. 画面では [renderUiIcon](src/lib/ui-icons.js) に [icons.json](public/keycap-ui/icons.json) の `path` にあるSVGのファイル名（拡張子を除く）を渡します。設計タブの設定項目を追加する際は、[フィールド定義](src/main.js) の `icon` にこのファイル名を指定します。印字は同じ定義を9か所で共有します。色は配置先の文字色に追従します。操作名はボタンのテキストまたは `aria-label` で指定します。
 5. `npm test` でプロジェクト・一覧・SVGの一致を確認し、ライト・ダークの実際の表示サイズで形と向きを確認します。編集元と書き出し結果を一緒にコミットします。
 
 ## UIの配色とテーマを維持する実装規約

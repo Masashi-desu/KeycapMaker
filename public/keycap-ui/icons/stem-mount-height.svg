@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="取り付け位置の高さ">
+  <title>取り付け位置の高さ</title>
+  <desc>天板の裏から伸びるボスに高さ寸法を添える。</desc>
+  <path d="M 3 6 L 21 6"/>
+  <path d="M 4 9.9 L 6.5 9.9 L 6.5 12.1 L 4 12.1 Z M 2.9 11 A 1.1 1.1 0 0 1 5.1 11 A 1.1 1.1 0 0 1 2.9 11 Z M 6.5 9.9 L 8 9.9 A 2.1 2.1 0 0 1 10.1 12 L 10.1 17.5 L 7.9 17.5 L 7.9 12.4 A 0.3 0.3 0 0 0 7.6 12.1 L 6.5 12.1 Z M 10.1 17.5 L 10.1 22.6 A 0.3 0.3 0 0 0 10.4 22.9 L 13 22.9 L 13 25.1 L 10 25.1 A 2.1 2.1 0 0 1 7.9 23 L 7.9 17.5 Z M 13 22.9 L 15.6 22.9 A 0.3 0.3 0 0 0 15.9 22.6 L 15.9 17.5 L 18.1 17.5 L 18.1 23 A 2.1 2.1 0 0 1 16 25.1 L 13 25.1 Z M 15.9 17.5 L 15.9 12 A 2.1 2.1 0 0 1 18 9.9 L 19 9.9 L 19 12.1 L 18.4 12.1 A 0.3 0.3 0 0 0 18.1 12.4 L 18.1 17.5 Z M 19 9.9 L 21 9.9 L 21 12.1 L 19 12.1 Z M 19.9 11 A 1.1 1.1 0 0 1 22.1 11 A 1.1 1.1 0 0 1 19.9 11 Z" fill="currentColor" stroke="none"/>
+  <path d="M 26 11 L 26 24"/>
+  <path d="M 24 11 L 28 11"/>
+  <path d="M 24 24 L 28 24"/>
+</svg>

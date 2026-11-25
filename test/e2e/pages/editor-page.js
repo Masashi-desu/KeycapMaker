@@ -11,6 +11,7 @@ export class EditorPage {
     this.width = page.locator('input[type="number"][data-field="keyWidth"]');
     this.nameCardIcon = page.locator('[aria-labelledby="design-name-card-title"] .field-group-card__icon-symbol');
     this.shapeToggle = page.locator('[data-field-group-toggle="shape"]');
+    this.keytopToggle = page.locator('[data-field-group-toggle="top"]');
     this.legendToggle = page.locator('[data-field-group-toggle="legend"]');
     this.legendPositions = page.getByRole("radiogroup", { name: "印字位置" });
     this.legendFields = page.locator("#legend-position-fields");
@@ -44,6 +45,17 @@ export class EditorPage {
       await this.shapeToggle.click();
     }
     await this.width.waitFor({ state: "visible" });
+  }
+
+  async openKeytop() {
+    if (await this.keytopToggle.getAttribute("aria-expanded") === "false") await this.keytopToggle.click();
+    await this.fieldIcon("topCornerRadius").waitFor({ state: "visible" });
+  }
+
+  fieldIcon(key) {
+    return this.designPanel.locator(".field-heading")
+      .filter({ has: this.page.locator(`[id="field-label-${key}"]`) })
+      .locator(".field-leading-icon__symbol");
   }
 
   async openLegends() {

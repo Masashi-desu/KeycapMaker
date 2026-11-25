@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="入れる文字">
+  <title>入れる文字</title>
+  <desc>入力中の文字と末尾のカーソル。</desc>
+  <path d="M 2.0032 22.53483 L 5.5032 15.03483 L 7.4968 15.96517 L 3.9968 23.46517 Z M 1.9 23 A 1.1 1.1 0 0 1 4.1 23 A 1.1 1.1 0 0 1 1.9 23 Z M 5.5032 15.03483 L 8.73134 8.11737 A 1.4 1.4 0 0 1 11.26866 8.11737 L 14.4968 15.03483 L 12.5032 15.96517 L 10 10.60118 L 7.4968 15.96517 Z M 14.4968 15.03483 L 17.9968 22.53483 L 16.0032 23.46517 L 12.5032 15.96517 Z M 15.9 23 A 1.1 1.1 0 0 1 18.1 23 A 1.1 1.1 0 0 1 15.9 23 Z" fill="currentColor" stroke="none"/>
+  <path d="M 6 18 L 14 18"/>
+  <path d="M 24 6 L 24 26"/>
+  <path d="M 21 6 L 27 6"/>
+  <path d="M 21 26 L 27 26"/>
+</svg>

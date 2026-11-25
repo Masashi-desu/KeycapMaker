@@ -42,11 +42,16 @@ test("テーマの切り替えは入力欄の配色を変え、キーキャッ�
   await editor.open();
   const updated = await webMcp.execute("update", { params: { bodyColor: "#245a81", legendColor: "#f0d48d", homingBarColor: "#bf5044" } });
   expect(updated.ok).toBe(true);
+  await editor.openKeytop();
   let lightColors;
   for (const theme of ["light", "dark"]) {
     await editor.setTheme(theme);
     await expect(editor.nameCardIcon).toBeVisible();
     await expect(editor.nameCardIcon).toHaveCSS("mask-image", /keycap-ui\/icons\/name\.svg/);
+    await expect(editor.fieldIcon("keyUnitMm")).toHaveCSS("mask-image", /keycap-ui\/icons\/key-unit-basis\.svg/);
+    await expect(editor.fieldIcon("keyWidth")).toHaveCSS("mask-image", /keycap-ui\/icons\/key-width\.svg/);
+    await expect(editor.fieldIcon("topCornerRadius")).toHaveCSS("mask-image", /keycap-ui\/icons\/surface-radius\.svg/);
+    await expect(editor.fieldIcon("topPitchDeg")).toHaveCSS("mask-image", /keycap-ui\/icons\/slope-pitch\.svg/);
     const samples = await editor.readInputColors();
     expect(samples).toHaveLength(2);
     for (const sample of samples) {

@@ -4,7 +4,7 @@
     {
       "id": "name",
       "name": "名称",
-      "description": "保存するデザインに付ける荷札。",
+      "description": "留め具の付いた横長の名札に、人物のシルエットと名前の欄を並べる。",
       "categories": [
         "設計カード"
       ],
@@ -13,7 +13,7 @@
     {
       "id": "shape",
       "name": "キーキャップの形",
-      "description": "正面から見た外形と横幅の寸法線。",
+      "description": "斜めから見たキーキャップ。Kのある天面、手前のスカート、左の側壁を描く。",
       "categories": [
         "設計カード"
       ],
@@ -22,7 +22,7 @@
     {
       "id": "top",
       "name": "キートップ",
-      "description": "中央がくぼんだ天面と手前の壁。",
+      "description": "同じキーキャップの天面だけを塗り、調整する面を示す。",
       "categories": [
         "設計カード"
       ],
@@ -31,7 +31,7 @@
     {
       "id": "key-top-hat",
       "name": "トップハット",
-      "description": "本体の肩に載る小さな上段。",
+      "description": "斜めから見た本体の肩と、その上に載る小さい二段目の天面。",
       "categories": [
         "設計カード"
       ],
@@ -66,8 +66,8 @@
     },
     {
       "id": "key-unit-basis",
-      "name": "1u の基準と横幅",
-      "description": "左上の一単位と隣接キーのピッチ。",
+      "name": "1u の基準",
+      "description": "隣り合う二つのキーの中心を結ぶ寸法線で1uのピッチを示す。",
       "categories": [
         "設計パラメーター"
       ],
@@ -441,6 +441,492 @@
         "印字位置"
       ],
       "path": "icons/legend-right.svg"
+    },
+    {
+      "id": "profile-choice",
+      "name": "形状プロファイル",
+      "description": "背の高いシェルと薄型のタイプライター風キーを横から並べ、選択をチェックで示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/profile-choice.svg"
+    },
+    {
+      "id": "notch-width",
+      "name": "欠き込みの幅",
+      "description": "JIS Enter の左下の欠き込みに水平寸法線を合わせる。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/notch-width.svg"
+    },
+    {
+      "id": "notch-depth",
+      "name": "欠き込みの奥行き",
+      "description": "欠き込みの上下端の間を縦に測る。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/notch-depth.svg"
+    },
+    {
+      "id": "surface-radius",
+      "name": "上面のR",
+      "description": "角を拡大し、円弧とその中心を結ぶ半径を示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/surface-radius.svg"
+    },
+    {
+      "id": "dish-depth",
+      "name": "くぼみの深さ",
+      "description": "凹面の断面とその中央へ下ろす矢印。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/dish-depth.svg"
+    },
+    {
+      "id": "part-color",
+      "name": "パーツの色",
+      "description": "親指を掛けるくぼみと四つの絵の具を描いたパレット。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/part-color.svg"
+    },
+    {
+      "id": "separate-color",
+      "name": "別の色を使う",
+      "description": "パレットにプラス記号を添え、トップハット専用の色を示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/separate-color.svg"
+    },
+    {
+      "id": "roof-thickness",
+      "name": "天板の厚み",
+      "description": "上面断面の二本線に厚みの寸法を合わせる。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/roof-thickness.svg"
+    },
+    {
+      "id": "metric-length",
+      "name": "実寸",
+      "description": "実寸を示す目盛付きの定規。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/metric-length.svg"
+    },
+    {
+      "id": "individual-corners",
+      "name": "角を個別に設定",
+      "description": "ひとつの丸い角を選び、残りの三隅を短い角印で示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/individual-corners.svg"
+    },
+    {
+      "id": "slope-pitch",
+      "name": "前後の傾斜",
+      "description": "斜めに見た天面に奥行き方向の矢印を載せる。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/slope-pitch.svg"
+    },
+    {
+      "id": "slope-roll",
+      "name": "左右の傾斜",
+      "description": "右上がりの天面を正面から示し、その傾きを矢印で示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/slope-roll.svg"
+    },
+    {
+      "id": "edge-height-front",
+      "name": "前端の高さ",
+      "description": "天面の前端に垂直の高さ矢印を立てる。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/edge-height-front.svg"
+    },
+    {
+      "id": "edge-height-back",
+      "name": "奥端の高さ",
+      "description": "天面の奥端に垂直の高さ矢印を立てる。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/edge-height-back.svg"
+    },
+    {
+      "id": "edge-height-left",
+      "name": "左端の高さ",
+      "description": "天面の左端に垂直の高さ矢印を立てる。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/edge-height-left.svg"
+    },
+    {
+      "id": "edge-height-right",
+      "name": "右端の高さ",
+      "description": "天面の右端に垂直の高さ矢印を立てる。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/edge-height-right.svg"
+    },
+    {
+      "id": "offset-horizontal",
+      "name": "左右の移動",
+      "description": "垂直な基準線から右へ向かう矢印。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/offset-horizontal.svg"
+    },
+    {
+      "id": "offset-vertical",
+      "name": "上下・前後の移動",
+      "description": "水平な基準線から奥へ向かう矢印。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/offset-vertical.svg"
+    },
+    {
+      "id": "hat-top-width",
+      "name": "トップハット上端の幅",
+      "description": "上端に対応する寸法線で幅を示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/hat-top-width.svg"
+    },
+    {
+      "id": "hat-top-depth",
+      "name": "トップハット上端の奥行き",
+      "description": "二段の輪郭を真上から見て、上端の前後端を結ぶ寸法線を示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/hat-top-depth.svg"
+    },
+    {
+      "id": "hat-top-radius",
+      "name": "トップハット上端のR",
+      "description": "上端の角の曲線を二段の輪郭に示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/hat-top-radius.svg"
+    },
+    {
+      "id": "hat-bottom-width",
+      "name": "トップハット下端の幅",
+      "description": "下端に対応する寸法線で幅を示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/hat-bottom-width.svg"
+    },
+    {
+      "id": "hat-bottom-depth",
+      "name": "トップハット下端の奥行き",
+      "description": "二段の輪郭を真上から見て、下端の前後端を結ぶ寸法線を示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/hat-bottom-depth.svg"
+    },
+    {
+      "id": "hat-bottom-radius",
+      "name": "トップハット下端のR",
+      "description": "下端の角の曲線を二段の輪郭に示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/hat-bottom-radius.svg"
+    },
+    {
+      "id": "hat-inset",
+      "name": "トップハットの内寄せ",
+      "description": "外周と内側の輪郭の間に内向き矢印を置く。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/hat-inset.svg"
+    },
+    {
+      "id": "hat-height",
+      "name": "トップハットの高さ",
+      "description": "段差の上下に縦の寸法線を添える。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/hat-height.svg"
+    },
+    {
+      "id": "hat-shoulder-angle",
+      "name": "トップハットの肩角度",
+      "description": "段の肩と水平面のなす角を弧で表す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/hat-shoulder-angle.svg"
+    },
+    {
+      "id": "rim-band",
+      "name": "キーリム",
+      "description": "内周と外周でキートップの縁取りを示す。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/rim-band.svg"
+    },
+    {
+      "id": "rim-width",
+      "name": "リムの幅",
+      "description": "二重枠の片側の帯を横切る寸法線。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/rim-width.svg"
+    },
+    {
+      "id": "rim-up",
+      "name": "リムの上方向の高さ",
+      "description": "基準となる上面から上へ伸びるリムの断面。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/rim-up.svg"
+    },
+    {
+      "id": "rim-down",
+      "name": "リムの下方向の高さ",
+      "description": "基準となる上面から下へ伸びるリムの断面。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/rim-down.svg"
+    },
+    {
+      "id": "bar-length",
+      "name": "目印の長さ",
+      "description": "横長の突起と両端を結ぶ寸法線。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/bar-length.svg"
+    },
+    {
+      "id": "bar-width",
+      "name": "目印の幅",
+      "description": "目印の短辺に直交する寸法線。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/bar-width.svg"
+    },
+    {
+      "id": "bar-height",
+      "name": "目印の高さ",
+      "description": "キー表面から盛り上がった突起を縦に測る。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/bar-height.svg"
+    },
+    {
+      "id": "bar-chamfer",
+      "name": "目印の面取り",
+      "description": "突起の断面の斜めに落とした角へ、外から矢印を当てる。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/bar-chamfer.svg"
+    },
+    {
+      "id": "stem-clearance",
+      "name": "ステムのクリアランス",
+      "description": "取り付け穴と軸の間にできる隙間の断面。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/stem-clearance.svg"
+    },
+    {
+      "id": "stem-mount-height",
+      "name": "取り付け位置の高さ",
+      "description": "天板の裏から伸びるボスに高さ寸法を添える。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/stem-mount-height.svg"
+    },
+    {
+      "id": "stem-outer-size",
+      "name": "軸外側の補正",
+      "description": "丸い軸の外周を横方向に測る。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/stem-outer-size.svg"
+    },
+    {
+      "id": "stem-fit",
+      "name": "軸のはめあい",
+      "description": "軸と受け穴の間に残す左右の余裕。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/stem-fit.svg"
+    },
+    {
+      "id": "stem-cross-chamfer",
+      "name": "十字穴の面取り",
+      "description": "十字穴の入口と手前の面に付けた斜面。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/stem-cross-chamfer.svg"
+    },
+    {
+      "id": "stem-inset",
+      "name": "軸の引き込み",
+      "description": "殻の底面から内側へ入る軸と上向きの矢印。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/stem-inset.svg"
+    },
+    {
+      "id": "legend-content",
+      "name": "印字の内容",
+      "description": "文字のAと星形のグリフを並べ、印字する内容の種類を示す。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-content.svg"
+    },
+    {
+      "id": "legend-text",
+      "name": "入れる文字",
+      "description": "入力中の文字と末尾のカーソル。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-text.svg"
+    },
+    {
+      "id": "legend-font",
+      "name": "書体",
+      "description": "大文字Aと小文字aを並べた書体見本。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-font.svg"
+    },
+    {
+      "id": "legend-style",
+      "name": "文字スタイル",
+      "description": "傾斜した字形と上下のセリフ。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-style.svg"
+    },
+    {
+      "id": "legend-underline",
+      "name": "下線",
+      "description": "文字の基線より下に引いた横線。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-underline.svg"
+    },
+    {
+      "id": "legend-library",
+      "name": "アイコンセット",
+      "description": "重ねた見本帳と先頭の図形。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-library.svg"
+    },
+    {
+      "id": "legend-glyph",
+      "name": "印字するアイコン",
+      "description": "四隅の枠に収まるひし形のグリフ。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-glyph.svg"
+    },
+    {
+      "id": "legend-fill",
+      "name": "アイコンの塗り",
+      "description": "輪郭と塗り面をひとつのひし形の左右に描き分ける。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-fill.svg"
+    },
+    {
+      "id": "legend-size",
+      "name": "印字サイズ",
+      "description": "文字の横に高さの寸法線を置く。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-size.svg"
+    },
+    {
+      "id": "legend-weight",
+      "name": "印字の太さ",
+      "description": "太い主幹と二つのふくらみを持つ、太字を表す大文字のB。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-weight.svg"
+    },
+    {
+      "id": "legend-relief",
+      "name": "印字の高さ",
+      "description": "水平な表面から盛り上がる印字の断面と、その高さの寸法。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-relief.svg"
+    },
+    {
+      "id": "legend-embed",
+      "name": "印字の埋め込み",
+      "description": "印字の脚が材料の中へ埋まる断面と、下向きの深さ矢印。",
+      "categories": [
+        "印字設定"
+      ],
+      "path": "icons/legend-embed.svg"
+    },
+    {
+      "id": "key-width",
+      "name": "キーの横幅",
+      "description": "真上から見た一つのキーの左右端を結ぶ横寸法。",
+      "categories": [
+        "設計パラメーター"
+      ],
+      "path": "icons/key-width.svg"
     }
   ]
 }

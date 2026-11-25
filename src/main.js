@@ -1823,6 +1823,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
   return [
     {
       key: enabledKey,
+      icon: "legend",
       label: () => (isSideLegend ? t("fields.sideLegend.enabled.label", sideValues()) : t("fields.legendEnabled.label")),
       hint: () => (isSideLegend ? t("fields.sideLegend.enabled.hint", sideValues()) : t("fields.legendEnabled.hint")),
       note: (params) => params[enabledKey] ? t("fields.legendPrintNotice") : "",
@@ -1830,6 +1831,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: colorKey,
+      icon: "part-color",
       label: () => t(fieldKey("color.label", "legendColor.label"), sideValues()),
       hint: () => t(fieldKey("color.hint", "legendColor.hint"), sideValues()),
       type: "color",
@@ -1838,6 +1840,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: contentTypeKey,
+      icon: "legend-content",
       label: () => t(fieldKey("contentType.label", "legendContentType.label"), sideValues()),
       hint: () => t(fieldKey("contentType.hint", "legendContentType.hint"), sideValues()),
       type: "select",
@@ -1847,6 +1850,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: iconSetKey,
+      icon: "legend-library",
       label: () => t(fieldKey("iconSet.label", "legendIconSet.label"), sideValues()),
       hint: () => t(fieldKey("iconSet.hint", "legendIconSet.hint"), sideValues()),
       type: "select",
@@ -1856,6 +1860,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: iconNameKey,
+      icon: "legend-glyph",
       label: () => t(fieldKey("iconName.label", "legendIconName.label"), sideValues()),
       hint: (params) => getLegendIconFieldHint(params, iconSetKey),
       type: "icon-search",
@@ -1863,6 +1868,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: iconFillKey,
+      icon: "legend-fill",
       label: () => t(fieldKey("iconFill.label", "legendIconFill.label"), sideValues()),
       hint: () => t(fieldKey("iconFill.hint", "legendIconFill.hint"), sideValues()),
       type: "checkbox",
@@ -1870,6 +1876,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: textKey,
+      icon: "legend-text",
       label: () => t(fieldKey("text.label", "legendText.label"), sideValues()),
       hint: () => t(fieldKey("text.hint", "legendText.hint"), sideValues()),
       type: "text",
@@ -1879,6 +1886,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: fontKey,
+      icon: "legend-font",
       label: () => t(fieldKey("fontKey.label", "legendFontKey.label"), sideValues()),
       hint: (params) => getLegendFontFieldHint(params, fontKey),
       type: "font-search",
@@ -1887,6 +1895,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: fontStyleKey,
+      icon: "legend-style",
       label: () => t(fieldKey("fontStyleKey.label", "legendFontStyleKey.label"), sideValues()),
       hint: (params) => getLegendFontStyleHint(params, fontKey),
       type: "select",
@@ -1896,6 +1905,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: underlineEnabledKey,
+      icon: "legend-underline",
       label: () => t(fieldKey("underlineEnabled.label", "legendUnderlineEnabled.label"), sideValues()),
       hint: () => t(fieldKey("underlineEnabled.hint", "legendUnderlineEnabled.hint"), sideValues()),
       type: "checkbox",
@@ -1903,6 +1913,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: sizeKey,
+      icon: "legend-size",
       label: () => t(fieldKey("size.label", "legendSize.label"), sideValues()),
       hint: () => t(fieldKey("size.hint", "legendSize.hint"), sideValues()),
       unit: "mm",
@@ -1913,6 +1924,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: outlineDeltaKey,
+      icon: "legend-weight",
       label: () => t(fieldKey("outlineDelta.label", "legendOutlineDelta.label"), sideValues()),
       hint: () => getLegendOutlineHint(),
       unit: "mm",
@@ -1923,6 +1935,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: heightKey,
+      icon: "legend-relief",
       label: () => t(fieldKey("height.label", "legendHeight.label"), sideValues()),
       hint: () => t(fieldKey("height.hint", "legendHeight.hint"), sideValues()),
       unit: "mm",
@@ -1933,6 +1946,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     ...(!isSideLegend ? [{
       key: embedKey,
+      icon: "legend-embed",
       label: () => t(fieldKey("embed.label", "legendEmbed.label"), sideValues()),
       hint: () => t(fieldKey("embed.hint", "legendEmbed.hint"), sideValues()),
       unit: "mm",
@@ -1942,6 +1956,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     }] : []),
     {
       key: offsetXKey,
+      icon: "offset-horizontal",
       label: () => t(fieldKey("offsetX.label", "legendOffsetX.label"), sideValues()),
       hint: () => t(fieldKey("offsetX.hint", "legendOffsetX.hint"), sideValues()),
       unit: "mm",
@@ -1951,6 +1966,7 @@ function createLegendControlFields({ paramPrefix, side = null }) {
     },
     {
       key: offsetYKey,
+      icon: "offset-vertical",
       label: () => t(fieldKey("offsetY.label", "legendOffsetY.label"), sideValues()),
       hint: () => t(fieldKey("offsetY.hint", "legendOffsetY.hint"), sideValues()),
       unit: "mm",
@@ -1972,6 +1988,7 @@ const fieldGroupTemplates = [
     fields: [
       {
         key: "shapeProfile",
+        icon: "profile-choice",
         label: () => t("fields.shapeProfile.label"),
         hint: () => t("fields.shapeProfile.hint"),
         type: "select",
@@ -1979,6 +1996,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "keyWidth",
+        icon: "key-width",
         label: () => t("fields.keyWidth.label"),
         hint: () => t("fields.keyWidth.hint", getKeyUnitCopyValues()),
         type: "linked-size",
@@ -1994,6 +2012,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "keyDepth",
+        icon: "key-depth-basis",
         label: () => t("fields.keyDepth.label"),
         hint: () => t("fields.keyDepth.hint", getKeyUnitCopyValues()),
         type: "linked-size",
@@ -2014,6 +2033,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "jisEnterNotchWidth",
+        icon: "notch-width",
         label: () => t("fields.jisEnterNotchWidth.label"),
         hint: (params) => getJisEnterNotchWidthHint(params),
         unit: "mm",
@@ -2022,6 +2042,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "jisEnterNotchDepth",
+        icon: "notch-depth",
         label: () => t("fields.jisEnterNotchDepth.label"),
         hint: (params) => getJisEnterNotchDepthHint(params),
         unit: "mm",
@@ -2030,6 +2051,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "wallThickness",
+        icon: "key-wall-thickness",
         label: () => t("fields.wallThickness.label"),
         hint: () => t("fields.wallThickness.hint"),
         type: "number-pair",
@@ -2041,6 +2063,7 @@ const fieldGroupTemplates = [
           max: THICKNESS_SLIDER_MAX,
           step: 0.05,
         },
+        primaryMiniIcon: "key-wall-thickness",
         primaryMiniLabel: () => t("fields.wallThickness.primaryMiniLabel"),
         secondaryLabel: () => t("fields.wallThickness.secondaryLabel"),
         secondaryField: "topThickness",
@@ -2050,6 +2073,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topThickness",
+        icon: "roof-thickness",
         label: () => t("fields.topThickness.label"),
         hint: () => t("fields.topThickness.hint"),
         unit: "mm",
@@ -2063,6 +2087,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "typewriterCornerRadius",
+        icon: "surface-radius",
         label: () => t("fields.typewriterCornerRadius.label"),
         hint: (params) => getTypewriterCornerRadiusHint(params),
         unit: "mm",
@@ -2071,6 +2096,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topScale",
+        icon: "key-top-taper",
         label: () => t("fields.topScale.label"),
         hint: () => t("fields.topScale.hint"),
         unit: "",
@@ -2085,6 +2111,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "keycapEdgeRadius",
+        icon: "keycap-edge-radius",
         label: () => t("fields.keycapEdgeRadius.label"),
         hint: (params) => getKeycapEdgeRadiusHint(params),
         unit: "mm",
@@ -2094,6 +2121,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "keycapShoulderRadius",
+        icon: "keycap-shoulder-radius",
         label: () => t("fields.keycapShoulderRadius.label"),
         hint: (params) => getKeycapShoulderRadiusHint(params),
         unit: "mm",
@@ -2103,6 +2131,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "bodyColor",
+        icon: "part-color",
         label: () => t("fields.bodyColor.label"),
         hint: () => t("fields.bodyColor.hint"),
         type: "color",
@@ -2117,6 +2146,7 @@ const fieldGroupTemplates = [
     fields: [
       {
         key: "topCenterHeight",
+        icon: "key-top-center-height",
         label: (params) => (isTypewriterShapeProfile(params.shapeProfile) ? t("fields.topCenterHeight.typewriterLabel") : t("fields.topCenterHeight.label")),
         hint: (params) => getTopCenterHeightHint(params),
         unit: "mm",
@@ -2125,11 +2155,13 @@ const fieldGroupTemplates = [
       },
       {
         key: "topOffsetX",
+        icon: "key-top-offset",
         label: () => t("fields.topOffset.label"),
         hint: () => t("fields.topOffset.hint"),
         type: "number-pair",
         unit: "mm",
         step: 0.1,
+        primaryMiniIcon: "offset-horizontal",
         primaryMiniLabel: () => t("fields.topOffsetX.label"),
         secondaryLabel: () => t("fields.topOffsetY.label"),
         secondaryField: "topOffsetY",
@@ -2138,6 +2170,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topOffsetY",
+        icon: "offset-vertical",
         label: () => t("fields.topOffsetY.label"),
         hint: () => t("fields.topOffsetY.hint"),
         unit: "mm",
@@ -2145,6 +2178,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topSurfaceShape",
+        icon: "key-top-surface-shape",
         label: () => t("fields.topSurfaceShape.label"),
         hint: () => getTopSurfaceShapeHint(),
         type: "select",
@@ -2153,6 +2187,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topCornerRadius",
+        icon: "surface-radius",
         label: () => t("fields.topCornerRadius.label"),
         hint: (params) => getTopCornerRadiusHint(params),
         type: "corner-radius",
@@ -2205,6 +2240,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "dishDepth",
+        icon: "dish-depth",
         label: () => t("fields.dishDepth.label"),
         hint: (params) => getDishDepthHint(params),
         unit: "mm",
@@ -2215,6 +2251,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatEnabled",
+        icon: "key-top-hat",
         label: () => t("fields.topHatEnabled.label"),
         hint: () => t("fields.topHatEnabled.hint"),
         type: "checkbox",
@@ -2236,6 +2273,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatSeparateColorEnabled",
+        icon: "separate-color",
         label: () => t("fields.topHatSeparateColorEnabled.label"),
         hint: () => t("fields.topHatSeparateColorEnabled.hint"),
         type: "checkbox",
@@ -2244,6 +2282,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatColor",
+        icon: "part-color",
         label: () => t("fields.topHatColor.label"),
         hint: () => t("fields.topHatColor.hint"),
         type: "color",
@@ -2252,6 +2291,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatSurfaceShape",
+        icon: "key-top-surface-shape",
         label: () => t("fields.topHatSurfaceShape.label"),
         hint: () => getTopHatSurfaceShapeHint(),
         type: "select",
@@ -2260,6 +2300,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatDishDepth",
+        icon: "dish-depth",
         label: () => t("fields.topHatDishDepth.label"),
         hint: (params) => getTopHatDishDepthHint(params),
         unit: "mm",
@@ -2270,6 +2311,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatTopWidth",
+        icon: "hat-top-width",
         label: () => t("fields.topHatTopWidth.label"),
         hint: (params) => getTopHatTopWidthHint(params),
         type: "linked-size",
@@ -2288,6 +2330,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatTopDepth",
+        icon: "hat-top-depth",
         label: () => t("fields.topHatTopDepth.label"),
         hint: (params) => getTopHatTopDepthHint(params),
         type: "linked-size",
@@ -2306,6 +2349,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatBottomWidth",
+        icon: "hat-bottom-width",
         label: () => t("fields.topHatBottomWidth.label"),
         hint: (params) => getTopHatBottomWidthHint(params),
         type: "linked-size",
@@ -2324,6 +2368,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatBottomDepth",
+        icon: "hat-bottom-depth",
         label: () => t("fields.topHatBottomDepth.label"),
         hint: (params) => getTopHatBottomDepthHint(params),
         type: "linked-size",
@@ -2342,6 +2387,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatInset",
+        icon: "hat-inset",
         label: () => t("fields.topHatInset.label"),
         hint: (params) => getTopHatInsetHint(params),
         unit: "mm",
@@ -2352,6 +2398,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatTopRadius",
+        icon: "hat-top-radius",
         label: () => t("fields.topHatTopRadius.label"),
         hint: (params) => getTopHatTopRadiusHint(params),
         type: "corner-radius",
@@ -2365,6 +2412,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatBottomRadius",
+        icon: "hat-bottom-radius",
         label: () => t("fields.topHatBottomRadius.label"),
         hint: (params) => getTopHatBottomRadiusHint(params),
         type: "corner-radius",
@@ -2462,6 +2510,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatHeight",
+        icon: "hat-height",
         label: () => t("fields.topHatHeight.label"),
         hint: (params) => getTopHatHeightHint(params),
         unit: "mm",
@@ -2472,6 +2521,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatShoulderAngle",
+        icon: "hat-shoulder-angle",
         label: () => t("fields.topHatShoulderAngle.label"),
         hint: () => t("fields.topHatShoulderAngle.hint"),
         unit: "deg",
@@ -2482,6 +2532,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatShoulderRadius",
+        icon: "keycap-shoulder-radius",
         label: () => t("fields.topHatShoulderRadius.label"),
         hint: (params) => getTopHatShoulderRadiusHint(params),
         unit: "mm",
@@ -2492,12 +2543,14 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimEnabled",
+        icon: "rim-band",
         label: () => t("fields.rimEnabled.label"),
         hint: () => t("fields.rimEnabled.hint"),
         type: "checkbox",
       },
       {
         key: "rimWidth",
+        icon: "rim-width",
         label: () => t("fields.rimWidth.label"),
         hint: (params) => getTypewriterRimWidthHint(params),
         unit: "mm",
@@ -2507,6 +2560,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimHeightUp",
+        icon: "rim-up",
         label: () => t("fields.rimHeightUp.label"),
         hint: () => getTypewriterRimHeightUpHint(),
         unit: "mm",
@@ -2516,6 +2570,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimHeightDown",
+        icon: "rim-down",
         label: () => t("fields.rimHeightDown.label"),
         hint: () => getTypewriterRimHeightDownHint(),
         unit: "mm",
@@ -2525,6 +2580,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimColor",
+        icon: "part-color",
         label: () => t("fields.rimColor.label"),
         hint: () => t("fields.rimColor.hint"),
         type: "color",
@@ -2533,6 +2589,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topSlopeInputMode",
+        icon: "key-top-slope-input-mode",
         label: () => t("fields.topSlopeInputMode.label"),
         hint: () => t("fields.topSlopeInputMode.hint"),
         type: "select",
@@ -2548,6 +2605,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topPitchDeg",
+        icon: "slope-pitch",
         label: () => t("fields.topPitchDeg.label"),
         hint: (params) => getTopPitchHint(params),
         unit: "deg",
@@ -2556,6 +2614,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topRollDeg",
+        icon: "slope-roll",
         label: () => t("fields.topRollDeg.label"),
         hint: (params) => getTopRollHint(params),
         unit: "deg",
@@ -2564,6 +2623,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topFrontHeight",
+        icon: "edge-height-front",
         label: () => t("fields.topFrontHeight.label"),
         hint: (params) => getTopFrontHeightHint(params),
         unit: "mm",
@@ -2572,6 +2632,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topBackHeight",
+        icon: "edge-height-back",
         label: () => t("fields.topBackHeight.label"),
         hint: (params) => getTopBackHeightHint(params),
         unit: "mm",
@@ -2580,6 +2641,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topLeftHeight",
+        icon: "edge-height-left",
         label: () => t("fields.topLeftHeight.label"),
         hint: (params) => getTopLeftHeightHint(params),
         unit: "mm",
@@ -2588,6 +2650,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topRightHeight",
+        icon: "edge-height-right",
         label: () => t("fields.topRightHeight.label"),
         hint: (params) => getTopRightHeightHint(params),
         unit: "mm",
@@ -2610,9 +2673,16 @@ const fieldGroupTemplates = [
     title: () => t("shapeProfiles.custom-shell.fieldGroups.homing.title"),
     description: () => t("shapeProfiles.custom-shell.fieldGroups.homing.description"),
     fields: [
-      { key: "homingBarEnabled", label: () => t("fields.homingBarEnabled.label"), hint: () => t("fields.homingBarEnabled.hint"), type: "checkbox" },
+      {
+        key: "homingBarEnabled",
+        icon: "homing",
+        label: () => t("fields.homingBarEnabled.label"),
+        hint: () => t("fields.homingBarEnabled.hint"),
+        type: "checkbox",
+      },
       {
         key: "homingBarColor",
+        icon: "part-color",
         label: () => t("fields.homingBarColor.label"),
         hint: () => t("fields.homingBarColor.hint"),
         type: "color",
@@ -2621,6 +2691,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarLength",
+        icon: "bar-length",
         label: () => t("fields.homingBarLength.label"),
         hint: () => t("fields.homingBarLength.hint"),
         unit: "mm",
@@ -2631,6 +2702,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarWidth",
+        icon: "bar-width",
         label: () => t("fields.homingBarWidth.label"),
         hint: () => t("fields.homingBarWidth.hint"),
         unit: "mm",
@@ -2640,6 +2712,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarHeight",
+        icon: "bar-height",
         label: () => t("fields.homingBarHeight.label"),
         hint: () => t("fields.homingBarHeight.hint"),
         unit: "mm",
@@ -2650,6 +2723,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarChamfer",
+        icon: "bar-chamfer",
         label: () => t("fields.homingBarChamfer.label"),
         hint: () => t("fields.homingBarChamfer.hint"),
         unit: "mm",
@@ -2659,6 +2733,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarOffsetY",
+        icon: "offset-vertical",
         label: () => t("fields.homingBarOffsetY.label"),
         hint: () => t("fields.homingBarOffsetY.hint"),
         unit: "mm",
@@ -2674,6 +2749,7 @@ const fieldGroupTemplates = [
     fields: [
       {
         key: "stemType",
+        icon: "stem",
         label: () => t("fields.stemType.label"),
         hint: () => t("fields.stemType.hint"),
         type: "select",
@@ -2681,6 +2757,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "jStemLp01PreviewColor",
+        icon: "part-color",
         label: () => t("fields.jStemLp01PreviewColor.label"),
         hint: () => t("fields.jStemLp01PreviewColor.hint"),
         type: "preview-color-swatch",
@@ -2689,6 +2766,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "typewriterMountHeight",
+        icon: "stem-mount-height",
         label: () => t("fields.typewriterMountHeight.label"),
         hint: (params) => getTypewriterMountHeightHint(params),
         unit: "mm",
@@ -2698,6 +2776,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "stemOuterDelta",
+        icon: "stem-outer-size",
         label: () => t("fields.stemOuterDelta.label"),
         hint: (params) => getStemOuterHint(params),
         unit: "mm",
@@ -2706,6 +2785,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "stemCrossMargin",
+        icon: "stem-fit",
         label: () => t("fields.stemCrossMargin.label"),
         hint: (params) => getStemFitHint(params),
         unit: "mm",
@@ -2714,6 +2794,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "stemCrossChamfer",
+        icon: "stem-cross-chamfer",
         label: () => t("fields.stemCrossChamfer.label"),
         hint: (params) => getStemChamferHint(params),
         unit: "mm",
@@ -2723,6 +2804,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "stemInsetDelta",
+        icon: "stem-inset",
         label: () => t("fields.stemInsetDelta.label"),
         hint: (params) => getStemInsetHint(params),
         unit: "mm",
@@ -2808,6 +2890,7 @@ function getKeyUnitBasisFieldConfig() {
   return {
     key: KEY_UNIT_FIELD_KEY,
     type: "key-unit-basis",
+    icon: "key-unit-basis",
     label: () => t("unitBasis.fieldLabel"),
     hint: () => t("unitBasis.fieldHint"),
     unit: "mm",
@@ -3020,8 +3103,18 @@ function renderFieldLeadingIcon(id) {
   return `<span class="field-leading-icon">${renderUiIcon(id, "field-leading-icon__symbol")}</span>`;
 }
 
-function getLeadingIconFieldClassName(leadingIcon) {
-  return leadingIcon ? " field--with-leading-icon" : "";
+function renderFieldHeading(field, controlId = "") {
+  const tag = controlId ? "label" : "span";
+  const forAttribute = controlId ? ` for="${escapeHtml(controlId)}"` : "";
+  return `
+    <${tag} class="field-heading"${forAttribute}>
+      ${renderFieldLeadingIcon(field.icon)}
+      <span class="field-copy">
+        <span class="field-label" id="field-label-${field.key}">${escapeHtml(resolveDynamicCopy(field.label))}</span>
+        <span class="field-hint" id="field-hint-${field.key}">${escapeHtml(resolveDynamicCopy(field.hint))}</span>
+      </span>
+    </${tag}>
+  `;
 }
 
 function getColorFieldValue(fieldKey, params = state.keycapParams) {
@@ -4400,7 +4493,7 @@ function renderStemSubcard(card, groupFieldByKey) {
   return `
     <section class="parameter-subcard" style="view-transition-name: ${cardViewTransitionName};">
       <div class="parameter-subcard__header">
-        <h4>${escapeHtml(cardTitle)}</h4>
+        <h4>${renderFieldLeadingIcon("stem-clearance")} ${escapeHtml(cardTitle)}</h4>
         <button
           class="field-group-toggle"
           type="button"
@@ -4521,25 +4614,13 @@ function renderDependentFieldList(dependentFields, fieldByKey = null) {
 function renderFieldWithDependentFields(field, dependentFields, fieldByKey = null) {
   const value = state.keycapParams[field.key];
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
-  const fieldLabel = resolveDynamicCopy(field.label);
-  const fieldHint = resolveDynamicCopy(field.hint);
   const fieldOptions = resolveFieldOptions(field);
   const isDisabled = isFieldDisabled(field);
   const inputId = `field-control-${field.key}`;
-  const leadingIcon = field.key === "topSurfaceShape" || field.key === "topHatSurfaceShape"
-    ? renderFieldLeadingIcon("key-top-surface-shape")
-    : field.key === "topSlopeInputMode"
-      ? renderFieldLeadingIcon("key-top-slope-input-mode")
-      : "";
-  const leadingIconClassName = getLeadingIconFieldClassName(leadingIcon);
 
   return `
-    <div class="field field--with-dependents${leadingIconClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-      ${leadingIcon}
-      <label class="field-copy" for="${inputId}">
-        <span class="field-label">${fieldLabel}</span>
-        <span class="field-hint">${fieldHint}</span>
-      </label>
+    <div class="field field--with-dependents" style="view-transition-name: ${fieldViewTransitionName};">
+      ${renderFieldHeading(field, inputId)}
       <span class="field-control field-control--select">
         <select id="${inputId}" data-field="${field.key}" ${isDisabled ? "disabled" : ""}>
           ${fieldOptions
@@ -5172,8 +5253,6 @@ function renderCornerRadiusControls(fieldSet, controlOrder, individualEnabled) {
 
 function renderCornerRadiusField(field, fieldClassName = "") {
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
-  const fieldLabel = resolveDynamicCopy(field.label);
-  const fieldHint = resolveDynamicCopy(field.hint);
   const fieldSet = CORNER_RADIUS_FIELD_SETS.find((item) => item.sharedFieldKey === field.key) ?? CORNER_RADIUS_FIELD_SETS[0];
   const individualFieldKey = field.individualFieldKey ?? fieldSet.individualFieldKey;
   const controlOrder = field.controlOrder ?? fieldSet.controlOrder;
@@ -5185,14 +5264,11 @@ function renderCornerRadiusField(field, fieldClassName = "") {
 
   return `
     <div class="field field--corner-radius${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-      <span class="field-copy">
-        <span class="field-label">${fieldLabel}</span>
-        <span class="field-hint">${fieldHint}</span>
-      </span>
+      ${renderFieldHeading(field)}
       <span class="corner-radius-panel" data-corner-radius-panel="${escapeHtml(individualFieldKey)}">
         <label class="checkbox-pill checkbox-toggle corner-radius-toggle" title="${escapeHtml(toggleHint)}">
           <input class="checkbox-toggle__input corner-radius-toggle__input" type="checkbox" data-field="${individualFieldKey}" data-corner-radius-toggle="${escapeHtml(individualFieldKey)}" aria-label="${escapeHtml(toggleLabel)}" ${individualEnabled ? "checked" : ""} />
-          <span class="checkbox-toggle__label corner-radius-toggle__label" aria-hidden="true">${toggleLabel}</span>
+          <span class="checkbox-toggle__label corner-radius-toggle__label" aria-hidden="true">${renderUiIcon("individual-corners")} <span class="corner-radius-toggle__text">${toggleLabel}</span></span>
           <span class="checkbox-toggle__switch corner-radius-toggle__switch" aria-hidden="true"></span>
         </label>
         ${controls}
@@ -5446,7 +5522,7 @@ function syncCheckboxToggleDom(input) {
   if (CORNER_RADIUS_INDIVIDUAL_FIELD_KEYS.has(fieldKey)) {
     const toggleLabel = resolveDynamicCopy(getFieldConfig(fieldKey)?.label);
     input.setAttribute("aria-label", toggleLabel);
-    input.parentElement?.querySelector(".corner-radius-toggle__label")?.replaceChildren(toggleLabel);
+    input.parentElement?.querySelector(".corner-radius-toggle__text")?.replaceChildren(toggleLabel);
     return;
   }
 
@@ -5454,20 +5530,16 @@ function syncCheckboxToggleDom(input) {
   input.parentElement?.querySelector(".checkbox-toggle__label")?.replaceChildren(getCheckboxStatusLabel(input.checked));
 }
 
-function renderPreviewColorSwatchField(field, fieldClassName, fieldViewTransitionName, fieldLabel, fieldHint, fieldOptions) {
+function renderPreviewColorSwatchField(field, fieldClassName, fieldViewTransitionName, fieldOptions) {
   const selectedValue = resolveJStemLp01PreviewColor(state.keycapParams[field.key]);
   const labelId = `field-label-${field.key}`;
   const hintId = `field-hint-${field.key}`;
-  const hintAttribute = fieldHint ? ` aria-describedby="${hintId}"` : "";
   const radioName = `field-${field.key}`;
 
   return `
     <div class="field field--preview-color${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-      <span class="field-copy">
-        <span class="field-label" id="${labelId}">${fieldLabel}</span>
-        ${fieldHint ? `<span class="field-hint" id="${hintId}">${fieldHint}</span>` : ""}
-      </span>
-      <span class="preview-color-options" role="radiogroup" aria-labelledby="${labelId}"${hintAttribute}>
+      ${renderFieldHeading(field)}
+      <span class="preview-color-options" role="radiogroup" aria-labelledby="${labelId}" aria-describedby="${hintId}">
         ${fieldOptions.map((option) => {
           const previewStyle = getJStemLp01PreviewStyle(option.value);
           const swatchClassName = option.swatchClass
@@ -5506,7 +5578,6 @@ function renderField(field, options = {}) {
   const value = state.keycapParams[field.key];
   const fieldViewTransitionName = createViewTransitionName("field", field.key);
   const fieldLabel = resolveDynamicCopy(field.label);
-  const fieldHint = resolveDynamicCopy(field.hint);
   const fieldNote = resolveDynamicCopy(field.note);
   const primaryMiniLabel = resolveDynamicCopy(field.primaryMiniLabel);
   const secondaryLabel = resolveDynamicCopy(field.secondaryLabel);
@@ -5527,19 +5598,13 @@ function renderField(field, options = {}) {
 
   if (field.type === "key-unit-basis") {
     const inputId = `field-control-${field.key}`;
-    const leadingIcon = renderFieldLeadingIcon("key-unit-basis");
-    const leadingIconClassName = getLeadingIconFieldClassName(leadingIcon);
     const keyUnitSliderMarkup = renderSliderRangeControl(field.key, field, getKeyUnitMm(), fieldLabel, {
       inputAttributes: "data-key-unit-mm data-key-unit-slider",
     });
 
     return `
-      <div class="field field--key-unit-basis${leadingIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        ${leadingIcon}
-        <label class="field-copy" for="${inputId}">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </label>
+      <div class="field field--key-unit-basis${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${renderFieldHeading(field, inputId)}
         ${keyUnitSliderMarkup ? `<span class="field-range-control field-range-control--key-unit">${keyUnitSliderMarkup}</span>` : ""}
         <span class="field-control">
           <input
@@ -5559,16 +5624,8 @@ function renderField(field, options = {}) {
   }
 
   if (field.type === "checkbox") {
-    const leadingIcon = field.key === "topHatEnabled" ? renderFieldLeadingIcon("key-top-hat") : "";
-    const checkboxIconClassName = getLeadingIconFieldClassName(leadingIcon);
     const checkboxStatusLabel = getCheckboxStatusLabel(Boolean(value));
     const checkboxAriaLabel = getCheckboxAriaLabel(field.key, Boolean(value));
-    const checkboxCopy = `
-      <span class="field-copy">
-        <span class="field-label">${fieldLabel}</span>
-        <span class="field-hint">${fieldHint}</span>
-      </span>
-    `;
     const noteMarkup = fieldNote ? `<p class="field-note">${escapeHtml(fieldNote)}</p>` : "";
     const checkboxControl = `
       <label class="checkbox-pill checkbox-toggle">
@@ -5580,9 +5637,8 @@ function renderField(field, options = {}) {
 
     if (dependentFields.length > 0) {
       return `
-        <div class="field field--checkbox${checkboxIconClassName}${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-          ${leadingIcon}
-          ${checkboxCopy}
+        <div class="field field--checkbox${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+          ${renderFieldHeading(field)}
           ${checkboxControl}
           ${noteMarkup}
           ${renderDependentFieldList(dependentFields, dependentFieldByKey)}
@@ -5591,9 +5647,8 @@ function renderField(field, options = {}) {
     }
 
     return `
-      <div class="field field--checkbox${checkboxIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        ${leadingIcon}
-        ${checkboxCopy}
+      <div class="field field--checkbox${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${renderFieldHeading(field)}
         ${checkboxControl}
         ${noteMarkup}
       </div>
@@ -5601,7 +5656,7 @@ function renderField(field, options = {}) {
   }
 
   if (field.type === "preview-color-swatch") {
-    return renderPreviewColorSwatchField(field, fieldClassName, fieldViewTransitionName, fieldLabel, fieldHint, fieldOptions);
+    return renderPreviewColorSwatchField(field, fieldClassName, fieldViewTransitionName, fieldOptions);
   }
 
   if (field.type === "font-search") {
@@ -5618,10 +5673,7 @@ function renderField(field, options = {}) {
 
     return `
       <div class="field field--font-search${dependentClassName} ${isPickerOpen ? "is-open" : ""}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        <span class="field-copy">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </span>
+        ${renderFieldHeading(field)}
         <span class="font-picker" data-font-picker>
           ${renderUserFontFileInput(field.key)}
           <span class="font-picker-trigger-shell">
@@ -5682,10 +5734,7 @@ function renderField(field, options = {}) {
 
     return `
       <div class="field field--icon-search ${isPickerOpen ? "is-open" : ""}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        <span class="field-copy">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </span>
+        ${renderFieldHeading(field)}
         <span class="icon-picker" data-icon-picker>
           <span class="icon-picker-trigger-shell">
             <span class="field-control icon-picker-trigger">
@@ -5738,10 +5787,7 @@ function renderField(field, options = {}) {
   if (field.type === "select") {
     return `
       <label class="field${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        <span class="field-copy">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </span>
+        ${renderFieldHeading(field)}
         <span class="field-control field-control--select">
           <select data-field="${field.key}" ${isDisabled ? "disabled" : ""}>
             ${fieldOptions
@@ -5761,10 +5807,7 @@ function renderField(field, options = {}) {
   if (field.type === "text") {
     return `
       <label class="field${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        <span class="field-copy">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </span>
+        ${renderFieldHeading(field)}
         <span class="field-control">
           <input
             type="text"
@@ -5784,10 +5827,7 @@ function renderField(field, options = {}) {
 
     return `
       <div class="field field--color${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        <label class="field-copy" for="${inputId}">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </label>
+        ${renderFieldHeading(field, inputId)}
         <span class="field-control-cluster field-control-cluster--color">
           <span class="field-control field-control--color">
             <span class="field-color-chip" data-color-chip="${field.key}" style="--field-color: ${escapeHtml(normalizedValue)};"></span>
@@ -5818,25 +5858,15 @@ function renderField(field, options = {}) {
   }
 
   if (field.type === "linked-size") {
-    const leadingIcon = field.key === "keyWidth"
-      ? renderFieldLeadingIcon("key-unit-basis")
-      : field.key === "keyDepth"
-        ? renderFieldLeadingIcon("key-depth-basis")
-        : "";
-    const linkedSizeIconClassName = getLeadingIconFieldClassName(leadingIcon);
     const linkedSizeSliderMarkup = renderSliderRangeControl(field.key, field, value, fieldLabel);
 
     return `
-      <div class="field field--linked-size${linkedSizeIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        ${leadingIcon}
-        <span class="field-copy">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </span>
+      <div class="field field--linked-size${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${renderFieldHeading(field)}
         ${linkedSizeSliderMarkup ? `<span class="field-range-control field-range-control--linked-size">${linkedSizeSliderMarkup}</span>` : ""}
         <span class="field-control-cluster field-control-cluster--linked-size">
           <span class="field-mini-control">
-            <span class="field-mini-control__label">${primaryMiniLabel}</span>
+            <span class="field-mini-control__label">${renderUiIcon("metric-length")} ${primaryMiniLabel}</span>
             <span class="field-control">
               <input
                 type="number"
@@ -5851,7 +5881,7 @@ function renderField(field, options = {}) {
             </span>
           </span>
           <span class="field-mini-control">
-            <span class="field-mini-control__label">${secondaryLabel}</span>
+            <span class="field-mini-control__label">${renderUiIcon("key-unit-basis")} ${secondaryLabel}</span>
             <span class="field-control">
               <input
                 type="number"
@@ -5876,26 +5906,16 @@ function renderField(field, options = {}) {
     const secondaryMinValue = resolveFieldAttribute(field.secondaryMin ?? secondaryFieldConfig?.min);
     const secondaryMaxValue = resolveFieldAttribute(field.secondaryMax ?? secondaryFieldConfig?.max);
     const secondaryStepValue = resolveFieldAttribute(field.secondaryStep ?? secondaryFieldConfig?.step);
-    const leadingIcon = field.key === "topOffsetX"
-      ? renderFieldLeadingIcon("key-top-offset")
-      : field.key === "wallThickness"
-        ? renderFieldLeadingIcon("key-wall-thickness")
-        : "";
-    const numberPairIconClassName = getLeadingIconFieldClassName(leadingIcon);
     const primarySliderMarkup = renderSliderRangeControl(field.key, field, value, primaryMiniLabel || fieldLabel);
     const secondarySliderMarkup = renderSliderRangeControl(field.secondaryField, secondaryFieldConfig, secondaryValue, secondaryLabel || fieldLabel);
     const numberPairSliderClassName = primarySliderMarkup || secondarySliderMarkup ? " field-control-cluster--slider-pair" : "";
 
     return `
-      <div class="field field--number-pair${numberPairIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        ${leadingIcon}
-        <span class="field-copy">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </span>
+      <div class="field field--number-pair${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${renderFieldHeading(field)}
         <span class="field-control-cluster field-control-cluster--pair${numberPairSliderClassName}">
           <span class="field-mini-control">
-            <span class="field-mini-control__label">${primaryMiniLabel}</span>
+            <span class="field-mini-control__label">${renderUiIcon(field.primaryMiniIcon)} ${primaryMiniLabel}</span>
             ${primarySliderMarkup}
             <span class="field-control">
               <input
@@ -5911,7 +5931,7 @@ function renderField(field, options = {}) {
             </span>
           </span>
           <span class="field-mini-control">
-            <span class="field-mini-control__label">${secondaryLabel}</span>
+            <span class="field-mini-control__label">${renderUiIcon(secondaryFieldConfig.icon)} ${secondaryLabel}</span>
             ${secondarySliderMarkup}
             <span class="field-control">
               <input
@@ -5938,10 +5958,7 @@ function renderField(field, options = {}) {
     if (dependentSliderMarkup) {
       return `
         <div class="field field--slider-number${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-          <span class="field-copy">
-            <span class="field-label">${fieldLabel}</span>
-            <span class="field-hint">${fieldHint}</span>
-          </span>
+          ${renderFieldHeading(field)}
           <span class="field-range-control" data-field-slider="${field.key}">
             ${dependentSliderMarkup}
             <span class="field-control field-range-control__number">
@@ -5966,10 +5983,7 @@ function renderField(field, options = {}) {
 
     return `
       <div class="field${dependentClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        <label class="field-copy" for="${inputId}">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </label>
+        ${renderFieldHeading(field, inputId)}
         <span class="field-control">
           <input
             id="${inputId}"
@@ -5987,27 +6001,11 @@ function renderField(field, options = {}) {
     `;
   }
 
-  const leadingIcon = field.key === "topCenterHeight"
-    ? renderFieldLeadingIcon("key-top-center-height")
-    : field.key === "wallThickness" || field.key === "topThickness"
-      ? renderFieldLeadingIcon("key-wall-thickness")
-      : field.key === "topScale"
-        ? renderFieldLeadingIcon("key-top-taper")
-        : field.key === "keycapEdgeRadius"
-          ? renderFieldLeadingIcon("keycap-edge-radius")
-          : field.key === "keycapShoulderRadius"
-            ? renderFieldLeadingIcon("keycap-shoulder-radius")
-            : "";
-  const numberIconClassName = leadingIcon ? `${getLeadingIconFieldClassName(leadingIcon)} field--single-number` : "";
 
   if (canRenderFieldSlider(sliderAttributes)) {
     return `
-      <div class="field field--slider-number${numberIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-        ${leadingIcon}
-        <span class="field-copy">
-          <span class="field-label">${fieldLabel}</span>
-          <span class="field-hint">${fieldHint}</span>
-        </span>
+      <div class="field field--slider-number${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+        ${renderFieldHeading(field)}
         <span class="field-range-control" data-field-slider="${field.key}">
           ${renderSliderRangeControl(field.key, field, value, fieldLabel)}
           <span class="field-control field-range-control__number">
@@ -6029,12 +6027,8 @@ function renderField(field, options = {}) {
   }
 
   return `
-    <label class="field${numberIconClassName}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
-      ${leadingIcon}
-      <span class="field-copy">
-        <span class="field-label">${fieldLabel}</span>
-        <span class="field-hint">${fieldHint}</span>
-      </span>
+    <label class="field${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
+      ${renderFieldHeading(field)}
       <span class="field-control">
         <input
           type="number"
@@ -9946,7 +9940,7 @@ function syncCornerRadiusFieldDom(fieldKey) {
   );
   input.checked = context.individualEnabled;
   input.setAttribute("aria-label", context.toggleLabel);
-  input.parentElement?.querySelector(".corner-radius-toggle__label")?.replaceChildren(context.toggleLabel);
+  input.parentElement?.querySelector(".corner-radius-toggle__text")?.replaceChildren(context.toggleLabel);
   return true;
 }
 

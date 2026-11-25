@@ -991,103 +991,35 @@ pre {
   box-shadow: inset 0 1px 0 rgb(var(--highlight-rgb) / calc(0.12 * var(--highlight-strength)));
 }
 
-.field--with-leading-icon {
-  --field-leading-icon-size: 60px;
-  --field-leading-icon-symbol-size: 44px;
-  --field-leading-icon-radius: 17px;
-  grid-template-columns: var(--field-leading-icon-size) minmax(0, 1fr);
-  column-gap: 12px;
+.field-heading,
+.parameter-subcard__header h4 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
-.field--with-leading-icon > .field-copy,
-.field--with-leading-icon > .field-control,
-.field--with-leading-icon > .field-control-cluster,
-.field--with-leading-icon > .field-range-control,
-.field--with-leading-icon > .checkbox-pill,
-.field--with-leading-icon > .field-note,
-.field--with-leading-icon > .key-unit-basis-readout {
-  grid-column: 1 / -1;
-}
-
-.field--with-leading-icon > .field-copy {
-  grid-column: 2;
-}
-
-.field--linked-size.field--with-leading-icon > .field-range-control,
-.field--linked-size.field--with-leading-icon > .field-control-cluster {
-  grid-column: 1 / -1;
-}
-
-.field--linked-size.field--with-leading-icon > .field-leading-icon {
-  grid-row: 1;
-}
-
-.field--key-unit-basis.field--with-leading-icon > .field-control,
-.field--key-unit-basis.field--with-leading-icon > .key-unit-basis-readout {
-  grid-column: 1 / -1;
-}
-
-.field--key-unit-basis.field--with-leading-icon > .field-leading-icon {
-  grid-row: 1;
-}
-
-.field--with-leading-icon > .field-dependent-list {
-  grid-column: 1 / -1;
-}
-
-.field--checkbox.field--with-leading-icon > .field-leading-icon {
-  grid-row: 1;
-}
-
-.field--single-number.field--with-leading-icon > .field-control {
-  grid-column: 1 / -1;
-}
-
-.field--slider-number.field--with-leading-icon > .field-range-control {
-  grid-column: 1 / -1;
-}
-
-.field--single-number.field--with-leading-icon > .field-leading-icon {
-  grid-row: 1;
-}
-
-.field--with-leading-icon > .field-leading-icon {
-  align-self: stretch;
-  width: var(--field-leading-icon-size);
-  height: auto;
-  min-height: var(--field-leading-icon-size);
-  border-radius: var(--field-leading-icon-radius);
-}
-
-.field--with-leading-icon > .field-copy {
-  align-self: center;
+.field-heading .field-copy {
   gap: 2px;
 }
 
-.field--with-leading-icon .field-label {
+.field-heading .field-label {
   font-size: 14px;
   line-height: 1.25;
 }
 
-.field--with-leading-icon .field-hint {
+.field-heading .field-hint {
   font-size: 12px;
   line-height: 1.35;
 }
 
-.field--with-leading-icon .field-leading-icon__symbol {
-  width: var(--field-leading-icon-symbol-size);
-  height: var(--field-leading-icon-symbol-size);
-}
-
 .field-leading-icon {
   display: grid;
-  grid-column: 1;
-  grid-row: 1;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  align-self: start;
-  border-radius: 15px;
+  flex: none;
+  width: 60px;
+  height: 60px;
+  border-radius: 17px;
   background: color-mix(in srgb, var(--panel-soft) 76%, var(--raised-surface) 24%);
   color: var(--panel-dark);
   box-shadow:
@@ -1096,18 +1028,15 @@ pre {
 }
 
 .field-leading-icon__symbol {
-  display: block;
-  width: 34px;
-  height: 34px;
+  width: 72%;
+  height: 72%;
 }
 
-.field--checkbox {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.field--checkbox.field--with-leading-icon {
-  grid-template-columns: var(--field-leading-icon-size) minmax(0, 1fr);
-  column-gap: 12px;
+.field--dependent > .field-heading .field-leading-icon,
+.parameter-subcard__header .field-leading-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
 }
 
 .field-note {
@@ -1459,6 +1388,13 @@ pre {
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
+}
+
+.corner-radius-toggle__label .ui-icon,
+.field-mini-control__label .ui-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
 }
 
 .checkbox-toggle__switch {
@@ -3992,23 +3928,14 @@ html.is-download-consent-open {
     align-items: start;
   }
 
-  .field--with-leading-icon {
-    --field-leading-icon-size: 56px;
-    --field-leading-icon-symbol-size: 40px;
-    --field-leading-icon-radius: 16px;
-    grid-template-columns: var(--field-leading-icon-size) minmax(0, 1fr);
-    column-gap: 10px;
+  .field-heading {
+    gap: 10px;
   }
 
   .field-leading-icon {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     border-radius: 14px;
-  }
-
-  .field-leading-icon__symbol {
-    width: 31px;
-    height: 31px;
   }
 
   .field-control,

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="2" role="img" aria-label="キーの横幅">
+  <title>キーの横幅</title>
+  <desc>真上から見た一つのキーの左右端を結ぶ横寸法。</desc>
+  <path d="M 1.9 12 L 1.9 5 A 2.1 2.1 0 0 1 4 2.9 L 16 2.9 L 16 5.1 L 4.4 5.1 A 0.3 0.3 0 0 0 4.1 5.4 L 4.1 12 Z M 16 2.9 L 28 2.9 A 2.1 2.1 0 0 1 30.1 5 L 30.1 12 L 27.9 12 L 27.9 5.4 A 0.3 0.3 0 0 0 27.6 5.1 L 16 5.1 Z M 30.1 12 L 30.1 19 A 2.1 2.1 0 0 1 28 21.1 L 16 21.1 L 16 18.9 L 27.6 18.9 A 0.3 0.3 0 0 0 27.9 18.6 L 27.9 12 Z M 16 21.1 L 4 21.1 A 2.1 2.1 0 0 1 1.9 19 L 1.9 12 L 4.1 12 L 4.1 18.6 A 0.3 0.3 0 0 0 4.4 18.9 L 16 18.9 Z" fill="currentColor" stroke="none"/>
+  <path d="M 6.9 12 L 6.9 9 A 2.1 2.1 0 0 1 9 6.9 L 16 6.9 L 16 9.1 L 9.4 9.1 A 0.3 0.3 0 0 0 9.1 9.4 L 9.1 12 Z M 16 6.9 L 23 6.9 A 2.1 2.1 0 0 1 25.1 9 L 25.1 12 L 22.9 12 L 22.9 9.4 A 0.3 0.3 0 0 0 22.6 9.1 L 16 9.1 Z M 25.1 12 L 25.1 15 A 2.1 2.1 0 0 1 23 17.1 L 16 17.1 L 16 14.9 L 22.6 14.9 A 0.3 0.3 0 0 0 22.9 14.6 L 22.9 12 Z M 16 17.1 L 9 17.1 A 2.1 2.1 0 0 1 6.9 15 L 6.9 12 L 9.1 12 L 9.1 14.6 A 0.3 0.3 0 0 0 9.4 14.9 L 16 14.9 Z" fill="currentColor" stroke="none"/>
+  <path d="M 3 24 L 3 28"/>
+  <path d="M 3 26 L 29 26"/>
+  <path d="M 29 24 L 29 28"/>
+</svg>
