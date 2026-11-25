@@ -37,9 +37,11 @@ npm run preview
 - `main`: GitHub Pages公開を所有するrelease branch兼remote default branch
 - `feat/*` など: 必要な場合だけ使う短期branch。`dev` へfast-forward可能またはreview可能な形で統合する
 
-通常は `dev` で検証済みcommitをpushし、公開時に `dev` の内容をreviewして `main` へ取り込みます。branch名や公開条件を変える場合は、remote設定、branch protection、workflow、READMEではなくこの文書を同じchangeで更新します。
+変更はまずローカルで実装し、変更内容に応じたテストと動作確認を行います。依頼者またはメンテナーが結果を確認し、仕様とリモートへの反映先を明示的に承認した時点で、承認された変更を対象ブランチへ push します。確認や仕様の調整が続いている間はローカルで作業を続けます。
 
-手動workflow実行は安全側に倒し、分類結果にかかわらずtest、build、deployを要求します。自動deployは公開branchへのpushかつ公開artifact classの変更だけです。
+通常の統合先は `dev` です。GitHub Pages に本番公開する場合は、`dev` の公開対象をレビューし、本番公開の承認を得て `main` に取り込みます。ブランチ名や公開条件を変える場合は、この文書も同じ変更で更新します。
+
+手動で公開ワークフローを実行する場合も、本番公開の承認が必要です。手動実行では変更分類にかかわらずテスト、ビルド、デプロイを行います。push による自動デプロイは、公開ブランチに公開対象（`artifact`）の変更がある場合に限ります。
 
 ```mermaid
 gitGraph
@@ -177,9 +179,14 @@ review時には「機能変更がWebMCP経由でも利用可能か」「追加�
 
 ## commit、push、Actions確認
 
-1. `git fetch --prune` 後、作業branchと対応remote、release branchのahead/behindを確認する。
-2. tracked/untrackedを含む全差分をreviewし、無関係なユーザー変更を含めない。
-3. 変更classに必要なgateとactionlintを成功させる。
-4. projectのbranch運用に従い、fast-forward可能なcommitを対応remoteへpushする。
-5. Actionsでclassificationと必要jobの成功、不要jobのskip、warning/annotation不在を確認する。
-6. failureやdeprecated Action/runtime warningがあれば、公式stable版と実装を確認して修正し、gateとActions確認をやり直す。
+**ローカルでの確認**
+
+1. 未追跡ファイルを含めて差分を確認し、今回の変更に関係するものだけをコミットの対象にする。
+2. 変更分類に応じた品質チェックと必要な手動確認を行い、変更内容と確認結果を依頼者またはメンテナーに共有する。
+
+**仕様と反映先の承認後**
+
+1. `git fetch --prune` を実行し、作業ブランチ、反映先、リリースブランチの差分を確認する。
+2. push 対象のコミットが承認された内容と一致することを確認し、承認されたリモートブランチへ fast-forward で push する。
+3. GitHub Actions で変更分類、必要なジョブの成功、対象外のジョブのスキップ、警告や注釈の有無を確認する。
+4. 失敗や非推奨の Action・ランタイムの警告があれば、公式の安定版と実装を確認して修正し、該当する品質チェックを再実行する。仕様や反映範囲が変わった場合は、再度承認を得てから反映する。
