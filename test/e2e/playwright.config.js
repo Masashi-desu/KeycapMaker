@@ -1,5 +1,6 @@
 import { defineConfig } from "@playwright/test";
 import { fileURLToPath } from "node:url";
+import scopes from "../regression-scopes.json" with { type: "json" };
 
 const port = Number(process.env.KEYCAP_BROWSER_TEST_PORT ?? 4175);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("KEYCAP_BROWSER_TEST_PORT must be an integer from 1 to 65535.");
@@ -7,8 +8,14 @@ const baseURL = `http://127.0.0.1:${port}`;
 
 export default defineConfig({
   testDir: ".",
-  testMatch: "**/*.spec.js",
   outputDir: "../../.tmp/playwright-results",
+  projects: Object.entries(scopes)
+    .filter(([, tests]) => tests.browser.length > 0)
+    .map(([name, tests]) => ({
+      name,
+      testMatch: tests.browser.map(file => `**/e2e/${file}`),
+      outputDir: `../../.tmp/playwright-results/${name}`,
+    })),
   forbidOnly: Boolean(process.env.CI),
   workers: 1,
   retries: 0,

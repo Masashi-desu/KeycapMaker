@@ -19,8 +19,6 @@ export class KeyboardPanel {
     this.importStatus = page.locator('[data-keyboard-import-status]');
     this.previewStatus = page.locator('[data-keyboard-preview-status]');
     this.sourceStep = page.locator('[data-keyboard-step="1"]');
-    this.previewButton = page.locator('.keyboard-preview-switch [data-preview-mode="keyboard"]');
-    this.keycapPreviewButton = page.locator('.keyboard-preview-switch [data-preview-mode="keycap"]');
     this.inspectorPreviewButton = page.locator('.inspector-panel--keyboard [data-preview-mode="keyboard"]');
     this.dangerZone = page.locator('[data-keyboard-danger-zone]');
     this.dangerZoneToggle = this.dangerZone.locator('summary');
@@ -75,14 +73,6 @@ export class KeyboardPanel {
     await this.exportButton.click();
     await this.consent.accept();
     return download;
-  }
-
-  async showPreview() {
-    await this.previewButton.click();
-  }
-
-  async showKeycapPreview() {
-    await this.keycapPreviewButton.click();
   }
 
   async expandDangerZone() {

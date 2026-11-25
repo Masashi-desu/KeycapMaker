@@ -21,6 +21,7 @@ npm run preview
 - `npm run test:docs`: Markdownのlocal link、文書化したnpm script、全lockfile dependency、利用中Web font/CDN package、bundled font/vendor、READMEのOpen Graph画像を検証する
 - `npm run lint:workflows`: actionlintでGitHub Actionsの構文、式、権限、shellを検証する
 - `npm test`: 上記文書・font検証を含むNode test suiteを実行する
+- `npm run test:scope -- project`: 指定したスコープのNode・ブラウザ回帰テストを実行し、各層の合否を表示する。スコープ一覧は [自動テストガイド](docs/guide/automated-testing.md) を参照する
 - `npm run test:browser`: Page Object Modelを使う主要UI flowとWebMCP同期のPlaywright testを、専用Vite serverと隔離されたheadless Chromiumで実行する。初回は `npx playwright install chromium` が必要。構成と追加方針は [自動テスト](docs/guide/automated-testing.md) を参照する
 - `npm run build`: ViteでGitHub Pages向けの `dist/` を生成する
 - `npm run generate:og`: CDNから版・SHA-256固定のManropeを取得し、headless Chromiumで公開用Open Graph PNGを再生成する。初回のbrowser導入と編集箇所は [Open Graph画像](docs/guide/open-graph.md) を参照する。通常のbuildでは再生成やCDN取得を行わない
@@ -146,6 +147,8 @@ UIの配色を追加・変更するときは、明示的な指定がなくても
 - browser起動、隔離、通信制御、mock登録、cleanupはconfig / fixture / supportで管理する。WebMCPのtool実行は `WebMcpClient` を使い、UIの操作検証をWebMCP呼び出しだけで代替しない。mock登録APIによる確認とnative APIの互換性確認を区別する
 - ユーザー操作を追加・変更した場合は、UIの連携・保存結果・非同期完了を既存browser caseで検証できるか確認し、必要なPOMとspecを同じ変更で追加・更新する。境界値、入力正規化、形式互換、geometryの網羅はNode testで確認し、browser testへ同じ組み合わせを重複させない
 - 各caseを独立させる。固定時間のsleepで待たず、locatorのauto-waitや完了eventを使う。UI変更時は該当Page Objectを修正し、既存flowの期待結果と独自のassertionを維持する
+- 各テストファイルは、主に検証する振る舞いに従って [スコープ一覧](test/regression-scopes.json) の1か所に登録する。異なる責務を独立して検証するcaseは対応するspecへ分ける。複数画面を通る一連の操作は、その結果を保証するスコープに置く。共通の画面操作はスコープをまたいで同じPOMを使う
+- 追加・移動したテストは対象スコープ単独で通し、変更分類に応じた全体gateも通す。スコープの追加・変更時はガイドの一覧と実行例を同期する。CIは同じ一覧からスコープ別のjobを生成し、全スコープの成功をbuildの条件とする
 
 reviewでは「specにUI実装の詳細が漏れていないか」「POMがユーザー操作を表しているか」「画面・WebMCP・保存結果の必要な回帰検証があるか」「重複を増やしていないか」「変更classのgateが成功したか」を確認します。
 

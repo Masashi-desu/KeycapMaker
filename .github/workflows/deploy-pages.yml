@@ -20,6 +20,7 @@ jobs:
       classification: ${{ steps.classify.outputs.classification }}
       docs: ${{ steps.classify.outputs.docs }}
       test: ${{ steps.classify.outputs.test }}
+      test_matrix: ${{ steps.scopes.outputs.matrix }}
       build: ${{ steps.classify.outputs.build }}
     steps:
       - name: Checkout repository history
@@ -53,6 +54,13 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Select regression scopes
+        id: scopes
+        if: steps.classify.outputs.test == 'true'
+        run: |
+          matrix=$(node scripts/test-scope.mjs --matrix)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
   docs:
     name: Validate documentation
     if: needs.classify.outputs.docs == 'true'
@@ -76,9 +84,12 @@ jobs:
         run: npm run test:docs
 
   test:
-    name: Run required tests
+    name: Regression / ${{ matrix.scope }}
     if: needs.classify.outputs.test == 'true'
     needs: classify
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.classify.outputs.test_matrix) }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -97,16 +108,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run test suite
-        run: npm test
-
       - name: Install headless Chromium
+        if: matrix.browser
         run: npx playwright install --with-deps chromium
 
-      - name: Run browser tests
-        run: npm run test:browser
+      - name: Run scoped regression tests
+        env:
+          SCOPE: ${{ matrix.scope }}
+        run: npm run test:scope -- "$SCOPE"
 
       - name: Lint GitHub Actions workflows
+        if: "!cancelled() && matrix.scope == 'repository'"
         run: docker run --rm -v "$GITHUB_WORKSPACE:/repo" --workdir /repo rhysd/actionlint:1.7.12 -color
 
   build:

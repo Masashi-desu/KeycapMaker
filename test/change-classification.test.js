@@ -62,7 +62,8 @@ test("co-located source and SCAD responsibility documents remain documentation",
 test("tests and workflows run tests without building", () => {
   const result = classify([
     "test/example.test.js", "test/e2e/editor.spec.js", "test/e2e/playwright.config.js",
-    "test/e2e/pages/editor-page.js", "test/support/scad-context.js", ".github/workflows/ci.yml",
+    "test/e2e/pages/preview-stage.js", "test/support/scad-context.js", "test/regression-scopes.json",
+    "scripts/test-scope.mjs", ".github/workflows/deploy-pages.yml",
   ]);
   assert.equal(result.classification, "validation");
   assert.equal(result.test, true);
@@ -75,7 +76,7 @@ test("safe package metadata changes stop after classification", () => {
 });
 
 test("test-script-only package changes use the validation gate", () => {
-  for (const [name, command] of [["test:docs", "node docs.js"], ["test:browser", "playwright test"]]) {
+  for (const [name, command] of [["test:docs", "node docs.js"], ["test:browser", "playwright test"], ["test:scope", "node scripts/test-scope.mjs"]]) {
     const afterPackage = { ...packageJson, scripts: { ...packageJson.scripts, [name]: command } };
     assert.equal(classify(["package.json"], { afterPackage }).classification, "validation", name);
   }

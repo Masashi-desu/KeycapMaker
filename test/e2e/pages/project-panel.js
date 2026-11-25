@@ -2,7 +2,7 @@ import { ExportDialog } from "./export-dialog.js";
 import { DownloadConsent } from "./download-consent.js";
 
 export class ProjectPanel {
-  constructor(page) {
+  constructor(page, preview) {
     this.page = page;
     this.tab = page.locator('[data-sidebar-tab="project"]');
     this.cards = page.locator("[data-project-keycap-card]");
@@ -11,7 +11,7 @@ export class ProjectPanel {
     this.configureKeyboardButton = page.locator(".keyboard-project-summary [data-keyboard-open]");
     this.saveButton = page.locator('[data-project-save]');
     this.status = page.locator('.project-status');
-    this.previewStage = page.locator('[data-preview-stage]');
+    this.preview = preview;
     this.consent = new DownloadConsent(page);
   }
 
@@ -60,7 +60,7 @@ export class ProjectPanel {
   }
 
   async importFiles(files, { directory = false, name = "Project" } = {}) {
-    const previousRequest = Number(await this.previewStage.getAttribute('data-preview-request-id'));
+    const previousRequest = await this.preview.requestId();
     await this.page.evaluate(({ files, directory, name }) => {
       const dataTransfer = new DataTransfer();
       const fileMap = new Map();
@@ -93,9 +93,6 @@ export class ProjectPanel {
       window.dispatchEvent(new DragEvent("drop", { dataTransfer, bubbles: true, cancelable: true }));
     }, { files: Object.entries(files).map(([path, bytes]) => [path, Array.from(bytes)]), directory, name });
     await this.addButton.waitFor({ state: "visible" });
-    await this.page.waitForFunction((previousRequest) => {
-      const stage = document.querySelector('[data-preview-stage]');
-      return Number(stage?.dataset.previewRequestId) > previousRequest && stage.dataset.previewStatus === "ready";
-    }, previousRequest);
+    await this.preview.waitForNextReady(previousRequest);
   }
 }

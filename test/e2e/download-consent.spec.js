@@ -1,7 +1,7 @@
 import { test, expect, readDownloadedJson } from "./fixtures.js";
 import { contrastRatio } from "./support/color-contrast.js";
 
-test("保存ごとに同意を求め、キャンセルとEscでダウンロードせず両テーマで読める", async ({ editor, webMcp, downloads }) => {
+test("保存ごとに同意を求め、キャンセルとEscでダウンロードせず両テーマで読める", async ({ editor, webMcp, downloads }, testInfo) => {
   await editor.open();
   expect((await webMcp.execute("update", { params: {
     name: "License sample", legendFontKey: "kurobara-cinderella-regular",
@@ -36,7 +36,7 @@ test("保存ごとに同意を求め、キャンセルとEscでダウンロー�
     for (const sample of await editor.consent.readColors()) {
       expect(contrastRatio(sample.color, sample.background), `${theme}, hover: ${sample.label}`).toBeGreaterThanOrEqual(4.5);
     }
-    await editor.consent.capture(`.tmp/download-consent-${theme}.png`);
+    await editor.consent.capture(testInfo.outputPath(`download-consent-${theme}.png`));
     await editor.consent.cancel({ escape: theme === "dark" });
     await expect(dialog.root).toBeVisible();
     await expect(dialog.status).toHaveText("ダウンロードをキャンセルしました。");
@@ -52,7 +52,7 @@ test("保存ごとに同意を求め、キャンセルとEscでダウンロー�
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth);
   expect(layout.top).toBeGreaterThanOrEqual(0);
   expect(layout.bottom).toBeLessThanOrEqual(layout.viewportHeight);
-  await editor.consent.capture(".tmp/download-consent-mobile.png");
+  await editor.consent.capture(testInfo.outputPath("download-consent-mobile.png"));
   await editor.consent.cancel();
   const payload = await readDownloadedJson(await dialog.exportJson());
   expect(payload.params).toMatchObject({ name: "License sample", legendFontKey: "kurobara-cinderella-regular" });

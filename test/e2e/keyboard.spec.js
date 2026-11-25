@@ -2,14 +2,14 @@ import { test, expect, readDownloaded3mf } from "./fixtures.js";
 import { createSplitKeyboardFixture } from "../support/keyboard-group-fixture.js";
 import { contrastRatio } from "./support/color-contrast.js";
 
-test("構造から分割所属を表示し、配置したキーだけをグループ付き3MFに出力する", async ({ editor, webMcp }) => {
+test("構造から分割所属を表示し、配置したキーだけをグループ付き3MFに出力する", async ({ editor, webMcp }, testInfo) => {
   await editor.open();
   const { files } = createSplitKeyboardFixture();
   await editor.keyboard.importFiles(files, "config/info.json");
   await expect(editor.keyboard.dangerZone).not.toHaveAttribute("open");
   await expect(editor.keyboard.removeButton).toBeHidden();
   await expect(editor.keyboard.inspectorPreviewButton).toHaveCount(0);
-  await expect(editor.keyboard.previewButton).toHaveCount(1);
+  await expect(editor.preview.keyboardButton).toHaveCount(1);
   await expect(editor.keyboard.assignCurrentButton).toBeVisible();
   await expect(editor.keyboard.offsetInputs).toHaveCount(0);
   await expect(editor.keyboard.editAssignedButton).toHaveCount(0);
@@ -34,7 +34,7 @@ test("構造から分割所属を表示し、配置したキーだけをグル�
   await editor.keyboard.assignCurrent("key-3");
   await editor.keyboard.selectSlot("key-2");
   await expect(editor.keyboard.group).toHaveText("分割所属: 不明");
-  await editor.keyboard.showPreview();
+  await editor.preview.showKeyboard();
   const uiDownload = await editor.keyboard.export3mf();
   await expect(editor.keyboard.exportStatus).toHaveText("3 個の配置済みキーを書き出しました。");
   const uiArchive = await readDownloaded3mf(uiDownload);
@@ -45,7 +45,7 @@ test("構造から分割所属を表示し、配置したキーだけをグル�
   expect([...uiArchive["Metadata/model_settings.config"].matchAll(/<part id=/g)]).toHaveLength(9);
   expect(uiArchive["3D/3dmodel.model"]).not.toContain("keyboard-surface");
   expect(uiArchive["3D/3dmodel.model"]).not.toContain("3 · keycap-preview");
-  await uiDownload.saveAs(".tmp/split-export/browser-keyboard.3mf");
+  await uiDownload.saveAs(testInfo.outputPath("browser-keyboard.3mf"));
 
   const agentExport = await webMcp.executeWithDownload("export", { format: "keyboard-3mf" });
   expect(agentExport.result.ok).toBe(true);
@@ -108,53 +108,6 @@ test("危険ゾーンからの配置削除は確認が必要で、キーキャ�
   await editor.showDesign();
   await expect(editor.name).toHaveValue("削除後も残るデザイン");
   await expect(editor.width).toHaveValue("18");
-});
-
-test("設計と配置への移動でプレビューを切り替え、その後の手動選択をUIとWebMCPで維持する", async ({ editor, webMcp }) => {
-  await editor.open();
-  await editor.keyboard.open();
-  const noBoard = await webMcp.execute("get_state");
-  expect(noBoard.data.previewMode).toBe("keycap");
-
-  const { files } = createSplitKeyboardFixture();
-  await editor.keyboard.importFiles(files, "config/info.json");
-  await expect(editor.keyboard.previewButton).toHaveAttribute("aria-pressed", "true");
-  await editor.showDesign();
-  await expect(editor.keyboard.keycapPreviewButton).toHaveAttribute("aria-pressed", "true");
-  await editor.keyboard.showPreview();
-  await editor.setWidth(18);
-  await editor.showDesign();
-  await expect(editor.keyboard.previewButton).toHaveAttribute("aria-pressed", "true");
-
-  await editor.keyboard.open();
-  await editor.keyboard.showKeycapPreview();
-  await editor.keyboard.selectSlot("key-1");
-  await editor.keyboard.open();
-  await expect(editor.keyboard.keycapPreviewButton).toHaveAttribute("aria-pressed", "true");
-  await editor.project.open();
-  await expect(editor.keyboard.keycapPreviewButton).toHaveAttribute("aria-pressed", "true");
-  await editor.project.openKeyboardConfiguration();
-  await expect(editor.keyboard.previewButton).toHaveAttribute("aria-pressed", "true");
-
-  const design = await webMcp.execute("set_view", { tab: "design" });
-  expect(design.data).toMatchObject({ tab: "design", previewMode: "keycap" });
-  await expect(editor.designTab).toHaveAttribute("aria-pressed", "true");
-  await expect(editor.keyboard.keycapPreviewButton).toHaveAttribute("aria-pressed", "true");
-  await webMcp.execute("set_view", { previewMode: "keyboard" });
-  const sameTab = await webMcp.execute("set_view", { tab: "design" });
-  expect(sameTab.data.previewMode).toBe("keyboard");
-  await webMcp.execute("set_view", { previewMode: "keycap" });
-  const keyboard = await webMcp.execute("set_view", { tab: "keyboard" });
-  expect(keyboard.data).toMatchObject({ tab: "keyboard", previewMode: "keyboard" });
-  await expect(editor.keyboard.previewButton).toHaveAttribute("aria-pressed", "true");
-  const explicit = await webMcp.execute("set_view", { tab: "design", previewMode: "keyboard" });
-  expect(explicit.data).toMatchObject({ tab: "design", previewMode: "keyboard" });
-  await expect(editor.keyboard.previewButton).toHaveAttribute("aria-pressed", "true");
-  await editor.keyboard.open();
-  await editor.keyboard.assignCurrent("key-1");
-  await editor.keyboard.editAssigned();
-  await expect(editor.designTab).toHaveAttribute("aria-pressed", "true");
-  await expect(editor.keyboard.keycapPreviewButton).toHaveAttribute("aria-pressed", "true");
 });
 
 test("配置済みキーがない場合の全体3MF出力はWebMCPでも失敗を返す", async ({ editor, webMcp }) => {

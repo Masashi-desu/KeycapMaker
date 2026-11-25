@@ -6,7 +6,7 @@
 
 - `Classify changes`: `.github/change-policy.json` とpackage/lockfileのsemantic diffから最強classを出力する
 - `Validate documentation`: repository documentationだけのpushで `npm run test:docs` を実行する
-- `Run required tests`: validation/artifact changeで `npm test`、隔離されたheadless Chromiumでの `npm run test:browser`、actionlintを実行する
+- `Regression / <scope>` はvalidation/artifact変更時に [スコープ一覧](../../test/regression-scopes.json) から生成する。各jobが担当するNode・ブラウザテストを実行し、`repository` はactionlintも実行する。1スコープが失敗しても他のjobは最後まで実行する
 - `Build Pages artifact`: artifact changeかつtest成功時だけVite buildとartifact uploadを実行する
 - `Deploy GitHub Pages`: build成功後、`main` pushまたは明示的manual runだけdeployする
 

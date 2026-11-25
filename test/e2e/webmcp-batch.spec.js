@@ -7,7 +7,7 @@ test("再入力用データと一括作成・割り当てがUIへ同期し、全
   await editor.keyboard.importFiles(files, "config/info.json");
   await editor.keyboard.assignCurrent("key-0");
   await editor.keyboard.setOffset("offsetX", 1.2);
-  await editor.keyboard.showKeycapPreview();
+  await editor.preview.showKeycap();
   const before = (await webMcp.execute("get_state")).data;
   expect(before).not.toHaveProperty("params");
   expect(before.observedParams).toHaveProperty("stemEnabled");
@@ -59,63 +59,14 @@ test("再入力用データと一括作成・割り当てがUIへ同期し、全
   expect(preview.data.preview.display).toMatchObject({ status: "ready", mode: "keyboard", rendered: true,
     keyCount: 4, assignedCount: 4, renderedAssignedCount: 4, modelCount: 3 });
   expect(preview.data.preview.display.partCount).toBeGreaterThan(4);
-  await expect(editor.previewStage).toHaveAttribute("data-preview-status", "ready");
-  await expect(editor.previewStage).toHaveAttribute("data-preview-request-id", String(preview.data.preview.display.requestId));
-  await expect(editor.previewStage).toHaveAttribute("aria-busy", "false");
-  const frame = await editor.readPreviewFrame();
+  await expect(editor.preview.stage).toHaveAttribute("data-preview-status", "ready");
+  await expect(editor.preview.stage).toHaveAttribute("data-preview-request-id", String(preview.data.preview.display.requestId));
+  await expect(editor.preview.stage).toHaveAttribute("aria-busy", "false");
+  const frame = await editor.preview.readFrame();
   expect(frame.frame).toBe("1"); expect(frame.width).toBeGreaterThan(0); expect(frame.height).toBeGreaterThan(0);
   const cleared = await webMcp.execute("batch", { assignments: [{ slotId: "key-2" }] });
   expect(cleared.data.clearedCount).toBe(1);
   const updatedPreview = await webMcp.execute("preview", { mode: "keyboard" });
   expect(updatedPreview.ok).toBe(true);
   expect(updatedPreview.data.preview.display).toMatchObject({ assignedCount: 3, renderedAssignedCount: 3 });
-});
-
-test("モデルを生成できない割り当てがあると全体の表示完了を成功にしない", async ({ editor, webMcp, scadUnavailable }) => {
-  expect(scadUnavailable).toBe(true);
-  await editor.open();
-  const { files } = createSplitKeyboardFixture();
-  await editor.keyboard.importFiles(files, "config/info.json");
-  const state = (await webMcp.execute("get_state")).data;
-  await webMcp.execute("batch", { assignments: [{ slotId: "key-0", keycapId: state.project.activeKeycapId }] });
-  const preview = await webMcp.execute("preview", { mode: "keyboard" });
-  expect(preview).toMatchObject({ ok: false, error: { code: "preview_failed" } });
-  const display = (await webMcp.execute("get_state")).data.preview.display;
-  expect(display).toMatchObject({ status: "error", mode: "keyboard", assignedCount: 1, renderedAssignedCount: 0, modelCount: 0 });
-  expect(display.errors).toHaveLength(1);
-  expect(display.errors[0].keycapId).toBe(state.project.activeKeycapId);
-  await expect(editor.keyboard.previewStatus).toBeVisible();
-  await webMcp.execute("batch", { assignments: [{ slotId: "key-0" }] });
-  expect((await webMcp.execute("preview", { mode: "keyboard" })).ok).toBe(true);
-  await expect(editor.keyboard.previewStatus).toBeHidden();
-});
-
-test("全体プレビューの成功で配置ファイルの読み込みエラーを消さない", async ({ editor, webMcp }) => {
-  await editor.open();
-  const { files } = createSplitKeyboardFixture();
-  await editor.keyboard.importFiles(files, "config/info.json");
-  const before = (await webMcp.execute("get_state")).data.project;
-  const message = await editor.keyboard.importInvalidFile();
-  expect(message).not.toBe("");
-  expect((await webMcp.execute("preview", { mode: "keyboard" })).ok).toBe(true);
-  await expect(editor.keyboard.importStatus).toHaveText(message);
-  await expect(editor.keyboard.importStatus).toHaveClass(/is-error/);
-  await expect(editor.keyboard.previewStatus).toBeHidden();
-  expect((await webMcp.execute("get_state")).data.project).toEqual(before);
-});
-
-test("全体プレビューの生成途中にUIで表示を切り替えると完了扱いしない", async ({ editor, webMcp }) => {
-  await editor.open();
-  await webMcp.execute("preview", { mode: "keycap" });
-  const { files } = createSplitKeyboardFixture();
-  await editor.keyboard.importFiles(files, "config/info.json");
-  await editor.keyboard.showKeycapPreview();
-  await webMcp.execute("batch", { keycaps: [{ ref: "fresh", params: { name: "Fresh", legendEnabled: true, legendText: "Wait", homingBarEnabled: true } }],
-    assignments: [{ slotId: "key-0", keycapRef: "fresh" }] });
-  const pending = webMcp.execute("preview", { mode: "keyboard" });
-  await editor.waitPreviewStatus("running");
-  expect((await webMcp.execute("get_state")).data.preview.display.status).toBe("running");
-  await editor.keyboard.showKeycapPreview();
-  expect(await pending).toMatchObject({ ok: false, error: { code: "preview_superseded" } });
-  expect((await webMcp.execute("preview", { mode: "keycap" })).ok).toBe(true);
 });

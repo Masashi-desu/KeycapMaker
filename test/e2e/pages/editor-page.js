@@ -1,4 +1,5 @@
 import { ProjectPanel } from "./project-panel.js";
+import { PreviewStage } from "./preview-stage.js";
 import { KeyboardPanel } from "./keyboard-panel.js";
 import { ImportBindingNotice } from "./import-binding-notice.js";
 import { readContrastSamples } from "./color-samples.js";
@@ -17,9 +18,8 @@ export class EditorPage {
     this.legendFields = page.locator("#legend-position-fields");
     this.designTab = page.locator('[data-sidebar-tab="design"]');
     this.designPanel = page.locator('.inspector-panel--design');
-    this.previewStage = page.locator('[data-preview-stage]');
-    this.previewCanvas = this.previewStage.locator('canvas');
-    this.project = new ProjectPanel(page);
+    this.preview = new PreviewStage(page);
+    this.project = new ProjectPanel(page, this.preview);
     this.keyboard = new KeyboardPanel(page);
     this.importReport = new ImportBindingNotice(page);
     this.consent = new DownloadConsent(page);
@@ -105,14 +105,6 @@ export class EditorPage {
 
   async readInputColors() {
     return this.designPanel.evaluate(readContrastSamples, '[data-field="name"], input[type="number"][data-field="keyWidth"]');
-  }
-
-  async waitPreviewStatus(status) {
-    await this.page.waitForFunction((expected) => document.querySelector('[data-preview-stage]')?.dataset.previewStatus === expected, status);
-  }
-
-  async readPreviewFrame() {
-    return this.previewCanvas.evaluate((canvas) => ({ width: canvas.width, height: canvas.height, frame: canvas.dataset.previewFrame }));
   }
 
   async resize(width, height) { await this.page.setViewportSize({ width, height }); }

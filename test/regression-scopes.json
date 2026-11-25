@@ -1,0 +1,34 @@
+{
+  "editor": {
+    "node": ["editor-data.test.js", "font-source-resolver.test.js", "keycap-fonts.test.js", "keycap-icons.test.js", "theme-policy.test.js", "ui-icons.test.js"],
+    "browser": ["editor.spec.js"]
+  },
+  "project": {
+    "node": ["project-data.test.js", "project-batch.test.js"],
+    "browser": ["project.spec.js", "project-archive.spec.js"]
+  },
+  "keyboard": {
+    "node": ["keyboard-layout.test.js", "keyboard-groups.test.js", "keyboard-export.test.js"],
+    "browser": ["keyboard.spec.js"]
+  },
+  "export": {
+    "node": ["export-3mf.test.js", "export-step.test.js", "download-consent.test.js"],
+    "browser": ["export.spec.js", "download-consent.spec.js"]
+  },
+  "preview": {
+    "node": ["preview-completion.test.js", "preview-scene.test.js", "preview-thumbnail.test.js"],
+    "browser": ["preview.spec.js"]
+  },
+  "geometry": {
+    "node": ["keycap-scad-bundle.test.js", "keycap-convex-surface-geometry.test.js", "j-stem-lp01-reference.test.js"],
+    "browser": []
+  },
+  "webmcp": {
+    "node": ["webmcp.test.js"],
+    "browser": ["webmcp-batch.spec.js", "webmcp-editor.spec.js"]
+  },
+  "repository": {
+    "node": ["change-classification.test.js", "documentation.test.js", "regression-scopes.test.js"],
+    "browser": []
+  }
+}
