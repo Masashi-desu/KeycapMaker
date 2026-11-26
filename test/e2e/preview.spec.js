@@ -71,14 +71,22 @@ test("モデルを生成できない割り当てがあると全体の表示完�
   await expect(editor.keyboard.previewStatus).toBeHidden();
 });
 
-test("全体プレビューの成功で配置ファイルの読み込みエラーを消さない", async ({ editor, webMcp }) => {
+test("単体の生成が遅れても全体プレビューを完了し、配置ファイルの読み込みエラーを保つ", async ({ editor, webMcp, frameClock, releaseScad }) => {
   await editor.open();
   const { files } = createSplitKeyboardFixture();
   await editor.keyboard.importFiles(files, "config/info.json");
+  await editor.preview.waitForStatus("ready");
   const before = (await webMcp.execute("get_state")).data.project;
   const message = await editor.keyboard.importInvalidFile();
   expect(message).not.toBe("");
-  expect((await webMcp.execute("preview", { mode: "keyboard" })).ok).toBe(true);
+  await frameClock.pause();
+  expect((await webMcp.execute("get_state")).data.preview.geometry.status).toBe("running");
+  const pending = webMcp.execute("preview", { mode: "keyboard" });
+  await editor.preview.waitForStatus("running");
+  releaseScad();
+  await expect.poll(async () => (await webMcp.execute("get_state")).data.preview.geometry.status, { timeout: 30_000 }).toBe("success");
+  await frameClock.advance(32);
+  expect(await pending).toMatchObject({ ok: true });
   await expect(editor.keyboard.importStatus).toHaveText(message);
   await expect(editor.keyboard.importStatus).toHaveClass(/is-error/);
   await expect(editor.keyboard.previewStatus).toBeHidden();

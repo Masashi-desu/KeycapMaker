@@ -31,6 +31,14 @@ export const test = base.extend({
     await installWebMcpRegistration(page);
     await use(new WebMcpClient(page));
   },
+  releaseScad: async ({ editor, page }, use) => {
+    const gate = Promise.withResolvers();
+    await page.route("**/vendor/openscad/**", async (route) => {
+      await gate.promise;
+      await route.continue();
+    });
+    try { await use(gate.resolve); } finally { gate.resolve(); }
+  },
   // Resolve editor first so its origin route cannot override this fault injection.
   scadUnavailable: async ({ editor, page }, use) => {
     await page.route("**/vendor/openscad/**", (route) => route.abort());

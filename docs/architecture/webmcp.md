@@ -80,7 +80,7 @@ toolによる変更操作は排他で、先行toolやUIのexport / project保存
 
 ## 参照・保守
 
-全体プレビューのモデル生成エラーは、配置ファイルの読み込み結果と別の表示状態で保持します。プレビューが成功しても読み込みエラーを消さず、モデル生成エラーは次の成功した全体プレビューで解消します。
+全体プレビューのモデル生成エラーは、配置ファイルの読み込み結果と別の表示状態で保持します。プレビューが成功しても読み込みエラーを消さず、モデル生成エラーは次の成功した全体プレビューで解消します。単体キーの生成が遅れて完了した場合は、同じ配置・編集値で進行中または描画済みの全体プレビューを引き継ぎます。
 
 APIの基準は2026-09-30版 [WebMCP公式ドラフト](https://webmachinelearning.github.io/webmcp/)。ブラウザ実装の確認は [Chrome imperative API](https://developer.chrome.com/docs/ai/webmcp/imperative-api) を参照します。ドラフトの変更時はcompatibility adapterとregistration testを同時に更新します。
 

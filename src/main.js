@@ -273,6 +273,7 @@ let lastPreviewField = null;
 let keyboardViewState = null;
 let mountedPreviewMode = "keycap";
 let latestViewerRequestId = 0;
+let previewViewerPromise = null;
 let previewDisplay = { status: "idle", requestId: 0, mode: "keycap", rendered: false };
 let previewDisplaySignature = "";
 let latestKeyboardImportId = 0;
@@ -10629,7 +10630,18 @@ function syncPreviewDisplayMarker() {
   stage.setAttribute("aria-busy", String(["running", "stale"].includes(display.status)));
 }
 
-async function renderPreviewViewer() {
+function renderPreviewViewer({ reuseKeyboard = false } = {}) {
+  if (reuseKeyboard && state.previewMode === "keyboard") {
+    const display = getPreviewDisplayState();
+    if (display.mode === "keyboard" && (display.status === "running" || display.status === "ready")) {
+      return previewViewerPromise;
+    }
+  }
+  previewViewerPromise = drawRequestedPreview();
+  return previewViewerPromise;
+}
+
+async function drawRequestedPreview() {
   const requestId = ++latestViewerRequestId;
   const mode = state.previewMode;
   const signature = getPreviewDisplaySignature();
@@ -10887,7 +10899,8 @@ async function executeKeycapPreview(options = {}) {
     previewGeometrySignature = getKeycapGeometrySignature(previewKeycapId, previewParams);
   }
 
-  const display = await renderPreviewViewer();
+  // Completing a single key's geometry must not displace a matching keyboard render.
+  const display = await renderPreviewViewer({ reuseKeyboard: true });
   if (didGeneratePreview && refreshActiveProjectPreview) {
     refreshActiveProjectKeycapPreviewFromCurrent();
   }
