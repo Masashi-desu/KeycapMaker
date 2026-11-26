@@ -301,7 +301,7 @@ let pendingLegendFontPickerFocus = false;
 let pendingLegendFontSourceInputFocus = false;
 let pendingLegendIconPickerFocus = false;
 let pendingActiveProjectSyncTimer = 0;
-let pendingFieldUiSyncTimer = 0;
+let pendingFieldUiSyncFrame = null;
 let legendFontSourceEditorTransitionToken = 0;
 let legendFontSourceEditorTransitionTimer = 0;
 let legendFontSourceEditorCleanupTimer = 0;
@@ -319,7 +319,6 @@ const FIELD_GROUP_COLLAPSE_GAP_ANIMATION_ID = "field-group-collapse-gap";
 const FIELD_GROUP_COLLAPSE_ANIMATION_DURATION_MS = 220;
 const FIELD_GROUP_COLLAPSE_ANIMATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 const CHECKBOX_TOGGLE_COMMIT_DELAY_MS = 190;
-const FIELD_UI_SYNC_DELAY_MS = 80;
 const ACTIVE_PROJECT_SYNC_DELAY_MS = 900;
 const THEME_SWITCH_ANIMATION_DURATION_MS = 260;
 const THEME_FADE_DURATION_MS = 320;
@@ -4644,7 +4643,8 @@ function renderFieldWithDependents(field, fieldByKey) {
   const dependentFields = dependentFieldKeys
     .map((fieldKey) => fieldByKey.get(fieldKey))
     .filter(Boolean)
-    .filter((dependentField) => isFieldVisible(dependentField));
+    .filter((dependentField) => isFieldVisible(dependentField)
+      || (dependentField.key === "topHatSeparateColorEnabled" && state.keycapParams.topHatEnabled));
 
   if (field.type === "select") {
     return renderFieldWithDependentFields(field, dependentFields, fieldByKey);
@@ -4661,6 +4661,9 @@ function renderDependentFieldList(dependentFields, fieldByKey = null) {
   return `
     <div class="field-dependent-list">
       ${dependentFields.map((dependentField) => {
+        if (dependentField.key === "topHatSeparateColorEnabled") {
+          return `<div data-top-hat-color-controls ${isFieldVisible(dependentField) ? "" : "hidden"}>${renderTopHatColorControls()}</div>`;
+        }
         const nestedDependentFields = (dependentField.dependentFieldKeys ?? [])
           .map((fieldKey) => fieldByKey?.get(fieldKey))
           .filter(Boolean)
@@ -4673,6 +4676,21 @@ function renderDependentFieldList(dependentFields, fieldByKey = null) {
       }).join("")}
     </div>
   `;
+}
+
+function renderTopHatColorControls() {
+  const toggle = getFieldConfig("topHatSeparateColorEnabled");
+  if (!isFieldVisible(toggle)) return "";
+  const color = getFieldConfig("topHatColor");
+  return renderField(toggle, { className: "field--dependent", dependentFields: isFieldVisible(color) ? [color] : [] });
+}
+
+function syncTopHatColorControls() {
+  const slot = app.querySelector("[data-top-hat-color-controls]");
+  if (!slot) return;
+  slot.innerHTML = renderTopHatColorControls();
+  slot.hidden = !slot.firstElementChild;
+  if (!slot.hidden) configureColoris();
 }
 
 function renderFieldWithDependentFields(field, dependentFields, fieldByKey = null) {
@@ -4822,6 +4840,8 @@ function formatSliderFieldValue(fieldKey, value, sliderAttributes) {
   return formatNumericFieldValue(fieldKey, clampSliderValue(value, sliderAttributes), sliderAttributes?.step);
 }
 
+const initialSliderParamsByProfile = new Map();
+
 function resolveStandardFieldSliderGuideValue(fieldKey, params = state.keycapParams) {
   if (fieldKey === "dishDepth") {
     return getTopSurfaceShapePreset(params.topSurfaceShape ?? "flat").dishDepth;
@@ -4839,8 +4859,9 @@ function resolveStandardFieldSliderGuideValue(fieldKey, params = state.keycapPar
     })[fieldKey];
   }
 
-  const initialParams = createInitialKeycapParams(params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY);
-  return initialParams[fieldKey];
+  const profile = params.shapeProfile ?? DEFAULT_SHAPE_PROFILE_KEY;
+  if (!initialSliderParamsByProfile.has(profile)) initialSliderParamsByProfile.set(profile, createInitialKeycapParams(profile));
+  return initialSliderParamsByProfile.get(profile)[fieldKey];
 }
 
 function resolveFieldSliderGuideValue(field, sliderConfig, params = state.keycapParams) {
@@ -9592,8 +9613,9 @@ function syncFieldHint(fieldKey, options = {}) {
 }
 
 function schedulePendingFieldUiSync() {
-  window.clearTimeout(pendingFieldUiSyncTimer);
-  pendingFieldUiSyncTimer = window.setTimeout(flushPendingFieldUiSync, FIELD_UI_SYNC_DELAY_MS);
+  if (pendingFieldUiSyncFrame === null) {
+    pendingFieldUiSyncFrame = window.requestAnimationFrame(flushPendingFieldUiSync);
+  }
 }
 
 function queueFieldHintSync(fieldKey, options = {}) {
@@ -9626,8 +9648,8 @@ function queueVisibleTopFieldStateSync(activeField = null) {
 }
 
 function flushPendingFieldUiSync() {
-  window.clearTimeout(pendingFieldUiSyncTimer);
-  pendingFieldUiSyncTimer = 0;
+  if (pendingFieldUiSyncFrame !== null) window.cancelAnimationFrame(pendingFieldUiSyncFrame);
+  pendingFieldUiSyncFrame = null;
 
   const shouldSyncVisibleTopFields = hasPendingVisibleTopFieldSync;
   const visibleTopFieldActiveField = pendingVisibleTopFieldActiveField;
@@ -9699,31 +9721,29 @@ function syncNumericFieldConstraints(input, fieldConfig) {
   syncFieldConstraintAttribute(input, "step", resolveFieldAttribute(fieldConfig?.step));
 }
 
-function syncFieldInputConstraints(input, fieldConfig) {
+function syncFieldInputConstraints(input, fieldConfig, sliderAttributes) {
   if (input.type !== "range") {
     syncNumericFieldConstraints(input, fieldConfig);
     return;
   }
 
-  const sliderAttributes = resolveFieldSliderAttributes(fieldConfig);
   syncFieldConstraintAttribute(input, "min", sliderAttributes?.min);
   syncFieldConstraintAttribute(input, "max", sliderAttributes?.max);
   syncFieldConstraintAttribute(input, "step", sliderAttributes?.step);
   input.disabled = Boolean(sliderAttributes && sliderAttributes.min >= sliderAttributes.max);
 }
 
-function formatFieldInputValue(input, fieldKey, value, fieldConfig) {
+function formatFieldInputValue(input, fieldKey, value, sliderAttributes) {
   if (input.type !== "range") {
     return formatNumericFieldValue(fieldKey, value);
   }
 
-  const sliderAttributes = resolveFieldSliderAttributes(fieldConfig);
   return canRenderFieldSlider(sliderAttributes)
     ? formatSliderFieldValue(fieldKey, value, sliderAttributes)
     : formatNumericFieldValue(fieldKey, value);
 }
 
-function syncFieldSliderVisualState(input, fieldKey, fieldConfig, sliderAttributes = resolveFieldSliderAttributes(fieldConfig)) {
+function syncFieldSliderVisualState(input, fieldKey, sliderAttributes) {
   if (input.type !== "range") {
     return;
   }
@@ -9778,10 +9798,10 @@ function syncFieldInputs(fieldKey, activeField = null) {
   const activeInput = document.activeElement;
   inputs.forEach((input) => {
     const sliderAttributes = input.type === "range" ? resolveFieldSliderAttributes(fieldConfig) : null;
-    const nextInputValue = formatFieldInputValue(input, fieldKey, state.keycapParams[fieldKey], fieldConfig);
+    const nextInputValue = formatFieldInputValue(input, fieldKey, state.keycapParams[fieldKey], sliderAttributes);
 
-    syncFieldInputConstraints(input, fieldConfig);
-    syncFieldSliderVisualState(input, fieldKey, fieldConfig, sliderAttributes);
+    syncFieldInputConstraints(input, fieldConfig, sliderAttributes);
+    syncFieldSliderVisualState(input, fieldKey, sliderAttributes);
 
     if (
       fieldKey !== activeField
@@ -9894,9 +9914,9 @@ function syncKeyUnitBasisInputs(activeInput = null) {
   inputs.forEach((input) => {
     if (input.type === "range") {
       const sliderAttributes = resolveFieldSliderAttributes(fieldConfig);
-      const nextInputValue = formatFieldInputValue(input, KEY_UNIT_FIELD_KEY, getKeyUnitMm(), fieldConfig);
-      syncFieldInputConstraints(input, fieldConfig);
-      syncFieldSliderVisualState(input, KEY_UNIT_FIELD_KEY, fieldConfig, sliderAttributes);
+      const nextInputValue = formatFieldInputValue(input, KEY_UNIT_FIELD_KEY, getKeyUnitMm(), sliderAttributes);
+      syncFieldInputConstraints(input, fieldConfig, sliderAttributes);
+      syncFieldSliderVisualState(input, KEY_UNIT_FIELD_KEY, sliderAttributes);
       if (input !== activeInput || !isInputNumericallySynced(input, nextInputValue)) {
         input.value = nextInputValue;
       }
@@ -10105,6 +10125,7 @@ function handleFieldChange(event) {
     value = parseNumericInputValue(input, field, fieldConfig);
     if (value == null) return;
   }
+  const wasRaised = state.keycapParams.topHatHeight > 0;
   state.keycapParams = applyEditorFieldValue(state.keycapParams, field, value);
   if (isLegendFieldWithSuffix(field, LEGEND_FIELD_SUFFIXES.contentType)) {
     state.legendFontPickerFieldKey = "";
@@ -10115,7 +10136,6 @@ function handleFieldChange(event) {
     state.legendIconPickerQuery = "";
   }
 
-  syncDerivedKeycapParams(state.keycapParams);
   if (deferContinuousSync) {
     scheduleActiveProjectKeycapSync();
   } else {
@@ -10156,8 +10176,11 @@ function handleFieldChange(event) {
     syncCheckboxToggleDom(input);
   }
 
-  state.editorStatus = "dirty";
-  state.editorSummary = t("status.dirty");
+  const affectsPreview = field !== "topSlopeInputMode";
+  if (affectsPreview) {
+    state.editorStatus = "dirty";
+    state.editorSummary = t("status.dirty");
+  }
 
   const shouldRenderInspector = TOP_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
     || SIDE_LEGEND_CONFIGS.some((config) => field === legendParamKey(config.paramPrefix, LEGEND_FIELD_SUFFIXES.enabled))
@@ -10168,7 +10191,6 @@ function handleFieldChange(event) {
     || field === "rimEnabled"
     || field === "topHatEnabled"
     || field === "topHatSeparateColorEnabled"
-    || field === "topHatHeight"
     || field === "topSurfaceShape"
     || field === "topHatSurfaceShape"
     || field === "topSlopeInputMode"
@@ -10180,6 +10202,8 @@ function handleFieldChange(event) {
     }
   } else if (shouldRenderInspector) {
     render({ animateInspector: input.type !== "checkbox" });
+  } else if (wasRaised !== (state.keycapParams.topHatHeight > 0)) {
+    syncTopHatColorControls();
   }
 
   if (field === "dishDepth") {
@@ -10274,7 +10298,7 @@ function handleFieldChange(event) {
     syncOrQueueFieldHint("topHatDishDepth", {}, deferContinuousSync);
   }
 
-  if (!deferPreview && field !== "topSlopeInputMode") {
+  if (!deferPreview && affectsPreview) {
     schedulePreviewRefresh();
   }
 }
@@ -10315,11 +10339,11 @@ function syncLinkedSizeInputs(changedField) {
       primaryInput,
       changedPrimaryField,
       state.keycapParams[changedPrimaryField],
-      primaryFieldConfig,
+      sliderAttributes,
     );
 
-    syncFieldInputConstraints(primaryInput, primaryFieldConfig);
-    syncFieldSliderVisualState(primaryInput, changedPrimaryField, primaryFieldConfig, sliderAttributes);
+    syncFieldInputConstraints(primaryInput, primaryFieldConfig, sliderAttributes);
+    syncFieldSliderVisualState(primaryInput, changedPrimaryField, sliderAttributes);
 
     if (
       changedField !== changedPrimaryField
@@ -10586,8 +10610,13 @@ function handleKeyboardChange(event) {
   return true;
 }
 
+// The slope input mode is saved with the design but does not change its geometry or its display.
+function getKeycapPreviewParams({ topSlopeInputMode, ...previewParams }) {
+  return previewParams;
+}
+
 async function getProjectKeyboardModel(entry) {
-  const signature = JSON.stringify(entry.params);
+  const signature = JSON.stringify(getKeycapPreviewParams(entry.params));
   if (projectMeshCache.get(entry.id)?.signature === signature) return projectMeshCache.get(entry.id);
   const token = `${entry.id}:${signature}`;
   if (!pendingProjectMeshes.has(token)) {
@@ -10602,16 +10631,16 @@ async function getProjectKeyboardModel(entry) {
 }
 
 function getPreviewDisplaySignature() {
-  if (state.previewMode === "keycap") return JSON.stringify({ mode: "keycap", id: state.project.activeKeycapId, params: state.keycapParams });
+  if (state.previewMode === "keycap") return JSON.stringify({ mode: "keycap", id: state.project.activeKeycapId, params: getKeycapPreviewParams(state.keycapParams) });
   const assigned = new Set(state.project.placements.map((entry) => entry.keycapId));
   return JSON.stringify({ mode: "keyboard", keyboard: state.project.keyboard, placements: state.project.placements,
     selectedSlotId: state.keyboardSlotId,
     keycaps: state.project.keycaps.filter((entry) => assigned.has(entry.id)).map((entry) => ({ id: entry.id,
-      params: entry.id === state.project.activeKeycapId ? state.keycapParams : entry.params })) });
+      params: getKeycapPreviewParams(entry.id === state.project.activeKeycapId ? state.keycapParams : entry.params) })) });
 }
 
 function getKeycapGeometrySignature(keycapId = state.project.activeKeycapId, params = state.keycapParams) {
-  return JSON.stringify({ keycapId, params });
+  return JSON.stringify({ keycapId, params: getKeycapPreviewParams(params) });
 }
 
 function getPreviewDisplayState() {
@@ -10885,7 +10914,7 @@ async function executeKeycapPreview(options = {}) {
       mesh: entry.mesh,
     }));
     previewGeometrySignature = getKeycapGeometrySignature(previewKeycapId, previewParams);
-    projectMeshCache.set(previewKeycapId, { signature: JSON.stringify(previewParams), layers: state.previewLayers.filter((entry) => entry.name !== "j-stem-lp01") });
+    projectMeshCache.set(previewKeycapId, { signature: JSON.stringify(getKeycapPreviewParams(previewParams)), layers: state.previewLayers.filter((entry) => entry.name !== "j-stem-lp01") });
     didGeneratePreview = true;
   } catch (error) {
     if (requestId !== latestPreviewRequestId || getKeycapGeometrySignature(previewKeycapId, previewParams) !== getKeycapGeometrySignature()) {
@@ -11157,11 +11186,14 @@ function updateKeycapFromWebMcp(patch) {
   state.keycapParams = prepareKeycapParameterPatch(state.keycapParams, patch);
   state.legendFontPickerFieldKey = "";
   state.legendIconPickerFieldKey = "";
-  state.editorStatus = "dirty";
-  state.editorSummary = t("status.dirty");
+  const affectsPreview = Object.keys(patch).some(key => key !== "topSlopeInputMode");
+  if (affectsPreview) {
+    state.editorStatus = "dirty";
+    state.editorSummary = t("status.dirty");
+  }
   syncActiveProjectKeycapFromCurrent();
   render();
-  schedulePreviewRefresh();
+  if (affectsPreview) schedulePreviewRefresh();
   return getWebMcpState();
 }
 

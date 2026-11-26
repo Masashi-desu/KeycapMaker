@@ -72,9 +72,11 @@ paramsは既定shapeの初期値への部分更新です。shapeProfileを指定
 
 toolによる変更操作は排他で、先行toolやUIのexport / project保存 / keyboard読込が実行中なら `busy` を返します。get_state / get_input / catalogは実行中も利用できます。同意画面を閉じた後の生成中はUIでの通常編集を継続できます。単体exportは呼び出し時のparams、配置全体3MFとproject ZIPは開始時のproject snapshotを使い、保存中の追加編集はdirty状態を維持します。
 
+`keycap_get_state` の `observedParams` はドラッグ中も直近の確定値を返します。画面の数値欄はその値に追従し、モデルの描画完了は次のプレビュー要求の状態で確認できます。
+
 `preview.geometry` はactive keycapの生成状態で、isCurrentは現在の対象・paramsと生成snapshotの一致を示します。`preview.display` は実際の表示要求の状態で、status（idle / running / ready / empty / error / stale）、requestId、mode、rendered、keyCount、assignedCount、renderedAssignedCount、modelCount、partCount、errorsを返します。keyboard表示では全割り当てのモデルをsnapshotから生成し、共有デザインは一度だけ生成します。初回requestAnimationFrameでThree.jsがcanvasへ描画した後だけreadyにし、対応するDOMのpreview stageにもrequestId / status / renderedとaria-busyを反映します。OSの画面提示やGPUの物理的な走査完了は保証しません。
 
-`keycap_preview({ mode: "keyboard" })` は表示を全体に切り替えて、モデル生成とcanvasフレームを待ちます。全割り当てが描画できて初めて成功し、未割り当てslotはガイド表示のままです。モデル失敗はerror / preview_failed、途中で配置・割り当て・対象params・表示modeが変わるか表示要求が差し替わるとpreview_superseded、待機期限を過ぎるとpreview_timeoutを返します。部分表示が残っても成功扱いしません。読み取り時に現在データと表示snapshotが異なる場合はstale / rendered:falseとして返すため、古いreadyを新しい入力の完了と混同しません。updateは従来どおり生成を予約し、batchは全体表示中なら再描画を予約します。操作結果の成功とプレビューの成功は別です。
+`keycap_preview({ mode: "keyboard" })` は表示を全体に切り替えて、モデル生成とcanvasフレームを待ちます。全割り当てが描画できて初めて成功し、未割り当てslotはガイド表示のままです。モデル失敗はerror / preview_failed、途中で配置・割り当て・対象params・表示modeが変わるか表示要求が差し替わるとpreview_superseded、待機期限を過ぎるとpreview_timeoutを返します。部分表示が残っても成功扱いしません。読み取り時に現在データと表示snapshotが異なる場合はstale / rendered:falseとして返すため、古いreadyを新しい入力の完了と混同しません。傾きの入力モードだけを切り替えた場合は進行中の生成や描画済みモデルを引き継ぎます。その他のパラメータを含むupdateは生成を予約し、batchは全体表示中なら再描画を予約します。操作結果の成功とプレビューの成功は別です。
 
 ブラウザが実行用AbortSignalを提供する場合は開始前と長時間処理後、download直前に確認し、project ZIPでは各keycapの生成前にも確認します。配置全体3MFでは各配置先とOFF partの生成前後にも確認します。previewのキャンセル・期限切れは待機を終了しますが、UIと共有する生成・描画は継続する場合があります。進行中のOpenSCAD workerジョブの強制停止や、すでに反映した編集・import・downloadの巻き戻しは保証しません。export成功は生成とdownload開始の成功であり、ブラウザの保存完了やローカルファイルpathを保証しません。STEP/STLの単色・legend省略契約は従来どおりです。
 

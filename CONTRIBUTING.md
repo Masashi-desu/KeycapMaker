@@ -23,6 +23,7 @@ npm run preview
 - `npm test`: 上記文書・font検証を含むNode test suiteを実行する
 - `npm run test:scope -- project`: 指定したスコープのNode・ブラウザ回帰テストを実行し、各層の合否を表示する。スコープ一覧は [自動テストガイド](docs/guide/automated-testing.md) を参照する
 - `npm run test:browser`: Page Object Modelを使う主要UI flowとWebMCP同期のPlaywright testを、専用Vite serverと隔離されたheadless Chromiumで実行する。初回は `npx playwright install chromium` が必要。構成と追加方針は [自動テスト](docs/guide/automated-testing.md) を参照する
+- `npm run test:scope -- parameter-performance` で設計項目を個別に操作し、数値・選択の画面反映時間とモデル描画時間をそれぞれの上限で判定する。測定条件と個別実行は [自動テストガイド](docs/guide/automated-testing.md#パラメータごとの性能回帰) を参照する
 - `npm run build`: ViteでGitHub Pages向けの `dist/` を生成する
 - `npm run generate:og`: CDNから版・SHA-256固定のManropeを取得し、headless Chromiumで公開用Open Graph PNGを再生成する。初回のbrowser導入と編集箇所は [Open Graph画像](docs/guide/open-graph.md) を参照する。通常のbuildでは再生成やCDN取得を行わない
 

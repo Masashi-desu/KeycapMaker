@@ -52,6 +52,22 @@ test("設計と配置への移動でプレビューを切り替え、その後�
   await expect(editor.preview.keycapButton).toHaveAttribute("aria-pressed", "true");
 });
 
+test("生成中に傾きの入力モードを切り替えても、そのモデルを最後まで描画する", async ({ editor, webMcp, releaseScad }) => {
+  await editor.open();
+  await editor.parameters.expand("top");
+  await editor.parameters.control("topSlopeInputMode").selectOption("edge-height");
+  const pending = await webMcp.execute("get_state");
+  expect(pending.data.observedParams.topSlopeInputMode).toBe("edge-height");
+  expect(pending.data.preview.geometry.status).toBe("running");
+  releaseScad();
+  await editor.preview.waitForStatus("ready");
+  const complete = await webMcp.execute("get_state");
+  const restored = await webMcp.execute("update", { params: { topSlopeInputMode: "angle" } });
+  expect(restored.data.observedParams.topSlopeInputMode).toBe("angle");
+  expect(restored.data.preview).toEqual(complete.data.preview);
+  expect(restored.data.preview.geometry).toMatchObject({ status: "success", isCurrent: true });
+});
+
 test("モデルを生成できない割り当てがあると全体の表示完了を成功にしない", async ({ editor, webMcp, scadUnavailable }) => {
   expect(scadUnavailable).toBe(true);
   await editor.open();

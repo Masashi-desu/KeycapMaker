@@ -4,6 +4,7 @@ import { KeyboardPanel } from "./keyboard-panel.js";
 import { ImportBindingNotice } from "./import-binding-notice.js";
 import { readContrastSamples } from "./color-samples.js";
 import { DownloadConsent } from "./download-consent.js";
+import { ParameterPanel } from "./parameter-panel.js";
 
 export class EditorPage {
   constructor(page) {
@@ -21,6 +22,7 @@ export class EditorPage {
     this.legendFields = page.locator("#legend-position-fields");
     this.designTab = page.locator('[data-sidebar-tab="design"]');
     this.designPanel = page.locator('.inspector-panel--design');
+    this.parameters = new ParameterPanel(page);
     this.preview = new PreviewStage(page);
     this.project = new ProjectPanel(page, this.preview);
     this.keyboard = new KeyboardPanel(page);

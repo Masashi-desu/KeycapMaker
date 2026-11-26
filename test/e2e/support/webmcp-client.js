@@ -28,6 +28,15 @@ export class WebMcpClient {
     return this.page.evaluate(({ name, input }) => globalThis.__keycapTestTools.get(`keycap_${name}`).execute(input), { name, input });
   }
 
+  // Pass this reader into the browser-side frame probe to avoid a runner round trip per sample.
+  async observedParamsReader() {
+    return this.page.evaluateHandle(() => async () => {
+      const result = await globalThis.__keycapTestTools.get("keycap_get_state").execute({});
+      if (!result.ok) throw new Error(result.error.message);
+      return result.data.observedParams;
+    });
+  }
+
   async executeWithDownload(name, input = {}) {
     const pendingDownload = this.page.waitForEvent("download");
     const pendingResult = this.execute(name, input);

@@ -99,3 +99,76 @@ test("印字位置を切り替えると選んだ設定だけを表示し、他�
   await editor.selectLegendPosition("前面サイドウォール");
   await expect(editor.legendField("sideLegendFrontText")).toHaveValue("Fn");
 });
+
+test("横幅をドラッグしている間もフレームごとにmmとuが追従する", async ({ editor, frameClock }) => {
+  await editor.open();
+  await editor.preview.waitForStatus("ready");
+  await frameClock.pause();
+  const requestId = await editor.preview.requestId();
+  const basis = Number(await editor.parameters.control("keyUnitMm").inputValue());
+  const drag = await editor.parameters.startSliderDrag("keyWidth", 0.24);
+  try {
+    let previous = Number(await drag.slider.inputValue());
+    for (const fraction of [0.35, 0.48, 0.62, 0.76]) {
+      await drag.move(fraction);
+      await frameClock.advance(16);
+      const mm = Number(await drag.slider.inputValue());
+      expect(mm).toBeGreaterThan(previous);
+      expect(Number(await editor.width.inputValue())).toBe(mm);
+      expect(await editor.widthUnits.inputValue()).toBe((mm / basis).toFixed(2));
+      expect(await editor.preview.requestId()).toBe(requestId);
+      previous = mm;
+    }
+  } finally {
+    await drag.release();
+  }
+});
+
+test("トップハットの高さが0を跨いでもスライダーがドラッグを受け続ける", async ({ editor, frameClock, webMcp }) => {
+  await editor.open();
+  const setup = await webMcp.execute("update", { params: { topHatEnabled: true, topHatSeparateColorEnabled: true } });
+  expect(setup.ok).toBe(true);
+  await editor.parameters.expand("topHat");
+  await editor.preview.waitForStatus("ready");
+  await frameClock.pause();
+  const drag = await editor.parameters.startSliderDrag("topHatHeight", 0.02);
+  try {
+    for (const [fraction, raised] of [[0.03, false], [0.42, true], [0.05, false], [0.7, true]]) {
+      await drag.move(fraction);
+      await frameClock.advance(16);
+      const height = Number(await drag.slider.inputValue());
+      expect(height > 0).toBe(raised);
+      expect(Number(await editor.parameters.control("topHatHeight").inputValue())).toBe(height);
+      expect(await editor.parameters.control("topHatColor").isVisible()).toBe(raised);
+    }
+  } finally {
+    await drag.release();
+  }
+});
+
+test("前端の高さをドラッグすると同じフレームで後端の高さも変わる", async ({ editor, frameClock, webMcp }) => {
+  await editor.open();
+  const setup = await webMcp.execute("update", { params: { topSlopeInputMode: "edge-height", topOffsetY: 0 } });
+  expect(setup.ok).toBe(true);
+  const center = setup.data.observedParams.topCenterHeight;
+  await editor.parameters.expand("top");
+  await editor.preview.waitForStatus("ready");
+  await frameClock.pause();
+  const requestId = await editor.preview.requestId();
+  const drag = await editor.parameters.startSliderDrag("topFrontHeight", 0.4);
+  try {
+    let previous = Number(await drag.slider.inputValue());
+    for (const fraction of [0.47, 0.54, 0.44]) {
+      await drag.move(fraction);
+      await frameClock.advance(16);
+      const front = Number(await drag.slider.inputValue());
+      expect(front).not.toBe(previous);
+      expect(Number(await editor.parameters.control("topFrontHeight").inputValue())).toBe(front);
+      expect(Number(await editor.parameters.control("topBackHeight").inputValue())).toBeCloseTo(2 * center - front, 2);
+      expect(await editor.preview.requestId()).toBe(requestId);
+      previous = front;
+    }
+  } finally {
+    await drag.release();
+  }
+});

@@ -109,7 +109,7 @@ export function createKeycapWebMcpTools(commands) {
       keys: { type: "array", items: identifier, minItems: 1, maxItems: 32 },
       limit: { type: "integer", minimum: 1, maximum: 100 },
     }, ["section"]), (input) => commands.getCatalog(input), { readOnly: true, untrusted: true }),
-    tool("update", "Edit the active keycap and update its project entry and UI. Preserve unspecified values. Shape changes follow the same reset rules as the UI. Invalid patches apply no changes. Preview refresh is scheduled; use keycap_preview to wait for geometry.", objectSchema({ params: parameterSchema }, ["params"]), ({ params }) => commands.updateKeycap(params), { untrusted: true }),
+    tool("update", "Edit the active keycap and update its project entry and UI. Preserve unspecified values. Shape changes follow the same reset rules as the UI. Invalid patches apply no changes. Changing only the slope input mode preserves the current preview. Other edits schedule a refresh. Use keycap_preview to wait for geometry.", objectSchema({ params: parameterSchema }, ["params"]), ({ params }) => commands.updateKeycap(params), { untrusted: true }),
     tool("project", "Add a copy of the current keycap, select or delete a keycap by ID, rename the project, or reorder a keycap by offset. Deleting the last keycap is rejected. Read state for IDs.", objectSchema({
       action: { type: "string", enum: ["add", "select", "delete", "rename", "move"] },
       keycapId: identifier, name: { ...identifier, maxLength: 80 },

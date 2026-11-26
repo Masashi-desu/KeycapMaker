@@ -3,6 +3,10 @@
     "node": ["editor-data.test.js", "font-source-resolver.test.js", "keycap-fonts.test.js", "keycap-icons.test.js", "theme-policy.test.js", "ui-icons.test.js"],
     "browser": ["editor.spec.js"]
   },
+  "parameter-performance": {
+    "node": [],
+    "browser": ["parameter-performance.spec.js"]
+  },
   "project": {
     "node": ["project-data.test.js", "project-batch.test.js"],
     "browser": ["project.spec.js", "project-archive.spec.js"]

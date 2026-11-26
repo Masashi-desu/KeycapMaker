@@ -26,11 +26,22 @@ export class PreviewStage {
     await this.stage.and(this.page.locator(`[data-preview-status="${status}"]`)).waitFor({ state: "attached" });
   }
 
-  async waitForNextReady(previousRequest) {
-    await this.page.waitForFunction(({ selector, previousRequest }) => {
+  async waitForNextReady(previousRequest, options) {
+    const ready = await this.page.waitForFunction(({ selector, previousRequest }) => {
       const stage = document.querySelector(selector);
-      return Number(stage?.dataset.previewRequestId) > previousRequest && stage.dataset.previewStatus === "ready";
-    }, { selector: stageSelector, previousRequest });
+      if (Number(stage?.dataset.previewRequestId) > previousRequest && stage.dataset.previewStatus === "ready") return performance.now();
+    }, { selector: stageSelector, previousRequest }, options);
+    return ready.jsonValue();
+  }
+
+  async countRequestsAfterEdit(previousRequest, observationMs) {
+    const result = await this.page.waitForFunction(({ selector, previousRequest, observationMs }) => {
+      const edit = performance.getEntriesByName("parameter-edit", "mark")[0];
+      if (!edit || performance.now() - edit.startTime < observationMs) return;
+      const stage = document.querySelector(selector);
+      if (stage) return { count: Number(stage.dataset.previewRequestId) - previousRequest };
+    }, { selector: stageSelector, previousRequest, observationMs }, { timeout: observationMs + 5000 });
+    return (await result.jsonValue()).count;
   }
 
   async waitForReplacementCanvas() {
