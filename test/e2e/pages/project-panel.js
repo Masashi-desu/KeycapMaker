@@ -30,6 +30,10 @@ export class ProjectPanel {
     await this.cards.nth(count).waitFor({ state: "visible" });
   }
 
+  async recaptureActivePreview() {
+    await this.activeCard.locator("[data-project-keycap-recapture]").click();
+  }
+
   async openKeyboardConfiguration() {
     await this.configureKeyboardButton.click();
   }

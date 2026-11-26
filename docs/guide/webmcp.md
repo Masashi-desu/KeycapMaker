@@ -22,6 +22,8 @@ boardがある場合、`keycap_set_view({ tab: "design" })` で設計へ移動�
 
 `ok` と `error.code` を毎回確認します。`busy` は状態を読み、先行処理の完了後に再試行します。`invalid_input` はcatalogを取り直して訂正します。成功結果のobservedParamsには正規化後の実値が入ります。UI編集とも共有されるので、toolの連続実行でもstateを取り直してください。
 
+fieldsの `previewView` で、その項目にフォーカスしたときに、単体プレビューが滑らかに回転して向かう面を確認できます。たとえばステムの種類は `underside`、左奥の角の丸みは `top-back-left` です。同じ結果の `previewZoom` で表示倍率も確認できます。横幅は0.84倍、印字は1.15倍です。ツールからパラメータを変更するときは、ユーザーが合わせた視点を維持します。
+
 fieldsの結果を短くしたい場合は `keycap_get_catalog({ section: "fields", keys: ["keyWidth", "legendText"] })` のように項目を指定するか、`query: "legend"` でkey/labelを絞り込めます。
 
 設計画面の「印字」では、上面・側面の位置を選ぶとその位置の設定が表示されます。たとえば前面に `Fn` を印字するには、画面では「側面」の「前面」を選んで印字をオンにし、文字を入力します。WebMCPでは `keycap_update({ params: { sideLegendFrontEnabled: true, sideLegendFrontText: "Fn" } })` で同じ設定を編集できます。

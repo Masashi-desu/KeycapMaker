@@ -9,6 +9,9 @@ export class EditorPage {
   constructor(page) {
     this.page = page;
     this.name = page.locator('[data-field="name"]');
+    this.widthSlider = page.locator('input[type="range"][data-field="keyWidth"]');
+    this.widthUnits = page.locator('input[data-field="keySizeUnits"]');
+    this.wallThickness = page.locator('input[type="number"][data-field="wallThickness"]');
     this.width = page.locator('input[type="number"][data-field="keyWidth"]');
     this.nameCardIcon = page.locator('[aria-labelledby="design-name-card-title"] .field-group-card__icon-symbol');
     this.shapeToggle = page.locator('[data-field-group-toggle="shape"]');
@@ -90,6 +93,27 @@ export class EditorPage {
   async rename(name) {
     await this.name.fill(name);
     await this.name.blur();
+  }
+
+  async focusWidth() {
+    await this.width.focus();
+  }
+
+  async focusWidthUnits() {
+    await this.widthUnits.focus();
+  }
+
+  async focusLegendText() {
+    await this.legendField("legendText").focus();
+  }
+
+  async focusWallThickness() {
+    await this.wallThickness.focus();
+  }
+
+  async stepWidthWithWheel(delta) {
+    await this.widthSlider.hover();
+    await this.page.mouse.wheel(delta, 0);
   }
 
   async setWidth(width) {

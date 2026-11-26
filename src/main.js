@@ -60,6 +60,7 @@ import {
   transformJStemLp01ReferenceMesh,
 } from "./lib/j-stem-lp01-reference.js";
 import { parseOff } from "./lib/off-parser.js";
+import { FIELD_VIEW_PRESETS, getFieldPreviewDestination } from "./lib/preview-framing.js";
 import { collectKeyboardDirectoryFiles, discoverGitHubKeyboardFiles, discoverLocalKeyboardFiles, isKeyboardLayoutJson } from "./lib/keyboard-import.js";
 import { normalizeKeyboardPlacements, parseKeyboardLayouts } from "./lib/keyboard-layout.js";
 import { createKeyboardPreviewLayers } from "./lib/keyboard-preview.js";
@@ -268,6 +269,7 @@ let colorisLoadPromise = null;
 let latestPreviewRequestId = 0;
 let previewGeometrySignature = "";
 let previewViewState = null;
+let lastPreviewField = null;
 let keyboardViewState = null;
 let mountedPreviewMode = "keycap";
 let latestViewerRequestId = 0;
@@ -1973,12 +1975,13 @@ function createLegendControlFields({ paramPrefix, side = null }) {
       step: 0.1,
       ...visibilityConfig,
     },
-  ];
+  ].map((field) => ({ ...field, previewView: side ?? "top", previewZoom: 1.15 }));
 }
 
 const fieldGroupTemplates = [
   {
     id: "shape",
+    previewView: "overview",
     title: () => t("shapeProfiles.custom-shell.fieldGroups.shape.title"),
     description: (params) => (
       isTypewriterShapeProfile(params.shapeProfile)
@@ -1996,6 +1999,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "keyWidth",
+        previewView: "top",
+        previewZoom: 0.84,
         icon: "key-width",
         label: () => t("fields.keyWidth.label"),
         hint: () => t("fields.keyWidth.hint", getKeyUnitCopyValues()),
@@ -2012,6 +2017,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "keyDepth",
+        previewView: "top",
+        previewZoom: 0.84,
         icon: "key-depth-basis",
         label: () => t("fields.keyDepth.label"),
         hint: () => t("fields.keyDepth.hint", getKeyUnitCopyValues()),
@@ -2033,6 +2040,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "jisEnterNotchWidth",
+        previewView: "top",
+        previewZoom: 1.1,
         icon: "notch-width",
         label: () => t("fields.jisEnterNotchWidth.label"),
         hint: (params) => getJisEnterNotchWidthHint(params),
@@ -2042,6 +2051,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "jisEnterNotchDepth",
+        previewView: "top",
+        previewZoom: 1.1,
         icon: "notch-depth",
         label: () => t("fields.jisEnterNotchDepth.label"),
         hint: (params) => getJisEnterNotchDepthHint(params),
@@ -2051,6 +2062,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "wallThickness",
+        previewView: "underside-oblique",
         icon: "key-wall-thickness",
         label: () => t("fields.wallThickness.label"),
         hint: () => t("fields.wallThickness.hint"),
@@ -2073,6 +2085,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topThickness",
+        previewView: "underside-oblique",
         icon: "roof-thickness",
         label: () => t("fields.topThickness.label"),
         hint: () => t("fields.topThickness.hint"),
@@ -2087,6 +2100,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "typewriterCornerRadius",
+        previewView: "top-front-right",
         icon: "surface-radius",
         label: () => t("fields.typewriterCornerRadius.label"),
         hint: (params) => getTypewriterCornerRadiusHint(params),
@@ -2111,6 +2125,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "keycapEdgeRadius",
+        previewView: "top-oblique",
         icon: "keycap-edge-radius",
         label: () => t("fields.keycapEdgeRadius.label"),
         hint: (params) => getKeycapEdgeRadiusHint(params),
@@ -2121,6 +2136,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "keycapShoulderRadius",
+        previewView: "top-oblique",
         icon: "keycap-shoulder-radius",
         label: () => t("fields.keycapShoulderRadius.label"),
         hint: (params) => getKeycapShoulderRadiusHint(params),
@@ -2141,11 +2157,13 @@ const fieldGroupTemplates = [
   },
   {
     id: "top",
+    previewView: "top",
     title: () => t("shapeProfiles.custom-shell.fieldGroups.top.title"),
     description: () => t("fieldGroups.topDescription"),
     fields: [
       {
         key: "topCenterHeight",
+        previewView: "front",
         icon: "key-top-center-height",
         label: (params) => (isTypewriterShapeProfile(params.shapeProfile) ? t("fields.topCenterHeight.typewriterLabel") : t("fields.topCenterHeight.label")),
         hint: (params) => getTopCenterHeightHint(params),
@@ -2178,6 +2196,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topSurfaceShape",
+        previewView: "top-oblique",
         icon: "key-top-surface-shape",
         label: () => t("fields.topSurfaceShape.label"),
         hint: () => getTopSurfaceShapeHint(),
@@ -2187,6 +2206,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topCornerRadius",
+        previewView: "top-front-right",
         icon: "surface-radius",
         label: () => t("fields.topCornerRadius.label"),
         hint: (params) => getTopCornerRadiusHint(params),
@@ -2204,6 +2224,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topCornerRadiusLeftTop",
+        previewView: "top-back-left",
         label: () => t("fields.topCornerRadiusLeftTop.label"),
         hint: (params) => getTopCornerRadiusHint(params),
         unit: "mm",
@@ -2213,6 +2234,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topCornerRadiusRightTop",
+        previewView: "top-back-right",
         label: () => t("fields.topCornerRadiusRightTop.label"),
         hint: (params) => getTopCornerRadiusHint(params),
         unit: "mm",
@@ -2222,6 +2244,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topCornerRadiusRightBottom",
+        previewView: "top-front-right",
         label: () => t("fields.topCornerRadiusRightBottom.label"),
         hint: (params) => getTopCornerRadiusHint(params),
         unit: "mm",
@@ -2231,6 +2254,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topCornerRadiusLeftBottom",
+        previewView: "top-front-left",
         label: () => t("fields.topCornerRadiusLeftBottom.label"),
         hint: (params) => getTopCornerRadiusHint(params),
         unit: "mm",
@@ -2240,6 +2264,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "dishDepth",
+        previewView: "top-oblique",
         icon: "dish-depth",
         label: () => t("fields.dishDepth.label"),
         hint: (params) => getDishDepthHint(params),
@@ -2291,6 +2316,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatSurfaceShape",
+        previewView: "top-oblique",
         icon: "key-top-surface-shape",
         label: () => t("fields.topHatSurfaceShape.label"),
         hint: () => getTopHatSurfaceShapeHint(),
@@ -2300,6 +2326,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatDishDepth",
+        previewView: "top-oblique",
         icon: "dish-depth",
         label: () => t("fields.topHatDishDepth.label"),
         hint: (params) => getTopHatDishDepthHint(params),
@@ -2398,6 +2425,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatTopRadius",
+        previewView: "top-front-right",
         icon: "hat-top-radius",
         label: () => t("fields.topHatTopRadius.label"),
         hint: (params) => getTopHatTopRadiusHint(params),
@@ -2412,6 +2440,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatBottomRadius",
+        previewView: "top-front-right",
         icon: "hat-bottom-radius",
         label: () => t("fields.topHatBottomRadius.label"),
         hint: (params) => getTopHatBottomRadiusHint(params),
@@ -2432,6 +2461,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatBottomRadiusLeftTop",
+        previewView: "top-back-left",
         label: () => t("fields.topHatBottomRadiusLeftTop.label"),
         hint: (params) => getTopHatBottomRadiusHint(params),
         unit: "mm",
@@ -2441,6 +2471,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatBottomRadiusRightTop",
+        previewView: "top-back-right",
         label: () => t("fields.topHatBottomRadiusRightTop.label"),
         hint: (params) => getTopHatBottomRadiusHint(params),
         unit: "mm",
@@ -2450,6 +2481,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatBottomRadiusRightBottom",
+        previewView: "top-front-right",
         label: () => t("fields.topHatBottomRadiusRightBottom.label"),
         hint: (params) => getTopHatBottomRadiusHint(params),
         unit: "mm",
@@ -2459,6 +2491,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatBottomRadiusLeftBottom",
+        previewView: "top-front-left",
         label: () => t("fields.topHatBottomRadiusLeftBottom.label"),
         hint: (params) => getTopHatBottomRadiusHint(params),
         unit: "mm",
@@ -2474,6 +2507,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatTopRadiusLeftTop",
+        previewView: "top-back-left",
         label: () => t("fields.topHatTopRadiusLeftTop.label"),
         hint: (params) => getTopHatTopRadiusHint(params),
         unit: "mm",
@@ -2483,6 +2517,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatTopRadiusRightTop",
+        previewView: "top-back-right",
         label: () => t("fields.topHatTopRadiusRightTop.label"),
         hint: (params) => getTopHatTopRadiusHint(params),
         unit: "mm",
@@ -2492,6 +2527,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatTopRadiusRightBottom",
+        previewView: "top-front-right",
         label: () => t("fields.topHatTopRadiusRightBottom.label"),
         hint: (params) => getTopHatTopRadiusHint(params),
         unit: "mm",
@@ -2501,6 +2537,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatTopRadiusLeftBottom",
+        previewView: "top-front-left",
         label: () => t("fields.topHatTopRadiusLeftBottom.label"),
         hint: (params) => getTopHatTopRadiusHint(params),
         unit: "mm",
@@ -2510,6 +2547,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatHeight",
+        previewView: "top-oblique",
         icon: "hat-height",
         label: () => t("fields.topHatHeight.label"),
         hint: (params) => getTopHatHeightHint(params),
@@ -2521,6 +2559,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatShoulderAngle",
+        previewView: "top-oblique",
         icon: "hat-shoulder-angle",
         label: () => t("fields.topHatShoulderAngle.label"),
         hint: () => t("fields.topHatShoulderAngle.hint"),
@@ -2532,6 +2571,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topHatShoulderRadius",
+        previewView: "top-oblique",
         icon: "keycap-shoulder-radius",
         label: () => t("fields.topHatShoulderRadius.label"),
         hint: (params) => getTopHatShoulderRadiusHint(params),
@@ -2560,6 +2600,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimHeightUp",
+        previewView: "top-oblique",
         icon: "rim-up",
         label: () => t("fields.rimHeightUp.label"),
         hint: () => getTypewriterRimHeightUpHint(),
@@ -2570,6 +2611,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "rimHeightDown",
+        previewView: "top-oblique",
         icon: "rim-down",
         label: () => t("fields.rimHeightDown.label"),
         hint: () => getTypewriterRimHeightDownHint(),
@@ -2605,6 +2647,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topPitchDeg",
+        previewView: "right",
         icon: "slope-pitch",
         label: () => t("fields.topPitchDeg.label"),
         hint: (params) => getTopPitchHint(params),
@@ -2614,6 +2657,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topRollDeg",
+        previewView: "front",
         icon: "slope-roll",
         label: () => t("fields.topRollDeg.label"),
         hint: (params) => getTopRollHint(params),
@@ -2623,6 +2667,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topFrontHeight",
+        previewView: "front",
         icon: "edge-height-front",
         label: () => t("fields.topFrontHeight.label"),
         hint: (params) => getTopFrontHeightHint(params),
@@ -2632,6 +2677,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topBackHeight",
+        previewView: "back",
         icon: "edge-height-back",
         label: () => t("fields.topBackHeight.label"),
         hint: (params) => getTopBackHeightHint(params),
@@ -2641,6 +2687,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topLeftHeight",
+        previewView: "left",
         icon: "edge-height-left",
         label: () => t("fields.topLeftHeight.label"),
         hint: (params) => getTopLeftHeightHint(params),
@@ -2650,6 +2697,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "topRightHeight",
+        previewView: "right",
         icon: "edge-height-right",
         label: () => t("fields.topRightHeight.label"),
         hint: (params) => getTopRightHeightHint(params),
@@ -2670,6 +2718,8 @@ const fieldGroupTemplates = [
   },
   {
     id: "homing",
+    previewView: "top",
+    previewZoom: 1.15,
     title: () => t("shapeProfiles.custom-shell.fieldGroups.homing.title"),
     description: () => t("shapeProfiles.custom-shell.fieldGroups.homing.description"),
     fields: [
@@ -2712,6 +2762,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarHeight",
+        previewView: "top-oblique",
         icon: "bar-height",
         label: () => t("fields.homingBarHeight.label"),
         hint: () => t("fields.homingBarHeight.hint"),
@@ -2723,6 +2774,7 @@ const fieldGroupTemplates = [
       },
       {
         key: "homingBarChamfer",
+        previewView: "top-oblique",
         icon: "bar-chamfer",
         label: () => t("fields.homingBarChamfer.label"),
         hint: () => t("fields.homingBarChamfer.hint"),
@@ -2744,6 +2796,7 @@ const fieldGroupTemplates = [
   },
   {
     id: "stem",
+    previewView: "underside",
     title: () => t("shapeProfiles.custom-shell.fieldGroups.stem.title"),
     description: (params) => getStemGroupDescription(params),
     fields: [
@@ -2766,6 +2819,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "typewriterMountHeight",
+        previewView: "underside-oblique",
+        previewZoom: 1.32,
         icon: "stem-mount-height",
         label: () => t("fields.typewriterMountHeight.label"),
         hint: (params) => getTypewriterMountHeightHint(params),
@@ -2794,6 +2849,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "stemCrossChamfer",
+        previewView: "underside-oblique",
+        previewZoom: 1.32,
         icon: "stem-cross-chamfer",
         label: () => t("fields.stemCrossChamfer.label"),
         hint: (params) => getStemChamferHint(params),
@@ -2804,6 +2861,8 @@ const fieldGroupTemplates = [
       },
       {
         key: "stemInsetDelta",
+        previewView: "underside-oblique",
+        previewZoom: 1.32,
         icon: "stem-inset",
         label: () => t("fields.stemInsetDelta.label"),
         hint: (params) => getStemInsetHint(params),
@@ -2819,7 +2878,9 @@ const fieldGroupTemplates = [
 
 const fieldConfigByKey = new Map([
   [DESIGN_NAME_FIELD.key, DESIGN_NAME_FIELD],
-  ...fieldGroupTemplates.flatMap((group) => group.fields).map((field) => [field.key, field]),
+  ...fieldGroupTemplates.flatMap((group) => group.fields.map((field) => [
+    field.key, { previewView: group.previewView, previewZoom: group.previewZoom, ...field },
+  ])),
 ]);
 function createFieldGroupCollapseState() {
   const groupIds = keycapEditorProfiles.profiles.flatMap((profile) => (profile.fieldGroups ?? []).map((group) => group.id));
@@ -2848,6 +2909,7 @@ function getFieldConfig(fieldKey, profileKey = state.keycapParams?.shapeProfile 
     ...baseField,
     ...override,
   };
+  fieldConfig.previewZoom ??= FIELD_VIEW_PRESETS[fieldConfig.previewView]?.zoom ?? null;
 
   if (fieldKey === "topCenterHeight") {
     fieldConfig.label = baseField.label;
@@ -3342,6 +3404,7 @@ function renderShell() {
   app.querySelector("[data-theme-control]")?.addEventListener("click", handleThemeControlClick);
   app.querySelector("[data-language-control]")?.addEventListener("click", handleLanguageControlClick);
   app.querySelector("[data-mobile-inspector-toggle]")?.addEventListener("click", handleMobileInspectorToggleClick);
+  app.querySelector(".inspector-card")?.addEventListener("focusin", handlePreviewFieldInteraction);
   app.querySelector(".inspector-card")?.addEventListener("click", handleInspectorCardClick);
   app.querySelector(".inspector-card")?.addEventListener("toggle", handleProjectKeycapPositionsToggle, true);
   app.querySelector(".inspector-card")?.addEventListener("toggle", handleKeyboardDangerZoneToggle, true);
@@ -4527,7 +4590,7 @@ function renderLegendPositionEditor(groupFieldByKey) {
         <div class="legend-position-segments">
           ${options.map((position) => `
             <label class="legend-position-option" title="${escapeHtml(position.title())}">
-              <input type="radio" name="legend-position" value="${position.id}"
+              <input type="radio" name="legend-position" value="${position.id}" data-preview-field="${position.enabledFieldKey}"
                 aria-label="${escapeHtml(position.title())}" aria-controls="legend-position-fields"
                 ${position === selected ? "checked" : ""} />
               ${renderUiIcon(`legend-${position.id}`)}
@@ -5674,7 +5737,7 @@ function renderField(field, options = {}) {
     return `
       <div class="field field--font-search${dependentClassName} ${isPickerOpen ? "is-open" : ""}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         ${renderFieldHeading(field)}
-        <span class="font-picker" data-font-picker>
+        <span class="font-picker" data-font-picker data-preview-field="${field.key}">
           ${renderUserFontFileInput(field.key)}
           <span class="font-picker-trigger-shell">
             <span class="field-control font-picker-trigger">
@@ -5735,7 +5798,7 @@ function renderField(field, options = {}) {
     return `
       <div class="field field--icon-search ${isPickerOpen ? "is-open" : ""}${fieldClassName}" style="view-transition-name: ${fieldViewTransitionName};">
         ${renderFieldHeading(field)}
-        <span class="icon-picker" data-icon-picker>
+        <span class="icon-picker" data-icon-picker data-preview-field="${field.key}">
           <span class="icon-picker-trigger-shell">
             <span class="field-control icon-picker-trigger">
               <span class="icon-picker-selection">
@@ -5845,7 +5908,7 @@ function renderField(field, options = {}) {
               ${fieldPlaceholder ? `placeholder="${escapeHtml(fieldPlaceholder)}"` : ""}
             />
           </span>
-          <button class="field-color-button" type="button" data-color-picker-open="${field.key}">
+          <button class="field-color-button" type="button" data-color-picker-open="${field.key}" data-preview-field="${field.key}">
             ${t("actions.choose")}
           </button>
         </span>
@@ -6391,7 +6454,32 @@ function handleKeyboardDangerZoneToggle(event) {
   state.keyboardDangerZoneExpanded = details.open;
 }
 
+function focusPreviewField(fieldKey) {
+  if (!fieldKey) return;
+  const key = LINKED_SIZE_UNIT_FIELDS[fieldKey] ?? fieldKey;
+  const keycapId = state.project.activeKeycapId;
+  if (lastPreviewField?.key === key && lastPreviewField.keycapId === keycapId) return;
+  if (state.previewMode !== "keycap") {
+    lastPreviewField = null;
+    return;
+  }
+  lastPreviewField = { key, keycapId };
+
+  const destination = getFieldPreviewDestination(getFieldConfig(key), captureCurrentPreviewViewState());
+  if (destination) previewViewState = destination;
+  if (mountedPreviewMode === "keycap") {
+    disposePreviewScene?.focusFieldView(destination, { animate: !reduceMotionQuery?.matches, keycapId });
+  }
+}
+
+function handlePreviewFieldInteraction(event) {
+  const control = getClosestFromEventTarget(event, "[data-field], [data-preview-field], [data-key-unit-mm]");
+  if (control) focusPreviewField(control.dataset.field ?? control.dataset.previewField ?? KEY_UNIT_FIELD_KEY);
+}
+
 function handleInspectorCardClick(event) {
+  // Button activation can occur without focus, particularly on touch devices.
+  if (getClosestFromEventTarget(event, "button")) handlePreviewFieldInteraction(event);
   if (getClosestFromEventTarget(event, "[data-project-keycap-positions]")) return;
   if (handleKeyboardClick(event)) return;
   const projectKeycapDragHandle = getClosestFromEventTarget(event, "[data-project-keycap-drag]");
@@ -6569,6 +6657,7 @@ function handleInspectorCardClick(event) {
 }
 
 function handleInspectorCardInput(event) {
+  handlePreviewFieldInteraction(event);
   if (handleKeyboardInput(event)) return;
   const projectNameInput = getClosestFromEventTarget(event, "[data-project-name]");
   if (projectNameInput) {
@@ -6696,6 +6785,7 @@ function handleInspectorCardWheel(event) {
     return;
   }
 
+  focusPreviewField(field);
   input.value = formatWheelSliderValue(nextValue, step);
   if (input.hasAttribute("data-key-unit-mm")) {
     handleKeyUnitBasisInput(input);
@@ -6708,6 +6798,7 @@ function handleInspectorCardWheel(event) {
 function handleInspectorCardChange(event) {
   const position = getClosestFromEventTarget(event, 'input[name="legend-position"]');
   if (position?.checked) {
+    handlePreviewFieldInteraction(event);
     state.legendPosition = position.value;
     state.legendFontPickerFieldKey = "";
     state.legendFontSourceEditorFieldKey = "";
@@ -6736,6 +6827,7 @@ function handleInspectorCardChange(event) {
     return;
   }
 
+  focusPreviewField(input.dataset.field);
   if (input.type === "checkbox") {
     syncCheckboxToggleDom(input);
     // A position switch can immediately unmount these controls. Commit before switching.
@@ -8188,7 +8280,7 @@ function parseProjectKeycapEntryEditorData(entry) {
   return parseEditorDataPayloadWithReport(getProjectEntryEditorDataPayload(entry));
 }
 
-function activateProjectKeycapEntry(entry) {
+function activateProjectKeycapEntry(entry, { restorePreview = true } = {}) {
   const {
     params,
     bindingReport,
@@ -8199,7 +8291,13 @@ function activateProjectKeycapEntry(entry) {
   state.editorStatus = "dirty";
   state.editorSummary = t("status.loadedDirty");
   setImportBindingReport(bindingReport, getProjectEntryReportFileName(entry));
-  previewViewState = clonePreviewViewState(entry.previewViewState) ?? previewViewState;
+  if (restorePreview) {
+    previewViewState = clonePreviewViewState(entry.previewViewState) ?? captureCurrentPreviewViewState();
+    lastPreviewField = null;
+    // The outgoing key may stay visible while the selected key is generated.
+    // Its camera no longer owns the single-key view or thumbnail.
+    if (mountedPreviewMode === "keycap") mountedPreviewMode = null;
+  }
   return params;
 }
 
@@ -8252,12 +8350,12 @@ function flushPendingActiveProjectKeycapSync() {
 }
 
 function captureCurrentPreviewViewState() {
-  if (mountedPreviewMode === "keyboard") return clonePreviewViewState(previewViewState);
+  if (mountedPreviewMode !== "keycap") return clonePreviewViewState(previewViewState);
   return clonePreviewViewState(disposePreviewScene?.captureViewState?.() ?? previewViewState);
 }
 
 function capturePreviewImageDataUrlForViewState(viewState) {
-  if (mountedPreviewMode === "keyboard") {
+  if (mountedPreviewMode !== "keycap") {
     return state.project.keycaps.find((entry) => entry.id === state.project.activeKeycapId)?.previewImageDataUrl
       || createProjectPreviewPlaceholderDataUrl(state.keycapParams);
   }
@@ -8478,7 +8576,7 @@ async function applyProjectKeycapSelection(entryId) {
     return;
   }
 
-  activateProjectKeycapEntry(entry);
+  activateProjectKeycapEntry(entry, { restorePreview: entry.id !== state.project.activeKeycapId });
   setProjectStatus("success", t("project.loadedKeycap", { name: entry.name }));
 
   render({ animateInspector: true });
@@ -10575,9 +10673,10 @@ async function renderPreviewViewer() {
       layers = createKeyboardPreviewLayers(board, placements, models, selectedSlotId);
     }
     if (!isCurrent()) return superseded();
+    const ongoingFocus = mountedPreviewMode === "keycap" ? disposePreviewScene?.focusTransition : null;
     if (disposePreviewScene) {
       if (mountedPreviewMode === "keyboard") keyboardViewState = disposePreviewScene.captureViewState();
-      else previewViewState = disposePreviewScene.captureViewState();
+      else if (mountedPreviewMode === "keycap") previewViewState = disposePreviewScene.captureViewState();
       disposePreviewScene.dispose(); disposePreviewScene = null;
     }
     const container = app.querySelector("[data-preview-stage]");
@@ -10591,6 +10690,7 @@ async function renderPreviewViewer() {
     if (!container.isConnected || !isCurrent()) return superseded();
     mountedPreviewMode = mode;
     const scene = mountPreviewScene(container, layers, {
+      initialFocusTransition: mode === "keycap" && ongoingFocus?.keycapId === state.project.activeKeycapId ? ongoingFocus : null,
       initialViewState: mode === "keyboard" ? keyboardViewState || { direction: [0.5, -0.8, 1.4], distanceScale: 2.8 } : previewViewState,
       upAxis: mode === "keyboard" ? "z" : "y", onSelectSlot: mode === "keyboard" ? selectKeyboardSlot : null,
     });
@@ -10981,7 +11081,7 @@ function getWebMcpFields(params = state.keycapParams) {
     }
     return {
       key, label: resolveDynamicCopy(field.label, params), description: resolveDynamicCopy(field.hint, params),
-      unit: field.unit ?? "", schema, value: params[key],
+      unit: field.unit ?? "", schema, value: params[key], previewView: field.previewView ?? null, previewZoom: field.previewZoom ?? null,
       visible: typeof field.visibleWhen !== "function" || Boolean(field.visibleWhen(params)),
       disabled: isFieldDisabled(field, params),
     };

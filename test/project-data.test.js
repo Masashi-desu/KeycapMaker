@@ -20,6 +20,7 @@ import {
   isProjectArchiveFileName,
   normalizeProjectAssetPath,
   normalizeProjectName,
+  normalizeProjectPreviewViewState,
   parseProjectManifest,
 } from "../src/lib/project-data.js";
 
@@ -61,6 +62,14 @@ test("現在のキーキャップからプロジェクト内キーキャップ�
     targetScale: [0, 0, 0],
     viewOffsetRatio: [0.1, -0.2],
   });
+});
+
+test("視点の移動途中で撮影したサムネイルの傾きを復元する", () => {
+  const view = { direction: [0, -1, 0], distanceScale: 3 };
+  assert.equal(normalizeProjectPreviewViewState({ ...view, modelRotationX: -0.4 }).modelRotationX, -0.4);
+  for (const modelRotationX of [undefined, null, NaN, 1, -2]) {
+    assert.equal(normalizeProjectPreviewViewState({ ...view, modelRotationX }).modelRotationX, undefined);
+  }
 });
 
 test("プロジェクトが空の場合はキーキャップを1件作成して active にする", () => {
@@ -105,6 +114,7 @@ test("プロジェクト manifest を作成し、読み戻せる", () => {
     id: "keycap-a",
     previewImageDataUrl: "data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E",
     previewViewState: {
+      upAxis: "z",
       direction: [0.5, 0.5, 0.7],
       distanceScale: 3.2,
       targetScale: [0, 0, 0],
@@ -125,6 +135,7 @@ test("プロジェクト manifest を作成し、読み戻せる", () => {
   assert.equal(isProjectManifestPayload(manifest), true);
   assert.deepEqual(parsed.keycaps, manifest.keycaps);
   assert.equal(manifest.keycaps[0].displayOrder, 0);
+  assert.equal(parsed.keycaps[0].previewViewState.upAxis, "z");
   assert.deepEqual(parsed.keycaps[0].previewViewState, entry.previewViewState);
   assert.equal(parsed.activeKeycapId, "keycap-a");
 });

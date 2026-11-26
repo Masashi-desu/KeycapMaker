@@ -5,6 +5,13 @@ import { EditorPage } from "./pages/editor-page.js";
 import { installWebMcpRegistration, WebMcpClient } from "./support/webmcp-client.js";
 
 export const test = base.extend({
+  frameClock: async ({ page }, use) => {
+    await page.clock.install();
+    await use({
+      pause: async () => page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000)),
+      advance: (ms) => page.clock.runFor(ms),
+    });
+  },
   downloads: async ({ page }, use) => {
     const downloads = [];
     const record = (download) => downloads.push(download);

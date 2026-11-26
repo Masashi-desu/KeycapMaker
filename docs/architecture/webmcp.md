@@ -38,6 +38,8 @@ shape固有フィールド、font style、iconはcatalogから現在の値と選
 
 ## 編集と結果の契約
 
+fieldsの `previewView` は、設計画面でその項目にフォーカスしたときに見える面です。`overview`、`top`、`underside`、`front`、`back`、`left`、`right` に加え、斜めから見る `top-oblique`、`underside-oblique`、および対象の角から見る `top-front-left`、`top-front-right`、`top-back-left`、`top-back-right` があります。名称のように視点を保つ項目は `null` です。`previewZoom` は画面サイズに合わせた初期カメラ距離に対する倍率です。1より大きいと近づき、小さいと離れ、`null` のときは現在の倍率を保ちます。単体プレビューでは、フォーカス時に現在の向きから指定の面まで滑らかに回転します。WebMCPによる編集・一括更新にはフォーカス操作がないため、現在の視点を保ちます。
+
 設計の「印字」で上面5か所・側面4か所を選ぶセグメントコントロールは、編集欄の表示位置を切り替える一時的なUI状態なのでtoolの公開対象外です。各位置の有効化・文字・色などは、表示中の位置にかかわらず既存の `keycap_get_catalog` と `keycap_update` で取得・編集できます。
 
 配置位置の補正と割り当て済みキーキャップの編集入口は、配置パネルの `この位置のキーキャップ` カード内にまとめます。補正は既存のUI専用操作、編集対象の選択は既存のproject選択処理を維持し、カード配置の変更でtoolやschemaを追加しません。

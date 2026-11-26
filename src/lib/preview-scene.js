@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { DEFAULT_CAMERA_OFFSET, getDefaultPreviewDistanceScale, isCompactPreviewViewport } from "./preview-framing.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 const OVERLAY_LAYER_NAMES = new Set([
@@ -18,8 +19,9 @@ const REFERENCE_LAYER_NAMES = new Set([
 ]);
 const SMOOTH_PREVIEW_CREASE_ANGLE = Math.PI / 12;
 const MIN_NORMAL_LENGTH_SQ = 1e-12;
-const DEFAULT_CAMERA_OFFSET = new THREE.Vector3(1.42, 1.18, 1.32);
-const COMPACT_CAMERA_DISTANCE_SCALE = 4.2;
+const FIELD_VIEW_DURATION_MS = 450;
+const UPRIGHT_MODEL_ROTATION = -Math.PI / 2;
+const MODEL_X_AXIS = new THREE.Vector3(1, 0, 0);
 
 function createFaceNormalData(mesh, face) {
   const a = mesh.vertices[face[0]];
@@ -185,22 +187,12 @@ function updatePointerVector(pointer, domElement, clientX, clientY) {
   return true;
 }
 
-function isCompactPreviewViewport() {
-  return window.innerWidth <= 760;
-}
-
 function getMinimumCameraDistanceScale() {
-  return isCompactPreviewViewport() ? COMPACT_CAMERA_DISTANCE_SCALE : 0.001;
+  return isCompactPreviewViewport() ? getDefaultPreviewDistanceScale() : 0.001;
 }
 
 function getDefaultCameraOffset(sceneScale) {
-  const offset = DEFAULT_CAMERA_OFFSET.clone();
-
-  if (isCompactPreviewViewport()) {
-    offset.setLength(Math.max(offset.length(), COMPACT_CAMERA_DISTANCE_SCALE));
-  }
-
-  return offset.multiplyScalar(sceneScale);
+  return new THREE.Vector3(...DEFAULT_CAMERA_OFFSET).setLength(getDefaultPreviewDistanceScale() * sceneScale);
 }
 
 function isFiniteNumber(value) {
@@ -228,45 +220,38 @@ function projectToViewport(camera, point, viewportWidth, viewportHeight) {
   );
 }
 
-function captureViewState({ camera, controls, sceneScale, viewOffsetRatio }) {
+function captureViewState({ camera, controls, scene, sceneScale, viewOffsetRatio }) {
   const target = controls.target.clone();
   const offset = camera.position.clone().sub(target);
   const distance = Math.max(offset.length(), 0.001);
 
   return {
-    direction: offset.normalize().toArray(),
+    ...(scene.rotation.x === UPRIGHT_MODEL_ROTATION ? { upAxis: "z" } : {}),
+    ...(scene.rotation.x < 0 && scene.rotation.x > UPRIGHT_MODEL_ROTATION ? { modelRotationX: scene.rotation.x } : {}),
+    direction: offset.normalize().applyQuaternion(scene.quaternion.clone().invert()).toArray(),
     distanceScale: distance / sceneScale,
     targetScale: target.divideScalar(sceneScale).toArray(),
     viewOffsetRatio: viewOffsetRatio.toArray(),
   };
 }
 
-function restoreViewState({ camera, controls, sceneScale, viewState }) {
-  if (
-    !viewState
-    || !isFiniteNumber(viewState.distanceScale)
-    || viewState.distanceScale <= 0
-    || !isValidVector3Array(viewState.direction)
-  ) {
-    camera.position.copy(getDefaultCameraOffset(sceneScale));
-    controls.target.set(0, 0, 0);
-    controls.update();
-    return;
+function restoreViewState({ camera, controls, scene, sceneScale, viewState }) {
+  // Keep camera directions in model space. For focused single-key views, align the
+  // model's +Z with OrbitControls' fixed +Y axis so side legends read upright.
+  const modelRotationX = viewState?.upAxis === "z" ? UPRIGHT_MODEL_ROTATION : (viewState?.modelRotationX ?? 0);
+  scene.rotation.x = camera.up.y === 1 ? modelRotationX : 0;
+  const offset = getDefaultCameraOffset(sceneScale);
+  if (isValidVector3Array(viewState?.direction)) {
+    const direction = new THREE.Vector3().fromArray(viewState.direction);
+    if (direction.lengthSq() > 0) {
+      const minScale = scene.rotation.x !== 0 ? 0.001 : getMinimumCameraDistanceScale();
+      const distance = isFiniteNumber(viewState.distanceScale) && viewState.distanceScale > 0
+        ? Math.max(viewState.distanceScale, minScale) * sceneScale : offset.length();
+      offset.copy(direction).setLength(distance).applyQuaternion(scene.quaternion);
+    }
   }
-
-  const direction = new THREE.Vector3().fromArray(viewState.direction);
-  if (direction.lengthSq() === 0) {
-    camera.position.copy(getDefaultCameraOffset(sceneScale));
-    controls.target.set(0, 0, 0);
-    controls.update();
-    return;
-  }
-
-  direction.normalize();
-  const target = new THREE.Vector3(0, 0, 0);
-  const distance = Math.max(viewState.distanceScale * sceneScale, getMinimumCameraDistanceScale() * sceneScale);
-  controls.target.copy(target);
-  camera.position.copy(target).addScaledVector(direction, distance);
+  controls.target.set(0, 0, 0);
+  camera.position.copy(offset);
   controls.update();
 }
 
@@ -354,7 +339,7 @@ export function mountPreviewScene(container, layers, options = {}) {
     camera.far = Math.max(1000, sceneScale * 20);
     camera.updateProjectionMatrix();
   }
-  restoreViewState({ camera, controls, sceneScale, viewState: initialViewState });
+  restoreViewState({ camera, controls, scene, sceneScale, viewState: initialViewState });
   const viewOffsetRatio = getViewOffsetRatio(initialViewState);
   const orbitTarget = new THREE.Vector3(0, 0, 0);
   const targetDelta = new THREE.Vector3();
@@ -419,12 +404,69 @@ export function mountPreviewScene(container, layers, options = {}) {
     renderer.render(scene, camera);
   };
 
+  const flushOrbitDamping = () => {
+    controls.enableDamping = false;
+    controls.update();
+    controls.enableDamping = true;
+  };
+
   const applyViewState = (viewState) => {
-    restoreViewState({ camera, controls, sceneScale, viewState });
+    flushOrbitDamping();
+    restoreViewState({ camera, controls, scene, sceneScale, viewState });
     viewOffsetRatio.copy(getViewOffsetRatio(viewState));
     enforceCompactCameraFraming();
     applyViewOffset();
     renderScene();
+  };
+
+  let focusTransition = options.initialFocusTransition ?? null;
+
+  const updateFocusTransition = (now) => {
+    if (!focusTransition) return;
+    const { startedAt, from, to, startRotation } = focusTransition;
+    const t = THREE.MathUtils.smoothstep(now, startedAt, startedAt + FIELD_VIEW_DURATION_MS);
+    scene.rotation.x = UPRIGHT_MODEL_ROTATION + (startRotation - UPRIGHT_MODEL_ROTATION) * (1 - t);
+    camera.position.setFromSphericalCoords(
+      THREE.MathUtils.lerp(from.radius, to.radius, t) * sceneScale,
+      THREE.MathUtils.lerp(from.phi, to.phi, t),
+      THREE.MathUtils.lerp(from.theta, to.theta, t),
+    ).add(controls.target);
+    if (t === 1) focusTransition = null;
+  };
+
+  const focusFieldView = (viewState, { animate, keycapId }) => {
+    if (!viewState || !animate) {
+      focusTransition = null;
+      if (viewState) applyViewState(viewState);
+      return;
+    }
+    const from = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+    from.radius /= sceneScale;
+    const targetRadius = viewState.distanceScale ?? from.radius;
+    if (focusTransition?.direction === viewState.direction && focusTransition.to.radius === targetRadius
+      && focusTransition.keycapId === keycapId) return;
+
+    const targetDirection = new THREE.Vector3().fromArray(viewState.direction).applyAxisAngle(MODEL_X_AXIS, UPRIGHT_MODEL_ROTATION);
+    const to = new THREE.Spherical().setFromVector3(targetDirection);
+    to.radius = targetRadius;
+    // Orbit across the azimuth seam by the shorter arc.
+    const delta = to.theta - from.theta;
+    to.theta = from.theta + Math.atan2(Math.sin(delta), Math.cos(delta));
+    focusTransition = {
+      startedAt: performance.now(),
+      from, to,
+      startRotation: scene.rotation.x,
+      direction: viewState.direction,
+      keycapId,
+    };
+
+    // Discard drag inertia without advancing the pose or pan from the last frame.
+    const screenOffset = viewOffsetRatio.clone();
+    flushOrbitDamping();
+    viewOffsetRatio.copy(screenOffset);
+    applyViewOffset();
+    updateFocusTransition(focusTransition.startedAt);
+    controls.update();
   };
 
   const updateHoverState = (clientX, clientY) => {
@@ -487,6 +529,7 @@ export function mountPreviewScene(container, layers, options = {}) {
       return;
     }
 
+    focusTransition = null;
     isInteracting = true;
     canvas.style.cursor = "grabbing";
   };
@@ -571,8 +614,9 @@ export function mountPreviewScene(container, layers, options = {}) {
   let failFirstFrame;
   let firstFramePending = true;
   const firstFrame = new Promise((resolve, reject) => { completeFirstFrame = resolve; failFirstFrame = reject; });
-  const renderFrame = () => {
+  const renderFrame = (now) => {
     try {
+      updateFocusTransition(now);
       renderScene();
       if (firstFramePending) {
         firstFramePending = false;
@@ -615,8 +659,10 @@ export function mountPreviewScene(container, layers, options = {}) {
 
   return {
     firstFrame,
+    focusFieldView,
+    get focusTransition() { return focusTransition; },
     applyViewState,
-    captureViewState: () => captureViewState({ camera, controls, sceneScale, viewOffsetRatio }),
+    captureViewState: () => captureViewState({ camera, controls, scene, sceneScale, viewOffsetRatio }),
     dispose,
   };
 }

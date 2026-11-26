@@ -156,6 +156,10 @@ export function normalizeProjectPreviewViewState(value) {
   }
 
   return {
+    ...(viewState.upAxis === "z" ? { upAxis: "z" } : {}),
+    ...(viewState.upAxis !== "z" && isFiniteNumber(viewState.modelRotationX)
+      && viewState.modelRotationX < 0 && viewState.modelRotationX > -Math.PI / 2
+      ? { modelRotationX: viewState.modelRotationX } : {}),
     direction,
     distanceScale: Number(viewState.distanceScale),
     targetScale: normalizeNumberArray(viewState.targetScale, 3) ?? [0, 0, 0],
