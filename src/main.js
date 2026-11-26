@@ -273,7 +273,7 @@ let lastPreviewField = null;
 let keyboardViewState = null;
 let mountedPreviewMode = "keycap";
 let latestViewerRequestId = 0;
-let previewViewerPromise = null;
+let keyboardPreviewRender = null;
 let previewDisplay = { status: "idle", requestId: 0, mode: "keycap", rendered: false };
 let previewDisplaySignature = "";
 let latestKeyboardImportId = 0;
@@ -10631,14 +10631,15 @@ function syncPreviewDisplayMarker() {
 }
 
 function renderPreviewViewer({ reuseKeyboard = false } = {}) {
-  if (reuseKeyboard && state.previewMode === "keyboard") {
+  if (reuseKeyboard && state.previewMode === "keyboard" && keyboardPreviewRender?.board === state.project.keyboard) {
     const display = getPreviewDisplayState();
     if (display.mode === "keyboard" && (display.status === "running" || display.status === "ready")) {
-      return previewViewerPromise;
+      return keyboardPreviewRender.promise;
     }
   }
-  previewViewerPromise = drawRequestedPreview();
-  return previewViewerPromise;
+  const promise = drawRequestedPreview();
+  keyboardPreviewRender = state.previewMode === "keyboard" ? { board: state.project.keyboard, promise } : null;
+  return promise;
 }
 
 async function drawRequestedPreview() {
